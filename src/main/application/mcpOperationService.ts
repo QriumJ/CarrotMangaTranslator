@@ -17,6 +17,7 @@ import { hashStableValue } from "../../shared/blockFingerprint";
 import { McpEditError } from "./mcpEditPolicy";
 import {
   MCP_JOB_CAPACITY,
+  MCP_JOB_HISTORY_CAPACITY,
   MCP_JOB_RETENTION_MS,
   parseMcpJobJournal,
   publicMcpJobResult,
@@ -207,13 +208,26 @@ export class McpOperationService {
       return this.project(previous);
     }
     if (
-      this.entries.size >= MCP_JOB_CAPACITY ||
+      this.entries.size >= MCP_JOB_CAPACITY + MCP_JOB_HISTORY_CAPACITY ||
       [...this.entries.values()].some((entry) => !entry.settled)
     )
       throw new McpEditError(
         "editor_busy",
-        "An MCP operation is active or the retained journal is full. Inspect existing jobs first.",
+        "An MCP operation is active or compact receipt history is full. Inspect existing jobs first; request identities remain protected for seven days.",
       );
+    const recent = [...this.entries.values()].filter(
+      (entry) => !entry.compacted,
+    );
+    if (recent.length >= MCP_JOB_CAPACITY) {
+      const oldest = recent.sort(
+        (a, b) => (a.finishedAt ?? a.startedAt) - (b.finishedAt ?? b.startedAt),
+      )[0];
+      const record = snapshotMcpEntries([oldest]).records[0];
+      this.entries.set(
+        oldest.id,
+        restoreMcpOperationEntry({ ...record, compacted: true }, this.now()),
+      );
+    }
     const entry: McpOperationEntry = {
       id: randomUUID(),
       owner: input.owner,

@@ -120,7 +120,7 @@ it("rejects injected paths and returns typed missing-page failures without start
         arguments: { chapterId: "chapter", pageId: "page", path: "private" },
       })
     ).json();
-    expect(invalid.error.code).toBe(-32602);
+    expect(invalid.result.structuredContent.error).toBe("invalid_arguments");
     expect(f.repository.openChapter).not.toHaveBeenCalled();
     const missing = await (
       await f.rpc("tools/call", {

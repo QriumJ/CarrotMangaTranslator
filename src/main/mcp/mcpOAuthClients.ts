@@ -6,7 +6,7 @@ import {
   oauthDigest,
   oauthEqual,
   oauthText,
-  readChatGptRedirect,
+  readMcpOAuthRedirect,
 } from "./mcpOAuthPolicy";
 
 type AuthMethod = "none" | "client_secret_post" | "client_secret_basic";
@@ -24,9 +24,12 @@ export class McpOAuthClients {
     private readonly now: () => number,
     private readonly persistent = false,
   ) {
-    this.clients = new McpOAuthState(now, 64);
+    this.clients = new McpOAuthState(now, 128);
   }
-  register(input: Record<string, unknown>) {
+  register(
+    input: Record<string, unknown>,
+    approvedIds: readonly string[] = [],
+  ) {
     if (
       !Array.isArray(input.redirect_uris) ||
       input.redirect_uris.length < 1 ||
@@ -34,9 +37,9 @@ export class McpOAuthClients {
     )
       throw new McpOAuthError(
         "invalid_client_metadata",
-        "One to four ChatGPT callbacks are required.",
+        "One to four ChatGPT or Codex callbacks are required.",
       );
-    const redirects = input.redirect_uris.map(readChatGptRedirect);
+    const redirects = input.redirect_uris.map(readMcpOAuthRedirect);
     const method = readAuthMethod(input.token_endpoint_auth_method);
     checkList(input.grant_types, ["authorization_code", "refresh_token"]);
     checkList(input.response_types, ["code"]);
@@ -46,6 +49,18 @@ export class McpOAuthClients {
         : oauthText(input.client_name, 120);
     const secret =
       method === "none" ? undefined : randomBytes(32).toString("base64url");
+    const approved = new Set(approvedIds.map(oauthDigest));
+    const records = this.clients.snapshot((value) => value);
+    const pending = records.filter((item) => !approved.has(item.digest));
+    if (pending.length >= 64) {
+      const discard = new Set(
+        pending.slice(0, pending.length - 63).map((item) => item.digest),
+      );
+      this.clients.restore(
+        records.filter((item) => !discard.has(item.digest)),
+        (value) => value,
+      );
+    }
     const id = this.clients.issue(
       { name, redirects, method, secretHash: secret && oauthDigest(secret) },
       CLIENT_LIFETIME,

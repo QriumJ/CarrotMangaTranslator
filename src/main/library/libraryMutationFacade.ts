@@ -76,12 +76,17 @@ export function createSavePageBlocks(runtime: SavePageBlocksRuntime) {
   return async (
     request: SavePageBlocksRequest,
     assertCanCommit?: () => void,
+    preserveBlockOrder = false,
   ): Promise<ChapterSnapshot> => {
     const chapter = await runtime.runMutation(() => {
       assertLibraryActivityAccess([
         pageContentResource(request.chapterId, request.pageId),
       ]);
-      return runtime.savePageBlocks(request, assertCanCommit);
+      return runtime.savePageBlocks(
+        request,
+        assertCanCommit,
+        preserveBlockOrder,
+      );
     });
     notifyLinkedWorkspacePagesSaved(request.chapterId, [request.pageId]);
     return chapter;

@@ -63,8 +63,8 @@ it("uses real OAuth ownership and strict contracts for restart-safe review and s
           ...command,
           path: "private",
         })
-      ).error.code,
-    ).toBe(-32602);
+      ).result.structuredContent.error,
+    ).toBe("invalid_arguments");
     await f.restart();
     expect(
       (await f.call("carrot_get_context_proposal", args)).result

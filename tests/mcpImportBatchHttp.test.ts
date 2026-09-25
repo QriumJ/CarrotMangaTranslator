@@ -44,8 +44,8 @@ it("runs owned preparation through real OAuth/HTTP and never grants network or p
           ...request,
           allowNetwork: false,
         })
-      ).error.code,
-    ).toBe(-32602);
+      ).result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const accepted = await f.call("carrot_run_import_batch", request);
     expect(accepted.result.isError).toBe(false);
     expect(await f.settle(accepted.result.structuredContent)).toMatchObject({

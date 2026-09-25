@@ -52,10 +52,16 @@ export function createMcpPageImageTools(
     invoke: async (args) => {
       allowArguments(args, ["chapterId", "pageId", ...(crop ? ["rect"] : [])]);
       const rect = crop ? pixelRect.safeParse(args.rect) : undefined;
-      if (rect && !rect.success) throw new McpInvalidParams();
+      if (rect && !rect.success)
+        throw new McpInvalidParams(
+          rect.error.issues.map((issue) => ({
+            ...issue,
+            path: ["rect", ...issue.path],
+          })),
+        );
       const { imageData, ...metadata } = await service.read(
-        readIdentifier(args.chapterId),
-        readIdentifier(args.pageId),
+        readIdentifier(args.chapterId, "chapterId"),
+        readIdentifier(args.pageId, "pageId"),
         rect?.data,
       );
       return [

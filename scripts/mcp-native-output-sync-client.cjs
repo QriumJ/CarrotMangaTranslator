@@ -80,6 +80,7 @@ async function outputSyncNativeClient(root, app, editing, native, credentials) {
     await session.ready();
     const tools = createMcpAppTools({
       ...editing,
+      assertWritable: editing.assertClean,
       preferences: outputSyncPreferences,
       additionalTools: session.tools,
       wrapTool: session.wrapTool,

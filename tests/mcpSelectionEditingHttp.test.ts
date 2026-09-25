@@ -117,8 +117,8 @@ it("requires editing scope for preview and mutation, rejects unknown input, and 
           ...input,
           rawBlocks: [],
         })
-      ).body.error.code,
-    ).toBe(-32602);
+      ).body.result.structuredContent.error,
+    ).toBe("invalid_arguments");
     expect(
       (await f.call("carrot_preview_selection_batch", input, f.other)).body
         .result.structuredContent.error,

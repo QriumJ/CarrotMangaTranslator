@@ -226,8 +226,9 @@ it("enforces processing scope, exact inputs, owner isolation and explicit retry 
       { ...f.target, apiKey: "injected" },
     ])
       expect(
-        (await f.call("carrot_run_block_translation", args)).error.code,
-      ).toBe(-32602);
+        (await f.call("carrot_run_block_translation", args)).result
+          .structuredContent.error,
+      ).toBe("invalid_arguments");
     expect(f.runtime.request).not.toHaveBeenCalled();
     vi.mocked(f.runtime.request).mockRejectedValueOnce(
       new Error("upstream uncertain"),

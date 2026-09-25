@@ -58,8 +58,8 @@ it("enforces scopes and ownership, rejects extra fields, and replays receipts wi
           ...input,
           path: "private",
         })
-      ).body.error.code,
-    ).toBe(-32602);
+      ).body.result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const accepted = (await f.call("carrot_run_selection_translation", input))
       .body.result.structuredContent;
     expect((await f.settle(accepted.jobId, f.principal)).status).toBe(
@@ -99,8 +99,8 @@ it("enforces scopes and ownership, rejects extra fields, and replays receipts wi
           analysisId: accepted.jobId,
           blockId: "a",
         })
-      ).body.error.code,
-    ).toBe(-32602);
+      ).body.result.structuredContent.error,
+    ).toBe("invalid_arguments");
     f.provider.revokeConnection(f.principal);
     expect(
       (

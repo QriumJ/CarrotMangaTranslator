@@ -1,5 +1,9 @@
 import type { ChapterSnapshot, MangaPage } from "../../shared/libraryTypes";
-import { gatherText, buildTranslatedTextImport } from "../../shared/gatherText";
+import {
+  gatherText,
+  buildTranslatedTextImport,
+  formatGatheredText,
+} from "../../shared/gatherText";
 import {
   McpTextImportPreviewSchema,
   type McpTextImportPreview,
@@ -258,7 +262,25 @@ function parseTxt(saved: McpContextSnapshot, input: Input, content: string) {
       direction: input.source.direction,
     });
   });
-  const parsed = buildTranslatedTextImport(gathered, content);
+  const options = input.source.options;
+  if (options.format !== "txt" || options.field === "source")
+    throw new McpEditError(
+      "invalid_edit",
+      "A translated or both-field TXT export is required.",
+    );
+  if (
+    formatGatheredText(gathered, options.field, options.includeHeaders).replace(
+      /\r\n/g,
+      "\n",
+    ) === content.replace(/\r\n/g, "\n")
+  )
+    return { updates: new Map<string, string>(), diagnostics: [] };
+  const parsed = buildTranslatedTextImport(
+    gathered,
+    content,
+    undefined,
+    options.field,
+  );
   if (parsed.updates.length > 1000 || parsed.warnings.length > 1000)
     throw new McpEditError(
       "invalid_edit",

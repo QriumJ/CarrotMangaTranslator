@@ -21,7 +21,7 @@ it("requires explicit scoped confirmation and a closed editor, rejects stale rev
     ).rejects.toMatchObject({ code: "not_found" });
     f.editorOpen(f.pageTarget.chapterId);
     await expect(f.applyPage(input)).rejects.toMatchObject({
-      code: "editor_busy",
+      code: "editor_open",
     });
     f.editorOpen(null);
     await f.assertPageOriginal();

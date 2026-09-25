@@ -41,8 +41,8 @@ it("registers actual batch tools, isolates owners and reconstructs held plans ov
           ...input,
           path: "C:/private",
         })
-      ).error.code,
-    ).toBe(-32602);
+      ).result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const prepared = await f.call("carrot_prepare_research_batch", input);
     expect(prepared.result.isError).toBe(false);
     const plan = prepared.result.structuredContent;

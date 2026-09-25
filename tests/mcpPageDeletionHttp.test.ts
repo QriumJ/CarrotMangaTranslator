@@ -28,8 +28,9 @@ it("separates page deletion read scopes from explicit removal and recovery and r
       { pageId: "../page" },
     ])
       expect(
-        (await f.http("carrot_delete_page", { ...input, ...patch })).error.code,
-      ).toBe(-32602);
+        (await f.http("carrot_delete_page", { ...input, ...patch })).result
+          .structuredContent.error,
+      ).toBe("invalid_arguments");
     await f.assertPageOriginal();
     const saved = (await f.http("carrot_delete_page", input)).result
       .structuredContent;

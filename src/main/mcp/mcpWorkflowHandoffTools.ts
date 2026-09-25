@@ -78,7 +78,7 @@ function acceptTool(service: McpWorkflowHandoffService): McpTool {
           "An approved receiving connection is required.",
         );
       const parsed = McpWorkflowHandoffAcceptSchema.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
       const guard = () => {
         context.assertAuthorized();
         context.assertScopes?.(scopes);

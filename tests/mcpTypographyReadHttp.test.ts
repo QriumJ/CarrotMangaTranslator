@@ -108,7 +108,7 @@ it("rejects unknown fields and sanitizes font-storage failures", async () => {
         arguments: { path: "private" },
       })
     ).json();
-    expect(invalid.error.code).toBe(-32602);
+    expect(invalid.result.structuredContent.error).toBe("invalid_arguments");
     expect(f.readCatalog).not.toHaveBeenCalled();
     f.readCatalog.mockRejectedValueOnce(
       new Error("C:/private/font-credentials"),

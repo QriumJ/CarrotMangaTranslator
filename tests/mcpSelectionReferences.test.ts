@@ -4,6 +4,38 @@ import { selectionEditingFixture } from "./mcpSelectionEditing.fixture";
 import { projectMcpBlocks } from "../src/main/application/mcpEditPolicy";
 import { McpSelectionBatchPreviewSchema } from "../src/shared/mcpSelectionEditing";
 
+it("restores legacy partial reading order through native apply, undo and redo", async () => {
+  const f = await selectionEditingFixture();
+  try {
+    await f.mutateStored((chapter) => {
+      chapter.pages[0].blockOrder = [chapter.pages[0].blocks[1].id];
+      chapter.pages[0].blocks[0].speakerId = "legacy-speaker";
+    });
+    const before = await f.snapshot();
+    const plan = await f.preview(await f.references({ speakerId: null }));
+    expect((await f.action(plan.batchId, "apply")).result.status).toBe(
+      "completed",
+    );
+    expect((await f.snapshot()).pages[0].blockOrder).toEqual(
+      before.pages[0].blockOrder,
+    );
+    expect((await f.action(plan.batchId, "undo")).result.status).toBe(
+      "completed",
+    );
+    expect((await f.snapshot()).pages[0].blocks).toEqual(
+      before.pages[0].blocks,
+    );
+    expect((await f.snapshot()).pages[0].blockOrder).toEqual(
+      before.pages[0].blockOrder,
+    );
+    expect((await f.action(plan.batchId, "redo")).result.status).toBe(
+      "completed",
+    );
+  } finally {
+    await f.close();
+  }
+});
+
 async function referenceFixture() {
   const f = await selectionEditingFixture();
   const guide = await f.library.getWorkStyleGuide("work");

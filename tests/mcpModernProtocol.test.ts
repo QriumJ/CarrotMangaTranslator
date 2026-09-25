@@ -212,8 +212,8 @@ it("returns precise request errors for malformed stateless envelopes and request
   ).toBe(-32602);
   expect(
     (await f.call("tools/call", { name: "carrot_list_works", arguments: null }))
-      .body.error.code,
-  ).toBe(-32602);
+      .body.result.structuredContent.error,
+  ).toBe("invalid_arguments");
   expect((await f.call("tools/list", { _meta: {} })).body.error.code).toBe(
     -32020,
   );

@@ -74,7 +74,7 @@ it("keeps dirty editor checks before any publication and stops a closed session"
   try {
     const before = await readFile(f.chapterPath);
     const input = await f.input();
-    f.editing.assertWritable.mockRejectedValueOnce(
+    f.editing.assertClean.mockRejectedValueOnce(
       new Error("Unsaved editor changes"),
     );
     await expect(f.apply(input)).rejects.toThrow("Unsaved editor");

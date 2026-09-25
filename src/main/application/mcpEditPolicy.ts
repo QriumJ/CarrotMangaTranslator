@@ -7,6 +7,7 @@ export class McpEditError extends Error {
     readonly code:
       | "revision_conflict"
       | "editor_busy"
+      | "editor_open"
       | "not_found"
       | "invalid_edit"
       | "access_denied",

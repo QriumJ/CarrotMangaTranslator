@@ -16,7 +16,10 @@ import {
 } from "../src/shared/mcpDesktopTypes";
 import type { McpPageChangedEvent } from "../src/shared/mcpEditingTypes";
 import { useMcpSettings } from "../src/renderer/src/components/settingsModal/useMcpSettings";
-import { McpSettingsView } from "../src/renderer/src/components/settingsModal/McpSettingsPanel";
+import {
+  McpSettingsPanel,
+  McpSettingsView,
+} from "../src/renderer/src/components/settingsModal/McpSettingsPanel";
 import { useMcpEditorSync } from "../src/renderer/src/hooks/useMcpEditorSync";
 import { createTestMangaGatewayStub } from "../src/renderer/src/api/mangaGateway";
 import { editingChapter } from "./mcpEditing.fixture";
@@ -52,6 +55,59 @@ function show(value = status(), busy = false) {
     />,
   );
 }
+it("shows distinct Codex and ChatGPT setup steps and copies the actual server commands", async () => {
+  const copy = vi.fn(async () => {});
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText: copy },
+  });
+  show();
+  fireEvent.click(screen.getByRole("button", { name: "연결 방법 및 도움말" }));
+  expect(
+    screen.getByRole("tab", { name: "Codex" }).getAttribute("aria-selected"),
+  ).toBe("true");
+  fireEvent.click(screen.getByRole("button", { name: "명령 복사" }));
+  await waitFor(() =>
+    expect(copy).toHaveBeenCalledWith(
+      'codex mcp add carrot --url "https://carrot.tail-test.ts.net/mcp"\ncodex mcp login carrot',
+    ),
+  );
+  expect(screen.getByRole("button", { name: "복사됨" })).toBeTruthy();
+  fireEvent.keyDown(screen.getByRole("tab", { name: "Codex" }), {
+    key: "ArrowRight",
+  });
+  expect(
+    screen.getByRole("tab", { name: "ChatGPT" }).getAttribute("aria-selected"),
+  ).toBe("true");
+  expect(screen.getByText("추가 → MCP 앱 만들기")).toBeTruthy();
+  expect(screen.getByText("⋯ → 관리")).toBeTruthy();
+  expect(screen.getByText("모든 도구 허용")).toBeTruthy();
+  expect(screen.getByText(/편집·삭제 같은 변경도 확인 없이/)).toBeTruthy();
+  expect(
+    screen.getAllByRole("img").map((image) => image.getAttribute("alt")),
+  ).toEqual([
+    "왼쪽 패널의 플러그인 아이콘",
+    "추가 메뉴의 MCP 앱 만들기",
+    "MCP 앱 만들기 · 연결 주소는 가린 예시",
+    "설치된 플러그인의 당근망가번역기",
+    "플러그인 더보기 메뉴의 관리",
+    "관리 화면의 권한 항목",
+    "권한 메뉴의 모든 도구 허용",
+  ]);
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "MCP 앱 만들기 · 연결 주소는 가린 예시 크게 보기",
+    }),
+  );
+  expect(
+    screen.getByRole("dialog", {
+      name: "MCP 앱 만들기 · 연결 주소는 가린 예시",
+    }),
+  ).toBeTruthy();
+  fireEvent.keyDown(document, { key: "Escape" });
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(screen.queryByRole("button", { name: "명령 복사" })).toBeNull();
+});
 it("routes the actual settings controls to app stop, stable URL copy and edit opt-in", async () => {
   const current = status();
   const setMcpEnabled = vi.fn(async () => current);
@@ -64,9 +120,9 @@ it("routes the actual settings controls to app stop, stable URL copy and edit op
   });
   show(current);
   fireEvent.click(screen.getByRole("button", { name: "MCP 끄기" }));
-  fireEvent.click(screen.getByRole("button", { name: "고정 주소 복사" }));
+  fireEvent.click(screen.getByRole("button", { name: "주소 복사" }));
   fireEvent.click(
-    screen.getByRole("checkbox", { name: "텍스트·서식·문맥 편집 허용" }),
+    screen.getByRole("checkbox", { name: "텍스트·서식·문맥 편집" }),
   );
   await waitFor(() => expect(setMcpEnabled).toHaveBeenCalledWith(false));
   expect(copyMcpUrl).toHaveBeenCalledOnce();
@@ -263,27 +319,29 @@ it("renders human-readable permissions and preserves unrecognized scope text saf
   ];
   show(current);
   expect(
-    screen.getByText(
+    screen.getByTitle(
       /이미지 및 이미지 포함 파일 전송.*텍스트·서식·문맥 편집.*블록·보관함 관리와 앱 모델 처리/,
     ),
   ).toBeTruthy();
   expect(
     screen.getByText(
-      /다음 실행에도 승인 유지.*custom.permission · constructor · __proto__ · toString/,
+      /승인 유지.*custom.permission · constructor · __proto__ · toString/,
     ),
   ).toBeTruthy();
   expect(screen.getByText("<img src=x>")).toBeTruthy();
   expect(document.querySelector("img")).toBeNull();
-  expect(screen.getByText(/외부 제공자를 사용하는 작업은/)).toBeTruthy();
-  expect(screen.getByText(/텍스트·문맥 파일 출력에 적용됩니다/)).toBeTruthy();
+  expect(screen.queryByText(/외부 AI로 처리하면/)).toBeNull();
+  expect(
+    screen.getByText(/보관함 전체의 텍스트·문맥 조회와 텍스트 파일 출력/),
+  ).toBeTruthy();
   expect(
     screen.getByRole("checkbox", {
-      name: "이미지와 이미지 포함 출력 파일 전송 허용",
+      name: "이미지·출력 파일 전송",
     }),
   ).toBeTruthy();
   expect(
     screen.getByRole("checkbox", {
-      name: "블록·보관함 관리 및 앱 모델 처리 허용",
+      name: "블록·보관함 관리 및 OCR·번역 실행",
     }),
   ).toBeTruthy();
 });
@@ -295,9 +353,112 @@ it("shows all first-use options checked and receives requests online without an 
   expect(options).toHaveLength(4);
   expect(options.every((option) => option.checked)).toBe(true);
   expect(screen.queryByRole("button", { name: /새 연결 허용/ })).toBeNull();
-  expect(screen.getByText(/새 연결 요청을 항상 받습니다/)).toBeTruthy();
+  expect(screen.getByText(/Codex 또는 ChatGPT를 선택하세요/)).toBeTruthy();
   view.unmount();
   show({ ...current, state: "off" });
   expect(screen.queryByText(/새 연결 요청을 항상 받습니다/)).toBeNull();
-  expect(screen.getByText(/MCP를 켜면 새 연결 요청을 받습니다/)).toBeTruthy();
+  expect(screen.getByText(/MCP를 켜고 사용할 AI 앱을 연결하세요/)).toBeTruthy();
+});
+
+it("hides historical revoked grants and removes a newly revoked connection after the action refresh", async () => {
+  const current = status();
+  current.connections = [
+    {
+      id: "old",
+      clientName: "Old ChatGPT",
+      scope: "carrot.read",
+      createdAt: 1,
+      revoked: true,
+    },
+    {
+      id: "active",
+      clientName: "Current ChatGPT",
+      scope: "carrot.read",
+      createdAt: 2,
+      revoked: false,
+    },
+  ];
+  const revokeMcpConnection = vi.fn(async (id: string) => {
+    current.connections = current.connections.map((item) =>
+      item.id === id ? { ...item, revoked: true } : item,
+    );
+    return current;
+  });
+  window.mangaApi = createTestMangaGatewayStub({
+    getMcpStatus: async () => structuredClone(current),
+    revokeMcpConnection,
+  });
+  const first = render(<McpSettingsPanel />);
+  const disconnect = await screen.findByRole("button", {
+    name: "Current ChatGPT 연결 해제",
+  });
+  expect(screen.queryByText("Old ChatGPT")).toBeNull();
+  fireEvent.click(disconnect);
+  await waitFor(() => expect(screen.queryByText("Current ChatGPT")).toBeNull());
+  expect(revokeMcpConnection).toHaveBeenCalledWith("active");
+  expect(screen.getByText(/아직 연결된 앱이 없습니다/)).toBeTruthy();
+  first.unmount();
+  render(<McpSettingsPanel />);
+  await screen.findByText(/아직 연결된 앱이 없습니다/);
+  expect(screen.queryByRole("button", { name: /연결 해제/ })).toBeNull();
+});
+
+it("retains a connection and shows the failure when revocation fails", async () => {
+  const current = status();
+  current.connections = [
+    {
+      id: "active",
+      clientName: "ChatGPT",
+      scope: "carrot.read",
+      createdAt: 1,
+      revoked: false,
+    },
+  ];
+  window.mangaApi = createTestMangaGatewayStub({
+    getMcpStatus: async () => current,
+    revokeMcpConnection: async () => {
+      throw new Error("권한 철회 실패");
+    },
+  });
+  render(<McpSettingsPanel />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "ChatGPT 연결 해제" }),
+  );
+  expect((await screen.findByRole("alert")).textContent).toBe("권한 철회 실패");
+  expect(
+    screen.getByRole("button", { name: "ChatGPT 연결 해제" }),
+  ).toBeTruthy();
+});
+
+it("keeps setup and diagnostics behind an accessible disclosure and runs the selected actions", async () => {
+  const current = status();
+  const openMcpHelp = vi.fn(async () => ({ completed: true }));
+  const diagnoseMcp = vi.fn(async () => ({
+    ok: false,
+    checks: [{ name: "OAuth", passed: false, message: "주소 확인 필요" }],
+  }));
+  window.mangaApi = createTestMangaGatewayStub({
+    getMcpStatus: async () => current,
+    openMcpHelp,
+    diagnoseMcp,
+  });
+  render(<McpSettingsPanel />);
+  await screen.findByText("연결 가능");
+  expect(screen.queryByRole("button", { name: "연결 진단" })).toBeNull();
+  const help = screen.getByRole("button", { name: "연결 방법 및 도움말" });
+  expect(help.getAttribute("aria-expanded")).toBe("false");
+  fireEvent.click(help);
+  expect(help.getAttribute("aria-expanded")).toBe("true");
+  fireEvent.click(screen.getByRole("button", { name: "Tailscale 설치 안내" }));
+  await waitFor(() => expect(openMcpHelp).toHaveBeenCalledWith("tailscale"));
+  await waitFor(() =>
+    expect(
+      (screen.getByRole("button", { name: "연결 진단" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(false),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "연결 진단" }));
+  await screen.findByText("실패 · OAuth: 주소 확인 필요");
+  fireEvent.click(help);
+  expect(screen.queryByRole("button", { name: "연결 진단" })).toBeNull();
 });

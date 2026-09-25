@@ -240,7 +240,11 @@ it("negotiates protocol versions and only advertises implemented capabilities", 
       }),
     );
     assert.equal(reply.status, 200);
-    assert.ok(json.includes(version === "2099-01-01" ? "2025-11-25" : version));
+    assert.ok(
+      json.includes(
+        ["2099-01-01", "2025-03-26"].includes(version) ? "2025-11-25" : version,
+      ),
+    );
     assert.equal(json.includes('"resources"'), false);
     assert.equal(json.includes('"sampling"'), false);
   }
@@ -307,7 +311,7 @@ for (const args of [
         await message(
           request("tools/call", { name: "carrot_list_works", arguments: args }),
         )
-      ).json.includes("-32602"),
+      ).json.includes("invalid_arguments"),
     );
   });
 }
@@ -328,7 +332,7 @@ it("rejects path-like ids before reaching storage", async () => {
             arguments: { chapterId },
           }),
         )
-      ).json.includes("-32602"),
+      ).json.includes("invalid_arguments"),
     );
   }
 });
@@ -435,8 +439,13 @@ it("rejects malformed, oversized bodies, token URLs and unsupported streaming", 
       400,
     );
     assert.equal(
-      (await fetch(url, { method: "POST", headers, body: "x".repeat(70_000) }))
-        .status,
+      (
+        await fetch(url, {
+          method: "POST",
+          headers,
+          body: "x".repeat(8 * 1024 * 1024 + 1),
+        })
+      ).status,
       413,
     );
     assert.equal((await post(`${url}?token=${TOKEN}`)).status, 404);

@@ -32,7 +32,7 @@ export function createMcpTypographyAnalysisTool(
       "Analyze explicit saved pages in ONE chapter using the existing source-size raster estimator and optional C23 source-font engine. Read carrot_preflight_typography first and retain its snapshot, catalogSnapshot and ordered page/revision pairs. Size mode never runs OCR or models. Font modes require Japanese-to-Korean inputs, allowOcr=true and allowAssetDownloads=true; the app may install approved Hayai/C23 assets. One shared local-model lease and one OCR CPU worker. No translation, erasure, rendering, page writes or font application. Choices are observations, not approved style changes; manual profile locks still require separate application checks. Poll carrot_get_job until terminal. Observations expire in 30 minutes or on restart. No images, font files, downloads links or attachments are returned. Failed jobs require a fresh preflight and new explicit request, not single-page retry.",
     invoke: async (args, context) => {
       const parsed = McpTypographyAnalysisTargetSchema.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
       if (
         !context?.principalId ||
         !context.assertScopes ||

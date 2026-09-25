@@ -260,7 +260,7 @@ it("does not expose export to a read-only grant or accept injected paths", async
       requestId: randomUUID(),
       path: "C:/private",
     });
-    expect(bad.error.code).toBe(-32602);
+    expect(bad.result.structuredContent.error).toBe("invalid_arguments");
   } finally {
     await f.close();
   }

@@ -20,8 +20,8 @@ it("requires edit/process authority for context application and preserves owner 
     ).toBe("Unknown tool");
     expect(
       (await f.call("carrot_apply_context_migration", { ...input, raw: {} }))
-        .error.code,
-    ).toBe(-32602);
+        .result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const applied = await f.call("carrot_apply_context_migration", input);
     expect(applied.result.isError).toBe(false);
     const id = applied.result.structuredContent.id;

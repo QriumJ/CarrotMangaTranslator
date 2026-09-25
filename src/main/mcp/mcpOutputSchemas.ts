@@ -350,6 +350,20 @@ const errorSchema = z
     message: z.string(),
     retryable: z.boolean(),
     nextAction: z.string(),
+    issues: z
+      .array(
+        z
+          .object({
+            field: z.string(),
+            code: z.string(),
+            expected: z.string().optional(),
+            minimum: z.number().optional(),
+            maximum: z.number().optional(),
+          })
+          .strict(),
+      )
+      .max(20)
+      .optional(),
   })
   .strict();
 const schemas = new Map<string, Record<string, unknown>>();

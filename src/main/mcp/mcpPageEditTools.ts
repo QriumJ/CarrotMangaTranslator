@@ -57,8 +57,8 @@ export function createMcpPageEditTools(
         allowArguments(args, ["chapterId", "pageId", "offset", "limit"]);
         return textContent(
           await service.read(
-            readIdentifier(args.chapterId),
-            readIdentifier(args.pageId),
+            readIdentifier(args.chapterId, "chapterId"),
+            readIdentifier(args.pageId, "pageId"),
             readWindow(args),
           ),
         );
@@ -110,10 +110,12 @@ function translationPatchTool(service: McpPageEditService): McpTool {
     },
     invoke: async (args, context) => {
       const parsed = editSchema.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
-      readIdentifier(parsed.data.chapterId);
-      readIdentifier(parsed.data.pageId);
-      parsed.data.edits.forEach((edit) => readIdentifier(edit.blockId));
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
+      readIdentifier(parsed.data.chapterId, "chapterId");
+      readIdentifier(parsed.data.pageId, "pageId");
+      parsed.data.edits.forEach((edit, index) =>
+        readIdentifier(edit.blockId, `edits.${index}.blockId`),
+      );
       return textContent(
         await service.update(
           {

@@ -85,8 +85,8 @@ it.each(["rename-chapter", "reorder-pages"])(
             ...input,
             path: "C:/private",
           })
-        ).error.code,
-      ).toBe(-32602);
+        ).result.structuredContent.error,
+      ).toBe("invalid_arguments");
       const saved = await call("carrot_apply_library_change", input);
       expect(saved.result.isError).toBe(false);
       expect(saved.result.structuredContent.status).toBe("saved");

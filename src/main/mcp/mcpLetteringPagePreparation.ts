@@ -1,3 +1,4 @@
+import { getActiveGeneratedLettering } from "../../shared/generatedLettering";
 import { matchesMcpFormat } from "../../shared/mcpFormatEditing";
 import { parseMcpLetteringRule } from "../../shared/mcpLetteringAdvanced";
 import type { McpLetteringPrepare } from "../../shared/mcpLettering";
@@ -85,7 +86,7 @@ function selectTargets(
       const reason =
         command.kind === "layout"
           ? mcpLayoutExclusion(block, command)
-          : block.generatedLettering
+          : getActiveGeneratedLettering(block)
             ? "generated_lettering"
             : null;
       if (reason) {

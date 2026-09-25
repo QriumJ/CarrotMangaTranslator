@@ -1,18 +1,12 @@
 import assert from "node:assert/strict";
 import { mcpTestEncryption as codec } from "./mcpEncryption.fixture";
-import {
-  mkdtemp,
-  readFile,
-  writeFile,
-  rm,
-  symlink,
-  mkdir,
-} from "node:fs/promises";
+import { mkdtemp, readFile, writeFile, rm, mkdir } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, it, vi } from "vitest";
 import { McpSecureStore } from "../src/main/mcp/mcpSecureStore";
 import { McpOAuthProvider } from "../src/main/mcp/mcpOAuthProvider";
+import { withFileSymlink } from "./fileSymlink.fixture";
 vi.mock("electron", () => ({
   safeStorage: { isEncryptionAvailable: () => false },
   app: { isPackaged: false },
@@ -84,15 +78,21 @@ it("never silently replaces corrupt credentials or falls back to plaintext", asy
     /No plaintext/,
   );
 });
-it("refuses symlinked private state without touching its external target", async () => {
+it("refuses symlinked private state without touching its external target", async (context) => {
   const directory = await root();
   const external = await root();
   await mkdir(join(directory, "mcp-private"));
   const target = join(external, "do-not-touch");
   await writeFile(target, "preserve");
-  await symlink(target, join(directory, "mcp-private/authorization.enc"));
-  await assert.rejects(new McpSecureStore(directory, codec()).load());
-  assert.equal(await readFile(target, "utf8"), "preserve");
+  await withFileSymlink(
+    context,
+    target,
+    join(directory, "mcp-private/authorization.enc"),
+    async () => {
+      await assert.rejects(new McpSecureStore(directory, codec()).load());
+      assert.equal(await readFile(target, "utf8"), "preserve");
+    },
+  );
 });
 
 it("can retry a temporarily unavailable key store without a plaintext fallback", async () => {
@@ -217,16 +217,22 @@ it("encrypts the job journal, restores it, and refuses a copied journal in anoth
   );
 });
 
-it("refuses symlinked job journal reads and writes without touching their target", async () => {
+it("refuses symlinked job journal reads and writes without touching their target", async (context) => {
   const directory = await root();
   const store = new McpSecureStore(directory, codec());
   await store.load();
   const external = join(await root(), "keep");
   await writeFile(external, "preserve");
-  await symlink(external, join(directory, "mcp-private/jobs.enc"));
-  await assert.rejects(store.readJobJournal());
-  await assert.rejects(store.writeJobJournal({ version: 1, records: [] }));
-  assert.equal(await readFile(external, "utf8"), "preserve");
+  await withFileSymlink(
+    context,
+    external,
+    join(directory, "mcp-private/jobs.enc"),
+    async () => {
+      await assert.rejects(store.readJobJournal());
+      await assert.rejects(store.writeJobJournal({ version: 1, records: [] }));
+      assert.equal(await readFile(external, "utf8"), "preserve");
+    },
+  );
 });
 
 it("binds retained metadata to this profile and refuses tampering and unavailable encryption", async () => {

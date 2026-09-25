@@ -125,8 +125,9 @@ it("enforces processing/edit scopes, proposal ownership and strict input schemas
       { ...f.target, researchTitle: "" },
     ])
       expect(
-        (await f.call("carrot_run_context_research", args)).error.code,
-      ).toBe(-32602);
+        (await f.call("carrot_run_context_research", args)).result
+          .structuredContent.error,
+      ).toBe("invalid_arguments");
     expect(f.research).not.toHaveBeenCalled();
     const preview = await f.call("carrot_preview_context_edit", {
       chapterId: "chapter",

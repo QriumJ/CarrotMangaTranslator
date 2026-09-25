@@ -258,6 +258,58 @@ describe("reviewed text import admission", () => {
 });
 
 describe("native TXT mapping through the existing translation policy", () => {
+  it("rejects source-only TXT at the policy boundary before translation planning", async () => {
+    const f = fixture("txt");
+    const input = f.policy.parse(f.request());
+    input.source.options = {
+      format: "txt",
+      field: "source",
+      includeHeaders: true,
+    };
+    await expect(
+      f.policy.plan(f.saved, input, { owner: "owner", guard: f.guard }),
+    ).rejects.toMatchObject({ code: "invalid_edit" });
+  });
+  it("rejects an overlarge native TXT mapping instead of truncating proposals", async () => {
+    const f = fixture("txt");
+    const page = f.chapter.pages[0];
+    page.blocks = Array.from({ length: 1001 }, (_, index) => ({
+      ...page.blocks[0],
+      id: index === 0 ? "a" : `extra-${index}`,
+    }));
+    f.value.source.pages[0].revision = createPageRevision(page);
+    f.setContent(
+      formatGatheredText(
+        gatherText({ chapter: f.chapter, page, scope: "page" }),
+        "both",
+      ).replaceAll("original-a", "reviewed"),
+    );
+    await expect(f.plan()).rejects.toMatchObject({ code: "invalid_edit" });
+  });
+  it.each(["both", "translated"] as const)(
+    "round trips %s with empty and multiline translations without changes",
+    async (field) => {
+      const f = fixture("txt");
+      const page = f.chapter.pages[0];
+      page.blocks[0].translatedText = "";
+      page.blocks[1].translatedText = "first line\nsecond line";
+      f.value.source.pages[0].revision = createPageRevision(page);
+      f.value.selection[0].blockIds = page.blocks.map((block) => block.id);
+      const request = f.request();
+      request.source.pages = [request.source.pages[0]];
+      request.source.options = { format: "txt", field, includeHeaders: true };
+      const gathered = gatherText({
+        chapter: f.chapter,
+        page,
+        scope: "page",
+        direction: "rtl",
+      });
+      f.setContent(formatGatheredText(gathered, field));
+      const plan = await f.plan(request);
+      expect(plan.pages[0].changedBlocks).toBe(0);
+      expect(plan.diagnostics).toEqual([]);
+    },
+  );
   it("resolves native order then applies only selected blocks and reports other file updates", async () => {
     const f = fixture("txt");
     const gathered = gatherText({

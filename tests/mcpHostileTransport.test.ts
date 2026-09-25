@@ -88,7 +88,7 @@ it("rejects invalid UTF-8, oversized multi-byte inputs and unauthenticated reque
     for (const [bytes, status] of [
       [Buffer.from([0xff, 0xfe]), 400],
       [Buffer.from("{} trailing"), 400],
-      [body("\uD55C".repeat(23000)), 413],
+      [body("\uD55C".repeat(3 * 1024 * 1024)), 413],
     ] as const) {
       expect((await f.send(bytes)).status).toBe(status);
       expect((await f.send(body("healthy"))).status).toBe(200);

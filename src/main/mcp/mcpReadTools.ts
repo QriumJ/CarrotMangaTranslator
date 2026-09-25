@@ -38,19 +38,22 @@ export type McpTool = {
       principalId?: string;
       assertScopes?: (scopes: readonly string[]) => void;
       assertJobAuthorized?: (scopes?: readonly string[]) => void;
+      visibleToolNames?: readonly string[];
     },
   ) => Promise<McpToolContent[]>;
+};
+
+type CapabilityProfile = {
+  readBlocks: boolean;
+  editTranslations: boolean;
+  additionalTools?: string[];
 };
 
 export function createMcpReadTools(
   service: McpLibraryReadService,
   imageTransfer = false,
   oauth = false,
-  profile?: {
-    readBlocks: boolean;
-    editTranslations: boolean;
-    additionalTools?: string[];
-  },
+  profile?: CapabilityProfile,
 ): McpTool[] {
   return [
     {
@@ -58,9 +61,16 @@ export function createMcpReadTools(
       description:
         "Report what this Carrot connection actually exposes. No models are started.",
       inputSchema: objectSchema({}),
-      invoke: async (args) => {
+      invoke: async (args, context) => {
         allowArguments(args, []);
-        return textContent(capabilityProfile(imageTransfer, oauth, profile));
+        return textContent(
+          capabilityProfile(
+            imageTransfer,
+            oauth,
+            profile,
+            context?.visibleToolNames,
+          ),
+        );
       },
     },
     {
@@ -90,7 +100,7 @@ export function createMcpReadTools(
         allowArguments(args, ["offset", "limit", "workId"]);
         return textContent(
           await service.listChapters(
-            readIdentifier(args.workId),
+            readIdentifier(args.workId, "workId"),
             readWindow(args),
           ),
         );
@@ -108,7 +118,7 @@ export function createMcpReadTools(
         allowArguments(args, ["offset", "limit", "chapterId"]);
         return textContent(
           await service.getChapter(
-            readIdentifier(args.chapterId),
+            readIdentifier(args.chapterId, "chapterId"),
             readWindow(args),
           ),
         );
@@ -154,13 +164,15 @@ export async function invokeMcpTool(tool: McpTool, value: unknown) {
 function capabilityProfile(
   imageTransfer: boolean,
   oauth: boolean,
-  profile?: {
-    readBlocks: boolean;
-    editTranslations: boolean;
-    additionalTools?: string[];
-  },
+  profile?: CapabilityProfile,
+  visibleToolNames?: readonly string[],
 ) {
-  const current = profile ?? { readBlocks: false, editTranslations: false };
+  const current = scopeCapabilityProfile(
+    imageTransfer,
+    profile,
+    visibleToolNames,
+  );
+  imageTransfer = current.imageTransfer;
   const additionalTools = current.additionalTools ?? [];
   const features = new Set(additionalTools);
   return {
@@ -186,4 +198,24 @@ function capabilityProfile(
     sampling: false,
     oauth,
   };
+}
+
+function scopeCapabilityProfile(
+  imageTransfer: boolean,
+  profile?: CapabilityProfile,
+  visibleToolNames?: readonly string[],
+) {
+  const exposed = visibleToolNames ? new Set(visibleToolNames) : undefined;
+  const current = exposed
+    ? {
+        readBlocks: exposed.has("carrot_get_page_blocks"),
+        editTranslations: exposed.has("carrot_update_translations"),
+        additionalTools: profile?.additionalTools?.filter((name) =>
+          exposed.has(name),
+        ),
+      }
+    : (profile ?? { readBlocks: false, editTranslations: false });
+  imageTransfer =
+    imageTransfer && (!exposed || exposed.has("carrot_get_page_preview"));
+  return { ...current, imageTransfer };
 }

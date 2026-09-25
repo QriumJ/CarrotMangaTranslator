@@ -77,7 +77,7 @@ it("serves versioned sound-effect metadata to read-only OAuth and rejects malfor
       pageId: "page",
       path: "C:/private.png",
     });
-    expect(bad.error.code).toBe(-32602);
+    expect(bad.result.structuredContent.error).toBe("invalid_arguments");
     const mutation = await call("carrot_apply_sound_effect_batch", {});
     expect(mutation.error.message).toBe("Unknown tool");
     const editor = createMcpTestGrant(origin, secret)(

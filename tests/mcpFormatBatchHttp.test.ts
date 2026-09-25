@@ -161,7 +161,10 @@ it("retains partial progress, rejects later user edits on undo and rejects text 
       translatedText: "not allowed",
     });
     const rejected = await f.call("carrot_preview_format_batch", invalid);
-    expect(rejected.error).toBeDefined();
+    expect(rejected.result).toMatchObject({
+      isError: true,
+      structuredContent: { error: "invalid_arguments" },
+    });
     const plan = (await f.call("carrot_preview_format_batch", input)).result
       .structuredContent;
     const page = (await f.library.openChapter("chapter")).pages[1];

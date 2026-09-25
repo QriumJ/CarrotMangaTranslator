@@ -70,19 +70,31 @@ function chapterReviewTool(service: McpReviewService): McpTool {
         "filter",
         "snapshot",
       ]);
-      const chapterId = readIdentifier(args.chapterId);
+      const chapterId = readIdentifier(args.chapterId, "chapterId");
       const window = readWindow(args);
       const filter = mcpReviewFilter.safeParse(
         args.filter === undefined ? "all" : args.filter,
       );
+      if (!filter.success)
+        throw new McpInvalidParams(
+          filter.error.issues.map((issue) => ({
+            ...issue,
+            path: ["filter", ...issue.path],
+          })),
+        );
       if (
-        !filter.success ||
         (args.snapshot !== undefined &&
           (typeof args.snapshot !== "string" ||
             !/^[a-f0-9]{16}$/.test(args.snapshot))) ||
         (window.offset > 0 && args.snapshot === undefined)
       )
-        throw new McpInvalidParams();
+        throw new McpInvalidParams([
+          {
+            path: ["snapshot"],
+            code: "invalid_value",
+            expected: "16-character hex snapshot required after the first page",
+          },
+        ]);
       context?.assertAuthorized();
       const result = await service.chapter(
         chapterId,
@@ -113,8 +125,8 @@ function exportPreflightTool(service: McpReviewService): McpTool {
     },
     invoke: async (args, context) => {
       allowArguments(args, ["chapterId", "pageId"]);
-      const chapterId = readIdentifier(args.chapterId),
-        pageId = readIdentifier(args.pageId);
+      const chapterId = readIdentifier(args.chapterId, "chapterId"),
+        pageId = readIdentifier(args.pageId, "pageId");
       context?.assertAuthorized();
       const result = await service.preflight(chapterId, pageId);
       context?.assertAuthorized();

@@ -23,8 +23,8 @@ it("registers strict HTTP discovery tools and restores the same owned review acr
           ...input,
           script: "alert(1)",
         })
-      ).error.code,
-    ).toBe(-32602);
+      ).result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const accepted = await f.call("carrot_discover_chapters", input);
     expect(accepted.result.isError).toBe(false);
     const done = await f.settle(accepted.result.structuredContent);
@@ -79,8 +79,8 @@ it("registers strict HTTP discovery tools and restores the same owned review acr
           ...scan,
           url: "https://other.example",
         })
-      ).error.code,
-    ).toBe(-32602);
+      ).result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const scanned = await f.settle(
       (await f.call("carrot_scan_discovered_chapter", scan)).result
         .structuredContent,

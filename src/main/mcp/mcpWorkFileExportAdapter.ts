@@ -87,7 +87,7 @@ function createExportTool(
     inputSchema: z.toJSONSchema(McpWorkFileExportTargetSchema),
     invoke: async (args, context) => {
       const parsed = McpWorkFileExportTargetSchema.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
       if (
         !context?.principalId ||
         !context.assertScopes ||

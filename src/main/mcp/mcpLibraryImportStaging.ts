@@ -4,10 +4,12 @@ import {
   mkdir,
   mkdtemp,
   open,
+  realpath,
   rm,
   type FileHandle,
 } from "node:fs/promises";
-import { extname, join, parse } from "node:path";
+import { extname, isAbsolute, join, parse, relative } from "node:path";
+import { tmpdir } from "node:os";
 import type {
   ImportPreviewResult,
   PreparedImportPreview,
@@ -130,7 +132,10 @@ async function copyInput(
   remaining: number,
   context: McpOperationContext,
 ): Promise<Evidence> {
-  await assertPathWithinRootWithoutSymlinks(parse(source).root, source, {
+  const resolved = await resolveImportSource(source);
+  source = resolved.source;
+  const root = resolved.root;
+  await assertPathWithinRootWithoutSymlinks(root, source, {
     allowMissingTarget: false,
   });
   const before = await lstat(source);
@@ -240,4 +245,18 @@ async function verifyInput(directory: string, evidence: Evidence[]) {
         "Reviewed import bytes changed; prepare a fresh input preview.",
       );
   }
+}
+
+async function resolveImportSource(source: string) {
+  const temporaryRoot = tmpdir();
+  const child = relative(temporaryRoot, source);
+  const withinTemporaryRoot =
+    child !== "" &&
+    child !== ".." &&
+    !child.startsWith(`..${process.platform === "win32" ? "\\" : "/"}`) &&
+    !isAbsolute(child);
+  const root = withinTemporaryRoot
+    ? await realpath(temporaryRoot)
+    : parse(source).root;
+  return { root, source: withinTemporaryRoot ? join(root, child) : source };
 }

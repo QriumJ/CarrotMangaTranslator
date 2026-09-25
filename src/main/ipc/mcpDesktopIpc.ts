@@ -48,7 +48,9 @@ export function registerMcpDesktopIpc(context: IpcContext): void {
           ? "https://tailscale.com/download"
           : page === "chatgpt"
             ? "https://chatgpt.com/"
-            : setup && readTailscaleSetupUrl(setup);
+            : page === "codex"
+              ? "https://learn.chatgpt.com/docs/extend/mcp?surface=cli"
+              : setup && readTailscaleSetupUrl(setup);
       if (!url) throw new Error("현재 열 수 있는 설정 주소가 없습니다.");
       await shell.openExternal(url);
       return { completed: true };

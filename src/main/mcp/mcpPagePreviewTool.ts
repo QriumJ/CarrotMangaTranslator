@@ -11,6 +11,7 @@ export function createMcpPagePreviewTool(
 ): McpTool {
   return {
     name: "carrot_get_page_preview",
+    requiredScopes: ["carrot.read", "carrot.images"],
     description:
       "Read a reduced PNG of a source page by chapterId and pageId. Only available when the local user enables image transfer. Existing redaction approval is required when enabled in the app. This does not translate the page.",
     inputSchema: {
@@ -22,8 +23,8 @@ export function createMcpPagePreviewTool(
     invoke: async (args) => {
       allowArguments(args, ["chapterId", "pageId"]);
       const { imageData, ...metadata } = await service.getPreview(
-        readIdentifier(args.chapterId),
-        readIdentifier(args.pageId),
+        readIdentifier(args.chapterId, "chapterId"),
+        readIdentifier(args.pageId, "pageId"),
       );
       return [
         ...textContent(metadata),

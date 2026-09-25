@@ -54,8 +54,8 @@ it("runs through actual scoped HTTP while withholding mutation and image authori
     expect(f.render).toHaveBeenCalledTimes(2);
     expect(
       (await f.call("carrot_get_workflow", { id: plan.id, path: "C:/private" }))
-        .error.code,
-    ).toBe(-32602);
+        .result.structuredContent.error,
+    ).toBe("invalid_arguments");
   } finally {
     await f.close();
   }

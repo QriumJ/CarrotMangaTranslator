@@ -12,6 +12,7 @@ type SnapshotEntry = Omit<McpStoredJob, "parameters" | "kind" | "result"> & {
 
 export function snapshotMcpEntries(entries: Iterable<SnapshotEntry>) {
   const records = [...entries].map((entry) => ({
+    ...(entry.compacted ? { compacted: entry.compacted } : {}),
     id: entry.id,
     owner: entry.owner,
     requestId: entry.requestId,

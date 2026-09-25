@@ -40,13 +40,13 @@ export function createMcpAuxiliarySessions(
   const typography = createMcpTypographyBatchSession(
     app,
     operations,
-    editing,
+    { ...editing, assertWritable: editing.assertClean },
     Boolean(preferences.allowEditing && preferences.allowProcessing),
   );
   const lettering = createMcpLetteringSession(
     app,
     operations,
-    editing,
+    { ...editing, assertWritable: editing.assertClean },
     Boolean(preferences.allowEditing && preferences.allowProcessing),
   );
   const selection = createMcpSelectionAnalysisSession(
@@ -54,7 +54,9 @@ export function createMcpAuxiliarySessions(
     operations,
     Boolean(preferences.allowProcessing),
     undefined,
-    preferences.allowEditing ? editing : undefined,
+    preferences.allowEditing
+      ? { ...editing, assertWritable: editing.assertClean }
+      : undefined,
   );
   const incoming = createIncomingFileSessions(options, resources);
   const images = createImageSessions(options, operations);
@@ -111,7 +113,7 @@ function createIncomingFileSessions(
           artifacts,
           uploads: imports.uploads,
           migration: retained.migration,
-          editing,
+          editing: { ...editing, assertWritable: editing.assertClean },
           allowEditing: Boolean(
             preferences.allowEditing && preferences.allowProcessing,
           ),
@@ -145,10 +147,13 @@ function createImageSessions(
     preferences.allowEditing && preferences.allowProcessing,
   );
   const images = Boolean(preferences.allowImages);
+  // These adapters acquire the native page lease before checking editor dirtiness.
+  // A global busy check here would reject the adapter's own mcp-edit activity.
+  const ownedEditing = { ...editing, assertWritable: editing.assertClean };
   const soundEffects = createMcpSoundEffectSession(
     app,
     operations,
-    editing,
+    ownedEditing,
     enabled,
     images,
   );
@@ -156,8 +161,8 @@ function createImageSessions(
     soundEffects,
     sessions: [
       soundEffects,
-      createMcpExternalImageSession(app, editing, enabled, images),
-      createMcpImageEditSession(app, editing, enabled, images),
+      createMcpExternalImageSession(app, ownedEditing, enabled, images),
+      createMcpImageEditSession(app, ownedEditing, enabled, images),
     ],
   };
 }

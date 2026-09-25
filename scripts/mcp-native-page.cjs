@@ -152,11 +152,7 @@ async function checkNativePageGoal(root) {
   };
   const stopHandoffs = acknowledgeFixtureHandoffs(app.jobs.pageHandoffs);
   const { createMcpPageEditScope } = load(root, "main/mcp/mcpPageEditScope.js");
-  const editing = {
-    assertWritable: async () => {},
-    assertClean: async () => {},
-    notifySaved: () => {},
-  };
+  const editing = nativeEditing(app);
   let allowed = true;
   const context = {
     assertAuthorized: () => {
@@ -185,6 +181,7 @@ async function checkNativePageGoal(root) {
   await session.ready();
   const tools = createMcpAppTools({
     ...editing,
+    assertWritable: editing.assertClean,
     withPageEdit: createMcpPageEditScope(app, library.openChapter),
     preferences,
     additionalTools: session.tools,
@@ -526,3 +523,18 @@ function acknowledgeFixtureHandoffs(handoffs) {
   });
 }
 module.exports = { checkNativePageGoal };
+
+/** @param {{jobs:{hasActive:boolean}}} app */
+function nativeEditing(app) {
+  return {
+    assertWritable: async () => {
+      assert.equal(
+        app.jobs.hasActive,
+        false,
+        "Unowned edit while an app job is running",
+      );
+    },
+    assertClean: async () => {},
+    notifySaved: () => {},
+  };
+}

@@ -30,7 +30,7 @@ it("rejects malformed scope and incomplete confirmation without touching either 
       ).toBe(false);
     f.editorOpen("chapter");
     await expect(f.applyMove(input)).rejects.toMatchObject({
-      code: "editor_busy",
+      code: "editor_open",
     });
     await f.assertMoveRestored();
     expect((await f.storage.index()).entries).toEqual([]);

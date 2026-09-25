@@ -136,7 +136,7 @@ it("denies read-only edits, cross-owner observations and invalid payloads withou
       ...f.request,
       blocks: [],
     });
-    expect(invalid.error.code).toBe(-32602);
+    expect(invalid.result.structuredContent.error).toBe("invalid_arguments");
     expect(await readFile(f.chapterPath)).toEqual(before);
     expect(f.editing.notifySaved).not.toHaveBeenCalled();
   } finally {

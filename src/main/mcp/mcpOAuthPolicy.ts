@@ -28,10 +28,10 @@ export function oauthEqual(left: string, right: string): boolean {
     Buffer.from(oauthDigest(right)),
   );
 }
-/** DCR is restricted to documented ChatGPT callback shapes. Each registration
+/** DCR accepts ChatGPT and Codex's numeric loopback callback shapes. Each registration
  * stores exact URIs, and authorization must match one of those exact strings.
  * Never fetch a caller-supplied client_uri, logo_uri or metadata URL. */
-export function readChatGptRedirect(value: unknown): string {
+export function readMcpOAuthRedirect(value: unknown): string {
   const text = oauthText(value);
   let url: URL;
   try {
@@ -39,23 +39,28 @@ export function readChatGptRedirect(value: unknown): string {
   } catch (_error) {
     throw new McpOAuthError("invalid_redirect_uri", "Invalid callback URL.");
   }
-  const pathAllowed =
-    /^\/connector\/oauth\/[A-Za-z0-9_-]{1,200}$/.test(url.pathname) ||
-    url.pathname === "/connector_platform_oauth_redirect";
   if (
-    url.origin !== "https://chatgpt.com" ||
-    url.username ||
-    url.password ||
-    url.search ||
-    url.hash ||
-    !pathAllowed ||
+    !isSupportedMcpCallback(url) ||
+    [url.username, url.password, url.search, url.hash].some(Boolean) ||
     url.href !== text
   )
     throw new McpOAuthError(
       "invalid_redirect_uri",
-      "Only exact ChatGPT callback URLs are supported by this test server.",
+      "Use an exact ChatGPT callback or Codex HTTP callback on 127.0.0.1 with an explicit unprivileged port.",
     );
   return text;
+}
+function isSupportedMcpCallback(url: URL): boolean {
+  const chatGpt =
+    url.origin === "https://chatgpt.com" &&
+    (/^\/connector\/oauth\/[A-Za-z0-9_-]{1,200}$/.test(url.pathname) ||
+      url.pathname === "/connector_platform_oauth_redirect");
+  const codex =
+    url.protocol === "http:" &&
+    url.hostname === "127.0.0.1" &&
+    Number(url.port) >= 1024 &&
+    /^\/callback(?:\/[A-Za-z0-9_-]{1,200})?$/.test(url.pathname);
+  return chatGpt || codex;
 }
 export function readOAuthScope(
   value: unknown,

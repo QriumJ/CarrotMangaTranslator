@@ -1,4 +1,5 @@
-import { open, readFile, symlink, unlink, writeFile } from "node:fs/promises";
+import { open, readFile, writeFile } from "node:fs/promises";
+import { withFileSymlink } from "./fileSymlink.fixture";
 import { join } from "node:path";
 import { expect, it, vi } from "vitest";
 import { chapterDeletionFilesFixture } from "./mcpChapterDeletionFiles.fixture";
@@ -61,20 +62,18 @@ it("rejects traversal, ambiguous names, missing parents and oversized inventorie
   }
 });
 
-it("refuses a file symlink without following it and preserves the external input", async () => {
+it("refuses a file symlink without following it and preserves the external input", async (context) => {
   const f = await chapterDeletionFilesFixture();
   const link = join(f.directory, "linked.png");
   try {
     const original = await readFile(f.originals[0]);
-    await symlink(f.originals[0], link, "file");
-    await expect(
-      f.files.captureChapterDeletionTree(f.directory, () => {}),
-    ).rejects.toThrow("links");
-    expect(await readFile(f.originals[0])).toEqual(original);
-  } finally {
-    await unlink(link).catch((error: NodeJS.ErrnoException) => {
-      if (error.code !== "ENOENT") throw error;
+    await withFileSymlink(context, f.originals[0], link, async () => {
+      await expect(
+        f.files.captureChapterDeletionTree(f.directory, () => {}),
+      ).rejects.toThrow("links");
+      expect(await readFile(f.originals[0])).toEqual(original);
     });
+  } finally {
     await f.close();
   }
 });

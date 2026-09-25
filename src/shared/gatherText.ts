@@ -238,7 +238,9 @@ export function buildTranslatedTextImport(
   pages: GatheredPage[],
   content: string,
   t?: TFunction<"renderer">,
+  field?: "both" | "translated",
 ): TranslatedTextImportResult {
+  if (field) pages = filterPagesByField(pages, field);
   const { sections, hasHeaders } = parseTextSections(content);
   const warnings: string[] = [];
   const updates: TranslatedTextImportUpdate[] = [];
@@ -274,7 +276,7 @@ export function buildTranslatedTextImport(
       );
       continue;
     }
-    const importedTexts = resolveImportedTranslatedTexts(section, page);
+    const importedTexts = resolveImportedTranslatedTexts(section, page, field);
     if (!importedTexts) {
       warnings.push(
         importMessage(t, "blockMismatch", {
@@ -317,7 +319,13 @@ function importMessage(
 function resolveImportedTranslatedTexts(
   section: ParsedTextSection,
   page: GatheredPage,
+  field?: "both" | "translated",
 ): string[] | null {
+  if (field === "both") return resolveBothFieldGroups(section, page, true);
+  if (field === "translated")
+    return section.groups.length === page.blocks.length
+      ? section.groups.map((group) => group.join("\n"))
+      : null;
   return (
     resolveBothFieldGroups(section, page) ??
     resolveTranslatedFieldGroups(section, page) ??
@@ -329,6 +337,7 @@ function resolveImportedTranslatedTexts(
 function resolveBothFieldGroups(
   section: ParsedTextSection,
   page: GatheredPage,
+  allowEmpty = false,
 ): string[] | null {
   if (section.groups.length !== page.blocks.length) {
     return null;
@@ -340,7 +349,7 @@ function resolveBothFieldGroups(
       return null;
     }
     const translatedLines = group.slice(sourceLines.length);
-    if (translatedLines.length === 0) {
+    if (translatedLines.length === 0 && !allowEmpty) {
       return null;
     }
     texts.push(translatedLines.join("\n"));

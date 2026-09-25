@@ -1,5 +1,7 @@
 import type { InpaintingHistoryTransactionRef } from "../../shared/inpaintingTypes";
 import type { MangaPage } from "../../shared/libraryTypes";
+import { isCodexImageModel } from "../../shared/codexSettings";
+import { readImageRedactionState } from "../imageRedactionStore";
 import { modelCleanupIsBlocked } from "../runtimeSupport/modelCleanupBarrier";
 import type { InpaintingJobContext } from "../jobs/inpaintingJobTypes";
 import type { startInpaintingJob } from "../jobs/inpaintingJobs";
@@ -29,6 +31,7 @@ export async function eraseMcpPage(
     .productionInpaintingJobRuntime;
   operation.assertAuthorized();
   const settings = await runtime.getSettings(app.appPaths);
+  await assertErasureEngine(app, target, settings);
   const scopedApp = {
     ...app,
     executionSettings: settings,
@@ -50,6 +53,7 @@ export async function eraseMcpPage(
     scopedApp,
     {
       mode: "page-pattern",
+      ...(target.engine === "codex" ? { engine: "codex" as const } : {}),
       chapterId: target.chapterId,
       pageId: target.pageId,
       blockId: target.blockId,
@@ -74,22 +78,38 @@ export async function eraseMcpPage(
     );
     if (page) editing.notifySaved(target.chapterId, target.pageId);
     recordSelectedHistory(result, target.blockId, onHistory);
-    return {
-      status: result.status,
-      chapterId: target.chapterId,
-      pageId: target.pageId,
-      blockId: target.blockId,
-      revision: page ? createPageRevision(page) : target.revision,
-      pagesChanged: result.pagesChanged ?? 0,
-      blocksErased: result.blocksErased ?? 0,
-      blocksIncomplete: result.blocksIncomplete ?? 0,
-      performed: ["erase-original"],
-      engine: "app-configured-local",
-    };
+    return erasureResult(result, page, target);
   } catch (error) {
     return cleanupFailure(error, committedPage, target, editing, runtime);
   } finally {
     operation.signal.removeEventListener("abort", cancel);
+  }
+}
+async function assertErasureEngine(
+  app: InpaintingJobContext,
+  target: McpOperationTarget,
+  settings: Awaited<ReturnType<InpaintingJobRuntime["getSettings"]>>,
+) {
+  if (target.engine === "codex") {
+    if (!target.allowExternalProcessing)
+      throw new McpEditError(
+        "access_denied",
+        "Explicit external image processing permission is required.",
+      );
+    if (
+      !target.expectedModel ||
+      !isCodexImageModel(target.expectedModel) ||
+      settings.codex.imageModel !== target.expectedModel
+    )
+      throw new McpEditError(
+        "invalid_edit",
+        "The Codex image model changed. Read get_sound_effects before retrying; no fallback was started.",
+      );
+    if ((await readImageRedactionState(app.appPaths.dataRoot)).enabled)
+      throw new McpEditError(
+        "access_denied",
+        "Codex erasure is blocked by image redaction review.",
+      );
   }
 }
 function guardErasureRuntime(
@@ -194,7 +214,7 @@ function cleanupFailure(
     blocksErased: undefined,
     blocksIncomplete: undefined,
     performed: ["erase-original"],
-    engine: "app-configured-local",
+    engine: target.engine === "codex" ? "codex" : "app-configured-local",
   };
 }
 
@@ -205,4 +225,23 @@ function recordSelectedHistory(
 ): void {
   if (blockId && result.status === "completed" && result.historyTransaction)
     remember?.(result.historyTransaction);
+}
+
+function erasureResult(
+  result: Awaited<ReturnType<typeof startInpaintingJob>>,
+  page: MangaPage | undefined,
+  target: McpOperationTarget,
+) {
+  return {
+    status: result.status,
+    chapterId: target.chapterId,
+    pageId: target.pageId,
+    blockId: target.blockId,
+    revision: page ? createPageRevision(page) : target.revision,
+    pagesChanged: result.pagesChanged ?? 0,
+    blocksErased: result.blocksErased ?? 0,
+    blocksIncomplete: result.blocksIncomplete ?? 0,
+    performed: ["erase-original"],
+    engine: target.engine === "codex" ? "codex" : "app-configured-local",
+  };
 }

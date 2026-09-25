@@ -35,6 +35,7 @@ type StartInpaintingTargetRequest =
   | {
       chapterId: string;
       mode: "page-pattern";
+      engine?: "codex";
       pageId: string;
       blockId?: string;
     }

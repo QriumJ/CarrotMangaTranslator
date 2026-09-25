@@ -65,6 +65,7 @@ async function exchangeNativeClient(root, app, editing, options = {}) {
   await session.ready();
   const tools = createMcpAppTools({
     ...editing,
+    assertWritable: editing.assertClean,
     preferences,
     additionalTools: session.tools,
     wrapTool: session.wrapTool,

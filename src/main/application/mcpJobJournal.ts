@@ -14,6 +14,7 @@ import {
 } from "../../shared/mcpImportBatch";
 import {
   validMcpJobReferences,
+  validErasureJobTarget,
   retainedContextProposalSchema,
   persistedResearchMetadata,
 } from "./mcpJobReferencePolicy";
@@ -70,7 +71,6 @@ import {
   mcpExchangeMetadataInput,
   validMcpExchangeResultMetadata,
 } from "./mcpExchangeJobPolicy";
-
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 const timestamp = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 const count = z.number().int().nonnegative();
@@ -82,12 +82,16 @@ const importPreparation = z.union([
 ]);
 export const MCP_JOB_RETENTION_MS = 7 * 24 * 60 * 60_000;
 export const MCP_JOB_CAPACITY = 512;
+export const MCP_JOB_HISTORY_CAPACITY = 4096;
 export const mcpJobTargetSchema = z
   .object({
     chapterId: id,
     pageId: id,
     blockId: id.optional(),
     contextMode: z.enum(["none", "saved"]).optional(),
+    engine: z.enum(["local", "codex"]).optional(),
+    expectedModel: z.string().min(1).max(128).optional(),
+    allowExternalProcessing: z.boolean().optional(),
     revision: z.string().regex(/^page-v1:[a-f0-9]{16}$/),
     requestId: z.string().uuid(),
   })
@@ -173,6 +177,7 @@ export const mcpJobResultMetadataSchema = z
   .refine(validMcpOutputSyncJobResult, "Invalid output sync result metadata.");
 const jobSchema = z
   .object({
+    compacted: z.literal(true).optional(),
     id: z.string().uuid(),
     owner: id,
     requestId: id,
@@ -238,7 +243,9 @@ export type McpJobPersistence = {
 const journalSchema = z
   .object({
     version: z.literal(1),
-    records: z.array(jobSchema).max(MCP_JOB_CAPACITY),
+    records: z
+      .array(jobSchema)
+      .max(MCP_JOB_CAPACITY + MCP_JOB_HISTORY_CAPACITY),
   })
   .strict();
 
@@ -307,11 +314,16 @@ export function persistedMcpJobResult(
 }
 export function parseMcpJobJournal(value: unknown): McpStoredJob[] {
   const parsed = journalSchema.parse(value);
+  let recent = 0,
+    compacted = 0;
   const ids = new Set<string>(),
     requests = new Set<string>();
   for (const record of parsed.records) {
     const key = JSON.stringify([record.owner, record.requestId]);
     if (
+      (record.compacted
+        ? ++compacted > MCP_JOB_HISTORY_CAPACITY
+        : ++recent > MCP_JOB_CAPACITY) ||
       ids.has(record.id) ||
       requests.has(key) ||
       record.fingerprint !==
@@ -328,6 +340,7 @@ export function parseMcpJobJournal(value: unknown): McpStoredJob[] {
   return parsed.records;
 }
 function validJobTarget(record: McpStoredJob): boolean {
+  if (record.compacted && record.status === "running") return false;
   const targets: Partial<Record<McpStoredJob["kind"], z.ZodType>> = {
     ...mcpExchangeJobTargets,
     outputSync: McpSyncOutputSchema,
@@ -357,12 +370,11 @@ function validPageTarget(record: McpStoredJob): boolean {
   if (!parsed.success) return false;
   const target = parsed.data;
   const blockRequired = ["blockOcr", "blockTranslation"].includes(record.kind);
+  if (blockRequired && !target.blockId) return false;
+  if (target.blockId && !blockRequired && record.kind !== "erase") return false;
   return (
-    (!blockRequired || Boolean(target.blockId)) &&
-    (blockRequired ||
-      record.kind === "erase" ||
-      target.blockId === undefined) &&
-    (record.kind === "blockTranslation" || target.contextMode === undefined)
+    (record.kind === "blockTranslation" || target.contextMode === undefined) &&
+    validErasureJobTarget(record.kind, target)
   );
 }
 function expiredPlanResult(

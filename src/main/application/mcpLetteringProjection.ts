@@ -1,3 +1,4 @@
+import { getActiveGeneratedLettering } from "../../shared/generatedLettering";
 import { createConditionalBatchPreview } from "../../shared/conditionalBatchEngine";
 import type { ConditionalBatchSchemeDraftV2 } from "../../shared/conditionalBatchRules";
 import { McpFormatFieldsSchema } from "../../shared/mcpFormatEditing";
@@ -64,6 +65,7 @@ export function projectMcpLetteringPage(options: {
       `Rule cannot be used for lettering: ${issues.join(", ")}.`,
     );
   let current = structuredClone(page);
+  if (!blockIds.length) return current;
   for (const scheme of recipe.schemes) {
     const context = {
       ...chapter,
@@ -160,7 +162,7 @@ export function assertMcpLetteringOnly(
       Object.entries(block).filter(([key]) => !allowed.has(key)),
     );
   if (
-    before.generatedLettering ||
+    getActiveGeneratedLettering(before) ||
     hashStableValue(protectedState(before)) !==
       hashStableValue(protectedState(after))
   )

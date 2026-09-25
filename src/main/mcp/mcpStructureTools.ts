@@ -43,7 +43,7 @@ export function createMcpStructureTools(
       invoke: async (args, context) => {
         const { owner, guard } = identity(context);
         const parsed = McpStructurePreviewSchema.safeParse(args);
-        if (!parsed.success) throw new McpInvalidParams();
+        if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
         return textContent(await service.preview(owner, parsed.data, guard));
       },
     },
@@ -58,7 +58,7 @@ export function createMcpStructureTools(
       invoke: async (args, context) => {
         const { owner, guard } = identity(context);
         const parsed = McpStructureGetSchema.safeParse(args);
-        if (!parsed.success) throw new McpInvalidParams();
+        if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
         return textContent(
           await service.inspect(owner, parsed.data.editId, guard),
         );
@@ -85,7 +85,7 @@ function actionTool(
     invoke: async (args, context) => {
       const { owner, guard } = identity(context);
       const parsed = McpStructureActionSchema.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
       return textContent(
         await service.act(owner, parsed.data, direction, guard),
       );

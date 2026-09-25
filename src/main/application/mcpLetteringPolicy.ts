@@ -1,3 +1,4 @@
+import { getActiveGeneratedLettering } from "../../shared/generatedLettering";
 import { hashStableValue } from "../../shared/blockFingerprint";
 import {
   McpLetteringPrepareSchema,
@@ -147,7 +148,7 @@ function planChange(
   const after = afterPage.blocks.find((block) => block.id === edit.blockId);
   if (!before || !after)
     throw new McpEditError("not_found", "Selected lettering block is missing.");
-  const excludedReason = before.generatedLettering
+  const excludedReason = getActiveGeneratedLettering(before)
     ? "generated_lettering"
     : exclusion;
   // Layout cannot change size in the first place; scalar/inline style requests protect manual size.

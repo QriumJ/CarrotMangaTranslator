@@ -96,9 +96,9 @@ export function createMcpReadingTool(service: McpReadingService): McpTool {
     },
     invoke: async (args, context) => {
       const parsed = schema.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
-      readIdentifier(parsed.data.chapterId);
-      readIdentifier(parsed.data.pageId);
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
+      readIdentifier(parsed.data.chapterId, "chapterId");
+      readIdentifier(parsed.data.pageId, "pageId");
       return textContent(
         await service.create(
           {

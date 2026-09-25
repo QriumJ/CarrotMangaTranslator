@@ -92,7 +92,7 @@ function preflightTool(service: McpExportBatchService): McpTool {
       "Inspect ONE chapter or 1-50 selected saved pages for export. Default is the old PNG plan. imageExport selects png/jpeg/webp, source or psd. Source requires explicit jpegQuality and webpQuality (1-100) plus unsupportedSource=png|reject; omitText defaults to false. It resolves each saved source name to a concrete PNG/JPEG/WebP option and reports the fallback; it is rendered output, not original-byte passthrough. JPEG/WebP require quality 1-100; PNG/PSD forbid quality. PSD requires acknowledgeOriginalLayer=true and acknowledgeRasterLayers=true: the original background is INCLUDED and unsupported typography remains a raster layer. Returns option-bound snapshot, page revisions, numbered names and native warnings. No rendering, model, image transfer or writes. Preflight does not reserve execution or guarantee file/renderer/budget success. Keep SAME options/snapshot/page revisions: use carrot_export_pages_psd for PSD, carrot_export_pages_images for explicit raster or source options, otherwise carrot_export_pages_png.",
     invoke: async (args, context) => {
       const parsed = McpExportPreflightInput.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
       return textContent(
         await service.preflight(parsed.data, () => context?.assertAuthorized()),
       );
@@ -123,7 +123,7 @@ function actionTool<S extends z.ZodType>(
     inputSchema: z.toJSONSchema(schema),
     invoke: async (args, context) => {
       const parsed = schema.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
       if (
         !context?.principalId ||
         !context.assertScopes ||

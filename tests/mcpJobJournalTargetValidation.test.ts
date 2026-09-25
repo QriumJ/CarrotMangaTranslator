@@ -40,6 +40,30 @@ function record(
   };
 }
 
+it("rejects running jobs in compact history and overfilled receipt tiers", () => {
+  const running = {
+    ...record("ocr", pageTarget),
+    compacted: true,
+    status: "running",
+    finishedAt: undefined,
+  };
+  expect(() => parseMcpJobJournal({ version: 1, records: [running] })).toThrow(
+    /inconsistent/,
+  );
+  for (const [compacted, length] of [
+    [false, 513],
+    [true, 4097],
+  ] as const) {
+    const records = Array.from({ length }, () => ({
+      ...record("ocr", { ...pageTarget, requestId: randomUUID() }),
+      ...(compacted ? { compacted: true } : {}),
+    }));
+    expect(() => parseMcpJobJournal({ version: 1, records })).toThrow(
+      /inconsistent/,
+    );
+  }
+});
+
 it.each(["ocr", "blockOcr", "blockTranslation", "erase", "exportPng"] as const)(
   "rejects a research-shaped target mislabeled as %s even with a matching fingerprint",
   (kind) => {
@@ -103,3 +127,23 @@ it.each(["ocr", "erase", "exportPng"] as const)(
     ).toThrow(/inconsistent/);
   },
 );
+
+it("persists explicit Codex erasure consent and rejects missing consent or unrelated engine fields", () => {
+  const target = {
+    ...pageTarget,
+    engine: "codex" as const,
+    expectedModel: "gpt-6-astra",
+    allowExternalProcessing: true,
+  };
+  expect(() =>
+    parseMcpJobJournal({ version: 1, records: [record("erase", target)] }),
+  ).not.toThrow();
+  for (const [kind, parameters] of [
+    ["ocr", target],
+    ["erase", { ...target, allowExternalProcessing: false }],
+    ["erase", { ...target, expectedModel: undefined }],
+  ] as const)
+    expect(() =>
+      parseMcpJobJournal({ version: 1, records: [record(kind, parameters)] }),
+    ).toThrow();
+});

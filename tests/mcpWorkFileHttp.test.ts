@@ -81,8 +81,8 @@ it("uses scoped HTTP work-file tools with real native publication and no private
     ).toBe("not_found");
     expect(
       (await f.call("carrot_import_work_file", { ...input, rawPath: path }))
-        .error.code,
-    ).toBe(-32602);
+        .result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const done = await f.settle(await call("carrot_import_work_file", input));
     expect(done.status).toBe("completed");
     const receipt = done.result?.workFileReceipt;
@@ -160,8 +160,8 @@ it("requires scoped ownership and a reviewed append target across actual OAuth H
           ...input,
           packagePath: path,
         })
-      ).error.code,
-    ).toBe(-32602);
+      ).result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const done = await f.settle(
       await f.checked("carrot_import_work_file", command),
     );

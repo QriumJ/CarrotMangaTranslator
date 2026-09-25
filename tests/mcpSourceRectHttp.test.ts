@@ -226,7 +226,7 @@ it("hides writes from read-only grants and rejects malicious or off-page inputs 
     });
     expect((await f.rpc("tools/list", {}, "invalid-token")).status).toBe(401);
     const injected = await f.call({ ...f.request, force: true });
-    expect(injected.error.code).toBe(-32602);
+    expect(injected.result.structuredContent.error).toBe("invalid_arguments");
     const offPage = await f.call({
       ...f.request,
       sourceRect: { x: 999, y: 0, w: 2, h: 10 },

@@ -28,8 +28,9 @@ it("keeps read-only review separate from approved whole-work deletion, recovery 
       { chapterId: "chapter" },
     ])
       expect(
-        (await f.http("carrot_delete_work", { ...input, ...patch })).error.code,
-      ).toBe(-32602);
+        (await f.http("carrot_delete_work", { ...input, ...patch })).result
+          .structuredContent.error,
+      ).toBe("invalid_arguments");
     await f.assertWorkOriginal();
     const saved = (await f.http("carrot_delete_work", input)).result
       .structuredContent;

@@ -178,7 +178,7 @@ type McpApi = {
   ) => Promise<import("./mcpDesktopTypes").McpDesktopStatus>;
   diagnoseMcp: () => Promise<import("./mcpDesktopTypes").McpDiagnostics>;
   openMcpHelp: (
-    page: "tailscale" | "setup" | "chatgpt",
+    page: "tailscale" | "setup" | "chatgpt" | "codex",
   ) => Promise<{ completed: boolean }>;
   copyMcpUrl: () => Promise<{ completed: boolean }>;
 };

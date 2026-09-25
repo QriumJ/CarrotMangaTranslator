@@ -388,6 +388,7 @@ async function prepareInpaintingPageRuntime({
       acquireInpaintingEngineIfNeeded({
         engine:
           request.mode === "selection-pattern" ||
+          request.mode === "page-pattern" ||
           request.mode === "page-pattern-drawn"
             ? request.engine
             : undefined,

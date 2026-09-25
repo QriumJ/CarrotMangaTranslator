@@ -72,7 +72,7 @@ async function httpFixture() {
     },
   };
 }
-it("accepts actual bytes over scoped HTTP while preserving the existing 64 KiB body limit", async () => {
+it("accepts actual bytes over scoped HTTP while preserving the bounded 8 MiB authenticated body limit", async () => {
   const f = await httpFixture();
   try {
     const original = await readFile(f.chapterPath),
@@ -101,7 +101,7 @@ it("accepts actual bytes over scoped HTTP while preserving the existing 64 KiB b
     const oversized = await f.request("carrot_write_image_upload", {
       uploadId,
       offset: 0,
-      data: "A".repeat(70_000),
+      data: "A".repeat(8 * 1024 * 1024 + 1),
     });
     expect(oversized.status).toBe(413);
     expect(
@@ -138,7 +138,7 @@ it("denies unexpected path/URL fields and unapproved image transfer without savi
       url: "http://localhost/private",
       path: "C:/private.png",
     });
-    expect(bad.error.code).toBe(-32602);
+    expect(bad.result.structuredContent.error).toBe("invalid_arguments");
     const masked = await f.call(
       "carrot_get_external_image_preview",
       { batchId: randomUUID() },

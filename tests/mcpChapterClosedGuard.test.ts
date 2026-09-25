@@ -18,7 +18,7 @@ it("refuses an open chapter even with no dirty pages and permits an unrelated or
     },
   );
   await expect(guard.assertChapterClosed(chapterId)).rejects.toMatchObject({
-    code: "editor_busy",
+    code: "editor_open",
   });
   open = "bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb";
   await expect(guard.assertChapterClosed(chapterId)).resolves.toBeUndefined();

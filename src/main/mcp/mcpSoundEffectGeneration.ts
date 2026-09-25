@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { MangaPage } from "../../shared/libraryTypes";
@@ -15,9 +15,12 @@ import { readMcpSoundEffectSettings } from "./mcpSoundEffectSettings";
 import { isCodexImageModel } from "../../shared/codexSettings";
 import { logError } from "../logger";
 import { generateSoundEffectLayer } from "./mcpSoundEffectLayer";
+import { askAstraJson } from "../pipeline/codexTypesettingRequest";
+import type { CodexTypesettingPorts } from "../application/codexTypesettingContracts";
 
 export type SoundEffectGenerationRuntime = {
   startClient: typeof startCodexImageSession;
+  startReader?: typeof startCodexImageSession;
 };
 type Command = Extract<McpSoundEffectPrepare["command"], { kind: "generate" }>;
 type Client = Awaited<ReturnType<typeof startCodexImageSession>>;
@@ -78,27 +81,33 @@ export async function generateMcpSoundEffects(options: Options) {
     signal.throwIfAborted();
   };
   await check();
-  return withClient(options, settings, async (client, directory) => {
-    let generationCalls = 0;
-    const transport: Client = {
-      ...client,
-      runEphemeralTurn: async (request) => {
-        await check();
-        generationCalls++;
-        return client.runEphemeralTurn(request);
-      },
-    };
-    const next = await runTargets(
-      options,
-      command,
-      eligible,
-      transport,
-      directory,
-      check,
-      exclusions,
-    );
-    return { page: next, exclusions, generationCalls };
-  });
+  return withClient(
+    options,
+    settings,
+    check,
+    async (client, directory, ask) => {
+      let generationCalls = 0;
+      const transport: Client = {
+        ...client,
+        runEphemeralTurn: async (request) => {
+          await check();
+          generationCalls++;
+          return client.runEphemeralTurn(request);
+        },
+      };
+      const next = await runTargets(
+        options,
+        command,
+        eligible,
+        transport,
+        directory,
+        check,
+        exclusions,
+        ask,
+      );
+      return { page: next, exclusions, generationCalls };
+    },
+  );
 }
 export class SoundEffectCleanupError extends AggregateError {
   constructor(errors: unknown[]) {
@@ -113,10 +122,16 @@ export class SoundEffectCleanupError extends AggregateError {
 async function withClient<T>(
   options: Options,
   settings: Awaited<ReturnType<typeof readMcpSoundEffectSettings>>,
-  run: (client: Client, directory: string) => Promise<T>,
+  check: () => Promise<void>,
+  run: (
+    client: Client,
+    directory: string,
+    ask: CodexTypesettingPorts["ask"],
+  ) => Promise<T>,
 ): Promise<T> {
   const directory = await mkdtemp(join(tmpdir(), "carrot-mcp-sfx-"));
   let client: Client | undefined;
+  let reader: Client | undefined;
   let outcome: { ok: true; value: T } | { ok: false; error: unknown };
   try {
     options.signal.throwIfAborted();
@@ -127,11 +142,45 @@ async function withClient<T>(
       directory,
       options.signal,
     );
-    outcome = { ok: true, value: await run(client, directory) };
+    const ask: CodexTypesettingPorts["ask"] = async (stage, prompt, images) => {
+      await check();
+      reader ??= await (options.runtime?.startReader ?? startCodexImageSession)(
+        options.paths,
+        settings,
+        directory,
+        options.signal,
+        "isolated",
+      );
+      const result = await askAstraJson({
+        client: reader,
+        model: reader.imageModel,
+        effort: settings.codex.imageReasoningEffort,
+        stage,
+        prompt,
+        images,
+        cwd: directory,
+        signal: options.signal,
+        evidence: async (name, value) => {
+          await writeFile(
+            join(directory, `${name}.json`),
+            JSON.stringify(value),
+          );
+        },
+        onRetry: () => {},
+      });
+      await check();
+      return result;
+    };
+    outcome = { ok: true, value: await run(client, directory, ask) };
   } catch (error) {
     outcome = { ok: false, error };
   }
   const failures: unknown[] = [];
+  try {
+    await reader?.dispose();
+  } catch (error) {
+    failures.push(error);
+  }
   try {
     await client?.dispose();
   } catch (error) {
@@ -158,6 +207,7 @@ async function runTargets(
   directory: string,
   check: () => Promise<void>,
   exclusions: McpSoundEffectChange[],
+  ask: CodexTypesettingPorts["ask"],
 ) {
   const next = structuredClone(options.page);
   for (const block of targets) {
@@ -170,6 +220,7 @@ async function runTargets(
         client,
         directory,
         options.signal,
+        ask,
       );
       await check();
       const candidate = next.blocks.map((item) =>
@@ -232,7 +283,7 @@ function excluded(
     excludedReason: reason,
     warnings: [
       "inspect_reviewed_change_before_applying",
-      "no_implicit_fallback_or_retry",
+      "up_to_3_readback_attempts_no_implicit_fallback",
     ],
   };
 }

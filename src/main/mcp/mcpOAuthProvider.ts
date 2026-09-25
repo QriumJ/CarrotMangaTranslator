@@ -88,8 +88,12 @@ export class McpOAuthProvider {
     };
   }
   register(input: Record<string, unknown>) {
+    this.pruneInactiveGrants();
     return {
-      ...this.clients.register(input),
+      ...this.clients.register(
+        input,
+        [...this.grants.values()].map((grant) => grant.clientId),
+      ),
       scope: [...this.allowedScopes(), "offline_access"].join(" "),
     };
   }
@@ -173,15 +177,25 @@ export class McpOAuthProvider {
         "Incorrect connection password. Start linking again.",
         403,
       );
-    if (this.grants.size >= 256)
+    this.pruneInactiveGrants();
+    this.clients.get(pending.code.grant.clientId);
+    const approvedClients = new Set(
+      [...this.grants.values()].map((grant) => grant.clientId),
+    );
+    if (
+      this.grants.size >= 256 ||
+      (!approvedClients.has(pending.code.grant.clientId) &&
+        approvedClients.size >= 64)
+    )
       throw new McpOAuthError(
         "temporarily_unavailable",
         "Connection capacity reached. Remove an old connection in the app.",
         503,
       );
+    const code = this.codes.issue(pending.code, 60_000);
     this.clients.remember(pending.code.grant.clientId);
     this.grants.set(pending.code.grant.id, pending.code.grant);
-    redirect.searchParams.set("code", this.codes.issue(pending.code, 60_000));
+    redirect.searchParams.set("code", code);
     return redirect.href;
   }
   token(input: Record<string, unknown>, authorization?: string) {
@@ -295,6 +309,15 @@ export class McpOAuthProvider {
       ...(this.options.allowEdits ? ["carrot.edit"] : []),
       ...(this.options.allowProcessing ? ["carrot.process"] : []),
     ];
+  }
+  private pruneInactiveGrants(): void {
+    const inactive = (grant: Grant) =>
+      grant.revoked || grant.expiresAt <= this.now();
+    this.access.removeWhere(inactive);
+    this.refresh.removeWhere((entry) => inactive(entry.grant));
+    this.codes.removeWhere((entry) => inactive(entry.grant));
+    for (const [id, grant] of this.grants)
+      if (inactive(grant)) this.grants.delete(id);
   }
   private exchangeCode(input: Record<string, unknown>, clientId: string) {
     const code = this.codes.get(oauthText(input.code, 128));

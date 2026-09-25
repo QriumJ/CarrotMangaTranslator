@@ -68,7 +68,7 @@ export function createMcpContextEditingTools(
       openWorld: false,
       invoke: async (args, context) => {
         const input = spec.schema.safeParse(args);
-        if (!input.success) throw new McpInvalidParams();
+        if (!input.success) throw new McpInvalidParams(input.error.issues);
         if (!context?.principalId || !context.assertScopes)
           throw new McpEditError(
             "access_denied",

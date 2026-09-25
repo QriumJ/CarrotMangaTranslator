@@ -80,8 +80,8 @@ it("publishes through OAuth and restores exact grouped receipts without granting
           ...f.input,
           paths: ["C:/private"],
         })
-      ).error.code,
-    ).toBe(-32602);
+      ).result.structuredContent.error,
+    ).toBe("invalid_arguments");
     expect(
       (await f.call("carrot_get_import_batch", { id: f.input.id }, f.other))
         .result.isError,

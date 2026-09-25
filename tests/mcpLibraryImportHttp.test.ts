@@ -21,12 +21,13 @@ it("publishes a selected import through HTTP and restores its owned receipt with
           ...choose,
           path: "C:/private",
         })
-      ).error.code,
-    ).toBe(-32602);
+      ).result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const input = await f.prepare();
     expect(
-      (await f.call("carrot_get_import_preview", input, f.other)).error.code,
-    ).toBe(-32602);
+      (await f.call("carrot_get_import_preview", input, f.other)).result
+        .structuredContent.error,
+    ).toBe("invalid_arguments");
     const preview = { previewId: input.previewId, snapshot: input.snapshot };
     expect(
       (await f.call("carrot_get_import_preview", preview, f.other)).result

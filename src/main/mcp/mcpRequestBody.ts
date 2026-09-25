@@ -4,8 +4,11 @@ import { McpHttpError } from "./mcpHttpPolicy";
 const MAX_BODY_BYTES = 64 * 1024;
 const BODY_TIMEOUT_MS = 10_000;
 
-export async function readMcpBody(request: IncomingMessage): Promise<unknown> {
-  const bytes = await readBoundedBody(request);
+export async function readMcpBody(
+  request: IncomingMessage,
+  maximum = MAX_BODY_BYTES,
+): Promise<unknown> {
+  const bytes = await readBoundedBody(request, maximum);
   let text: string;
   try {
     text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
@@ -15,10 +18,14 @@ export async function readMcpBody(request: IncomingMessage): Promise<unknown> {
   }
 }
 
-export function readBoundedBody(request: IncomingMessage): Promise<Buffer> {
+export function readBoundedBody(
+  request: IncomingMessage,
+  maximum = MAX_BODY_BYTES,
+): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;
+    let overflow: McpHttpError | undefined;
     const finish = (error?: Error) => {
       clearTimeout(timer);
       request.off("data", onData);
@@ -33,12 +40,16 @@ export function readBoundedBody(request: IncomingMessage): Promise<Buffer> {
       }
     };
     const onData = (chunk: Buffer) => {
+      if (overflow) return;
       size += chunk.length;
-      if (size > MAX_BODY_BYTES)
-        finish(new McpHttpError(413, "Request body is too large."));
-      else chunks.push(chunk);
+      if (size > maximum) {
+        overflow = new McpHttpError(413, "Request body is too large.");
+        chunks.length = 0;
+      } else chunks.push(chunk);
     };
-    const onEnd = () => finish();
+    // Drain within the existing deadline so closing an oversized upload does not
+    // reset the socket before the client can read its actionable 413 response.
+    const onEnd = () => finish(overflow);
     const onError = () =>
       finish(new McpHttpError(400, "Request body could not be read."));
     const onAborted = () =>

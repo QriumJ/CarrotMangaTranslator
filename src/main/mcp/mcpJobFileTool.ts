@@ -41,7 +41,7 @@ export function createMcpJobFileTool(
     inputSchema: z.toJSONSchema(inputSchema),
     invoke: async (args, context) => {
       const parsed = inputSchema.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
       const artifact = await retrieveFile(
         operations,
         access,

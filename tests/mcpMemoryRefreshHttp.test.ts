@@ -58,8 +58,8 @@ it("uses real OAuth scopes for memory inspection, summary publication, owned rec
           ...input,
           path: "C:/private",
         })
-      ).error.code,
-    ).toBe(-32602);
+      ).result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const applied = await f.call("carrot_apply_memory_refresh", input);
     expect(applied.result.isError).toBe(false);
     const id = applied.result.structuredContent.id;

@@ -41,6 +41,21 @@ beforeEach(() => {
 });
 
 describe("Astra request evidence and bounded capacity recovery", () => {
+  it("uses an explicitly configured inspection model and still rejects routing to another model", async () => {
+    const { request } = setup();
+    request.client.runEphemeralTurn.mockResolvedValue({
+      ...response,
+      routedModel: "gpt-6-sol",
+    });
+    await askAstraJson({ ...request, model: "gpt-6-sol" });
+    expect(request.client.runEphemeralTurn).toHaveBeenCalledWith(
+      expect.objectContaining({ model: "gpt-6-sol" }),
+    );
+    request.client.runEphemeralTurn.mockResolvedValue(response);
+    await expect(
+      askAstraJson({ ...request, model: "gpt-6-sol" }),
+    ).rejects.toThrow("검증되지 않은 모델");
+  });
   it.each(["low", "medium", "high", "xhigh"] as const)(
     "uses the selected %s effort without upgrading it",
     async (effort) => {

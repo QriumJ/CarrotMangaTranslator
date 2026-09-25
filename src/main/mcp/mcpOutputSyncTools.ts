@@ -115,7 +115,7 @@ function readTool<S extends z.ZodType>(
         (async () => {
           const authority = outputSyncCaller(caller, scopes, lifetime);
           const input = schema.safeParse(args);
-          if (!input.success) throw new McpInvalidParams();
+          if (!input.success) throw new McpInvalidParams(input.error.issues);
           return withMcpAuthorization(
             authority.guard,
             lifetime,
@@ -153,7 +153,7 @@ function syncTool(
             true,
           );
           const input = McpSyncOutputSchema.safeParse(args);
-          if (!input.success) throw new McpInvalidParams();
+          if (!input.success) throw new McpInvalidParams(input.error.issues);
           return withMcpAuthorization(
             authority.guard,
             lifetime,

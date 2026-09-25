@@ -204,9 +204,10 @@ it("enforces scopes, ownership, strict arguments, matching suffixes and HTTP pol
       { jobId, pageId: "p1", path: "C:/private" },
       { jobId, pageId: "p1", includeAttachment: "true" },
     ])
-      expect((await f.call("carrot_get_job_file", args)).error.code).toBe(
-        -32602,
-      );
+      expect(
+        (await f.call("carrot_get_job_file", args)).result.structuredContent
+          .error,
+      ).toBe("invalid_arguments");
     const png = (await f.call("carrot_get_job_file", { jobId, pageId: "p1" }))
       .result.structuredContent;
     const pngPath = new URL(png.url).pathname;

@@ -58,6 +58,78 @@ function fixture(autoAcknowledge = true) {
   };
 }
 describe("MCP uses the existing app erasure job", () => {
+  it("routes explicitly selected Codex erasure through native ownership without a local engine or layout", async () => {
+    const f = fixture();
+    const settings = await f.harness.runtime.getSettings(f.app.appPaths);
+    f.harness.runtime.getSettings = async () => ({
+      ...settings,
+      codex: { ...settings.codex, imageModel: "gpt-6-astra" },
+    });
+    const release = vi.fn(async () => {});
+    const codex = vi.fn(async () => ({
+      engine: {
+        model: "codex" as const,
+        backend: "imagegen" as const,
+        runtimePath: "codex",
+        runRootDir: "test",
+        inpaint: f.harness.runEngine,
+        dispose: release,
+      },
+      release,
+    }));
+    f.harness.runtime.acquireCodexEngine = codex;
+    f.harness.runtime.reviewImages = async (_input, run) => run();
+    const layout = vi.fn();
+    f.harness.runtime.createBubbleLayoutRunner = layout;
+    const before = structuredClone(f.page.blocks);
+    const result = await eraseMcpPage(
+      f.app,
+      f.editing,
+      {
+        ...f.target,
+        engine: "codex",
+        expectedModel: "gpt-6-astra",
+        allowExternalProcessing: true,
+      },
+      f.operation,
+      f.harness.runtime,
+    );
+    expect(result).toMatchObject({
+      status: "completed",
+      engine: "codex",
+      pagesChanged: 1,
+    });
+    expect(codex).toHaveBeenCalledOnce();
+    expect(release).toHaveBeenCalledOnce();
+    expect(f.harness.acquireEngine).not.toHaveBeenCalled();
+    expect(layout).not.toHaveBeenCalled();
+    expect(f.chapters.get("chapter")?.pages[0].blocks).toEqual(before);
+    expect(f.app.jobs.current).toBeNull();
+  });
+  it("refuses an unapproved or mismatched Codex controller before starting any job", async () => {
+    const f = fixture();
+    const codex = vi.fn();
+    f.harness.runtime.acquireCodexEngine = codex;
+    for (const external of [false, true]) {
+      await expect(
+        eraseMcpPage(
+          f.app,
+          f.editing,
+          {
+            ...f.target,
+            engine: "codex",
+            expectedModel: "unknown",
+            allowExternalProcessing: external,
+          },
+          f.operation,
+          f.harness.runtime,
+        ),
+      ).rejects.toThrow();
+    }
+    expect(codex).not.toHaveBeenCalled();
+    expect(f.harness.acquireEngine).not.toHaveBeenCalled();
+    expect(f.harness.runtime.savePages).not.toHaveBeenCalled();
+  });
   it("runs local page-pattern removal and preserves text and history with no Codex or layout", async () => {
     const f = fixture();
     const codex = vi.fn();

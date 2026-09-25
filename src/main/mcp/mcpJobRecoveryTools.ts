@@ -16,6 +16,7 @@ type Executors = {
   exportPng?: McpOperationExecutor;
   ocr?: McpOperationExecutor;
   blockOcr?: McpOperationExecutor;
+  sourceSize?: McpOperationExecutor;
   blockTranslation?: McpOperationExecutor;
   erase?: McpOperationExecutor;
 };
@@ -89,7 +90,7 @@ function createRetryJobTool(
     },
     invoke: async (args, context) => {
       const parsed = retrySchema.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
       context?.assertAuthorized();
       if (
         !context?.principalId ||
@@ -110,6 +111,7 @@ function createRetryJobTool(
       const scopes = [
         "carrot.read",
         kind === "exportPng" ? "carrot.images" : "carrot.process",
+        ...(target.engine === "codex" ? ["carrot.images"] : []),
       ];
       context.assertScopes(scopes);
       if (target.requestId === parsed.data.requestId)
@@ -132,16 +134,9 @@ function createRetryJobTool(
   };
 }
 function executorFor(kind: string, executors: Executors): McpOperationExecutor {
-  const execute =
-    kind === "ocr"
-      ? executors.ocr
-      : kind === "blockTranslation"
-        ? executors.blockTranslation
-        : kind === "blockOcr"
-          ? executors.blockOcr
-          : kind === "erase"
-            ? executors.erase
-            : executors.exportPng;
+  const execute = Object.hasOwn(executors, kind)
+    ? executors[kind as keyof Executors]
+    : undefined;
   if (!execute)
     throw new McpEditError(
       "access_denied",

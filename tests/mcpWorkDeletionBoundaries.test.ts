@@ -28,7 +28,7 @@ it("requires exact confirmation, current review and a closed chapter; read-only 
       ).rejects.toThrow();
     f.editorOpen("chapter");
     await expect(f.applyWork(input)).rejects.toMatchObject({
-      code: "editor_busy",
+      code: "editor_open",
     });
     f.editorOpen(null);
     await f.library.renameWork("work", "Changed after review");

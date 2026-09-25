@@ -42,6 +42,7 @@ async function retainedClient(root, app, editing) {
   await session.ready();
   const tools = createMcpAppTools({
     ...editing,
+    assertWritable: editing.assertClean,
     preferences,
     additionalTools: session.tools,
     wrapTool: session.wrapTool,

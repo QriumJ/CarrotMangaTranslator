@@ -32,7 +32,7 @@ export function createMcpContextResearchTool(
     openWorld: true,
     invoke: async (args, context) => {
       const target = McpContextResearchTargetSchema.safeParse(args);
-      if (!target.success) throw new McpInvalidParams();
+      if (!target.success) throw new McpInvalidParams(target.error.issues);
       if (
         !context?.principalId ||
         !context.assertScopes ||

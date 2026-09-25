@@ -60,6 +60,34 @@ export async function soundEffectFixture() {
     text: JSON.stringify({ result: generatedPng().toString("base64") }),
   }));
   const dispose = vi.fn(async () => {});
+  const readerTurn = vi.fn<
+    (request: Parameters<typeof turn>[0]) => ReturnType<typeof turn>
+  >(async (request) => {
+    const page = (await f.snapshot()).pages[0];
+    const ids = new Set(
+      request.input.flatMap((item) =>
+        item.type === "text" ? [item.text] : [],
+      ),
+    );
+    return {
+      itemId: randomUUID(),
+      threadId: randomUUID(),
+      turnId: randomUUID(),
+      text: JSON.stringify({
+        regions: page.blocks
+          .filter((block) => ids.has(block.id))
+          .map((block) => ({ regionId: block.id, text: block.translatedText })),
+      }),
+    };
+  });
+  const readerDispose = vi.fn(async () => {});
+  const startReader = vi.fn<SoundEffectGenerationRuntime["startClient"]>(
+    async () => ({
+      imageModel: settings.codex.imageModel,
+      runEphemeralTurn: readerTurn,
+      dispose: readerDispose,
+    }),
+  );
   const startClient = vi.fn<SoundEffectGenerationRuntime["startClient"]>(
     async () => ({
       imageModel: settings.codex.imageModel,
@@ -70,7 +98,10 @@ export async function soundEffectFixture() {
   const service = new McpPageBatchService(
     createMcpSoundEffectPorts(f.app, f.editing, lifetime.signal),
     createMcpSoundEffectPolicy(
-      createMcpSoundEffectPreparation(f.app.appPaths, { startClient }),
+      createMcpSoundEffectPreparation(f.app.appPaths, {
+        startClient,
+        startReader,
+      }),
     ),
     Date.now,
     lifetime.signal,
@@ -153,6 +184,9 @@ export async function soundEffectFixture() {
     service,
     turn,
     startClient,
+    startReader,
+    readerTurn,
+    readerDispose,
     dispose,
     settings,
     close: async () => {

@@ -73,6 +73,10 @@ export class McpOAuthState<T> {
   clear(): void {
     this.entries.clear();
   }
+  removeWhere(predicate: (value: T) => boolean): void {
+    for (const [key, entry] of this.entries)
+      if (predicate(entry.value)) this.entries.delete(key);
+  }
   private prune(): void {
     for (const [key, entry] of this.entries)
       if (entry.expiresAt <= this.now()) this.entries.delete(key);

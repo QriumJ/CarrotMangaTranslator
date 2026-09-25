@@ -84,8 +84,8 @@ it("uses actual approved recipient identity, enforces scopes and resumes only af
           { ...acceptance, snapshot: {} },
           receiver.token,
         )
-      ).error.code,
-    ).toBe(-32602);
+      ).result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const accepted = await f.call(
       "carrot_accept_workflow_handoff",
       acceptance,

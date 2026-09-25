@@ -1,3 +1,4 @@
+import { getActiveGeneratedLettering } from "../../shared/generatedLettering";
 import type { MangaPage } from "../../shared/libraryTypes";
 import type { McpLetteringCommand } from "../../shared/mcpLettering";
 import { isManualBubbleLayout } from "../../shared/bubbleLayout";
@@ -13,7 +14,7 @@ export function mcpLayoutExclusion(
   block: MangaPage["blocks"][number],
   command: Command,
 ) {
-  if (block.generatedLettering) return "generated_lettering";
+  if (getActiveGeneratedLettering(block)) return "generated_lettering";
   if (block.textRole === "sound") return "sound_effect_block";
   if (block.curveLayout) return "curve_layout_preserved";
   if (!block.translatedText.trim()) return "empty_translation";

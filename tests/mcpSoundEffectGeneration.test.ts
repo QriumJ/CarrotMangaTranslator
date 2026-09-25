@@ -19,6 +19,64 @@ function command(
     invertColors: false,
   };
 }
+it("blindly reads generated pixels, retries malformed Hangul and publishes only the corrected candidate", async () => {
+  const f = await soundEffectFixture();
+  try {
+    const block = (await f.snapshot()).pages[0].blocks[0];
+    f.readerTurn.mockResolvedValueOnce({
+      itemId: "read",
+      threadId: "read",
+      turnId: "read",
+      text: JSON.stringify({ regions: [{ regionId: block.id, text: "쿠□" }] }),
+    });
+    const plan = await f.preview(command(f, [block.id]));
+    const stored = f.service.readOwnedPlan(f.owner, plan.batchId, () => {});
+    expect(stored.generationCalls).toBe(2);
+    expect(stored.failedItems).toBe(0);
+    expect(f.readerTurn).toHaveBeenCalledTimes(2);
+    const request = f.readerTurn.mock.calls[0][0];
+    expect(JSON.stringify(request)).not.toContain(block.translatedText);
+    expect(request.input.filter((item) => item.type === "image")).toHaveLength(
+      2,
+    );
+    expect(JSON.stringify(f.turn.mock.calls[1][0])).toContain("쿠□");
+    expect(f.startReader.mock.calls[0][4]).toBe("isolated");
+    expect(f.readerDispose).toHaveBeenCalledOnce();
+    expect(
+      (await f.snapshot()).pages[0].blocks[0].generatedLettering,
+    ).toBeUndefined();
+  } finally {
+    await f.close();
+  }
+});
+it("fails closed after three misspellings and preserves saved content on unreadable or failed inspection", async () => {
+  const f = await soundEffectFixture();
+  try {
+    const before = await readFile(f.chapterPath);
+    const block = (await f.snapshot()).pages[0].blocks[0];
+    f.readerTurn.mockResolvedValue({
+      itemId: "read",
+      threadId: "read",
+      turnId: "read",
+      text: JSON.stringify({ regions: [{ regionId: block.id, text: "□" }] }),
+    });
+    const plan = await f.preview(command(f, [block.id]));
+    const stored = f.service.readOwnedPlan(f.owner, plan.batchId, () => {});
+    expect(stored.generationCalls).toBe(3);
+    expect(stored.failedItems).toBe(1);
+    expect(stored.after.blocks[0].generatedLettering).toBeUndefined();
+    expect(await readFile(f.chapterPath)).toEqual(before);
+    f.readerTurn.mockRejectedValue(new Error("reader unavailable"));
+    const unavailable = await f.preview(command(f, [block.id]));
+    expect(
+      f.service.readOwnedPlan(f.owner, unavailable.batchId, () => {})
+        .failedItems,
+    ).toBe(1);
+    expect(await readFile(f.chapterPath)).toEqual(before);
+  } finally {
+    await f.close();
+  }
+});
 it("uses native foreground generation without erasure, stores only the reviewed layer and replays exact history without another model", async () => {
   const f = await soundEffectFixture();
   try {

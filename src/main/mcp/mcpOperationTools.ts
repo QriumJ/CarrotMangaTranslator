@@ -26,6 +26,9 @@ const targetSchema = z
     chapterId: z.string(),
     pageId: z.string(),
     contextMode: z.enum(["none", "saved"]).optional(),
+    engine: z.enum(["local", "codex"]).optional(),
+    expectedModel: z.string().min(1).max(128).optional(),
+    allowExternalProcessing: z.boolean().optional(),
     blockId: z
       .string()
       .regex(/^[A-Za-z0-9_-]{1,128}$/)
@@ -84,7 +87,7 @@ function createJobControlTool(
     inputSchema: jobIdInputSchema,
     invoke: async (args, context) => {
       const parsed = jobIdSchema.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
       await operations.ready();
       const owner = principal(context);
       const result = cancel
@@ -126,7 +129,7 @@ const operationDescriptions: Record<
   erase: {
     name: "carrot_run_page_erasure",
     description:
-      "Erase original text for the page's existing non-excluded blocks, or ONLY the optional blockId. Missing/excluded selected IDs fail; selection is retained for retry. Uses the app's configured LOCAL inpainting engine and existing masks. No OCR, translation, Codex or automatic bubble layout. Preserves translation text and styles. Model assets may be downloaded by the existing app. Returns a jobId.",
+      "Erase original text for the page's existing non-excluded blocks, or ONLY blockId. engine=codex uses the app's Codex image controller with no local inference/downloads; requires image permission, allowExternalProcessing=true and expectedModel from get_sound_effects. External images use account quota. Omitted engine or local uses the configured LOCAL engine and may download assets. No OCR, translation or layout. Preserves text/styles and native history. Poll jobId, then visually inspect the rendered page; completion alone does not prove clean erasure. Never substitute a local engine when the user excludes local models.",
   },
 };
 function createStartOperationTool(
@@ -154,6 +157,17 @@ function createStartOperationTool(
         chapterId: identifierSchema,
         pageId: identifierSchema,
         ...(block ? { blockId: identifierSchema } : {}),
+        ...(kind === "erase"
+          ? {
+              engine: {
+                type: "string",
+                enum: ["local", "codex"],
+                default: "local",
+              },
+              expectedModel: { type: "string", minLength: 1, maxLength: 128 },
+              allowExternalProcessing: { type: "boolean", default: false },
+            }
+          : {}),
         ...(translation
           ? {
               contextMode: {
@@ -177,6 +191,9 @@ function createStartOperationTool(
     },
     invoke: async (args, context) => {
       const target = parseOperationTarget(args, kind);
+      const jobScopes =
+        target.engine === "codex" ? [...scopes, "carrot.images"] : scopes;
+      context?.assertScopes?.(jobScopes);
       await operations.ready();
       const owner = principal(context);
       return textContent(
@@ -187,7 +204,7 @@ function createStartOperationTool(
           parameters: target,
           assertAuthorized: () =>
             (context?.assertJobAuthorized ?? context?.assertAuthorized)?.(
-              scopes,
+              jobScopes,
             ),
           execute: (operation) => execute(target, operation),
         }),
@@ -197,20 +214,46 @@ function createStartOperationTool(
 }
 function parseOperationTarget(args: unknown, kind: string) {
   const parsed = targetSchema.safeParse(args);
-  if (!parsed.success) throw new McpInvalidParams();
+  if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
   const target = parsed.data;
+  assertErasureArguments(target, kind);
+  assertOperationBlockTarget(target, kind);
+  readIdentifier(target.chapterId, "chapterId");
+  readIdentifier(target.pageId, "pageId");
+  return kind === "blockTranslation"
+    ? { ...target, contextMode: target.contextMode ?? ("saved" as const) }
+    : target;
+}
+function assertErasureArguments(target: McpOperationTarget, kind: string) {
+  if (
+    (kind !== "erase" &&
+      [
+        target.engine,
+        target.expectedModel,
+        target.allowExternalProcessing,
+      ].some((value) => value !== undefined)) ||
+    (target.engine === "codex" &&
+      (!target.expectedModel || target.allowExternalProcessing !== true))
+  )
+    throw new McpInvalidParams([{ path: ["engine"], code: "invalid_value" }]);
+}
+function assertOperationBlockTarget(target: McpOperationTarget, kind: string) {
   if (
     (!["erase", "blockOcr", "blockTranslation"].includes(kind) &&
       target.blockId !== undefined) ||
     (["blockOcr", "blockTranslation"].includes(kind) && !target.blockId) ||
     (kind !== "blockTranslation" && target.contextMode !== undefined)
   )
-    throw new McpInvalidParams();
-  readIdentifier(target.chapterId);
-  readIdentifier(target.pageId);
-  return kind === "blockTranslation"
-    ? { ...target, contextMode: target.contextMode ?? ("saved" as const) }
-    : target;
+    throw new McpInvalidParams([
+      {
+        path: [
+          kind !== "blockTranslation" && target.contextMode !== undefined
+            ? "contextMode"
+            : "blockId",
+        ],
+        code: "invalid_value",
+      },
+    ]);
 }
 
 function principal(context: Parameters<McpTool["invoke"]>[1]): string {

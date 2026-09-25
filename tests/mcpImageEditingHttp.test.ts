@@ -136,8 +136,8 @@ it("separates edit and image scopes, rejects extra fields, and hides foreign pla
           ...request,
           path: "private",
         })
-      ).body.error.code,
-    ).toBe(-32602);
+      ).body.result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const batchId = (await f.call("carrot_preview_image_edit", request)).body
       .result.structuredContent.batchId;
     expect(

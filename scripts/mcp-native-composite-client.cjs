@@ -84,6 +84,7 @@ async function compositeNativeClient(root, app, editing, options = {}) {
     await activeSession.ready();
     const tools = createMcpAppTools({
       ...editing,
+      assertWritable: editing.assertClean,
       preferences,
       additionalTools: activeSession.tools,
       wrapTool: activeSession.wrapTool,

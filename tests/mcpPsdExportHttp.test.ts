@@ -102,7 +102,9 @@ it("does not accept PSD through raster endpoints or bypass acknowledgments with 
       "carrot_export_pages_png",
       "carrot_export_pages_images",
     ])
-      expect((await f.call(name, target)).error.code).toBe(-32602);
+      expect((await f.call(name, target)).result.structuredContent.error).toBe(
+        "invalid_arguments",
+      );
     for (const imageExport of [
       { format: "psd" },
       { ...psdOptions, acknowledgeOriginalLayer: false },
@@ -113,8 +115,8 @@ it("does not accept PSD through raster endpoints or bypass acknowledgments with 
     ])
       expect(
         (await f.call("carrot_export_pages_psd", { ...target, imageExport }))
-          .error.code,
-      ).toBe(-32602);
+          .result.structuredContent.error,
+      ).toBe("invalid_arguments");
     expect(f.renderImage).not.toHaveBeenCalled();
     expect(f.render).not.toHaveBeenCalled();
   } finally {

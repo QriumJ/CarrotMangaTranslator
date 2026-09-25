@@ -176,8 +176,9 @@ it("restores an owned page change after a new MCP session and keeps read-only/fo
         .structuredContent.error,
     ).toBe("not_found");
     expect(
-      (await f.call("carrot_get_change", { id, snapshot: {} })).error.code,
-    ).toBe(-32602);
+      (await f.call("carrot_get_change", { id, snapshot: {} })).result
+        .structuredContent.error,
+    ).toBe("invalid_arguments");
     expect(
       (await f.call("carrot_undo_change", request)).result.structuredContent
         .status,
@@ -232,9 +233,9 @@ it("reissues identical retained bytes over HEAD/GET after restart without granti
     expect(createHash("sha256").update(data).digest("hex")).toBe(next.sha256);
     expect(f.render).toHaveBeenCalledTimes(1);
     expect(
-      (await f.call("carrot_discard_retained", { id, confirm: false })).error
-        .code,
-    ).toBe(-32602);
+      (await f.call("carrot_discard_retained", { id, confirm: false })).result
+        .structuredContent.error,
+    ).toBe("invalid_arguments");
     expect(
       (await f.call("carrot_discard_retained", { id, confirm: true })).result
         .isError,

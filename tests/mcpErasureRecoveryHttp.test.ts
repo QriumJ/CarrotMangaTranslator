@@ -240,7 +240,7 @@ it("rejects other grants, read-only writes, injected targets and malformed input
       { ...action, revision: "bad" },
     ]) {
       const rejected = await f.call("carrot_undo_erasure", args);
-      expect(rejected.error?.code).toBe(-32602);
+      expect(rejected.result.structuredContent.error).toBe("invalid_arguments");
     }
     expect(await f.snapshot()).toEqual(snapshot);
     expect(f.app.jobs.gate.activities).toEqual([]);

@@ -40,9 +40,15 @@ export function createMcpWorkContextTool(
         section !== "characters" &&
         section !== "memory"
       )
-        throw new McpInvalidParams();
+        throw new McpInvalidParams([
+          {
+            path: ["section"],
+            code: "invalid_value",
+            expected: "overview, glossary, characters or memory",
+          },
+        ]);
       const result = await service.read(
-        readIdentifier(args.chapterId),
+        readIdentifier(args.chapterId, "chapterId"),
         section,
         readWindow(args),
       );

@@ -1,3 +1,4 @@
+import { McpPageBatchPreparation } from "./mcpPageBatchPreparation";
 import { randomUUID } from "node:crypto";
 import { createPageRevision } from "../../shared/pageRevision";
 import { mcpContextRevision } from "../../shared/mcpContextEditing";
@@ -13,37 +14,17 @@ import type {
   BatchPlan,
   BatchPorts,
   BatchPolicy,
+  BatchTextRun,
+  BatchEntry as Entry,
 } from "./mcpPageBatchTypes";
 import {
   runMcpPageBatch,
   describeBatchRun,
   batchAvailability,
-  type BatchTextRun,
 } from "./mcpTranslationBatchRunner";
 import type { McpContextSnapshot } from "./mcpContextEditPolicy";
 import { McpEditError } from "./mcpEditPolicy";
 
-type Entry<
-  I extends BatchTarget,
-  C extends BatchChange,
-  P extends BatchPlan<C> = BatchPlan<C>,
-> = {
-  id: string;
-  owner: string;
-  input: I;
-  signature: string;
-  plan: P;
-  bytes: number;
-  expires: number;
-  busy: boolean;
-  applyStarted: boolean;
-  run?: BatchTextRun;
-  done?: Promise<void>;
-  receipts: Map<
-    string,
-    { signature: string; value: McpTranslationBatchReceipt }
-  >;
-};
 const TTL = 30 * 60_000;
 /** Memory-only review/history. Writes reuse the app page service; no model worker,
  * secret, file, or second library store is introduced. */
@@ -56,6 +37,7 @@ export class McpPageBatchService<
 > {
   private readonly entries = new Map<string, Entry<I, C, P>>();
   private readonly tasks = new Set<Promise<void>>();
+  private readonly preparation = new McpPageBatchPreparation();
   private stopped = false;
   constructor(
     private readonly ports: BatchPorts<R>,
@@ -72,6 +54,7 @@ export class McpPageBatchService<
   }
   async close() {
     this.stop();
+    await this.preparation.settle();
     await Promise.all(this.tasks);
     this.entries.clear();
   }
@@ -124,11 +107,31 @@ export class McpPageBatchService<
     this.check(owner, guard);
     const prior = this.priorPreview(owner, input, signature);
     if (prior) return this.summary(prior, saved);
-    const plan = await this.policy.plan(saved, input, { owner, guard, signal });
+    const id = await this.preparation.run(
+      JSON.stringify([owner, input.requestId]),
+      signature,
+      this.entries.size,
+      [...this.entries.values()].reduce((sum, entry) => sum + entry.bytes, 0),
+      () => this.prepare(owner, input, signature, saved, guard, signal),
+    );
+    return this.summary(this.owned(owner, id, guard), saved);
+  }
+  private async prepare(
+    owner: string,
+    input: I,
+    signature: string,
+    saved: McpContextSnapshot,
+    guard: () => void,
+    signal?: AbortSignal,
+  ) {
+    this.check(owner, guard);
+    const plan = await this.policy.plan(saved, input, {
+      owner,
+      guard,
+      signal,
+    });
     this.check(owner, guard);
     this.prune();
-    const raced = this.priorPreview(owner, input, signature);
-    if (raced) return this.summary(raced, saved);
     const bytes =
       Buffer.byteLength(JSON.stringify(plan)) + Buffer.byteLength(signature);
     const occupied = [...this.entries.values()].reduce(
@@ -157,7 +160,7 @@ export class McpPageBatchService<
       receipts: new Map(),
     };
     this.entries.set(entry.id, entry);
-    return this.summary(entry, saved);
+    return entry.id;
   }
   async inspect(owner: string, value: unknown, guard: () => void) {
     const input = McpTranslationBatchGetSchema.parse(value);

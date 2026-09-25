@@ -22,13 +22,13 @@ it("exposes movement review to read-only grants but requires explicit approved p
       (await f.http("carrot_move_chapter", input, f.read)).error.message,
     ).toBe("Unknown tool");
     expect(
-      (await f.http("carrot_move_chapter", { ...input, confirm: true })).error
-        .code,
-    ).toBe(-32602);
+      (await f.http("carrot_move_chapter", { ...input, confirm: true })).result
+        .structuredContent.error,
+    ).toBe("invalid_arguments");
     expect(
       (await f.http("carrot_move_chapter", { ...input, path: "C:/private" }))
-        .error.code,
-    ).toBe(-32602);
+        .result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const saved = (await f.http("carrot_move_chapter", input)).result
       .structuredContent;
     expect(saved.status).toBe("saved");

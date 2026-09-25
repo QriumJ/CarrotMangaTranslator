@@ -282,9 +282,10 @@ it("enforces processing approval, exact target inputs and job ownership", async 
       { ...f.target, path: "C:/private" },
       { ...f.target, blockId: "../escape" },
     ])
-      expect((await f.call("carrot_run_block_ocr", args)).error.code).toBe(
-        -32602,
-      );
+      expect(
+        (await f.call("carrot_run_block_ocr", args)).result.structuredContent
+          .error,
+      ).toBe("invalid_arguments");
     expect(f.recognize).not.toHaveBeenCalled();
     const started = await f.call("carrot_run_block_ocr", f.target);
     const jobId = started.result.structuredContent.jobId;

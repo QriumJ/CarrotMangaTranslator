@@ -42,7 +42,7 @@ export function createMcpPageRetentionSession(
         storage,
         artifacts,
         app,
-        editing,
+        { ...editing, assertWritable: editing.assertClean },
         Boolean(preferences.allowEditing && preferences.allowProcessing),
         preferences.allowImages,
         (kind, id) => {

@@ -43,7 +43,7 @@ export function createMcpBatchTool<T = unknown>(options: {
       };
       guard();
       const parsed = options.schema.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
       const result = await options.execute(
         parsed.data,
         context.principalId,

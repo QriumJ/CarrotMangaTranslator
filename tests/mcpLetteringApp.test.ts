@@ -10,6 +10,75 @@ const geometry = {
   mode: "geometry",
   allowAssetDownloads: true,
 };
+it.each([true, false])(
+  "edits the visible fallback of disabled artwork, but reports active artwork exclusions (enabled=%s)",
+  async (enabled) => {
+    const f = await letteringAppFixture();
+    try {
+      const chapter = JSON.parse(await readFile(f.chapterPath, "utf8"));
+      for (const page of chapter.pages) {
+        const block = page.blocks[0];
+        block.generatedLettering = {
+          version: 1,
+          enabled,
+          dataUrl: "data:image/png;base64," + f.bytes.toString("base64"),
+          sourceText: block.sourceText,
+          translatedText: block.translatedText,
+        };
+      }
+      await writeFile(f.chapterPath, JSON.stringify(chapter));
+      const result = await f.prepare({
+        kind: "format",
+        fields: { rotationDeg: -18 },
+      });
+      const batchId = requireBatch(result);
+      const plan = await f.invoke("carrot_get_lettering_batch", { batchId });
+      expect(plan.canApply).toBe(!enabled);
+      if (enabled) {
+        expect(JSON.stringify(plan)).toContain("generated_lettering");
+      } else {
+        expect((await f.action(batchId, "apply")).status).toBe("completed");
+        const after = await f.library.openChapter("chapter");
+        expect(after.pages[0].blocks[0].rotationDeg).toBe(-18);
+        expect(after.pages[0].blocks[0].generatedLettering).toEqual(
+          chapter.pages[0].blocks[0].generatedLettering,
+        );
+        await f.action(batchId, "undo");
+        expect(
+          (await f.library.openChapter("chapter")).pages.map(
+            (page) => page.blocks,
+          ),
+        ).toEqual(
+          chapter.pages.map((page: { blocks: unknown }) => page.blocks),
+        );
+      }
+      expect(f.runtime.create).not.toHaveBeenCalled();
+    } finally {
+      await f.close();
+    }
+  },
+);
+it("reports a completely filtered-out scalar format as exclusions instead of an invalid block-ID failure", async () => {
+  const f = await letteringAppFixture();
+  try {
+    const before = await readFile(f.chapterPath);
+    const result = await f.prepare({
+      kind: "format",
+      fields: { rotationDeg: 15 },
+      filter: {
+        conditions: [{ field: "fontSizePx", operator: "gt", value: 512 }],
+      },
+    });
+    const plan = await f.invoke("carrot_get_lettering_batch", {
+      batchId: requireBatch(result),
+    });
+    expect(plan.canApply).toBe(false);
+    expect(JSON.stringify(plan)).toContain("format_filter_not_matched");
+    expect(await readFile(f.chapterPath)).toEqual(before);
+  } finally {
+    await f.close();
+  }
+});
 function requireBatch(
   result: Awaited<
     ReturnType<Awaited<ReturnType<typeof letteringAppFixture>>["prepare"]>

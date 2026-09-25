@@ -113,10 +113,11 @@ it("keeps the PNG endpoint narrow and rejects malformed format options before cr
       ...target,
       imageExport: { format: "jpeg", quality: 90 },
     });
-    expect(wrong.error.code).toBe(-32602);
+    expect(wrong.result.structuredContent.error).toBe("invalid_arguments");
     expect(
-      (await f.call("carrot_export_pages_images", target)).error.code,
-    ).toBe(-32602);
+      (await f.call("carrot_export_pages_images", target)).result
+        .structuredContent.error,
+    ).toBe("invalid_arguments");
     for (const imageExport of [
       { format: "jpeg" },
       { format: "png", quality: 90 },
@@ -129,8 +130,8 @@ it("keeps the PNG endpoint narrow and rejects malformed format options before cr
             chapterId: f.chapter.id,
             imageExport,
           })
-        ).error.code,
-      ).toBe(-32602);
+        ).result.structuredContent.error,
+      ).toBe("invalid_arguments");
     }
     expect(f.render).not.toHaveBeenCalled();
     expect(f.renderImage).not.toHaveBeenCalled();

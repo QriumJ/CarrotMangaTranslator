@@ -4,6 +4,17 @@ const id = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 const revision = z.string().regex(/^[a-f0-9]{16}$/);
 const count = z.number().int().nonnegative();
 const locale = z.enum(["ko", "en", "ja", "zh-Hans", "zh-Hant"]);
+export const McpFontSamplesInput = z
+  .object({
+    fontIds: z
+      .array(id)
+      .min(1)
+      .max(4)
+      .refine((ids) => new Set(ids).size === ids.length),
+    snapshot: revision,
+    text: z.string().trim().min(1).max(80),
+  })
+  .strict();
 export const McpFontListInput = z
   .object({
     query: z.string().max(200).optional(),
@@ -111,6 +122,20 @@ export type McpTypographyPreflight = z.infer<
   typeof McpTypographyPreflightInput
 >;
 export const mcpTypographyReadOutputs = {
+  carrot_get_font_samples: z
+    .object({
+      snapshot: revision,
+      samples: z
+        .array(
+          z
+            .object({ fontId: id, label: z.string(), contentIndex: count })
+            .strict(),
+        )
+        .min(1)
+        .max(4),
+      notes: z.array(z.string()),
+    })
+    .strict(),
   carrot_list_fonts: McpFontListOutput,
   carrot_preflight_typography: McpTypographyPreflightOutput,
 };

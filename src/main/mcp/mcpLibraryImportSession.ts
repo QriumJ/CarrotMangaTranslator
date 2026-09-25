@@ -229,7 +229,7 @@ function startTool(
     openWorld: true,
     invoke: async (args, context) => {
       const parsed = schema.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
       if (
         !context?.principalId ||
         !context.assertScopes ||

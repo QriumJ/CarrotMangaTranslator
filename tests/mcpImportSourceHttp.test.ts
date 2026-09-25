@@ -43,8 +43,8 @@ it("exposes metadata-only duplicate review with read scope while keeping preview
           ...args,
           sourcePath: "C:/private",
         })
-      ).error.code,
-    ).toBe(-32602);
+      ).result.structuredContent.error,
+    ).toBe("invalid_arguments");
     expect(
       (
         await f.call(

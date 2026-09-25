@@ -1,8 +1,17 @@
 import { randomUUID } from "node:crypto";
-import { open, readFile, readdir, symlink, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import {
+  open,
+  readFile,
+  readdir,
+  realpath,
+  symlink,
+  unlink,
+  writeFile,
+} from "node:fs/promises";
+import { join, relative } from "node:path";
 import { expect, it, vi } from "vitest";
 import { libraryImportFixture } from "./mcpLibraryImport.fixture";
+import { withFileSymlink } from "./fileSymlink.fixture";
 import type { PreparedImportPreview } from "../src/shared/importTypes";
 import type { McpOperationContext } from "../src/main/application/mcpOperationService";
 
@@ -36,6 +45,70 @@ function context(): McpOperationContext {
   };
 }
 
+it("accepts a trusted system temporary-root alias while rejecting a nested directory link", async () => {
+  const f = await libraryImportFixture();
+  const alias = `${f.env.root}-alias`;
+  const nested = join(f.env.root, "nested-link");
+  try {
+    await symlink(f.env.root, alias, "junction");
+    await symlink(f.env.root, nested, "junction");
+    const { freezeMcpImport } =
+      await import("../src/main/mcp/mcpLibraryImportStaging");
+    const variable = process.platform === "win32" ? "TEMP" : "TMPDIR";
+    const previous = process.env[variable];
+    process.env[variable] = alias;
+    try {
+      const child = relative(f.env.root, f.originals[0]);
+      const frozen = await freezeMcpImport(
+        preview([join(alias, child)]),
+        f.env.root,
+        context(),
+      );
+      await frozen.verify();
+      expect(frozen.sourceBytes).toBe(f.bytes.length);
+      await frozen.cleanup();
+      await expect(
+        freezeMcpImport(
+          preview([join(alias, "nested-link", child)]),
+          f.env.root,
+          context(),
+        ),
+      ).rejects.toThrow(/symlink/);
+      expect(await readFile(f.originals[0])).toEqual(f.bytes);
+    } finally {
+      if (previous === undefined) delete process.env[variable];
+      else process.env[variable] = previous;
+    }
+  } finally {
+    await unlink(nested);
+    await unlink(alias);
+    await f.close();
+  }
+});
+
+it("accepts a regular selected file outside the configured temporary root", async () => {
+  const f = await libraryImportFixture();
+  const variable = process.platform === "win32" ? "TEMP" : "TMPDIR";
+  const previous = process.env[variable];
+  try {
+    process.env[variable] = join(f.env.root, "another-system-temp-root");
+    const { freezeMcpImport } =
+      await import("../src/main/mcp/mcpLibraryImportStaging");
+    const frozen = await freezeMcpImport(
+      preview(await Promise.all(f.originals.map((path) => realpath(path)))),
+      f.env.root,
+      context(),
+    );
+    await frozen.verify();
+    expect(await readFile(f.originals[0])).toEqual(f.bytes);
+    await frozen.cleanup();
+  } finally {
+    if (previous === undefined) delete process.env[variable];
+    else process.env[variable] = previous;
+    await f.close();
+  }
+});
+
 it("captures repeated source bytes once, preserves input objects and detects same-size staged corruption", async () => {
   const f = await libraryImportFixture();
   try {
@@ -66,7 +139,7 @@ it("captures repeated source bytes once, preserves input objects and detects sam
   }
 });
 
-it.each(["empty", "oversize", "symlink"] as const)(
+it.each(["empty", "oversize"] as const)(
   "rejects %s source files without retaining copied input",
   async (kind) => {
     const f = await libraryImportFixture();
@@ -74,8 +147,7 @@ it.each(["empty", "oversize", "symlink"] as const)(
       const { freezeMcpImport } =
         await import("../src/main/mcp/mcpLibraryImportStaging");
       const path = join(f.env.root, `boundary-${kind}.png`);
-      if (kind === "symlink") await symlink(f.originals[0], path, "file");
-      else {
+      {
         const file = await open(path, "wx");
         try {
           if (kind === "oversize") await file.truncate(128 * 1024 * 1024 + 1);
@@ -100,6 +172,23 @@ it.each(["empty", "oversize", "symlink"] as const)(
     }
   },
 );
+
+it("rejects a file symlink without retaining copied input", async (testContext) => {
+  const f = await libraryImportFixture();
+  try {
+    const { freezeMcpImport } =
+      await import("../src/main/mcp/mcpLibraryImportStaging");
+    const path = join(f.env.root, "boundary-symlink.png");
+    await withFileSymlink(testContext, f.originals[0], path, async () => {
+      await expect(
+        freezeMcpImport(preview([path]), f.env.root, context()),
+      ).rejects.toThrow();
+      expect(await readFile(f.originals[0])).toEqual(f.bytes);
+    });
+  } finally {
+    await f.close();
+  }
+});
 
 it.each([0, 501])(
   "rejects %i preview pages before source copying and still releases native preparation",

@@ -5,7 +5,7 @@ import { McpOAuthProvider } from "../src/main/mcp/mcpOAuthProvider";
 import { McpOAuthState } from "../src/main/mcp/mcpOAuthState";
 import {
   oauthDigest,
-  readChatGptRedirect,
+  readMcpOAuthRedirect,
   uniqueOAuthParams,
 } from "../src/main/mcp/mcpOAuthPolicy";
 import { mcpOAuthConsentPage } from "../src/main/mcp/mcpOAuthPage";
@@ -94,21 +94,89 @@ for (const callback of [
   "https://chatgpt.com/connector/oauth/../evil",
   "https://chatgpt.com/anything",
   "file:///etc/passwd",
+  "http://localhost:43123/callback",
+  "http://127.0.0.1.evil.example:43123/callback",
+  "http://127.1:43123/callback",
+  "http://2130706433:43123/callback",
+  "http://127.0.0.1:80/callback",
+  "http://127.0.0.1:43123/other",
+  "http://127.0.0.1:43123/callback?next=evil",
+  "http://127.0.0.1:43123/callback/../other",
+  "http://user@127.0.0.1:43123/callback",
 ]) {
   it(`rejects untrusted callback ${callback}`, () =>
-    assert.throws(() => readChatGptRedirect(callback)));
+    assert.throws(() => readMcpOAuthRedirect(callback)));
 }
 
 it("allows current and documented legacy callbacks and rejects duplicate form fields", () => {
-  assert.equal(readChatGptRedirect(CALLBACK), CALLBACK);
+  assert.equal(readMcpOAuthRedirect(CALLBACK), CALLBACK);
   assert.equal(
-    readChatGptRedirect(
+    readMcpOAuthRedirect(
       "https://chatgpt.com/connector_platform_oauth_redirect",
     ),
     "https://chatgpt.com/connector_platform_oauth_redirect",
   );
   assert.throws(() =>
     uniqueOAuthParams(new URLSearchParams("resource=a&resource=b")),
+  );
+});
+
+it("supports Codex DCR with an exact loopback callback and PKCE after restart", () => {
+  const callback = "http://127.0.0.1:43123/callback/carrot-codex";
+  assert.equal(readMcpOAuthRedirect(callback), callback);
+  assert.equal(
+    readMcpOAuthRedirect("http://127.0.0.1:65535/callback"),
+    "http://127.0.0.1:65535/callback",
+  );
+  const provider = new McpOAuthProvider(ISSUER, PASSWORD);
+  const client = provider.register({
+    client_name: "Codex",
+    redirect_uris: [callback],
+    token_endpoint_auth_method: "none",
+  });
+  const input = {
+    response_type: "code",
+    client_id: client.client_id,
+    redirect_uri: callback,
+    resource: RESOURCE,
+    state: "codex-state",
+    scope: "carrot.read offline_access",
+    code_challenge: oauthDigest(VERIFIER),
+    code_challenge_method: "S256",
+  };
+  assert.throws(() =>
+    provider.begin({
+      ...input,
+      redirect_uri: callback.replace("43123", "43124"),
+    }),
+  );
+  const consent = provider.begin(input);
+  const location = new URL(
+    provider.approve(
+      {
+        transaction: consent.transaction,
+        decision: "approve",
+        pairing_secret: PASSWORD,
+      },
+      consent.cookie,
+    ),
+  );
+  assert.equal(location.origin + location.pathname, callback);
+  assert.equal(location.searchParams.get("state"), "codex-state");
+  const tokens = provider.token({
+    grant_type: "authorization_code",
+    client_id: client.client_id,
+    redirect_uri: callback,
+    resource: RESOURCE,
+    code: location.searchParams.get("code"),
+    code_verifier: VERIFIER,
+  });
+  assert.ok(tokens.access_token);
+  const restored = new McpOAuthProvider(ISSUER, PASSWORD);
+  restored.restore(provider.snapshot());
+  assert.equal(
+    restored.connectionIdFor(`Bearer ${tokens.access_token}`),
+    provider.connectionIdFor(`Bearer ${tokens.access_token}`),
   );
 });
 

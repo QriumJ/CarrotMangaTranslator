@@ -94,14 +94,14 @@ it("requires a trusted closed editor, including for a clean open chapter", async
   try {
     const input = await f.command();
     f.editorOpen("chapter");
-    await expect(f.apply(input)).rejects.toMatchObject({ code: "editor_busy" });
+    await expect(f.apply(input)).rejects.toMatchObject({ code: "editor_open" });
     await f.assertOriginal();
     expect((await f.storage.index()).entries).toEqual([]);
     f.editorOpen("different-chapter");
     const saved = await f.apply(input);
     f.editorOpen("chapter");
     await expect(f.recover(saved.id, "undo")).rejects.toMatchObject({
-      code: "editor_busy",
+      code: "editor_open",
     });
     f.editorOpen(null);
     await f.recover(saved.id, "undo");

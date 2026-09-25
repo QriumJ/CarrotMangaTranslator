@@ -134,7 +134,7 @@ function createRequestHandler(
         );
       }
       validateMcpPost(request);
-      const body = await readMcpBody(request);
+      const body = await readMcpBody(request, 8 * 1024 * 1024);
       if (!accepting) throw new McpHttpError(503, "MCP server is stopping.");
       await authorize(request);
       sendReply(
@@ -208,65 +208,63 @@ function visibleTools(
   if (!options.enforceScopes) return options.tools;
   const scope = oauth?.scopeFor(request.headers.authorization ?? "") ?? "";
   const scopes = scope.split(" ");
-  return options.tools
-    .filter((tool) =>
-      (tool.requiredScopes ?? ["carrot.read"]).every((needed) =>
-        scopes.includes(needed),
-      ),
-    )
-    .map((tool) => {
-      const assertAuthorized = () => {
-        if (response.destroyed || response.writableEnded)
-          throw new McpEditError(
-            "access_denied",
-            "The request ended before the operation could commit. Inspect the page before retrying.",
-          );
-        const current =
-          oauth?.scopeFor(request.headers.authorization ?? "")?.split(" ") ??
-          [];
-        if (
-          !(tool.requiredScopes ?? ["carrot.read"]).every((needed) =>
-            current.includes(needed),
-          )
+  const visible = options.tools.filter((tool) =>
+    (tool.requiredScopes ?? ["carrot.read"]).every((needed) =>
+      scopes.includes(needed),
+    ),
+  );
+  const visibleToolNames = visible.map((tool) => tool.name);
+  return visible.map((tool) => {
+    const assertAuthorized = () => {
+      if (response.destroyed || response.writableEnded)
+        throw new McpEditError(
+          "access_denied",
+          "The request ended before the operation could commit. Inspect the page before retrying.",
+        );
+      const current =
+        oauth?.scopeFor(request.headers.authorization ?? "")?.split(" ") ?? [];
+      if (
+        !(tool.requiredScopes ?? ["carrot.read"]).every((needed) =>
+          current.includes(needed),
         )
-          throw new McpEditError(
-            "access_denied",
-            "Authorization changed. Reconnect or request approval in the app.",
+      )
+        throw new McpEditError(
+          "access_denied",
+          "Authorization changed. Reconnect or request approval in the app.",
+        );
+    };
+    return {
+      ...tool,
+      invoke: async (args: Record<string, unknown>) => {
+        assertAuthorized();
+        const principalId = oauth?.provider.connectionIdFor(
+          request.headers.authorization ?? "",
+        );
+        const required = tool.requiredScopes ?? ["carrot.read"];
+        const assertScopes = (needed: readonly string[]) =>
+          assertGranted(
+            needed,
+            oauth?.scopeFor(request.headers.authorization ?? ""),
           );
-      };
-      return {
-        ...tool,
-        invoke: async (args: Record<string, unknown>) => {
-          assertAuthorized();
-          const principalId = oauth?.provider.connectionIdFor(
-            request.headers.authorization ?? "",
+        const assertJobAuthorized = (needed: readonly string[] = required) => {
+          assertGranted(needed, scope);
+          assertGranted(
+            needed,
+            principalId ? oauth?.scopeForConnection(principalId) : undefined,
           );
-          const required = tool.requiredScopes ?? ["carrot.read"];
-          const assertScopes = (needed: readonly string[]) =>
-            assertGranted(
-              needed,
-              oauth?.scopeFor(request.headers.authorization ?? ""),
-            );
-          const assertJobAuthorized = (
-            needed: readonly string[] = required,
-          ) => {
-            assertGranted(needed, scope);
-            assertGranted(
-              needed,
-              principalId ? oauth?.scopeForConnection(principalId) : undefined,
-            );
-          };
-          const result = await tool.invoke(args, {
-            assertAuthorized,
-            principalId,
-            assertScopes,
-            assertJobAuthorized,
-          });
-          assertAuthorized();
-          return result;
-        },
-      };
-    });
+        };
+        const result = await tool.invoke(args, {
+          assertAuthorized,
+          principalId,
+          assertScopes,
+          assertJobAuthorized,
+          visibleToolNames,
+        });
+        assertAuthorized();
+        return result;
+      },
+    };
+  });
 }
 
 function assertGranted(

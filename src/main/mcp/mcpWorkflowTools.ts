@@ -98,7 +98,7 @@ function runTool(name: string, service: McpWorkflowService): McpTool {
       "Explicitly run/resume an owned prepared workflow at its current version. Rechecks settings, source/page/context evidence and live approval before native execution. PNG plans additionally require carrot.images. Same requestId never starts another run. Completed steps stay complete; retryFailed=true explicitly permits another attempt only when the saved pre-state still matches and no completed native receipt can be reconciled. Retries consume the retained budgets. No local model parallelism, automatic fallback, automatic cross-connection takeover, implicit undo or automatic restart resume. Returns immediately; poll carrot_get_workflow and its native job IDs.",
     invoke: async (args, context) => {
       const parsed = McpWorkflowRunSchema.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
       if (!context?.principalId)
         throw new McpEditError(
           "access_denied",

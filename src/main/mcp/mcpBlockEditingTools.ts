@@ -25,7 +25,7 @@ export function createMcpBlockEditingTools(
       inputSchema: z.toJSONSchema(McpBlockPatchSchema),
       invoke: async (args, context) => {
         const request = McpBlockPatchSchema.safeParse(args);
-        if (!request.success) throw new McpInvalidParams();
+        if (!request.success) throw new McpInvalidParams(request.error.issues);
         return textContent(
           await service.updateBlocks(request.data, context?.assertAuthorized),
         );
@@ -43,7 +43,7 @@ export function createMcpBlockEditingTools(
       inputSchema: z.toJSONSchema(McpReadingOrderSchema),
       invoke: async (args, context) => {
         const request = McpReadingOrderSchema.safeParse(args);
-        if (!request.success) throw new McpInvalidParams();
+        if (!request.success) throw new McpInvalidParams(request.error.issues);
         return textContent(
           await service.reorder(request.data, context?.assertAuthorized),
         );
@@ -61,7 +61,7 @@ export function createMcpBlockEditingTools(
       inputSchema: z.toJSONSchema(McpSourceRectPatchSchema),
       invoke: async (args, context) => {
         const request = McpSourceRectPatchSchema.safeParse(args);
-        if (!request.success) throw new McpInvalidParams();
+        if (!request.success) throw new McpInvalidParams(request.error.issues);
         return textContent(
           await service.updateSourceRect(
             request.data,

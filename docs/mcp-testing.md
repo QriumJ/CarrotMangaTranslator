@@ -4,7 +4,7 @@
 
 이 문서는 기존 **로컬 Bearer 읽기 전용 개발 프로필**만 설명합니다. 앱에서 관리하는 영구 OAuth·편집 연결과 다른 프로필이며 동시에 같은 포트로 실행하지 않습니다. 설치된 정식 릴리스에 이 브랜치의 변경이 포함되어 있다고 가정하지 마세요.
 
-이 경로는 Codex CLI처럼 같은 PC의 loopback HTTP에 접근할 수 있는 클라이언트를 위한 것입니다. 앱 관리 OAuth의 등록 정책은 ChatGPT 콜백만 허용하므로 이 개발 프로필에서 `codex mcp login`을 사용하지 않습니다. 일반 ChatGPT 웹에는 이 로컬 주소 대신 앱의 Tailscale HTTPS 주소를 등록합니다. 설정 예시가 존재한다는 사실과 특정 클라이언트 버전으로 실제 연결에 성공했다는 기록은 별개입니다.
+이 경로는 Codex CLI처럼 같은 PC의 loopback HTTP에 접근할 수 있는 클라이언트를 위한 것입니다. 이 읽기 전용 개발 프로필은 Bearer 인증이므로 `codex mcp login`을 사용하지 않습니다. 앱 설정에서 켠 MCP는 별도로 Codex OAuth/DCR을 지원합니다. 일반 ChatGPT 웹에는 이 로컬 주소 대신 앱의 Tailscale HTTPS 주소를 등록합니다. 설정 예시와 실제 연결 검증은 구분합니다.
 
 ## 실행과 진단
 
@@ -57,14 +57,16 @@ Codex의 모델 이용 한도와 로컬 MCP 진단은 별개입니다. Codex를 
 
 ## 프로토콜 확인 범위
 
-소스는 `2026-07-28`의 요청별 메타데이터 방식과 `2025-11-25`, `2025-06-18`, `2025-03-26`의 초기화 방식을 함께 제공합니다. 현대 프로필은 각 요청의 `_meta`와 대응 HTTP 헤더를 요구하며 `server/discover`로 서버 기능을 읽습니다. 이 동작은 [MCP 버전 호환성](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning)과 [Streamable HTTP](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http)에 따라 별도로 검사합니다. 지원 버전 목록은 소스의 제공 범위이며 모든 클라이언트 버전과의 실제 상호운용 성공을 뜻하지 않습니다.
+소스는 `2026-07-28`의 요청별 메타데이터 방식과 `2025-11-25`, `2025-06-18`의 초기화 방식을 함께 제공합니다. 현대 프로필은 각 요청의 `_meta`와 대응 HTTP 헤더를 요구하며 `server/discover`로 서버 기능을 읽습니다. 이 동작은 [MCP 버전 호환성](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning)과 [Streamable HTTP](https://modelcontextprotocol.io/specification/2026-07-28/basic/transports/streamable-http)에 따라 별도로 검사합니다. 지원 버전 목록은 소스의 제공 범위이며 모든 클라이언트 버전과의 실제 상호운용 성공을 뜻하지 않습니다.
 
 개발 프로필의 smoke는 초기화·도구 호출을 확인할 수 있지만, 앱 설정의 연결 진단은 공개 OAuth 메타데이터와 무인증 접근 거부만 확인합니다. 도구 목록이 바뀐 뒤에는 클라이언트 연결을 새로 고쳐 다시 확인하세요. 이미지 요청을 승인했다면 원본 미리보기인지 완성 출력인지 구분하고, 출력 도구의 작업 접수·완료·명시적 파일 조회도 각각 확인합니다.
+
+2025-03-26은 필수 batch 처리를 구현하지 않아 지원 목록에서 제외했습니다. 인증된 MCP 본문은 최대 8 MiB이며 OAuth 본문은 64 KiB입니다. 잘못된 도구 인자는 `isError`와 필드별 교정 정보를 반환합니다. 현재 연결의 권한 범위는 `carrot_get_capabilities`로 확인합니다. 상세 수정과 검증은 [신뢰성 검증 기록](mcp-reliability-validation-20260924.md)을 참고하세요.
 
 ## 종료·오류
 
 연결 거부는 앱 실행과 포트를, 정상 요청의 401은 토큰 일치를 확인합니다. 이미지 도구가 없다면 `--images`와 클라이언트 재연결을 확인하세요. 브라우저 주소창 방문의 401/405는 인증된 MCP POST가 아니므로 위 진단으로 판정합니다.
 
-앱을 정상 종료합니다. 이 개발 프로필의 토큰을 교체하려면 종료 후 `.tmp/mcp-local-token`만 삭제하고 다시 실행합니다. 실행 중 토큰 파일 삭제는 즉시 권한 철회가 아닙니다. **앱 관리 OAuth 연결은 설정의 ‘연결 권한 철회’를 사용**하며, MCP 끄기·재시작만으로 승인 기록을 삭제하지 않습니다.
+앱을 정상 종료합니다. 이 개발 프로필의 토큰을 교체하려면 종료 후 `.tmp/mcp-local-token`만 삭제하고 다시 실행합니다. 실행 중 토큰 파일 삭제는 즉시 권한 철회가 아닙니다. **앱 관리 OAuth 연결은 설정의 ‘연결 해제’를 사용**하며, MCP 끄기·재시작만으로 승인 기록을 삭제하지 않습니다.
 
 최신 소스 진행 범위와 최종 승인 단계는 [남은 작업 로드맵](mcp-remaining-roadmap-20260918.md)을 확인하세요. [통합 기록](mcp-integration-status.md)의 이전 자동 검사·화면 캡처는 기록된 커밋과 환경의 근거입니다. 이후 추가된 도구나 현재 클라이언트의 실제 연결 결과로 확대 해석하지 않습니다. 외부 합성 시험의 선택 환경변수는 `CARROT_MCP_SMOKE_TAILSCALE=1`이며, 설치·로그인된 Tailscale 계정을 사용자가 준비해야 합니다. 과거 Cloudflare 임시 터널 환경변수와 암호 파일 기반 웹 진단 안내는 폐기되었습니다.

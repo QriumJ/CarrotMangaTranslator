@@ -64,8 +64,9 @@ export function createSavePagesBlocksMutation(
 ): (
   request: SavePagesBlocksRequest,
   assertCanCommit?: () => void,
+  preserveBlockOrder?: boolean,
 ) => Promise<ReturnType<typeof hydrateChapter>> {
-  return async (request, assertCanCommit) => {
+  return async (request, assertCanCommit, preserveBlockOrder = false) => {
     assertCanCommit?.();
     assertValidPageBatch(request.pages);
     const locator = await runtime.findChapterLocation(request.chapterId);
@@ -82,7 +83,12 @@ export function createSavePagesBlocksMutation(
 
     const updates = resolvePageUpdates(chapter, request, runtime.logWarning);
     const now = nextChapterUpdatedAt(chapter, runtime.now());
-    const nextChapter = applyPageUpdates(chapter, updates, now);
+    const nextChapter = applyPageUpdates(
+      chapter,
+      updates,
+      now,
+      preserveBlockOrder,
+    );
     assertCanCommit?.();
     await runtime.commitChapterAndWork(nextChapter, now, assertCanCommit);
     return hydrateChapter(nextChapter);
@@ -95,6 +101,7 @@ export const savePagesBlocksUnlocked =
 export function savePageBlocksUnlocked(
   request: SavePageBlocksRequest,
   assertCanCommit?: () => void,
+  preserveBlockOrder = false,
 ): Promise<ReturnType<typeof hydrateChapter>> {
   return savePagesBlocksUnlocked(
     {
@@ -114,6 +121,7 @@ export function savePageBlocksUnlocked(
       ],
     },
     assertCanCommit,
+    preserveBlockOrder,
   );
 }
 
@@ -205,6 +213,7 @@ function applyPageUpdates(
   chapter: LibraryChapter,
   updates: Map<string, SavePageBlocksUpdate>,
   updatedAt: string,
+  preserveBlockOrder: boolean,
 ): LibraryChapter {
   const pages = chapter.pages.map((page) => {
     const update = updates.get(page.id);
@@ -216,7 +225,9 @@ function applyPageUpdates(
     return {
       ...page,
       blocks,
-      blockOrder: normalizeSavedBlockOrder(update.blockOrder, blocks),
+      blockOrder: preserveBlockOrder
+        ? update.blockOrder
+        : normalizeSavedBlockOrder(update.blockOrder, blocks),
       translationCompletion: resolveCompletionAfterBlockMutation(
         page.translationCompletion,
         page.blocks,

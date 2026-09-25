@@ -18913,6 +18913,28 @@
         "pct": 94.44
       }
     },
+    "src/main/application/mcpPageBatchPreparation.ts": {
+      "lines": {
+        "total": 14,
+        "covered": 13,
+        "pct": 92.85
+      },
+      "statements": {
+        "total": 14,
+        "covered": 13,
+        "pct": 92.85
+      },
+      "functions": {
+        "total": 4,
+        "covered": 3,
+        "pct": 75
+      },
+      "branches": {
+        "total": 8,
+        "covered": 8,
+        "pct": 100
+      }
+    },
     "src/main/application/mcpPageBatchService.ts": {
       "lines": {
         "covered": 114,
@@ -26303,6 +26325,50 @@
         "total": 28,
         "covered": 17,
         "pct": 60.71
+      }
+    },
+    "src/main/mcp/mcpFontSamplesAdapter.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 15,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 15,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 2,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 2,
+        "pct": 0
+      }
+    },
+    "src/main/mcp/mcpFontSamplesTool.ts": {
+      "lines": {
+        "covered": 24,
+        "total": 25,
+        "pct": 96
+      },
+      "statements": {
+        "covered": 26,
+        "total": 27,
+        "pct": 96.29
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 15,
+        "total": 16,
+        "pct": 93.75
       }
     },
     "src/main/mcp/mcpFormatBatchTools.ts": {
@@ -37808,6 +37874,28 @@
       "branches": {
         "total": 6,
         "covered": 6,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/components/settingsModal/McpConnectionGuide.tsx": {
+      "lines": {
+        "covered": 10,
+        "total": 11,
+        "pct": 90.9
+      },
+      "statements": {
+        "covered": 10,
+        "total": 12,
+        "pct": 83.33
+      },
+      "functions": {
+        "covered": 5,
+        "total": 7,
+        "pct": 71.42
+      },
+      "branches": {
+        "covered": 16,
+        "total": 16,
         "pct": 100
       }
     },

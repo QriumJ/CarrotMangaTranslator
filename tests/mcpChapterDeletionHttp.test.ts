@@ -24,13 +24,13 @@ it("requires separately approved mutation scopes and explicit removal acknowledg
     ).toBe("Unknown tool");
     for (const confirm of [true, false, "", "delete"])
       expect(
-        (await f.call("carrot_delete_chapter", { ...input, confirm })).error
-          .code,
-      ).toBe(-32602);
+        (await f.call("carrot_delete_chapter", { ...input, confirm })).result
+          .structuredContent.error,
+      ).toBe("invalid_arguments");
     expect(
       (await f.call("carrot_delete_chapter", { ...input, path: "C:/private" }))
-        .error.code,
-    ).toBe(-32602);
+        .result.structuredContent.error,
+    ).toBe("invalid_arguments");
     await f.assertOriginal();
     const saved = await f.call("carrot_delete_chapter", input);
     expect(saved.result.isError).toBe(false);

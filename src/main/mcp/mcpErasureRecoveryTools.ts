@@ -23,7 +23,7 @@ export function createMcpErasureRecoveryTools(
     inputSchema: z.toJSONSchema(mcpErasureRecoveryLookup),
     invoke: async (args, context) => {
       const parsed = mcpErasureRecoveryLookup.safeParse(args);
-      if (!parsed.success) throw new McpInvalidParams();
+      if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
       const { owner, authorize } = access(context, ["carrot.read"]);
       return textContent(
         await service.inspect(parsed.data.jobId, owner, authorize),
@@ -45,7 +45,7 @@ export function createMcpErasureRecoveryTools(
         inputSchema: z.toJSONSchema(mcpErasureRecoveryAction),
         invoke: async (args, context) => {
           const parsed = mcpErasureRecoveryAction.safeParse(args);
-          if (!parsed.success) throw new McpInvalidParams();
+          if (!parsed.success) throw new McpInvalidParams(parsed.error.issues);
           const { owner, authorize } = access(context, [
             "carrot.read",
             "carrot.process",

@@ -173,3 +173,23 @@ export function persistedResearchMetadata(
     },
   };
 }
+
+export function validErasureJobTarget(
+  kind: string,
+  target: {
+    engine?: "local" | "codex";
+    expectedModel?: string;
+    allowExternalProcessing?: boolean;
+  },
+): boolean {
+  if (kind !== "erase")
+    return [
+      target.engine,
+      target.expectedModel,
+      target.allowExternalProcessing,
+    ].every((value) => value === undefined);
+  return (
+    target.engine !== "codex" ||
+    (Boolean(target.expectedModel) && target.allowExternalProcessing === true)
+  );
+}

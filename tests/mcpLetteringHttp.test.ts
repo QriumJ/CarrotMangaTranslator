@@ -153,8 +153,8 @@ it("rejects insufficient scopes, unknown fields, forged plans and revoked connec
           ...input,
           path: "private",
         })
-      ).body.error.code,
-    ).toBe(-32602);
+      ).body.result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const accepted = (await f.call("carrot_prepare_lettering_batch", input))
       .body.result.structuredContent;
     const job = await f.settleJob(accepted.jobId, f.principal);
@@ -171,8 +171,8 @@ it("rejects insufficient scopes, unknown fields, forged plans and revoked connec
           requestId: randomUUID(),
           blocks: [],
         })
-      ).body.error.code,
-    ).toBe(-32602);
+      ).body.result.structuredContent.error,
+    ).toBe("invalid_arguments");
     f.provider.revokeConnection(f.principal);
     expect(
       (
@@ -242,8 +242,8 @@ it("discovers saved resources with read-only OAuth and uses the same pinned reci
           { ...reference, path: "private" },
           f.read,
         )
-      ).body.error.code,
-    ).toBe(-32602);
+      ).body.result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const input = await f.request({ kind: "resource", ...reference });
     expect(
       (await f.call("carrot_prepare_lettering_batch", input, f.read)).body.error

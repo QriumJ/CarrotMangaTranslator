@@ -22,8 +22,8 @@ it("uses scoped OAuth HTTP byte delivery without private paths and keeps durable
           ...begin,
           path: "C:/private.png",
         })
-      ).error.code,
-    ).toBe(-32602);
+      ).result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const call = async (name: string, args: object) => {
       const result = await f.call(name, args);
       expect(result.result?.isError, JSON.stringify(result)).toBe(false);
@@ -46,8 +46,8 @@ it("uses scoped OAuth HTTP byte delivery without private paths and keeps durable
           offset: 0,
           data: "file://secret",
         })
-      ).error.code,
-    ).toBe(-32602);
+      ).result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const prepared = await call("carrot_prepare_uploaded_import", {
       requestId: randomUUID(),
       source: "local",

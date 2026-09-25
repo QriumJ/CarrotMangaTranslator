@@ -32,7 +32,7 @@ export function createMcpSelectionEditSession(
   const lifetime = new AbortController();
   const edits = new McpPageEditService({
     openChapter,
-    savePageBlocks,
+    savePageBlocks: (request, guard) => savePageBlocks(request, guard, true),
     ...editing,
     withPageEdit: createMcpPageEditScope(app, openChapter, lifetime.signal),
   });

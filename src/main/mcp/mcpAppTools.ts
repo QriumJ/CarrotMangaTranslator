@@ -2,6 +2,8 @@ import { createMcpContextReferenceTools } from "./mcpContextReferenceTools";
 import { McpTypographyReadService } from "../application/mcpTypographyReadService";
 import { createMcpTypographyReadTools } from "./mcpTypographyReadTools";
 import { readMcpFontCatalog } from "./mcpFontCatalogAdapter";
+import { createMcpFontSamplesTool } from "./mcpFontSamplesTool";
+import { renderMcpFontSamples } from "./mcpFontSamplesAdapter";
 import { createMcpTranslationBatchTools } from "./mcpTranslationBatchTools";
 import { createMcpFormatBatchTools } from "./mcpFormatBatchTools";
 import {
@@ -51,7 +53,10 @@ export function createMcpAppTools(options: {
   });
   const extensions = [
     ...createMcpContextReferenceTools(),
-    ...typographyReadTools(options.additionalTools ?? []),
+    ...typographyReadTools(
+      options.additionalTools ?? [],
+      options.preferences.allowImages,
+    ),
     ...(options.additionalTools ?? []),
     ...createMcpTranslationBatchTools(
       createMcpTranslationBatchPorts(edits),
@@ -110,8 +115,11 @@ export function createMcpAppTools(options: {
   return tools;
 }
 
-function typographyReadTools(operations: readonly McpTool[]): McpTool[] {
-  return createMcpTypographyReadTools(
+function typographyReadTools(
+  operations: readonly McpTool[],
+  images: boolean,
+): McpTool[] {
+  const tools = createMcpTypographyReadTools(
     new McpTypographyReadService({
       openChapter,
       readCatalog: readMcpFontCatalog,
@@ -123,6 +131,14 @@ function typographyReadTools(operations: readonly McpTool[]): McpTool[] {
       ),
     }),
   );
+  if (images)
+    tools.push(
+      createMcpFontSamplesTool({
+        catalog: readMcpFontCatalog,
+        render: renderMcpFontSamples,
+      }),
+    );
+  return tools;
 }
 
 function configureMcpTool(

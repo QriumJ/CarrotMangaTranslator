@@ -1,7 +1,7 @@
 import { z } from "zod";
 import {
   oauthDigest,
-  readChatGptRedirect,
+  readMcpOAuthRedirect,
   readOAuthScope,
 } from "./mcpOAuthPolicy";
 
@@ -10,7 +10,10 @@ const timestamp = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
 const client = z
   .object({
     name: z.string().min(1).max(120),
-    redirects: z.array(z.string().transform(readChatGptRedirect)).min(1).max(4),
+    redirects: z
+      .array(z.string().transform(readMcpOAuthRedirect))
+      .min(1)
+      .max(4),
     method: z.enum(["none", "client_secret_post", "client_secret_basic"]),
     secretHash: digest.optional(),
   })
@@ -41,7 +44,7 @@ const snapshot = z
   .object({
     version: z.literal(1),
     issuer: z.string().url().max(2048),
-    clients: entries(client, 64),
+    clients: entries(client, 128),
     grants: z.array(grant).max(256),
     access: entries(z.string().uuid(), 8192),
     refresh: entries(

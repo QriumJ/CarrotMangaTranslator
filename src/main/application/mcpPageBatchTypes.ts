@@ -1,6 +1,9 @@
 import type { MangaPage } from "../../shared/libraryTypes";
 import type { McpContextSnapshot } from "./mcpContextEditPolicy";
-import type { McpTranslationBatchDirection } from "../../shared/mcpTranslationBatch";
+import type {
+  McpTranslationBatchReceipt,
+  McpTranslationBatchDirection,
+} from "../../shared/mcpTranslationBatch";
 
 export type BatchChange = { changed: boolean; excludedReason: string | null };
 export type BatchPage<C extends BatchChange> = {
@@ -60,4 +63,34 @@ export type BatchPolicy<
   project: (change: C) => V;
   inspectTool: string;
   exclusionWarning: string;
+};
+
+export type BatchEntry<
+  I extends BatchTarget,
+  C extends BatchChange,
+  P extends BatchPlan<C> = BatchPlan<C>,
+> = {
+  id: string;
+  owner: string;
+  input: I;
+  signature: string;
+  plan: P;
+  bytes: number;
+  expires: number;
+  busy: boolean;
+  applyStarted: boolean;
+  run?: BatchTextRun;
+  done?: Promise<void>;
+  receipts: Map<
+    string,
+    { signature: string; value: McpTranslationBatchReceipt }
+  >;
+};
+
+export type BatchTextRun = {
+  requestId: string;
+  direction: McpTranslationBatchDirection;
+  controller: AbortController;
+  status: "running" | "completed" | "partial" | "failed" | "cancelled";
+  failure?: unknown;
 };

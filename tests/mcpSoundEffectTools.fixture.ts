@@ -23,7 +23,7 @@ export async function soundEffectToolsFixture() {
     f.editing,
     true,
     true,
-    { startClient: f.startClient },
+    { startClient: f.startClient, startReader: f.startReader },
   );
   const invoke = async (name: string, args: object, caller = f.auth()) => {
     const tool = session.tools.find((tool) => tool.name === name);

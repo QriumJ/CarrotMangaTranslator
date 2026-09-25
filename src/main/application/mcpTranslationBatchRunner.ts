@@ -5,18 +5,11 @@ import type {
   BatchTarget,
   BatchPolicy,
   BatchCommit,
+  BatchTextRun,
 } from "./mcpPageBatchTypes";
 import type { McpTranslationPatch } from "../../shared/mcpEditingTypes";
-import type { McpTranslationBatchDirection } from "../../shared/mcpTranslationBatch";
 import { McpEditError } from "./mcpEditPolicy";
 
-export type BatchTextRun = {
-  requestId: string;
-  direction: McpTranslationBatchDirection;
-  controller: AbortController;
-  status: "running" | "completed" | "partial" | "failed" | "cancelled";
-  failure?: unknown;
-};
 export type BatchTextCommit = BatchCommit<McpTranslationPatch>;
 
 /** A sequence of ordinary page edits, NOT a model queue or a chapter-wide lock.

@@ -107,9 +107,10 @@ it("hides structure operations from read-only clients and rejects invalid input 
     for (const tool of tools) {
       expect(tool.outputSchema).toMatchObject({ type: "object" });
       expect((await f.call(tool.name, {}, f.read)).error.code).toBe(-32602);
-      expect((await f.call(tool.name, { injected: true })).error.code).toBe(
-        -32602,
-      );
+      expect(
+        (await f.call(tool.name, { injected: true })).result.structuredContent
+          .error,
+      ).toBe("invalid_arguments");
     }
     const plan = (
       await f.call("carrot_preview_block_structure_edit", f.request)

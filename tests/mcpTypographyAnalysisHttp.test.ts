@@ -176,7 +176,7 @@ it("denies missing processing authority and rejects unknown arguments before mod
       ...input,
       imagePath: "private",
     });
-    expect(invalid.error.code).toBe(-32602);
+    expect(invalid.result.structuredContent.error).toBe("invalid_arguments");
     expect(f.prepare).not.toHaveBeenCalled();
     const forbiddenOcr = await f.call("carrot_run_typography_analysis", {
       ...input,

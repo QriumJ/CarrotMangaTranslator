@@ -120,12 +120,12 @@ export const mcpIpcContracts = {
       .strict(),
   }),
   openMcpHelp: defineIpcContract<
-    ["tailscale" | "setup" | "chatgpt"],
+    ["tailscale" | "setup" | "chatgpt" | "codex"],
     { completed: boolean }
   >({
     apiKey: "openMcpHelp",
     channel: "mcp:open-help",
-    args: z.tuple([z.enum(["tailscale", "setup", "chatgpt"])]),
+    args: z.tuple([z.enum(["tailscale", "setup", "chatgpt", "codex"])]),
     result: z.object({ completed: z.boolean() }).strict(),
   }),
   copyMcpUrl: defineIpcContract<[], { completed: boolean }>({

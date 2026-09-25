@@ -79,8 +79,8 @@ it("enforces processing scope and exposes source evidence over HTTP without imag
     expect(execute).not.toHaveBeenCalled();
     expect(
       (await call("carrot_run_page_source_size", { ...args, path: "private" }))
-        .error.code,
-    ).toBe(-32602);
+        .result.structuredContent.error,
+    ).toBe("invalid_arguments");
     const started = await call("carrot_run_page_source_size", args);
     expect(started.result.isError).toBe(false);
     const jobId = started.result.structuredContent.jobId;

@@ -35,7 +35,8 @@ export class McpEditorGuard {
   async assertChapterClosed(chapterId: string): Promise<void> {
     const state = await this.probe();
     if (state.chapterId === chapterId)
-      throw busy(
+      throw new McpEditError(
+        "editor_open",
         "Close this chapter in the app before deleting or restoring it.",
       );
   }

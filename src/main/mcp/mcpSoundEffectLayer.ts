@@ -9,6 +9,11 @@ import { translatedPageReading } from "../codexImageEditing";
 import { generateLetteringLayers } from "../pipeline/codexTypesettingLettering";
 import { prepareExternalImageFile } from "../imageRedactionContext";
 import { McpEditError } from "../application/mcpEditPolicy";
+import { inspectGeneratedLettering } from "../application/codexTypesettingReadback";
+import type {
+  CodexTypesettingPorts,
+  TypesettingIssue,
+} from "../application/codexTypesettingContracts";
 type Command = Extract<McpSoundEffectPrepare["command"], { kind: "generate" }>;
 export async function generateSoundEffectLayer(
   page: MangaPage,
@@ -17,7 +22,59 @@ export async function generateSoundEffectLayer(
   client: Awaited<ReturnType<typeof startCodexImageSession>>,
   directory: string,
   signal: AbortSignal,
+  ask: CodexTypesettingPorts["ask"],
 ) {
+  const target = await soundEffectTarget(page, block);
+  const render = target.blocks[0].renderBbox;
+  const reading = translatedPageReading(target, "image");
+  let issues: TypesettingIssue[] = [];
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const result = await generateLetteringLayers(
+      target,
+      reading,
+      (id) => id,
+      client,
+      directory,
+      signal,
+      {
+        attempt,
+        issues,
+        invertColors: command.invertColors,
+        plan: {
+          groups: [
+            {
+              id: block.id,
+              description: "",
+              members: [{ regionId: block.id, bold: false, italic: false }],
+            },
+          ],
+          fonts: [],
+          sfxRendering: "image",
+        },
+      },
+    );
+    if (!result.page.blocks[0].imageGenerationBlocked) {
+      issues = await inspectGeneratedLettering(result.page, reading, attempt, {
+        ask,
+        blockId: (id) => id,
+        targetLanguage: "target-script",
+      });
+      signal.throwIfAborted();
+      if (issues.length) continue;
+    }
+    return projectLayer(
+      block,
+      result.page.blocks[0],
+      render,
+      command.allowRenderAdjustment,
+    );
+  }
+  throw new McpEditError(
+    "invalid_edit",
+    `Generated lettering failed independent readback after 3 attempts; use editable text or explicitly retry. ${issues.map((issue) => issue.reason).join("; ")}`,
+  );
+}
+async function soundEffectTarget(page: MangaPage, block: TranslationBlock) {
   const source = normalizeBboxTo1000(block.bbox, page, block.bboxSpace);
   const render = normalizeBboxTo1000(
     block.renderBbox ?? block.bbox,
@@ -38,43 +95,12 @@ export async function generateSoundEffectLayer(
     blockOrder: _order,
     ...sourcePage
   } = page;
-  const target = {
+  return {
     ...sourcePage,
     blockOrder: [block.id],
     imagePath: await prepareExternalImageFile(page.imagePath),
     blocks: [normalized],
   };
-  const reading = translatedPageReading(target, "image");
-  const result = await generateLetteringLayers(
-    target,
-    reading,
-    (id) => id,
-    client,
-    directory,
-    signal,
-    {
-      attempt: 1,
-      issues: [],
-      invertColors: command.invertColors,
-      plan: {
-        groups: [
-          {
-            id: block.id,
-            description: "",
-            members: [{ regionId: block.id, bold: false, italic: false }],
-          },
-        ],
-        fonts: [],
-        sfxRendering: "image",
-      },
-    },
-  );
-  return projectLayer(
-    block,
-    result.page.blocks[0],
-    render,
-    command.allowRenderAdjustment,
-  );
 }
 function projectLayer(
   block: TranslationBlock,
