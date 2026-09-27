@@ -46,6 +46,7 @@ function fixture() {
     fonts,
     reportError,
     library: createCustomFontLibrary({
+      validateFontLoad: async () => undefined,
       getFontsDirectory: () => fonts,
       getLegacyBundledFontsDirectory: () => legacy,
       reportError,
@@ -94,6 +95,7 @@ it("preserves installed bytes, preferences and saved block aliases exactly once 
   expect(f.library.removeCustomFont(old.customId)).toEqual([]);
   expect(existsSync(file)).toBe(false);
   const restarted = createCustomFontLibrary({
+    validateFontLoad: async () => undefined,
     getFontsDirectory: () => f.fonts,
     getLegacyBundledFontsDirectory: () => f.legacy,
     reportError: f.reportError,

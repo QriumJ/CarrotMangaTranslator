@@ -16,13 +16,22 @@ import {
   resolveBubbleLayoutBlockRevision,
 } from "./bubbleLayoutPageProcessor";
 
+type DetectionCache = {
+  entries: Map<
+    string,
+    { promise: Promise<ComicPageDetectionResult>; bytes: number }
+  >;
+  bytes: number;
+};
+const MAX_DETECTION_CACHE_BYTES = 64 * 1024 * 1024;
+
 export function createProductionBubbleLayoutRunner(
   options: BubbleLayoutRunnerFactoryOptions,
 ): BubbleLayoutRunner {
-  const detectionsByOriginalPath = new Map<
-    string,
-    Promise<ComicPageDetectionResult>
-  >();
+  const detectionsByOriginalPath: DetectionCache = {
+    entries: new Map(),
+    bytes: 0,
+  };
   return {
     runPage: (request) =>
       runProductionBubbleLayout(options, request, detectionsByOriginalPath),
@@ -32,7 +41,7 @@ export function createProductionBubbleLayoutRunner(
 async function runProductionBubbleLayout(
   options: BubbleLayoutRunnerFactoryOptions,
   request: BubbleLayoutRunnerRequest,
-  detectionsByOriginalPath: Map<string, Promise<ComicPageDetectionResult>>,
+  detectionsByOriginalPath: DetectionCache,
 ): Promise<BubbleLayoutRunnerResult> {
   let pageRevision: string | null = null;
   try {
@@ -91,27 +100,37 @@ async function runProductionBubbleLayout(
   }
 }
 
-function detectOriginalPageLayout(
+async function detectOriginalPageLayout(
   options: BubbleLayoutRunnerFactoryOptions,
   request: BubbleLayoutRunnerRequest,
-  detectionsByOriginalPath: Map<string, Promise<ComicPageDetectionResult>>,
+  cache: DetectionCache,
 ): Promise<ComicPageDetectionResult> {
   const originalPath = request.page.imagePath;
-  const cached = detectionsByOriginalPath.get(originalPath);
-  if (cached) {
-    return cached;
-  }
+  const source = await stat(originalPath);
+  const key = `${originalPath}:${source.size}:${source.mtimeMs}:${source.ctimeMs}`;
+  const cached = cache.entries.get(key);
+  if (cached) return cached.promise;
   const detection = detectOriginalPageLayoutUncached(options, request);
-  // A runner belongs to one inpainting job. Successful raw detections are
-  // shared by the mask pre-pass and final postprocess.
-  detectionsByOriginalPath.set(originalPath, detection);
-  void detection.catch(() => {
-    // A failed pre-pass must not consume the final postprocess's retry.
-    if (detectionsByOriginalPath.get(originalPath) === detection) {
-      detectionsByOriginalPath.delete(originalPath);
+  if (cache.entries.size >= 128) return detection;
+  const entry = { promise: detection, bytes: 0 };
+  cache.entries.set(key, entry);
+  try {
+    const result = await detection;
+    const bytes = result.detections.reduce(
+      (total, item) => total + 256 + (item.mask?.logits.byteLength ?? 0),
+      256,
+    );
+    if (cache.bytes + bytes > MAX_DETECTION_CACHE_BYTES)
+      cache.entries.delete(key);
+    else {
+      entry.bytes = bytes;
+      cache.bytes += bytes;
     }
-  });
-  return detection;
+    return result;
+  } catch (error) {
+    cache.entries.delete(key);
+    throw error;
+  }
 }
 
 async function detectOriginalPageLayoutUncached(

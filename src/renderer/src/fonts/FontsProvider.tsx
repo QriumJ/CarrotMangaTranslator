@@ -15,6 +15,8 @@ import {
   type BlockFontCatalog,
 } from "../lib/fonts";
 import { clearBlockFontLoadCache } from "../lib/blockFontLoading";
+import { formatErrorMessage } from "../lib/errorPresentation";
+import { toast } from "../lib/toastStore";
 import { FontsContext, type FontsContextValue } from "./fontsContextValue";
 
 export type FontLibrarySource = Pick<
@@ -121,6 +123,7 @@ function useFontLibraryActions(
   "busy" | "registerFont" | "removeFont" | "savePreferences"
 > {
   const [busy, setBusy] = React.useState(false);
+  const { t } = useTranslation("renderer");
   const registerFont = React.useCallback(async () => {
     setBusy(true);
     try {
@@ -129,11 +132,13 @@ function useFontLibraryActions(
         await refresh();
       }
     } catch (error) {
-      console.error(error);
+      toast.error(formatErrorMessage(error, t("fonts.registerFailed")), {
+        duration: 0,
+      });
     } finally {
       setBusy(false);
     }
-  }, [refresh, source]);
+  }, [refresh, source, t]);
 
   const removeFont = React.useCallback(
     async (id: string) => {

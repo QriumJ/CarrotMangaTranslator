@@ -1,7 +1,6 @@
 import { resolveDemotedBlockFontId } from "../shared/demotedBlockFonts";
 import { preserveDemotedFonts } from "./demotedFontMigration";
 import {
-  copyFileSync,
   existsSync,
   mkdirSync,
   readFileSync,
@@ -31,16 +30,16 @@ import type {
 } from "../shared/libraryTypes";
 import { getAppPaths } from "./appPaths";
 import {
-  assertFontFileLooksValid,
+  ALLOWED_FONT_EXTENSIONS,
   sanitizeFontLabel,
   normalizeFontUuid,
 } from "./customFontFileValidation";
 import { logError } from "./logger";
-
-export const ALLOWED_EXTENSIONS = new Set([".ttf", ".otf"]);
-const MAX_FONTS = 200;
+import { registerCustomFontFile } from "./customFontRegistration";
+import { validateCustomFontLoad } from "./customFontLoadValidation";
 
 export type CustomFontLibraryDependencies = {
+  validateFontLoad: (bytes: Buffer) => Promise<void>;
   getFontsDirectory: () => string;
   getLegacyBundledFontsDirectory?: () => string;
   reportError: (message: string, error: unknown) => void;
@@ -54,12 +53,13 @@ export type CustomFontLibrary = {
     customFonts?: readonly CustomFont[],
   ) => FontPreferences;
   getFontLibrarySnapshot: () => FontLibrarySnapshot;
-  registerCustomFontFromFile: (sourcePath: string) => CustomFont;
+  registerCustomFontFromFile: (sourcePath: string) => Promise<CustomFont>;
   removeCustomFont: (id: string) => CustomFont[];
   resolveCustomFontFilePath: (id: string) => string | null;
 };
 
 const productionDependencies: CustomFontLibraryDependencies = {
+  validateFontLoad: validateCustomFontLoad,
   getFontsDirectory: () => getAppPaths().fontsDir,
   getLegacyBundledFontsDirectory: () => {
     const paths = getAppPaths();
@@ -113,7 +113,7 @@ function isSafeFontFileName(id: string, fileName: string): boolean {
     return false;
   }
   const ext = extname(fileName).toLowerCase();
-  return ALLOWED_EXTENSIONS.has(ext) && fileName === `${id}${ext}`;
+  return ALLOWED_FONT_EXTENSIONS.has(ext) && fileName === `${id}${ext}`;
 }
 
 function resolveFontFilePath(
@@ -340,34 +340,25 @@ function getFontLibrarySnapshotWith(
   };
 }
 
-export function registerCustomFontFromFile(sourcePath: string): CustomFont {
+export function registerCustomFontFromFile(
+  sourcePath: string,
+): Promise<CustomFont> {
   return registerCustomFontFromFileWith(productionDependencies, sourcePath);
 }
 
 function registerCustomFontFromFileWith(
   dependencies: CustomFontLibraryDependencies,
   sourcePath: string,
-): CustomFont {
-  const ext = extname(sourcePath).toLowerCase();
-  if (!ALLOWED_EXTENSIONS.has(ext)) {
-    throw new Error("TTF 또는 OTF 폰트 파일만 등록할 수 있습니다.");
-  }
-  assertFontFileLooksValid(sourcePath, ext);
-  const fonts = listCustomFontsWith(dependencies);
-  if (fonts.length >= MAX_FONTS) {
-    throw new Error("등록할 수 있는 폰트 수를 초과했습니다.");
-  }
-  const id = randomUUID();
-  const fileName = `${id}${ext}`;
-  copyFileSync(sourcePath, join(fontsDir(dependencies), fileName));
-  const font: CustomFont = {
-    id,
-    label: sanitizeFontLabel(basename(sourcePath, extname(sourcePath))),
-    family: `MGTUser-${id}`,
-    fileName,
-  };
-  saveIndex(dependencies, [...fonts, font]);
-  return font;
+): Promise<CustomFont> {
+  return registerCustomFontFile(
+    {
+      validateFontLoad: dependencies.validateFontLoad,
+      listFonts: () => listCustomFontsWith(dependencies),
+      saveFonts: (fonts) => saveIndex(dependencies, fonts),
+      getFontsDirectory: () => fontsDir(dependencies),
+    },
+    sourcePath,
+  );
 }
 
 export function removeCustomFont(id: string): CustomFont[] {

@@ -1,11 +1,13 @@
 import { readFileSync, statSync } from "node:fs";
 
+export const ALLOWED_FONT_EXTENSIONS = new Set([".ttf", ".otf"]);
+
 const MAX_CUSTOM_FONT_BYTES = 32 * 1024 * 1024;
 
 export function assertFontFileLooksValid(
   sourcePath: string,
   extension: string,
-): void {
+): Buffer {
   const info = statSync(sourcePath);
   if (!info.isFile()) {
     throw new Error("폰트 파일을 읽지 못했습니다.");
@@ -13,7 +15,8 @@ export function assertFontFileLooksValid(
   if (info.size < 12 || info.size > MAX_CUSTOM_FONT_BYTES) {
     throw new Error("폰트 파일 크기가 올바르지 않습니다.");
   }
-  const header = readFileSync(sourcePath).subarray(0, 4);
+  const bytes = readFileSync(sourcePath);
+  const header = bytes.subarray(0, 4);
   const signature = header.toString("latin1");
   const isTrueType =
     header[0] === 0x00 &&
@@ -26,6 +29,7 @@ export function assertFontFileLooksValid(
   if (extension === ".ttf" && !isTrueType && signature !== "true") {
     throw new Error("TTF 폰트 파일 형식이 올바르지 않습니다.");
   }
+  return bytes;
 }
 
 export function sanitizeFontLabel(raw: string): string {

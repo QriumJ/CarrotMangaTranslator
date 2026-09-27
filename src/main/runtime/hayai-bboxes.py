@@ -8,6 +8,7 @@ effect crops are returned separately for the opt-in review layer.
 from __future__ import annotations
 
 import argparse
+import contextlib
 import gc
 import hashlib
 import json
@@ -72,6 +73,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--regions")
     parser.add_argument("--output")
     parser.add_argument("--batch")
+    parser.add_argument("--worker", action="store_true")
     parser.add_argument("--progress")
     parser.add_argument("--device", default="gpu")
     parser.add_argument("--source-language", default="ja")
@@ -83,6 +85,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    if args.worker:
+        return serve(args)
     items = read_batch_items(args)
     model, tokenizer, processor, device = load_runtime(args)
     summaries: list[dict[str, Any]] = []
@@ -118,6 +122,40 @@ def main() -> int:
             "output": item["output"], "count": len(payload["items"]),
         })
     print(json.dumps({"items": summaries, "count": len(summaries)}, ensure_ascii=False), flush=True)
+    return 0
+
+
+def serve(args: argparse.Namespace) -> int:
+    """Reuse only model state; acknowledge each durable page independently."""
+    runtime = None
+    for line in sys.stdin:
+        command = json.loads(line)
+        if command.get("type") == "shutdown":
+            return 0
+        response = {"id": command["id"], "ok": False}
+        try:
+            with contextlib.redirect_stdout(sys.stderr):
+                if runtime is None:
+                    runtime = load_runtime(args)
+                model, tokenizer, processor, device = runtime
+                item = normalize_batch_item(command)
+                process_page(
+                    image_path=runtime_path(item["image"]),
+                    region_path=runtime_path(item["regions"]),
+                    output_path=runtime_path(item["output"]),
+                    model=model, tokenizer=tokenizer, processor=processor, device=device,
+                    batch_size=max(1, args.batch_size),
+                    max_new_tokens=max(8, args.max_new_tokens),
+                    max_num_patches=max(1, args.max_num_patches),
+                )
+            response["ok"] = True
+        except Exception as error:
+            response.update(error=str(error), fatal=runtime is None or args.device != "cpu")
+        finally:
+            release_gpu_memory()
+        print(json.dumps(response, ensure_ascii=False), flush=True)
+        if response.get("fatal"):
+            return 1
     return 0
 
 

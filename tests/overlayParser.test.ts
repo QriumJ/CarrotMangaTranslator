@@ -8,6 +8,62 @@ const {
 } = require("../src/main/runtime/overlay-parser.cjs");
 
 describe("overlay parser", () => {
+  it.each(["\n", "\r\n"])(
+    "keeps a record open across a blank line between source and translation (%j)",
+    (newline) => {
+      const raw = [
+        "id: 1",
+        "type: nonsolid",
+        "textRole: ordinary",
+        "x1: 735",
+        "y1: 48",
+        "x2: 906",
+        "y2: 238",
+        "direction: vertical",
+        "angle: 0",
+        "fontSize: 32",
+        "confidence: 1.00",
+        String.raw`jp: ああ♥\n今日は\nいい天気`,
+        "",
+        String.raw`ko: 아아♥\n오늘은\n좋은 날씨`,
+        "",
+        "id: 2",
+        "type: solid",
+        "x1: 10",
+        "y1: 20",
+        "x2: 110",
+        "y2: 80",
+        "source: はい",
+        "",
+        "target: 네",
+        "",
+      ].join(newline);
+      const items = normalizeItems(parseJsonLenient(raw));
+      expect(items).toHaveLength(2);
+      expect(items[0]).toMatchObject({
+        id: 1,
+        bbox: { x: 735, y: 48, w: 171, h: 190 },
+        direction: "vertical",
+        fontSize: 32,
+        confidence: 1,
+        jp: "ああ♥\n今日は\nいい天気",
+        ko: "아아♥\n오늘은\n좋은 날씨",
+      });
+      expect(items[1]).toMatchObject({
+        id: 2,
+        jp: "はい",
+        ko: "네",
+        bbox: { x: 10, y: 20, w: 100, h: 60 },
+      });
+    },
+  );
+
+  it("does not borrow a translation or geometry from another incomplete record", () => {
+    const raw =
+      "id: 1\nx1: 10\ny1: 20\nx2: 110\ny2: 80\njp: 未完\n\nid: 2\njp: 次\n\nko: 다음";
+    expect(() => parseJsonLenient(raw)).toThrow("parseable structured payload");
+  });
+
   it("parses strict line records with corner coordinates", () => {
     const raw = String.raw`
 id: 1

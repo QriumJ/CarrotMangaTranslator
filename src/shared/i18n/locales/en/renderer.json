@@ -37,6 +37,7 @@
     "chapters": "Chapter count"
   },
   "fonts": {
+    "registerFailed": "Could not register the font. Check that it is an original TTF/OTF file supported by the app and try again. See the error report for details.",
     "default": "Default",
     "defaultSample": "Abc 가나다"
   },

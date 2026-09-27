@@ -5,13 +5,20 @@ import { buildBaseOptions, buildPageOptions } from "../pipeline/options";
 import { detectWorkflowBlocks, readWorkflowSource } from "./pageWorkflowOcr";
 import { translateWorkflowPage } from "./pageWorkflowTranslation";
 import { createWorkflowTypography } from "./pageWorkflowTypography";
-import { eraseWorkflowPage, layoutWorkflowPage } from "./pageWorkflowImages";
+import { createWorkflowImages } from "./pageWorkflowImages";
+import { createWorkflowSessions } from "./pageWorkflowSessions";
 import { applyWorkflowRuleStage } from "./pageWorkflowRuleExecution";
 import type { PageWorkflowRuntimeContext } from "./pageWorkflowRuntimeTypes";
 import type { PageWorkflowContextCommit } from "../application/pageWorkflowContextCommit";
 import { savePageWorkflowResult } from "../library";
 
 export function createPageWorkflowRuntime(context: PageWorkflowRuntimeContext) {
+  const sessions = createWorkflowSessions(context.dependencies.runtime);
+  context = {
+    ...context,
+    dependencies: { ...context.dependencies, runtime: sessions.runtime },
+  };
+  const images = createWorkflowImages(context);
   const typography = createWorkflowTypography(context);
   let pending: PageWorkflowContextCommit = {};
   let disposal: Promise<void> | undefined;
@@ -26,6 +33,7 @@ export function createPageWorkflowRuntime(context: PageWorkflowRuntimeContext) {
     },
   };
   return {
+    finishStage: sessions.close,
     restoreCompletedStage: async (
       stage: PageWorkflowStage,
       page: MangaPage,
@@ -57,20 +65,59 @@ export function createPageWorkflowRuntime(context: PageWorkflowRuntimeContext) {
     ): Promise<MangaPage> => {
       pending = {};
       if (stage === "detect" || stage === "ocr")
-        return executeWorkflowRecognition(context, chapter, page, stage);
+        return withSessionFailureCleanup(sessions, () =>
+          executeWorkflowRecognition(context, chapter, page, stage),
+        );
       if (!page.blocks.length) return page;
       if (stage === "translate")
-        return translateWorkflowPage(context, chapter, page);
+        return withSessionFailureCleanup(sessions, () =>
+          translateWorkflowPage(context, chapter, page),
+        );
       if (stage === "typography") return typography.apply(page);
-      if (stage === "erase") return eraseWorkflowPage(context, page);
-      if (stage === "layout") return layoutWorkflowPage(context, page);
+      if (stage === "erase") return images.erase(page);
+      if (stage === "layout") return images.layout(page);
       return applyWorkflowRuleStage(context, chapter, page, stage);
     },
-    dispose: () =>
-      (disposal ??= Promise.resolve().then(() =>
-        context.dependencies.fontMatching.pageInference?.dispose?.(),
-      )),
+    dispose: () => (disposal ??= disposeWorkflowResources(sessions, context)),
   };
+}
+
+async function withSessionFailureCleanup(
+  sessions: ReturnType<typeof createWorkflowSessions>,
+  run: () => Promise<MangaPage>,
+) {
+  try {
+    return await run();
+  } catch (error) {
+    try {
+      await sessions.close();
+    } catch (cleanupError) {
+      throw Object.assign(
+        new AggregateError(
+          [error, cleanupError],
+          "페이지 처리와 런타임 종료에 실패했습니다.",
+          { cause: cleanupError },
+        ),
+        { nonRetriable: true },
+      );
+    }
+    throw error;
+  }
+}
+
+async function disposeWorkflowResources(
+  sessions: ReturnType<typeof createWorkflowSessions>,
+  context: PageWorkflowRuntimeContext,
+) {
+  const results = await Promise.allSettled([
+    sessions.dispose(),
+    context.dependencies.fontMatching.pageInference?.dispose?.(),
+  ]);
+  const errors = results.flatMap((result) =>
+    result.status === "rejected" ? [result.reason] : [],
+  );
+  if (errors.length)
+    throw new AggregateError(errors, "페이지 작업 정리에 실패했습니다.");
 }
 
 async function executeWorkflowRecognition(

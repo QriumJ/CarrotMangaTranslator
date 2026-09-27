@@ -3,6 +3,10 @@ import { getAppPaths } from "./appPaths";
 
 const APP_RUNTIME_MODULE_FILES = {
   ocrEnvironment: "ocr/runtime-environment.cjs",
+  ocrCommands: "simple-page-ocr-commands.cjs",
+  ocrProgress: "simple-page-progress.cjs",
+  ocrProgressHandlers: "simple-page-ocr-progress-handlers.cjs",
+  shellCommand: "transport/shell-command.cjs",
   ocrBatch: "simple-page-ocr-bbox-pipeline.cjs",
   animeTextRelations: "semantic-ocr/anime-text-review-relations.cjs",
   apiKeyRetry: "transport/api-key-retry.cjs",

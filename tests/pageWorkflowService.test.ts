@@ -66,6 +66,63 @@ function harness(
 }
 
 describe("Hayai page workflow commits", () => {
+  it("finishes each stage before preparing the next", async () => {
+    const order: string[] = [];
+    const h = harness(["ocr", "translate"]);
+    h.port.prepareStage = async (stage) => {
+      order.push(stage);
+    };
+    h.port.finishStage = async () => {
+      order.push("close");
+    };
+    await executePageWorkflow(h.input, h.port);
+    expect(order).toEqual(["ocr", "close", "translate", "close"]);
+  });
+
+  it("releases page ownership and retains the primary error if cleanup also fails", async () => {
+    const h = harness(["ocr", "translate"]);
+    h.port.prepareStage = async () => {
+      throw new Error("preparation failed");
+    };
+    h.port.finishStage = vi.fn(async () => {
+      throw new Error("cleanup failed");
+    });
+    const result = await executePageWorkflow(h.input, h.port);
+    expect(result.status).toBe("failed");
+    expect(result.issues[0].message).toContain("preparation failed");
+    expect(h.port.finishStage).toHaveBeenCalledTimes(1);
+    expect(h.port.releasePage).toHaveBeenCalledTimes(1);
+    expect(h.port.execute).not.toHaveBeenCalled();
+  });
+
+  it("does not prepare or restore an entirely completed typography stage", async () => {
+    const h = harness(["typography"]);
+    const restore = vi.fn();
+    h.port.restoreCompletedStage = restore;
+    await executePageWorkflow(h.input, h.port);
+    await executePageWorkflow(h.input, h.port);
+    expect(h.port.prepareStage).toHaveBeenCalledTimes(1);
+    expect(h.port.execute).toHaveBeenCalledTimes(1);
+    expect(restore).not.toHaveBeenCalled();
+    expect(h.port.progress).toHaveBeenCalledTimes(2);
+  });
+
+  it("prepares the whole selection when only part of typography is complete", async () => {
+    const h = harness(["typography"]);
+    await executePageWorkflow(h.input, h.port);
+    h.addPage({ ...makePage(), id: "second" });
+    const restore = vi.fn();
+    h.port.restoreCompletedStage = restore;
+    await executePageWorkflow(h.input, h.port);
+    expect(h.port.prepareStage).toHaveBeenLastCalledWith(
+      "typography",
+      expect.anything(),
+      ["page-1", "second"],
+    );
+    expect(restore).toHaveBeenCalledTimes(1);
+    expect(h.port.execute).toHaveBeenCalledTimes(2);
+  });
+
   it("keeps processing other pages after a page-local failure", async () => {
     const h = harness(
       ["translate", "review"],

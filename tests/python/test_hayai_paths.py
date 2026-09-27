@@ -2,6 +2,11 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
+import sys
+import math
+import re
+import unicodedata
 import ast
 from contextlib import redirect_stdout
 from io import StringIO
@@ -12,7 +17,7 @@ from pathlib import Path
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 
 SCRIPT = Path(__file__).resolve().parents[2] / "src/main/runtime/hayai-bboxes.py"
@@ -21,15 +26,15 @@ SCRIPT = Path(__file__).resolve().parents[2] / "src/main/runtime/hayai-bboxes.py
 def load_file_pipeline():
     tree = ast.parse(SCRIPT.read_text(encoding="utf-8"))
     functions = {
-        "main", "parse_args", "runtime_path", "read_batch_items",
+        "main", "serve", "parse_args", "runtime_path", "read_batch_items",
         "normalize_batch_item", "read_json", "emit_progress", "process_page",
-        "require_regions",
+        "require_regions", "require_box", "box_contains", "dialogue_hint", "normalize_text", "effect_item",
     }
     nodes = [ast.ImportFrom(module="__future__", names=[ast.alias(name="annotations")], level=0)]
     nodes.extend(node for node in tree.body if (
         isinstance(node, ast.FunctionDef) and node.name in functions
     ) or isinstance(node, ast.Assign))
-    namespace = dict(argparse=argparse, json=json, os=os, Path=Path)
+    namespace = dict(argparse=argparse, json=json, os=os, Path=Path, contextlib=contextlib, sys=sys, math=math, re=re, unicodedata=unicodedata)
     exec(compile(ast.fix_missing_locations(ast.Module(body=nodes, type_ignores=[])), str(SCRIPT), "exec"), namespace)
     return namespace
 
@@ -145,6 +150,51 @@ class HayaiPathsTest(unittest.TestCase):
                     self.assertEqual(payload["items"], [])
                     events = [json.loads(line) for line in fixture_path(progress).read_text(encoding="utf-8").splitlines()]
                     self.assertEqual([event["phase"] for event in events], ["start", "done"])
+
+    def test_worker_reuses_model_and_preserves_single_page_output(self):
+        with tempfile.TemporaryDirectory(prefix="hayai-worker-") as root:
+            root = Path(root)
+            image, regions = root / "image.png", root / "regions.json"
+            image.write_bytes(b"fixture-image")
+            regions.write_text(json.dumps({
+                "schemaVersion": self.runtime["REGION_SCHEMA"], "width": 10, "height": 20,
+                "dialogueRegions": [{"id": 1, "regionId": "block", "kind": "dialogue", "bbox": [0, 0, 10, 20],
+                                     "recognitionBboxes": [[0, 0, 5, 20], [5, 0, 10, 20]]}],
+                "effectRegions": [],
+            }), encoding="utf-8")
+            load = Mock(return_value=(None, None, None, None))
+            boundaries = {"load_runtime": load, "release_gpu_memory": lambda: None,
+                          "Image": SimpleNamespace(open=ImageFile), "ImageOps": SimpleNamespace(exif_transpose=lambda image: image),
+                          "crop_region": lambda image, box: box,
+                          "recognize_batch_resilient": lambda *args, **kwargs: ["原", "文"]}
+            argv = [str(SCRIPT), "--image", str(image), "--regions", str(regions), "--output", str(root / "single.json")]
+            with patch.dict(self.runtime, boundaries), patch("sys.argv", argv), redirect_stdout(StringIO()):
+                self.runtime["main"]()
+            load.reset_mock()
+            commands = [{"id": str(i), "image": str(image), "regions": str(regions), "output": str(root / f"worker-{i}.json")} for i in range(3)]
+            stdin = StringIO("\n".join(json.dumps(c) for c in [*commands, {"type": "shutdown"}]) + "\n")
+            stdout = StringIO()
+            with patch.dict(self.runtime, boundaries), patch("sys.argv", [*argv, "--worker"]), patch("sys.stdin", stdin), redirect_stdout(stdout):
+                self.assertEqual(self.runtime["main"](), 0)
+            self.assertEqual(load.call_count, 1)
+            self.assertEqual([json.loads(line)["ok"] for line in stdout.getvalue().splitlines()], [True] * 3)
+            baseline = json.loads((root / "single.json").read_text(encoding="utf-8"))
+            for i in range(3):
+                self.assertEqual(json.loads((root / f"worker-{i}.json").read_text(encoding="utf-8")), baseline)
+
+    def test_worker_page_failure_is_explicit_and_cpu_can_continue(self):
+        load = Mock(return_value=(None, None, None, None))
+        process = Mock(side_effect=[None, ValueError("broken page"), None])
+        commands = [{"id": str(i), "image": "i", "regions": "r", "output": "o"} for i in range(3)]
+        output = StringIO()
+        with patch.dict(self.runtime, {"load_runtime": load, "process_page": process, "release_gpu_memory": lambda: None}), \
+             patch("sys.argv", [str(SCRIPT), "--worker", "--device", "cpu"]), \
+             patch("sys.stdin", StringIO("\n".join(json.dumps(c) for c in commands))), redirect_stdout(output):
+            self.assertEqual(self.runtime["main"](), 0)
+        responses = [json.loads(line) for line in output.getvalue().splitlines()]
+        self.assertEqual([r["ok"] for r in responses], [True, False, True])
+        self.assertFalse(responses[1]["fatal"])
+        self.assertEqual(load.call_count, 1)
 
 
 if __name__ == "__main__":

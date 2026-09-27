@@ -135,6 +135,7 @@ function normalizeLooseLine(line) {
 /** @param {LooseParserState} state @param {string} line */
 function processLooseLine(state, line) {
   if (!line) {
+    if (state.currentTextKey === "jp") return;
     flushCurrentItem(state);
     state.currentTextKey = null;
     return;

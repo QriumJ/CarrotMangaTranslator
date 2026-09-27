@@ -43,6 +43,44 @@ afterEach(async () => {
 });
 
 describe("production bubble layout failure fallback", () => {
+  it.each(["changed-source", "oversized-result"])(
+    "does not reuse %s detections",
+    async (mode) => {
+      const files = await createPageFiles();
+      const page = { ...makePage(files.original, files.cleaned), blocks: [] };
+      bubbleRuntimeMocks.ensureKoharuLayoutAssets.mockResolvedValue({
+        modelPath: join(files.root, "model.onnx"),
+      });
+      bubbleRuntimeMocks.detectKoharuPageLayout.mockResolvedValue({
+        imageWidth: 4,
+        imageHeight: 4,
+        detections:
+          mode === "oversized-result"
+            ? [{ mask: { logits: new Float32Array(16 * 1024 * 1024) } }]
+            : [],
+      });
+      const { createProductionBubbleLayoutRunner } =
+        await import("../src/main/bubbleLayout/bubbleLayoutFacade");
+      const runner = createProductionBubbleLayoutRunner({
+        dataRoot: files.root,
+      });
+      const request = {
+        imagePath: files.cleaned,
+        page,
+        paddingRatio: 0,
+        policy: "balanced" as const,
+        signal: new AbortController().signal,
+      };
+      await runner.runPage(request);
+      if (mode === "changed-source")
+        await writeFile(files.original, "changed source bytes");
+      await runner.runPage(request);
+      expect(bubbleRuntimeMocks.detectKoharuPageLayout).toHaveBeenCalledTimes(
+        2,
+      );
+    },
+  );
+
   it("reuses original-page detector output across mask and final layout passes", async () => {
     const files = await createPageFiles();
     const finalPage = makePage(files.original, files.cleaned);

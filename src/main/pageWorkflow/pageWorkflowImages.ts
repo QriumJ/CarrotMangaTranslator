@@ -25,9 +25,18 @@ function workflowBubbleRunner(context: PageWorkflowRuntimeContext) {
   });
 }
 
-export async function eraseWorkflowPage(
+export function createWorkflowImages(context: PageWorkflowRuntimeContext) {
+  const runner = workflowBubbleRunner(context);
+  return {
+    erase: (page: MangaPage) => eraseWorkflowPage(context, page, runner),
+    layout: (page: MangaPage) => layoutWorkflowPage(context, page, runner),
+  };
+}
+
+async function eraseWorkflowPage(
   context: PageWorkflowRuntimeContext,
   page: MangaPage,
+  runner: ReturnType<typeof workflowBubbleRunner>,
 ): Promise<MangaPage> {
   const targets = workflowTargetBlocks(page, "erase", context.plan);
   if (!targets.length) return page;
@@ -42,7 +51,7 @@ export async function eraseWorkflowPage(
             page,
             blockIds,
             config: { policy: "balanced", overwriteManual: false },
-            runner: workflowBubbleRunner(context),
+            runner,
             signal: context.signal,
           })
         : { page };
@@ -92,9 +101,10 @@ export async function eraseWorkflowPage(
   }
 }
 
-export async function layoutWorkflowPage(
+async function layoutWorkflowPage(
   context: PageWorkflowRuntimeContext,
   page: MangaPage,
+  runner: ReturnType<typeof workflowBubbleRunner>,
 ): Promise<MangaPage> {
   let output = page;
   if (context.plan.bubbleLayout) {
@@ -106,7 +116,7 @@ export async function layoutWorkflowPage(
         await runBubbleLayoutPostprocess({
           page,
           blockIds,
-          runner: workflowBubbleRunner(context),
+          runner,
           signal: context.signal,
           config: {
             policy: "balanced",

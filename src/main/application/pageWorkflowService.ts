@@ -34,6 +34,7 @@ export type PageWorkflowExecutionPort = {
     chapter: ChapterSnapshot,
     pageIds: string[],
   ) => Promise<void>;
+  finishStage?: () => Promise<void>;
   execute: (
     stage: PageWorkflowStage,
     chapter: ChapterSnapshot,
@@ -105,20 +106,62 @@ async function executeWorkflowChapter(
           (id) =>
             acquired.includes(id) && !hasFailedDependency(issues, id, stage),
         );
-      await port.prepareStage(stage, chapter, pageIds);
-      const stageIssues = await executeWorkflowPages(
-        input,
-        port,
-        chapter,
-        pageIds,
-        stage,
+      if (reportCompletedStage(input, port, chapter, pageIds, stage)) continue;
+      issues.push(
+        ...(await executeWorkflowStage(input, port, chapter, pageIds, stage)),
       );
-      issues.push(...stageIssues);
     }
     return issues;
   } finally {
     for (const id of acquired) port.releasePage(selection.chapterId, id);
   }
+}
+
+async function executeWorkflowStage(
+  input: PageWorkflowExecution,
+  port: PageWorkflowExecutionPort,
+  chapter: ChapterSnapshot,
+  pageIds: string[],
+  stage: PageWorkflowStage,
+) {
+  let issues: PageWorkflowIssue[];
+  try {
+    await port.prepareStage(stage, chapter, pageIds);
+    issues = await executeWorkflowPages(input, port, chapter, pageIds, stage);
+  } catch (error) {
+    try {
+      await port.finishStage?.();
+    } catch (cleanupError) {
+      throw new AggregateError(
+        [error, cleanupError],
+        `페이지 단계 처리와 종료에 실패했습니다: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: cleanupError },
+      );
+    }
+    throw error;
+  }
+  await port.finishStage?.();
+  return issues;
+}
+
+function reportCompletedStage(
+  input: PageWorkflowExecution,
+  port: PageWorkflowExecutionPort,
+  chapter: ChapterSnapshot,
+  pageIds: string[],
+  stage: PageWorkflowStage,
+) {
+  const pages = chapter.pages.filter((page) => pageIds.includes(page.id));
+  const complete = pages.every((page) =>
+    workflowStageComplete(
+      workflowReceipt(input, page),
+      page,
+      stage,
+      input.configurationKeys?.[stage],
+    ),
+  );
+  if (complete) pages.forEach((page) => port.progress(stage, page));
+  return complete;
 }
 
 function hasFailedDependency(

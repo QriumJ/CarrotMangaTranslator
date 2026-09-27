@@ -15,6 +15,7 @@ import type {
 import { startModelEndpointSession } from "./runtimeModules";
 import type { OcrGroupingEvidencePort } from "./ocrGroupingEvidencePort";
 import { logPipelineWarning } from "./pipelineLogger";
+import { startHayaiRecognitionSession } from "./hayaiRecognitionSession";
 
 type TranslationEndpointSession = {
   readonly handle: ModelEndpointHandle;
@@ -22,6 +23,10 @@ type TranslationEndpointSession = {
 };
 
 export type TranslationRuntimePort = {
+  startPreparedHayaiSession?: (options: TranslationOptions) => Promise<{
+    collect: (options: TranslationOptions) => Promise<OcrBboxResult>;
+    dispose: () => Promise<void>;
+  }>;
   collectPreparedHayaiHints?: (
     options: TranslationOptions,
   ) => Promise<OcrBboxResult>;
@@ -115,6 +120,8 @@ export function createTranslationRuntimePort({
   runtime: RuntimeModules;
 }): TranslationRuntimePort {
   return {
+    startPreparedHayaiSession: (options) =>
+      prepareHayaiSession(options, gpuMemory, hayaiRegionPrepass, runtime),
     isModelCached: (options) => runtime.simplePage.isModelCached(options),
     startEndpointSession: async (options) => {
       await runtime.simplePage.waitForOcrIdle?.();
@@ -175,6 +182,21 @@ export function createTranslationRuntimePort({
     normalizeRegionSingleItem: (parsed) =>
       runtime.overlayTools.normalizeRegionSingleItem(parsed),
   };
+}
+
+async function prepareHayaiSession(
+  options: TranslationOptions,
+  gpuMemory: GpuMemoryCoordinator,
+  prepass: HayaiOcrRegionPrepassPort,
+  runtime: RuntimeModules,
+) {
+  if (!isHayaiOcrPipeline(options.ocrPipeline) || !options.ocrBboxRegionsPath)
+    throw new Error("HayaiOCR 고정 영역 입력이 필요합니다.");
+  await releaseGpuBeforeOcr(gpuMemory, [options]);
+  await prepass.releaseDetectorResources("prepared-hayai-session");
+  return startHayaiRecognitionSession(options, (page) =>
+    runtime.simplePage.collectOcrBboxHints(page),
+  );
 }
 
 async function collectOcrHints({

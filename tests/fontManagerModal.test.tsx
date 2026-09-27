@@ -32,6 +32,45 @@ afterEach(() => {
 });
 
 describe("FontManagerModal", () => {
+  it("shows registration failure and re-enables the import button", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const source = createTestMangaGatewayStub({
+      getFontLibrary: async () => ({
+        customFonts: [],
+        preferences: {
+          hiddenIds: [],
+          favoriteIds: [],
+          orderedIds: [],
+          defaultFontId: DEFAULT_BLOCK_FONT_ID,
+        },
+      }),
+      onFontLibraryChanged: () => () => undefined,
+      registerCustomFont: async () => {
+        throw new Error("OTS invalid font");
+      },
+    });
+    render(
+      <FontsProvider source={source}>
+        <FontManagerModal onClose={vi.fn()} />
+      </FontsProvider>,
+    );
+    const button = await screen.findByRole("button", {
+      name: /폰트.*추가|폰트.*등록/,
+    });
+    await waitFor(() =>
+      expect((button as HTMLButtonElement).disabled).toBe(false),
+    );
+    fireEvent.click(button);
+    await waitFor(() =>
+      expect(
+        getToasts().some((item) =>
+          item.message.includes("폰트를 등록하지 못했습니다"),
+        ),
+      ).toBe(true),
+    );
+    expect((button as HTMLButtonElement).disabled).toBe(false);
+    expect(getToasts()[0]?.duration).toBe(0);
+  });
   it("saves hidden fonts and keeps the default font visible", async () => {
     const saveFontPreferences = vi.fn(async (preferences) => ({
       customFonts: [],

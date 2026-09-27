@@ -141,8 +141,8 @@
       "reason": "Shared popup behavior authority; broad reuse is intentional"
     },
     "src/renderer/src/lib/errorPresentation.ts": {
-      "maxImportedBy": 28,
-      "reason": " Workflow actions reuse existing error presentation."
+      "maxImportedBy": 29,
+      "reason": " Workflow actions reuse existing error presentation. Font registration uses the existing localized error boundary."
     },
     "src/shared/geometry.ts": {
       "maxImportedBy": 35,
@@ -232,6 +232,10 @@
     "src/renderer/src/components/PageArtwork.tsx": {
       "maxRuntimeImports": 13,
       "reason": " Prepared blank blocks share a single display-text contract across canvas and exports."
+    },
+    "src/renderer/src/lib/toastStore.ts": {
+      "maxImportedBy": 26,
+      "reason": "Font registration reports rejected font files through the existing toast store."
     }
   }
 }

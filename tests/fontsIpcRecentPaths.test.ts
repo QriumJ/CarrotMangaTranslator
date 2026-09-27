@@ -125,7 +125,7 @@ describe("font registration recent directory", () => {
     const { dataRoot, fontDirectory, fontPath } =
       await makeFontFixture("fonts-ipc-success-");
     const service = makeFontRegistrationService();
-    service.registerCustomFontFromFile.mockReturnValue(registeredFont);
+    service.registerCustomFontFromFile.mockResolvedValue(registeredFont);
     electronBoundary.showOpenDialog
       .mockResolvedValueOnce({ canceled: false, filePaths: [fontPath] })
       .mockResolvedValueOnce({ canceled: true, filePaths: [] });
@@ -145,9 +145,9 @@ describe("font registration recent directory", () => {
   it("does not remember the source folder when font registration fails", async () => {
     const { dataRoot, fontPath } = await makeFontFixture("fonts-ipc-failure-");
     const service = makeFontRegistrationService();
-    service.registerCustomFontFromFile.mockImplementationOnce(() => {
-      throw new Error("invalid font");
-    });
+    service.registerCustomFontFromFile.mockRejectedValueOnce(
+      new Error("invalid font"),
+    );
     electronBoundary.showOpenDialog
       .mockResolvedValueOnce({ canceled: false, filePaths: [fontPath] })
       .mockResolvedValueOnce({ canceled: true, filePaths: [] });

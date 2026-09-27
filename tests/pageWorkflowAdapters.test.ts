@@ -18,7 +18,7 @@ import { prepareWorkflowTypographyPage } from "../src/main/pageWorkflow/pageWork
 import { preparePageResult } from "../src/main/pipeline/pageResultBuilder";
 import { estimateSourceFontSizeForItem } from "../src/main/pipeline/sourceFontSizeEstimator";
 import { successTranslationResult } from "./helpers/wholePageTranslationResults";
-import { layoutWorkflowPage } from "../src/main/pageWorkflow/pageWorkflowImages";
+import { createWorkflowImages } from "../src/main/pageWorkflow/pageWorkflowImages";
 import {
   buildBaseOptions,
   buildPageOptions,
@@ -643,10 +643,12 @@ describe("independent Hayai workflow adapters", () => {
       withBubbleLayout: true,
       blockPatch: { translatedText: "이것은 길게 쓴 수동 번역문입니다" },
     });
-    expect(await layoutWorkflowPage(f.context, page)).toEqual(page);
+    expect(await createWorkflowImages(f.context).layout(page)).toEqual(page);
     const manual = makePage({
       blockPatch: { translatedText: "첫 줄\n둘째 줄" },
     });
-    expect(await layoutWorkflowPage(f.context, manual)).toEqual(manual);
+    expect(await createWorkflowImages(f.context).layout(manual)).toEqual(
+      manual,
+    );
   });
 });

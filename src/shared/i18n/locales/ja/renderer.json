@@ -37,6 +37,7 @@
     "chapters": "話数"
   },
   "fonts": {
+    "registerFailed": "フォントを登録できませんでした。アプリで読み込める元のTTF/OTFファイルか確認し、再試行してください。詳細はエラーレポートで確認できます。",
     "default": "デフォルト",
     "defaultSample": "あいう Aa"
   },

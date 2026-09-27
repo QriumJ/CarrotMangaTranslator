@@ -3,10 +3,8 @@ import { installWorkflowRuleRenderer } from "./workflowRules";
 import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import { PageArtwork } from "../components/PageArtwork";
-import {
-  loadBlockFonts,
-  type BlockFontLoadReport,
-} from "../lib/blockFontLoading";
+import { loadBlockFonts } from "../lib/blockFontLoading";
+import { assertExportFontsLoaded } from "./fontValidation";
 import { createBlockFontCatalog } from "../lib/fonts";
 import { waitForWarpDisplacementMaps } from "../lib/warpDisplacementMap";
 import { parsePageExportData } from "./documentData";
@@ -50,7 +48,7 @@ async function startPageExport(): Promise<void> {
     decodeExportImage(data.imageSrc, data.sourceSize),
     loadBlockFonts(document, data.page.blocks, catalog),
   ]);
-  assertFontsLoaded(fontReport);
+  assertExportFontsLoaded(fontReport, catalog);
   const root = createRoot(stage);
   flushSync(() => {
     root.render(
@@ -94,27 +92,6 @@ async function waitForRenderedImages(
     stage.querySelectorAll<HTMLImageElement>("img:not([data-warp-map])"),
   );
   await Promise.all(images.map((image) => image.decode()));
-}
-
-function assertFontsLoaded(report: BlockFontLoadReport): void {
-  if (report.failures.length > 0) {
-    throw new Error(
-      `Page export font loading failed: ${report.failures
-        .map(
-          (failure) => `${failure.css} (${formatFontLoadError(failure.error)})`,
-        )
-        .join("; ")}`,
-    );
-  }
-  if (report.missingFamilies.length > 0) {
-    throw new Error(
-      `Page export fonts are missing: ${report.missingFamilies.join(", ")}`,
-    );
-  }
-}
-
-function formatFontLoadError(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 function waitForTwoAnimationFrames(): Promise<void> {

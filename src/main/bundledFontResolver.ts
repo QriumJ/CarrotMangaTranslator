@@ -1,7 +1,8 @@
 import { existsSync } from "node:fs";
 import { extname, join } from "node:path";
 import { getAppPaths } from "./appPaths";
-import { ALLOWED_EXTENSIONS, isPathInside } from "./customFonts";
+import { isPathInside } from "./customFonts";
+import { ALLOWED_FONT_EXTENSIONS } from "./customFontFileValidation";
 
 /**
  * 빌트인 @font-face 폰트(`mgt-font:///<rel>`)의 파일 경로를 해석한다. dev에서는
@@ -15,7 +16,7 @@ export function resolveBundledFontFilePath(rel: string): string | null {
   if (!rel || rel.includes("\0")) {
     return null;
   }
-  if (!ALLOWED_EXTENSIONS.has(extname(rel).toLowerCase())) {
+  if (!ALLOWED_FONT_EXTENSIONS.has(extname(rel).toLowerCase())) {
     return null;
   }
   const { repoRoot, isPackaged } = getAppPaths();

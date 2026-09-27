@@ -47,15 +47,19 @@ function startCommand(command, options, resolve, reject) {
     reject,
   );
   bindExecution(execution);
-  if (options.lowPriority && child.pid) {
-    try {
-      setPriority(child.pid, constants.priority.PRIORITY_BELOW_NORMAL);
-    } catch (error) {
-      // Scheduling priority is best effort; worker/RAM limits still apply.
-      options.onOutput?.(`OCR worker priority could not be lowered: ${error}`);
-    }
-  }
+  if (options.lowPriority) lowerProcessPriority(child.pid, options.onOutput);
   armTimeout(execution);
+}
+
+/** @param {number | null | undefined} pid @param {RunCommandOptions["onOutput"]} onOutput */
+function lowerProcessPriority(pid, onOutput) {
+  if (!pid) return;
+  try {
+    setPriority(pid, constants.priority.PRIORITY_BELOW_NORMAL);
+  } catch (error) {
+    // Scheduling priority is best effort; worker/RAM limits still apply.
+    onOutput?.(`OCR worker priority could not be lowered: ${error}`);
+  }
 }
 
 /** @param {import("node:child_process").ChildProcess} child @param {CommandSpec} command @param {RunCommandOptions} options @param {CommandExecution["resolve"]} resolve @param {CommandExecution["reject"]} reject @returns {CommandExecution} */
@@ -248,4 +252,4 @@ function emitSanitizedLine(onOutput, line) {
   if (sanitized) onOutput(sanitized);
 }
 
-module.exports = { runCommand };
+module.exports = { runCommand, lowerProcessPriority };

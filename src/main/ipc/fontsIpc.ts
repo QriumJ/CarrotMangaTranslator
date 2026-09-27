@@ -91,7 +91,7 @@ export function registerFontsIpc(
       if (result.canceled || !result.filePaths[0]) {
         return null;
       }
-      const font = registrationService.registerCustomFontFromFile(
+      const font = await registrationService.registerCustomFontFromFile(
         result.filePaths[0],
       );
       rememberRecentDialogFile(

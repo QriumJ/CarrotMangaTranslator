@@ -15,6 +15,8 @@ const TEST_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx"]);
  * mocking the same internal dependency by convention.
  */
 const ALLOWED_INTERNAL_BOUNDARY_MOCKS = new Set([
+  // Substitute only the Python installer; use real command/env modules and worker transport.
+  "tests/hayaiRecognitionSession.test.ts::../src/main/runtimeModuleLoader",
   // Exercise real context analysis/research against isolated storage and a controlled provider lifecycle.
   "tests/workContextAnalysisLifecycle.test.ts::../src/main/appPaths",
   "tests/workContextAnalysisLifecycle.test.ts::../src/main/translationRuntime",

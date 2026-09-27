@@ -39,6 +39,66 @@ describe("custom font index validation", () => {
     }
   });
 
+  it("rejects an unreadable font before writing a file or index", async () => {
+    const root = await createTempRoot();
+    const source = join(root, "broken.ttf");
+    const bytes = Buffer.alloc(12);
+    bytes.writeUInt32BE(0x00010000);
+    await writeFile(source, bytes);
+    const library = createCustomFontLibrary({
+      getFontsDirectory: () => join(root, "fonts"),
+      reportError: vi.fn(),
+      validateFontLoad: vi
+        .fn()
+        .mockRejectedValue(new Error("앱에서 읽을 수 없는 폰트")),
+    });
+    await expect(library.registerCustomFontFromFile(source)).rejects.toThrow(
+      "“broken”: 앱에서 읽을 수 없는 폰트",
+    );
+    expect(existsSync(join(root, "fonts"))).toBe(false);
+    expect(await readFile(source)).toEqual(bytes);
+  });
+
+  it("stores inspected bytes and keeps both concurrent registrations", async () => {
+    const root = await createTempRoot();
+    const source = join(root, "valid.ttf");
+    const bytes = Buffer.alloc(12);
+    bytes.writeUInt32BE(0x00010000);
+    await writeFile(source, bytes);
+    const release: Array<() => void> = [];
+    const library = createCustomFontLibrary({
+      getFontsDirectory: () => join(root, "fonts"),
+      reportError: vi.fn(),
+      validateFontLoad: () =>
+        new Promise<void>((resolve) => release.push(resolve)),
+    });
+    const first = library.registerCustomFontFromFile(source);
+    const second = library.registerCustomFontFromFile(source);
+    await writeFile(source, "source replaced during validation");
+    release.forEach((resolve) => resolve());
+    const fonts = await Promise.all([first, second]);
+    expect(library.listCustomFonts()).toHaveLength(2);
+    for (const font of fonts)
+      expect(await readFile(join(root, "fonts", font.fileName))).toEqual(bytes);
+  });
+
+  it("rolls back a new font file when its index cannot be saved", async () => {
+    const root = await createTempRoot();
+    const source = join(root, "valid.ttf");
+    const bytes = Buffer.alloc(12);
+    bytes.writeUInt32BE(0x00010000);
+    await writeFile(source, bytes);
+    await mkdir(join(root, "fonts", "index.json"), { recursive: true });
+    const library = createTestCustomFonts(root, vi.fn());
+    await expect(library.registerCustomFontFromFile(source)).rejects.toThrow();
+    expect(
+      (await readdir(join(root, "fonts"))).filter((name) =>
+        name.endsWith(".ttf"),
+      ),
+    ).toEqual([]);
+    expect(await readFile(source)).toEqual(bytes);
+  });
+
   it("keeps only UUID-backed basename font files inside the fonts directory", async () => {
     const rootDir = await createTempRoot();
     const fontsDir = join(rootDir, "fonts");
@@ -290,6 +350,7 @@ function createTestCustomFonts(
   reportError: (message: string, error: unknown) => void,
 ): CustomFontLibrary {
   return createCustomFontLibrary({
+    validateFontLoad: async () => undefined,
     getFontsDirectory: () => join(rootDir, "fonts"),
     reportError,
   });

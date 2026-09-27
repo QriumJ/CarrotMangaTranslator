@@ -37,6 +37,7 @@
     "chapters": "章节数"
   },
   "fonts": {
+    "registerFailed": "无法注册字体。请确认文件为应用支持的原始 TTF/OTF 文件，然后重试。详细原因请查看错误报告。",
     "default": "默认",
     "defaultSample": "示例 Aa"
   },
