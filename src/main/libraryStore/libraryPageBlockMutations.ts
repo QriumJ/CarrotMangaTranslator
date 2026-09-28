@@ -1,3 +1,4 @@
+import { createPageRevision } from "../../shared/pageRevision";
 import {
   hashTranslationBlocks,
   hashStableValue,
@@ -32,6 +33,7 @@ export type SavePagesBlocksMutationRuntime = {
   commitChapterAndWork: (
     chapter: LibraryChapter,
     updatedAt: string,
+    assertCanCommit?: () => void,
   ) => Promise<void>;
 };
 
@@ -40,15 +42,20 @@ const productionRuntime: SavePagesBlocksMutationRuntime = {
   logWarning: logLibraryWarning,
   now: () => new Date().toISOString(),
   readChapterFile,
-  commitChapterAndWork: async (chapter, updatedAt) => {
+  commitChapterAndWork: async (chapter, updatedAt, assertCanCommit) => {
     const work = await readWorkFile(chapter.workId);
     if (!work) {
       throw new Error("작품을 찾지 못했습니다.");
     }
-    await runLibraryTransaction("save-page-blocks", async (transaction) => {
-      await stageChapterFile(transaction, chapter);
-      await stageWorkFile(transaction, { ...work, updatedAt });
-    });
+    await runLibraryTransaction(
+      "save-page-blocks",
+      async (transaction) => {
+        await stageChapterFile(transaction, chapter);
+        await stageWorkFile(transaction, { ...work, updatedAt });
+      },
+      undefined,
+      assertCanCommit,
+    );
   },
 };
 
@@ -56,8 +63,11 @@ export function createSavePagesBlocksMutation(
   runtime: SavePagesBlocksMutationRuntime,
 ): (
   request: SavePagesBlocksRequest,
+  assertCanCommit?: () => void,
+  preserveBlockOrder?: boolean,
 ) => Promise<ReturnType<typeof hydrateChapter>> {
-  return async (request) => {
+  return async (request, assertCanCommit, preserveBlockOrder = false) => {
+    assertCanCommit?.();
     assertValidPageBatch(request.pages);
     const locator = await runtime.findChapterLocation(request.chapterId);
     if (!locator) {
@@ -73,8 +83,14 @@ export function createSavePagesBlocksMutation(
 
     const updates = resolvePageUpdates(chapter, request, runtime.logWarning);
     const now = nextChapterUpdatedAt(chapter, runtime.now());
-    const nextChapter = applyPageUpdates(chapter, updates, now);
-    await runtime.commitChapterAndWork(nextChapter, now);
+    const nextChapter = applyPageUpdates(
+      chapter,
+      updates,
+      now,
+      preserveBlockOrder,
+    );
+    assertCanCommit?.();
+    await runtime.commitChapterAndWork(nextChapter, now, assertCanCommit);
     return hydrateChapter(nextChapter);
   };
 }
@@ -84,22 +100,29 @@ export const savePagesBlocksUnlocked =
 
 export function savePageBlocksUnlocked(
   request: SavePageBlocksRequest,
+  assertCanCommit?: () => void,
+  preserveBlockOrder = false,
 ): Promise<ReturnType<typeof hydrateChapter>> {
-  return savePagesBlocksUnlocked({
-    chapterId: request.chapterId,
-    dirtyVersion: request.dirtyVersion,
-    saveReason: request.saveReason,
-    pages: [
-      {
-        pageId: request.pageId,
-        baseUpdatedAt: request.baseUpdatedAt,
-        baseBlocksHash: request.baseBlocksHash,
-        baseBlockOrderHash: request.baseBlockOrderHash,
-        blocks: request.blocks,
-        blockOrder: request.blockOrder,
-      },
-    ],
-  });
+  return savePagesBlocksUnlocked(
+    {
+      chapterId: request.chapterId,
+      dirtyVersion: request.dirtyVersion,
+      saveReason: request.saveReason,
+      pages: [
+        {
+          pageId: request.pageId,
+          expectedRevision: request.expectedRevision,
+          baseUpdatedAt: request.baseUpdatedAt,
+          baseBlocksHash: request.baseBlocksHash,
+          baseBlockOrderHash: request.baseBlockOrderHash,
+          blocks: request.blocks,
+          blockOrder: request.blockOrder,
+        },
+      ],
+    },
+    assertCanCommit,
+    preserveBlockOrder,
+  );
 }
 
 function assertValidPageBatch(pages: SavePageBlocksUpdate[]): void {
@@ -135,21 +158,17 @@ function assertPageSaveAllowed(
   request: SavePagesBlocksRequest,
   logWarning: typeof logLibraryWarning,
 ): void {
-  if (!update.baseUpdatedAt || page.updatedAt === update.baseUpdatedAt) {
-    return;
-  }
   const currentBlocksHash = hashTranslationBlocks(page.blocks);
-  const currentBlockOrderHash = hashStableValue(page.blockOrder ?? null);
-  const orderUnchanged =
-    currentBlockOrderHash ===
-    (update.baseBlockOrderHash ?? hashStableValue(update.blockOrder ?? null));
-  if (
-    update.baseBlocksHash &&
-    currentBlocksHash === update.baseBlocksHash &&
-    orderUnchanged
-  ) {
-    return;
-  }
+  const revisionMatches = matchesExpectedPageRevision(page, update);
+  const blocksMatch =
+    update.baseBlocksHash === undefined ||
+    currentBlocksHash === update.baseBlocksHash;
+  const sameVersion =
+    !update.baseUpdatedAt || page.updatedAt === update.baseUpdatedAt;
+  const orderMatches = matchesPageBlockOrder(page, update, sameVersion);
+  const versionMatches =
+    sameVersion || Boolean(update.baseBlocksHash && blocksMatch);
+  if (revisionMatches && blocksMatch && versionMatches && orderMatches) return;
   logWarning("Page block save conflict", {
     chapterId: request.chapterId,
     pageId: update.pageId,
@@ -165,10 +184,36 @@ function assertPageSaveAllowed(
   );
 }
 
+/** Timestamp drift may merge image changes, but must never overwrite a newer reading order. */
+function matchesPageBlockOrder(
+  page: LibraryPageRecord,
+  update: SavePageBlocksUpdate,
+  sameVersion: boolean,
+): boolean {
+  if (update.baseBlockOrderHash === undefined && sameVersion) return true;
+  return (
+    hashStableValue(page.blockOrder ?? null) ===
+    (update.baseBlockOrderHash ?? hashStableValue(update.blockOrder ?? null))
+  );
+}
+
+/** Versioned remote edits may not race a newly acquired page job. */
+function matchesExpectedPageRevision(
+  page: LibraryPageRecord,
+  update: SavePageBlocksUpdate,
+): boolean {
+  if (update.expectedRevision === undefined) return true;
+  return (
+    page.analysisStatus !== "running" &&
+    createPageRevision(page) === update.expectedRevision
+  );
+}
+
 function applyPageUpdates(
   chapter: LibraryChapter,
   updates: Map<string, SavePageBlocksUpdate>,
   updatedAt: string,
+  preserveBlockOrder: boolean,
 ): LibraryChapter {
   const pages = chapter.pages.map((page) => {
     const update = updates.get(page.id);
@@ -180,7 +225,9 @@ function applyPageUpdates(
     return {
       ...page,
       blocks,
-      blockOrder: normalizeSavedBlockOrder(update.blockOrder, blocks),
+      blockOrder: preserveBlockOrder
+        ? update.blockOrder
+        : normalizeSavedBlockOrder(update.blockOrder, blocks),
       translationCompletion: resolveCompletionAfterBlockMutation(
         page.translationCompletion,
         page.blocks,

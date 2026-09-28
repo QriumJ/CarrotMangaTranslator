@@ -286,6 +286,7 @@ export const StartInpaintingRequestSchema = z.discriminatedUnion("mode", [
     .object({
       chapterId: uuid,
       mode: z.literal("page-pattern"),
+      engine: z.literal("codex").optional(),
       pageId: uuid,
       blockId: TranslationBlockObjectSchema.shape.id.optional(),
       postprocess: InpaintingPostprocessOptionsSchema.optional(),

@@ -314,7 +314,7 @@ describe("production cleanup coverage floor gate", () => {
     );
 
     const inconsistent = createFixture();
-    inconsistent.coverage[inconsistent.existingFileAbsolute].lines = {
+    inconsistent.coverage[fixturePath(inconsistent)].lines = {
       total: 100,
       covered: 79,
       skipped: 0,
@@ -501,11 +501,16 @@ describe("production cleanup coverage floor gate", () => {
     expect(Object.keys(manifest.floors)).toEqual(scope.existing);
     expect(Object.keys(manifest.introducedFloors)).toEqual(scope.added);
     expect(manifest.deletedFiles).toEqual(scope.deleted);
-    expect(scope.existing).toHaveLength(769);
-    expect(scope.added).toHaveLength(747);
-    expect(scope.deleted).toHaveLength(10);
+    expect(scope.existing).toHaveLength(781);
+    // Includes MCP and master additions; the renderer gatherText floor follows its shared owner.
+    expect(scope.added).toHaveLength(1260);
+    expect(scope.deleted).toHaveLength(11);
   });
 });
+
+function fixturePath(fixture: Fixture): string {
+  return fixture.existingFileAbsolute;
+}
 
 type Fixture = {
   root: string;

@@ -40,6 +40,8 @@ import { validateCustomFontLoad } from "./customFontLoadValidation";
 
 export type CustomFontLibraryDependencies = {
   validateFontLoad: (bytes: Buffer) => Promise<void>;
+  /** Suppress directory creation and legacy migration in query methods only. */
+  readOnlyQueries?: boolean;
   getFontsDirectory: () => string;
   getLegacyBundledFontsDirectory?: () => string;
   reportError: (message: string, error: unknown) => void;
@@ -90,7 +92,7 @@ export function createCustomFontLibrary(
 
 function fontsDir(dependencies: CustomFontLibraryDependencies): string {
   const dir = dependencies.getFontsDirectory();
-  mkdirSync(dir, { recursive: true });
+  if (!dependencies.readOnlyQueries) mkdirSync(dir, { recursive: true });
   return dir;
 }
 
@@ -186,7 +188,7 @@ function listCustomFontsWith(
 ): CustomFont[] {
   try {
     const legacyDirectory = dependencies.getLegacyBundledFontsDirectory?.();
-    if (legacyDirectory)
+    if (legacyDirectory && !dependencies.readOnlyQueries)
       preserveDemotedFonts(fontsDir(dependencies), legacyDirectory);
     const path = join(fontsDir(dependencies), "index.json");
     if (!existsSync(path)) {

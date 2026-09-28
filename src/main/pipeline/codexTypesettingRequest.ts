@@ -9,6 +9,7 @@ import { typesettingOutputSchema } from "../application/codexTypesettingValidati
 
 type Evidence = (name: string, value: unknown) => Promise<void>;
 type Request = {
+  model?: string;
   effort?: import("../../shared/codexSettings").CodexReasoningEffort;
   client: Pick<CodexAppServerClient, "runEphemeralTurn">;
   stage: string;
@@ -27,6 +28,7 @@ const CAPACITY_ERROR =
 
 export async function askAstraJson(request: Request): Promise<unknown> {
   const { client, stage, cwd, signal, evidence } = request;
+  const model = request.model ?? CODEX_TYPESETTING_MODEL;
   const { prompt, images } = prepareTypesettingInspection(
     stage,
     request.prompt,
@@ -50,7 +52,7 @@ export async function askAstraJson(request: Request): Promise<unknown> {
     let result;
     try {
       result = await client.runEphemeralTurn({
-        model: CODEX_TYPESETTING_MODEL,
+        model,
         effort: request.effort ?? "high",
         cwd,
         signal,
@@ -95,7 +97,7 @@ export async function askAstraJson(request: Request): Promise<unknown> {
       ...result,
     });
     signal.throwIfAborted();
-    if (result.routedModel && result.routedModel !== CODEX_TYPESETTING_MODEL)
+    if (result.routedModel && result.routedModel !== model)
       throw new Error(
         `검증되지 않은 모델로 변경되었습니다: ${result.routedModel}`,
       );
@@ -114,7 +116,7 @@ function createRequestEvidence(
       sha256: createHash("sha256").update(image.dataUrl).digest("hex"),
     }));
   return {
-    model: CODEX_TYPESETTING_MODEL,
+    model: request.model ?? CODEX_TYPESETTING_MODEL,
     effort: request.effort ?? "high",
     prompt: prepared.prompt,
     outputSchema,
