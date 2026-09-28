@@ -2,7 +2,7 @@
 /** @typedef {import("../runtime-jsdoc-types").DetailedError} DetailedError */
 /** @typedef {import("../runtime-jsdoc-types").RuntimeOptions} RuntimeOptions */
 /** @typedef {import("../runtime-jsdoc-types").RuntimeOptions & { label?: string | null; onProgress?: ((progress: Record<string, unknown>) => void) | null; port?: unknown; reuseServer?: boolean | null; serverPath?: string | null; serverLogPath?: string | null } & Record<string, any>} ServerRuntimeOptions */
-/** @typedef {{ baseUrl: string; child: import("node:child_process").ChildProcess | null; startedByScript: boolean; serverLogPath?: string | null }} StartedServer */
+/** @typedef {{ baseUrl: string; child: import("node:child_process").ChildProcess | null; startedByScript: boolean; effectiveFitTargetMb?: unknown; serverLogPath?: string | null }} StartedServer */
 /** @typedef {{ child: import("node:child_process").ChildProcess; recent: { stdout: string; stderr: string }; outputTransport: ReturnType<typeof createServerOutputTransport>; onAbort: () => void }} RunningServer */
 const { spawn } = require("node:child_process");
 const { existsSync } = require("node:fs");
@@ -55,6 +55,7 @@ const { createServerOutputTransport } = require("./llama-server-output.cjs");
 const {
   VRAM_THROTTLE_MESSAGE,
   calibrateMtpFitServer,
+  withMtpFitCache,
 } = require("./mtp-fit-calibration-flow.cjs");
 const {
   isReachable,
@@ -82,32 +83,56 @@ async function startServer(options) {
     return { baseUrl, child: null, startedByScript: false };
   const serverPath = await resolveServerPath(baseUrl, options);
   await ensureHfModelAssetsDownloaded(options, inspectModelLaunch(options));
-  await verifyLlamaRuntimePreflight(serverPath, options);
+  const memoryEstimate = await verifyLlamaRuntimePreflight(serverPath, options);
   emitServerStarting(options);
+  const startOptions = { ...options, ...memoryEstimate };
+  return withMtpFitCache(
+    baseUrl,
+    serverPath,
+    startOptions,
+    startCalibratedServer,
+  );
+}
+
+/** @param {string} baseUrl @param {string} serverPath @param {ServerRuntimeOptions} options @returns {Promise<StartedServer>} */
+async function startCalibratedServer(baseUrl, serverPath, options) {
   /** @type {ServerRuntimeOptions} */
   let launchOptions = { ...options, serverPath };
   let launchArgs = buildLaunchArgs(launchOptions);
   let running = spawnServer(serverPath, launchArgs, launchOptions);
+  const awaitReady = () =>
+    awaitServerReady(baseUrl, serverPath, launchArgs, launchOptions, running);
   try {
-    await awaitServerReady(
-      baseUrl,
-      serverPath,
-      launchArgs,
-      launchOptions,
-      running,
-    );
-    await calibrateMtpFitServer(baseUrl, launchOptions);
+    await awaitReady();
+    await calibrateMtpFitServer(baseUrl, launchOptions, undefined, {
+      isMemoryEstimateMissing: () =>
+        Number.isFinite(options.mtpFitMemoryGapMiB) &&
+        running.outputTransport.mtpMemoryEstimateMissing,
+      restart: async (fitTargetMb) => {
+        options.abortSignal?.removeEventListener?.("abort", running.onAbort);
+        await stopServer({
+          baseUrl,
+          child: running.child,
+          startedByScript: true,
+        });
+        options.abortSignal?.throwIfAborted();
+        launchOptions = { ...launchOptions, fitTargetMb };
+        launchArgs = buildLaunchArgs(launchOptions);
+        running = spawnServer(serverPath, launchArgs, launchOptions);
+        await awaitReady();
+      },
+    });
     running.outputTransport.stopStartupForwarding();
     emitServerReady(options);
   } catch (error) {
-    const startupError = await normalizeVramThrottleError(error, launchOptions);
+    const startupError = await normalizeVramThrottleError(error, options);
     terminateChildProcessTree(running.child);
     throw normalizeStartupError(
       startupError,
       baseUrl,
       serverPath,
       launchArgs,
-      options,
+      launchOptions,
       running.recent,
     );
   } finally {
@@ -118,6 +143,7 @@ async function startServer(options) {
     child: running.child,
     startedByScript: true,
     serverLogPath: options.serverLogPath,
+    effectiveFitTargetMb: launchOptions.fitTargetMb,
   };
 }
 
@@ -241,12 +267,8 @@ function bindServerOutput(running) {
   };
   child.stdout?.setEncoding("utf8");
   child.stderr?.setEncoding("utf8");
-  child.stdout?.on("data", (chunk) =>
-    recordServerOutput("stdout", chunk, running),
-  );
-  child.stderr?.on("data", (chunk) =>
-    recordServerOutput("stderr", chunk, running),
-  );
+  child.stdout?.on("data", (chunk) => outputTransport.record("stdout", chunk));
+  child.stderr?.on("data", (chunk) => outputTransport.record("stderr", chunk));
   child.once("exit", disposeOutput);
   child.on("error", disposeOutput);
   let pipeFailed = false;
@@ -259,11 +281,6 @@ function bindServerOutput(running) {
   };
   child.stdout?.on("error", failPipe);
   child.stderr?.on("error", failPipe);
-}
-
-/** @param {"stdout" | "stderr"} stream @param {unknown} chunk @param {RunningServer} running */
-function recordServerOutput(stream, chunk, running) {
-  running.outputTransport.record(stream, chunk);
 }
 
 /** @param {string} baseUrl @param {string} serverPath @param {string[]} launchArgs @param {ServerRuntimeOptions} options @param {RunningServer} running */
@@ -403,17 +420,21 @@ function emitServerReady(options) {
 async function stopServer(server) {
   if (!server?.child) return;
   const child = server.child;
-  let exited = false;
-  child.once("exit", () => {
-    exited = true;
-  });
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  // A refit must never overlap the old server's GPU allocations. Register
+  // before termination and fail closed if process exit cannot be confirmed.
+  const exited = new Promise((resolve) => child.once("exit", resolve));
   if (process.platform === "win32") terminateChildProcessTree(child);
   else child.kill("SIGTERM");
-  await Promise.race([
-    new Promise((resolve) => child.once("exit", resolve)),
-    delay(5000),
-  ]);
-  if (!exited) terminateChildProcessTree(child);
+  await Promise.race([exited, delay(5000)]);
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  terminateChildProcessTree(child);
+  await Promise.race([exited, delay(5000)]);
+  if (child.exitCode === null && child.signalCode === null) {
+    throw new Error(
+      "llama-server 종료를 확인하지 못해 GPU 메모리를 다시 배분할 수 없습니다.",
+    );
+  }
 }
 
 /** @param {unknown} value */

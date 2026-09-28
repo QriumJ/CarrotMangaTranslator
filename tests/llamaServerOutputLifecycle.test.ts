@@ -1,7 +1,25 @@
-import { execFile } from "node:child_process";
+import { execFile, spawn, type ChildProcess } from "node:child_process";
 import { resolve } from "node:path";
 import { promisify } from "node:util";
 import { expect, it } from "vitest";
+
+it("confirms the old server has exited before a refit can allocate GPU memory", async () => {
+  const { stopServer } =
+    require("../src/main/runtime/transport/llama-server-process.cjs") as {
+      stopServer(server: { child: ChildProcess }): Promise<void>;
+    };
+  const child = spawn(process.execPath, ["-e", "setInterval(() => {}, 1000)"], {
+    stdio: "ignore",
+    windowsHide: true,
+  });
+  try {
+    await stopServer({ child });
+    expect(child.exitCode !== null || child.signalCode !== null).toBe(true);
+    await stopServer({ child });
+  } finally {
+    if (child.exitCode === null && child.signalCode === null) child.kill();
+  }
+});
 
 it.each([false, true])(
   "drains a real Writable during disposal (pending write fails: %s)",

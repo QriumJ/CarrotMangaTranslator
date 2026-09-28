@@ -22,6 +22,7 @@ function shouldCalibrateMtpFit(options, platform = process.platform) {
   if (platform !== "win32") return false;
   if (!isSpeedGemmaModel(options)) return false;
   if (!options.useDraft) return false;
+  if (options.fitEnabled === false) return false;
   if (String(options.draftSpecType || "").toLowerCase() !== "draft-mtp") {
     return false;
   }
@@ -193,6 +194,57 @@ async function measureNvidiaFreeVramMiB(options) {
   return samples.length ? Math.min(...samples) : null;
 }
 
+/**
+ * Windows can report more CUDA-addressable memory than physically free VRAM.
+ * Reuse the existing preflight device listing, before loading model weights,
+ * so paging cannot hide this difference once the board is nearly full.
+ * @param {CalibrationOptions} options
+ * @param {string} output
+ * @param {typeof measureNvidiaFreeVramMiB} [measure]
+ * @param {NodeJS.Platform} [platform]
+ */
+async function measureMtpFitMemoryBudget(
+  options,
+  output,
+  measure = measureNvidiaFreeVramMiB,
+  platform = process.platform,
+) {
+  if (!shouldCalibrateMtpFit(options, platform)) return null;
+  const devices = [
+    ...output.matchAll(
+      /^\s*CUDA(\d+):[^\r\n]*\((\d+) MiB, (\d+) MiB free\)\s*$/gm,
+    ),
+  ];
+  const configured = resolveComputeGpuIndex(options.computeGpuIndex);
+  // Automatic multi-GPU placement has no single matching board-wide budget.
+  const device =
+    configured === null
+      ? devices.length === 1
+        ? devices[0]
+        : undefined
+      : devices.find((match) => Number(match[1]) === configured);
+  if (!device) return null;
+  const nativeFreeMiB = Number(device[3]);
+  if (nativeFreeMiB > Number(device[2])) return null;
+  const physicalFreeMiB = await measure({
+    ...options,
+    computeGpuIndex: Number(device[1]),
+  });
+  if (
+    physicalFreeMiB === null ||
+    !Number.isFinite(physicalFreeMiB) ||
+    physicalFreeMiB < 0 ||
+    physicalFreeMiB > Number(device[2])
+  )
+    return null;
+  return {
+    mtpFitMemoryGapMiB: Math.max(0, nativeFreeMiB - physicalFreeMiB),
+    mtpFitPhysicalFreeMiB: physicalFreeMiB,
+    mtpFitGpuTotalMiB: Number(device[2]),
+    mtpFitGpuIdentity: device[0].trim().replace(/, \d+ MiB free\)/, ")"),
+  };
+}
+
 /** @param {unknown} configuredIndex */
 function queryNvidiaFreeVramMiB(configuredIndex) {
   const computeGpuIndex = resolveComputeGpuIndex(configuredIndex);
@@ -239,6 +291,7 @@ module.exports = {
   createMtpCalibrationRequestBody,
   isLikelyMtpVramThrottle,
   measureNvidiaFreeVramMiB,
+  measureMtpFitMemoryBudget,
   probeMtpServerPerformance,
   resolveMtpStartupTimeoutMs,
   shouldCalibrateMtpFit,

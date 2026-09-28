@@ -35,6 +35,7 @@ function createServerOutputTransport(
     ),
   };
   let forwardStartupOutput = true;
+  let mtpMemoryEstimateMissing = false;
   if (serverLogTarget?.creationError !== undefined) {
     recordServerLogFailure(normalizeError(serverLogTarget.creationError));
   }
@@ -44,6 +45,9 @@ function createServerOutputTransport(
 
   return {
     recent,
+    get mtpMemoryEstimateMissing() {
+      return mtpMemoryEstimateMissing;
+    },
     dispose() {
       output.stdout.dispose();
       output.stderr.dispose();
@@ -54,6 +58,12 @@ function createServerOutputTransport(
     },
     /** @param {ServerOutputName} stream @param {unknown} chunk */
     record(stream, chunk) {
+      // Keep the fit diagnostic even after the bounded recent-output buffer
+      // rolls over, including warnings split across pipe chunks.
+      mtpMemoryEstimateMissing ||=
+        `${recent[stream].slice(-256)}${String(chunk)}`.includes(
+          "failed to measure the memory of the extra model, fitting without it",
+        );
       recent[stream] = shrinkBuffer(recent[stream], chunk);
       serverLog.write(`[${stream}] ${chunk}`);
       emitServerInstallLog(options, chunk, forwardStartupOutput);

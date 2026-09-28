@@ -48,12 +48,31 @@ continue without a usable draft path.
 
 The application therefore runs a short real MTP probe after server startup,
 sampling physical free VRAM while the configured text-only or 1,024
-image-token path is active. If the measured margin is too small, decode drops
-below 10 tok/s, or the 30-second probe times out, the request stops with an
-error toast asking the user to lower context length and maximum output tokens.
-The risky MTP startup path also has a 60-second startup bound. The runtime does
-not rewrite context length, maximum output tokens, or the requested free-VRAM
-target, and it no longer restarts with an automatically increased fit target.
+image-token path is active. If decode drops below 10 tok/s or the 30-second
+probe times out, a recorded extra-model fitting failure together with measured
+low VRAM permits one runtime-only fit correction and a fresh probe. The
+correction uses the measured deficit plus 256 MiB, rounded up to 256 MiB,
+bounded to 512–4,096 MiB extra reserve, plus the pre-load CUDA/physical memory
+budget gap rounded up to 256 MiB. That gap is measured using the existing
+device preflight and `nvidia-smi`; unlike the MTP correction it is not capped
+at 4 GiB, since it represents physically unavailable VRAM. Unknown or
+ambiguous GPU budgets do not enable automatic refitting.
+The old process must exit before the
+replacement starts. Healthy starts, unknown VRAM measurements and failures
+without the fitting warning do not trigger a restart. A failed second probe
+stops the request. Failures without measured low VRAM use a performance-check
+error rather than asserting VRAM exhaustion.
+The risky MTP startup path also has a 60-second startup bound. Context length,
+maximum output tokens, MTP and the saved free-VRAM target remain unchanged;
+both requested and effective fit targets are retained in failure diagnostics.
+Successful corrections now persist across jobs and app restarts in the
+`mtp-fit-v1` runtime cache. Reuse requires the same launch/file/GPU identity
+and physical free VRAM plus CUDA budget gap within 512 MiB. Changed or unknown
+conditions and entries older than 14 days trigger ordinary fitting. Reused
+targets still pass the startup probe; failed cached launches invalidate the
+entry. The shared cache policy and validation are documented in
+`gemma4-26b-qat-mtp.md`; user settings remain the authority for the requested
+margin, context, output limit and MTP mode.
 
 ## Production speed contract
 

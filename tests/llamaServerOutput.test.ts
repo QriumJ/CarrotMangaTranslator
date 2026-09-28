@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 type ProgressEvent = Record<string, unknown>;
 type OutputTransport = {
+  mtpMemoryEstimateMissing: boolean;
   dispose: () => void;
   recent: { stdout: string; stderr: string };
   record: (stream: "stdout" | "stderr", chunk: unknown) => void;
@@ -53,6 +54,32 @@ const { startServer, stopServer } =
   };
 
 describe("llama server output transport", () => {
+  it("retains split MTP fitting warnings after the recent log buffer rolls over", () => {
+    const output = { write() {} };
+    const transport = createServerOutputTransport(
+      { label: "test", modelFile: "fixture.gguf", onProgress() {} },
+      null,
+      { stdout: output, stderr: output },
+    );
+    expect(transport.mtpMemoryEstimateMissing).toBe(false);
+    transport.record(
+      "stderr",
+      "Gemma4Assistant requires ctx_other to be set\n",
+    );
+    expect(transport.mtpMemoryEstimateMissing).toBe(false);
+    transport.record(
+      "stderr",
+      "failed to measure the memory of the extra model, ",
+    );
+    transport.record(
+      "stderr",
+      "fitting without it: failed to create llama_context from model\n",
+    );
+    transport.record("stderr", "x".repeat(20000));
+    expect(transport.mtpMemoryEstimateMissing).toBe(true);
+    expect(transport.recent.stderr).not.toContain("fitting without it");
+    transport.dispose();
+  });
   it("treats an absent server process as already stopped", async () => {
     await expect(stopServer(null)).resolves.toBeUndefined();
   });

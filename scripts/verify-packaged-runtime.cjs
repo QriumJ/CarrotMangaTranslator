@@ -150,7 +150,8 @@ const allowedElectronLocales = new Set([
 // Codex 0.156.1 adds 39 official voice runtime/license files (6 -> 45 files)
 // below resources/c. Preserve the upstream native layout; no app voice feature
 // is enabled. The audited Windows payload therefore grows from 331 to 370.
-const MAX_PACKAGED_FILES = 370;
+// v2.8.6 adds one MTP fit-cache module; the audited payload is 371 files.
+const MAX_PACKAGED_FILES = 371;
 // The trained font matching runtime bundle (~467 MiB) is externalized out of
 // the installer and downloaded into the data-root cache on first use, so the
 // unpacked payload is ~745 MiB (Electron + app.asar + tools, no bundle) and the

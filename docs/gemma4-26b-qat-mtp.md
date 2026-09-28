@@ -72,10 +72,67 @@ model presets retain their previous b9553/b9547/BeeLlama/b1291 runtimes. The
 runtime contract is verified separately by pinned archive hashes, focused
 launch tests, and an actual CUDA model smoke.
 
-Windows CUDA MTP routes run a short multimodal startup probe. If the measured
-image-path margin is too small, the app restarts once with a runtime-only
-512 MiB layer-sized fit correction and displays the exact change in a toast.
-The user's saved 1,024 MiB value remains unchanged.
+Windows CUDA MTP routes run a short multimodal startup probe. When the runtime
+reports that it omitted the extra model from fitting, the probe is unhealthy,
+and measured free VRAM is below the requested margin, the app makes one
+runtime-only fit correction. It rounds the measured deficit plus 256 MiB up to
+a 256 MiB boundary (minimum 512 MiB, maximum 4,096 MiB additional reserve),
+then adds the separately measured pre-load CUDA/physical free-memory gap,
+also rounded up to 256 MiB. Windows can expose a larger CUDA memory budget
+than the physical headroom reported by `nvidia-smi`; once paging begins,
+the remaining free-VRAM sample alone hides that deficit. The existing
+`--list-devices` preflight supplies the CUDA budget without another model load.
+Automatic refitting requires an unambiguous GPU budget; unknown measurements
+and automatic multi-GPU placement are not treated as zero memory.
+It confirms the old process has exited before loading the replacement and
+repeats the probe. The progress log records both targets; saved settings,
+context, output limits and MTP stay unchanged. Healthy starts do not restart.
+Successful corrections are retained in the llama.cpp cache directory under
+`mtp-fit-v1`, including across app restarts. The cache key covers launch
+arguments (excluding the listening port), model/projector/draft and runtime
+file identity, GPU identity/capacity, compute environment and output limit.
+Both physical free VRAM and the CUDA/physical budget gap must stay within
+512 MiB of the successful launch. Unknown measurements, changed configuration,
+corrupt entries and entries older than 14 days are cache misses. A hit launches
+directly with the successful target but still runs the short performance probe;
+a failed cached startup discards the entry, while user cancellation preserves
+it. A further low-memory recovery uses the original requested margin and adds
+the measured CUDA gap only once, increasing the previous target by at least
+512 MiB. Cache I/O failure never fails translation or changes saved settings.
+This compensates for the upstream estimator failure; it does not repair the
+native estimator or guarantee that every 16 GB configuration will fit.
+
+### Issue #131 recovery verification (2026-09-28)
+
+Persistent-cache validation used the same RTX 4090/QAT 26B/MTP workload with
+4 GiB held by a separate CUDA process. Windows paging changed the pre-load
+budget between the first two starts, correctly causing a new measurement.
+Once it stabilized, the third start reused the successful 6,144 MiB target
+without a correction/restart: startup including preflight and the image probe
+fell from 61.1 seconds on the preceding recovery to 23.7 seconds, and the
+probe decoded at 108.16 tok/s. The saved target stayed at 1,024 MiB. Evidence:
+`.tmp/issue131-persistent-fit-smoke-v3.json` and
+`.tmp/issue131-persistent-fit-smoke-v3.log`. A separate fresh-process test also
+checks persistence across app restarts. Earlier 256 MiB tolerance trials
+missed a 436 MiB Windows budget fluctuation; the final 512 MiB tolerance keeps
+the health probe and rejects larger changes.
+
+On the RTX 4090 with b10621, QAT 26B + MTP, context 30,000, output limit
+20,000 and fit target 1,024 MiB, an ordinary image probe completed without a
+restart. A separate CUDA process then held 4 GiB throughout a constrained
+run. The original launch timed out after 30 seconds with 456 MiB physically
+free. Preflight had measured a 6,368 MiB CUDA/physical budget gap. One refit
+to 8,448 MiB completed the startup probe at 75.73 tok/s and a second actual
+image request at 87.35 tok/s (16 of 28 draft tokens accepted). Total startup
+and request wall time, including the initial timeout, was 59.19 seconds.
+Saved fit target, context, output limit and MTP stayed unchanged. This is a
+physical-pressure reproduction on a 24 GB card, not validation on a 5070 Ti.
+
+Local evidence: `.tmp/issue131-normal-smoke.json`,
+`.tmp/issue131-constrained-smoke.json` and
+`.tmp/issue131-constrained-smoke-output-v3.log`. Earlier deficit-only and
+capped-total corrections did not recover this run; the final policy accounts
+for the full measured budget gap separately from the bounded MTP correction.
 
 ## Candidate rejection before tuning
 

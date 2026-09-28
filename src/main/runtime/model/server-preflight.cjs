@@ -26,6 +26,7 @@ const {
   truncateText,
 } = require("../simple-page-runtime-common.cjs");
 const { buildLlamaServerEnv } = require("./server-environment.cjs");
+const { measureMtpFitMemoryBudget } = require("./mtp-fit-calibration.cjs");
 const {
   installedRuntimeMarkerMatches,
 } = require("./llama-runtime-installed-integrity.cjs");
@@ -107,6 +108,7 @@ async function verifyLlamaRuntimePreflight(serverPath, options = {}) {
   // process or updater cannot replace a managed binary between the probe and
   // the real server spawn.
   assertManagedRuntimeComplete(serverPath, runtime, options);
+  return measureMtpFitMemoryBudget(options, result.stdout);
 }
 
 /** @param {string} serverPath @param {LlamaRuntimeDescriptor} runtime @param {RuntimeOptions} options */
