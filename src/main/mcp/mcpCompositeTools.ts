@@ -37,7 +37,7 @@ function preparationTools(service: McpCompositeToolPort["service"]): McpTool[] {
       scopes,
       write: true,
       description:
-        "Persist a same-owner, ordered composite with at most 32 declared native/review phases, 10 chapters and 50 pages. Preparation checks every declared family's required scopes and fixed settings/provider policy but starts no model, import, render or edit. Exact saved targets or the reviewed import mapping bound the plan. Native admissions, per-page edits, model attempts and 1-3 review passes have finite explicit budgets; unknown usage is never refunded. No automatic execution, cross-owner handoff or grant-based target expansion.",
+        "For complete translation use carrot_get_translation_guide and qualityPolicy=complete-translation-v1. Plan wording, typography and placement together before edits, batch changes, and declare one final visual review after all content changes. maxReviewPasses is only a ceiling for targeted fixes of observed defects, never a request to schedule repeated passes. Persist a same-owner, ordered composite with at most 32 declared native/review phases, 10 chapters and 50 pages. Preparation checks every declared family's required scopes and fixed settings/provider policy but starts no model, import, render or edit. Exact saved targets or the reviewed import mapping bound the plan. Native admissions, per-page edits, model attempts and 1-3 review passes have finite explicit budgets; unknown usage is never refunded. No automatic execution, cross-owner handoff or grant-based target expansion.",
       execute: async (args, owner, guard, authorize) =>
         compositeWorkflowView(
           await service.prepare(
@@ -144,7 +144,7 @@ function reviewTools(service: McpCompositeToolPort["service"]): McpTool[] {
       scopes,
       write: true,
       description:
-        "Submit a bounded connected-AI, host-reported judgment only after retrieving the issued actual render images for every assessed page. Native source, permissions, exact evidence IDs/pass and current revisions are checked again. This records the host's assessment, not a native quality guarantee, and does not set page reviewStatus. Corrections must be explicitly bound native actions followed by a fresh declared render pass. Findings overflow, exhausted passes, no progress and oscillation remain unresolved stops.",
+        "With complete-translation-v1, supply assessments[].quality for every page: sourceCoverage, translationAccuracy, contextConsistency, soundEffectCoverage, backgroundRestoration, typography, generatedGlyphs, soundEffectsFound, soundEffectsCompleted, unresolved and cumulative per-region imageHistory (hostAttempts/appAttempts, outcome, reason). Unverified checks or remaining saved text/SFX block acceptance. Submit a bounded connected-AI, host-reported judgment only after retrieving the issued actual render images for every assessed page. Native source, permissions, exact evidence IDs/pass and current revisions are checked again. This records the host's assessment, not a native quality guarantee, and does not set page reviewStatus. Corrections must be explicitly bound native actions followed by a fresh declared render pass. Findings overflow, exhausted passes, no progress and oscillation remain unresolved stops.",
       execute: async (args, owner, guard, authorize) =>
         compositeWorkflowView(
           await service.report(

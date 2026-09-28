@@ -3,6 +3,9 @@ import type { ChapterSnapshot, LibraryIndex } from "../../shared/libraryTypes";
 export type McpPageWindow = { offset: number; limit: number };
 
 export type McpLibraryReadPort = {
+  readContext?: (
+    chapterId: string,
+  ) => Promise<import("./mcpContextEditPolicy").McpContextSnapshot>;
   listLibrary: () => Promise<LibraryIndex>;
   openChapter: (chapterId: string) => Promise<ChapterSnapshot>;
 };

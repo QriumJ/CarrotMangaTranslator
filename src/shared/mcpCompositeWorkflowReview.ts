@@ -1,5 +1,9 @@
 import { z } from "zod/v4";
 import {
+  McpTranslationQualityAssessmentSchema,
+  McpTranslationSavedQualitySchema,
+} from "./mcpTranslationQuality";
+import {
   McpCompositeIdentifierSchema as id,
   McpCompositeFingerprintSchema as fingerprint,
   McpCompositeMutationSchema,
@@ -15,6 +19,7 @@ export const McpCompositeRenderEvidenceSchema = z
     phaseId: id,
     pass: z.number().int().min(1).max(3),
     kind: z.literal("rendered-page"),
+    savedQuality: McpTranslationSavedQualitySchema.optional(),
     workId: id,
     chapterId: id,
     pageId: id,
@@ -74,7 +79,14 @@ export const McpCompositeReviewReportSchema = McpCompositeMutationSchema.extend(
     verdict: z.enum(["accepted", "needs-correction", "blocked"]),
     assessments: z
       .array(
-        z.object({ chapterId: id, pageId: id, evidenceId: z.uuid() }).strict(),
+        z
+          .object({
+            chapterId: id,
+            pageId: id,
+            evidenceId: z.uuid(),
+            quality: McpTranslationQualityAssessmentSchema.optional(),
+          })
+          .strict(),
       )
       .min(1)
       .max(50),

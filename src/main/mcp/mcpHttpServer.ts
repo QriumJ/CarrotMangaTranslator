@@ -23,10 +23,26 @@ export type McpHttpServer = {
   stopAccepting: () => void;
   close: () => Promise<void>;
 };
+type RequestTrace = {
+  route: string;
+  httpMethod: string;
+  protocol: string;
+  rpcMethod: string;
+  rpcError?: number;
+  toolCount?: number;
+  authorized: boolean;
+};
+export type McpRequestDiagnostic = RequestTrace & {
+  status: number;
+  responseBytes: number | null;
+  completed: boolean;
+  durationMs: number;
+};
 type ServerOptions = {
   config: McpConfiguration;
   tools: readonly McpTool[];
   reportError: (error: unknown) => void;
+  reportRequest?: (diagnostic: McpRequestDiagnostic) => void;
   oauthHttp?: McpOAuthHttp;
   enforceScopes?: boolean;
   artifacts?: McpArtifactStore;
@@ -46,7 +62,8 @@ export async function startMcpHttpServer(
   const handler = createRequestHandler(options, config, oauth);
   const requests = new Set<Promise<void>>();
   const server = createServer({ maxHeaderSize: 8192 }, (request, response) => {
-    const task = handler.serve(request, response);
+    const trace = traceRequest(request, response, options);
+    const task = handler.serve(request, response, trace);
     requests.add(task);
     const remove = () => {
       requests.delete(task);
@@ -104,7 +121,11 @@ function createRequestHandler(
       oauth && ((header) => oauth.scopeFor(header) !== undefined),
     );
   }
-  async function serve(request: IncomingMessage, response: ServerResponse) {
+  async function serve(
+    request: IncomingMessage,
+    response: ServerResponse,
+    trace: RequestTrace,
+  ) {
     let counted = false;
     let deadline: ReturnType<typeof setTimeout> | undefined;
     try {
@@ -125,6 +146,7 @@ function createRequestHandler(
       if (await handleMcpArtifact(options.artifacts, request, response)) return;
       if (await oauth?.handle(request, response)) return;
       await authorize(request);
+      trace.authorized = true;
       if (request.url !== "/mcp") throw new McpHttpError(404, "Not found.");
       if (request.method !== "POST") {
         response.setHeader("Allow", "POST");
@@ -135,17 +157,17 @@ function createRequestHandler(
       }
       validateMcpPost(request);
       const body = await readMcpBody(request, 8 * 1024 * 1024);
+      traceRpcRequest(trace, body);
       if (!accepting) throw new McpHttpError(503, "MCP server is stopping.");
       await authorize(request);
-      sendReply(
-        response,
-        await handleMcpMessage(
-          body,
-          visibleTools(options, request, response, oauth),
-          options.reportError,
-          request.headersDistinct,
-        ),
+      const reply = await handleMcpMessage(
+        body,
+        visibleTools(options, request, response, oauth),
+        options.reportError,
+        request.headersDistinct,
       );
+      traceRpcReply(trace, reply.body);
+      sendReply(response, reply);
     } catch (error) {
       if (!(error instanceof McpHttpError)) options.reportError(error);
       sendFailure(response, error, oauth);
@@ -195,8 +217,98 @@ function sendReply(response: ServerResponse, reply: McpHttpReply) {
   if (reply.body === undefined) response.end();
   else {
     response.setHeader("Content-Type", "application/json; charset=utf-8");
-    response.end(JSON.stringify(reply.body));
+    const body = JSON.stringify(reply.body);
+    response.setHeader("Content-Length", Buffer.byteLength(body));
+    response.end(body);
   }
+}
+
+/** Allowlisted metadata only: never capture credentials, URLs, IDs or tool arguments. */
+function traceRequest(
+  request: IncomingMessage,
+  response: ServerResponse,
+  options: Pick<ServerOptions, "reportRequest" | "reportError">,
+): RequestTrace {
+  const path = request.url?.split("?")[0] ?? "";
+  const method = request.method ?? "";
+  const routes = [
+    "/mcp",
+    "/oauth/register",
+    "/oauth/authorize",
+    "/oauth/token",
+    "/oauth/consent",
+    "/oauth/pairing",
+    "/.well-known/oauth-protected-resource/mcp",
+    "/.well-known/oauth-authorization-server",
+  ];
+  const trace: RequestTrace = {
+    route: routes.includes(path) ? path : "other",
+    httpMethod: ["GET", "POST", "DELETE", "OPTIONS"].includes(method)
+      ? method
+      : "other",
+    protocol: safeProtocol(request.headers["mcp-protocol-version"]),
+    rpcMethod: "unread",
+    authorized: false,
+  };
+  const started = performance.now();
+  let reported = false;
+  const finish = () => {
+    if (reported) return;
+    reported = true;
+    const length = Number(response.getHeader("Content-Length"));
+    try {
+      options.reportRequest?.({
+        ...trace,
+        status: response.statusCode,
+        responseBytes: Number.isFinite(length) ? length : null,
+        completed: response.writableFinished,
+        durationMs: Math.round(performance.now() - started),
+      });
+    } catch (error) {
+      options.reportError(error);
+    }
+  };
+  response.once("finish", finish);
+  response.once("close", finish);
+  return trace;
+}
+function safeProtocol(value: unknown): string {
+  return value === undefined
+    ? "absent"
+    : typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
+      ? value
+      : "invalid";
+}
+function traceRpcRequest(trace: RequestTrace, value: unknown): void {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return;
+  const request = value as {
+    method?: unknown;
+    params?: { protocolVersion?: unknown };
+  };
+  const methods = [
+    "initialize",
+    "server/discover",
+    "tools/list",
+    "tools/call",
+    "ping",
+    "notifications/initialized",
+  ];
+  trace.rpcMethod =
+    typeof request.method === "string" && methods.includes(request.method)
+      ? request.method
+      : "other";
+  if (trace.protocol === "absent")
+    trace.protocol = safeProtocol(request.params?.protocolVersion);
+}
+function traceRpcReply(trace: RequestTrace, value: unknown): void {
+  if (!value || typeof value !== "object") return;
+  const reply = value as {
+    error?: { code?: unknown };
+    result?: { tools?: unknown };
+  };
+  if (typeof reply.error?.code === "number") trace.rpcError = reply.error.code;
+  if (trace.rpcMethod === "tools/list" && Array.isArray(reply.result?.tools))
+    trace.toolCount = reply.result.tools.length;
 }
 
 function visibleTools(

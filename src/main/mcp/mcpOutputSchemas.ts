@@ -1,3 +1,4 @@
+import { McpTranslationGuideOutputSchema } from "../../shared/mcpTranslationGuide";
 import { mcpWorkFileOutputs } from "../../shared/mcpWorkFileImport";
 import { mcpCompositeWorkflowOutputs } from "../../shared/mcpCompositeWorkflowOutputs";
 import { mcpTextExchangeOutputs } from "../../shared/mcpTextExchange";
@@ -101,6 +102,7 @@ const image = z
   .strict();
 /** Public projections only. JSON Schema and runtime validation share these definitions. */
 export const mcpOutputSchemas: Record<string, z.ZodType> = {
+  carrot_get_translation_guide: McpTranslationGuideOutputSchema,
   ...mcpCompositeWorkflowOutputs,
   ...mcpTextExchangeOutputs,
   ...mcpContextExchangeOutputs,
@@ -375,7 +377,7 @@ export function mcpToolOutputSchema(
   let result = schemas.get(name);
   if (!result) {
     result = {
-      ...z.toJSONSchema(z.union([schema, errorSchema])),
+      ...z.toJSONSchema(z.union([schema, errorSchema]), { reused: "ref" }),
       type: "object",
     };
     schemas.set(name, result);

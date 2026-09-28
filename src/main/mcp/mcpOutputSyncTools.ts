@@ -109,7 +109,8 @@ function readTool<S extends z.ZodType>(
     destructive: false,
     idempotent: true,
     openWorld: false,
-    inputSchema: z.toJSONSchema(schema),
+    // Union branches are objects, but Zod omits the root type required by MCP Tool.
+    inputSchema: { ...z.toJSONSchema(schema), type: "object" },
     invoke: (args, caller) =>
       track(
         (async () => {

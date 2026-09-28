@@ -86,7 +86,7 @@ it("keeps advertised capabilities aligned with actually registered image tools",
       libraryPort(),
       enabled ? async () => ({ data: png, width: 1, height: 1 }) : undefined,
     );
-    assert.equal(tools.length, enabled ? 5 : 4);
+    assert.equal(tools.length, enabled ? 6 : 5);
     assert.equal(
       tools.some((tool) => tool.name === "carrot_get_page_preview"),
       enabled,

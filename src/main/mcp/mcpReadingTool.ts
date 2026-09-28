@@ -62,7 +62,7 @@ export function createMcpReadingTool(service: McpReadingService): McpTool {
     idempotent: true,
     requiredScopes: ["carrot.read", "carrot.process"],
     description:
-      "Append editable blocks read/translated by the calling AI, in supplied reading order, preserving ALL existing blocks. Rectangles are ORIGINAL IMAGE PIXELS. Use a new UUID requestId per batch and a unique key per block; reuse them unchanged only for exact retries. Requires current revision. Empty translatedText stores OCR-only results. App typography defaults apply. Does NOT run OCR, paid models, erasure or output rendering.",
+      "Append editable blocks read/translated by the calling AI, in supplied reading order, preserving ALL existing blocks. Rectangles are ORIGINAL IMAGE PIXELS. Set sourceDirection from the actual original (often vertical Japanese), independently of renderDirection. Choose renderRect for readable Korean within clear artwork space; do not blindly reuse a narrow source column or widen across faces. Use a new UUID requestId per batch and a unique key per block; reuse them unchanged only for exact retries. Requires current revision. Empty translatedText stores OCR-only results. Initial typography is provisional app defaults, NOT matched fonts or finished lettering: carry your source-based font/size/placement decisions into a format or typography batch. Does NOT run OCR, paid models, erasure or output rendering.",
     inputSchema: {
       type: "object",
       additionalProperties: false,

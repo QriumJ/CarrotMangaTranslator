@@ -65,6 +65,7 @@ export async function readMcpCompositeSources(
     authorizedRequirements: requirements,
     phases: plan.phases,
     budgets: plan.budgets,
+    ...(plan.qualityPolicy ? { qualityPolicy: plan.qualityPolicy } : {}),
   });
   const values: McpCompositeNativePage[] = [];
   for (const target of targets)

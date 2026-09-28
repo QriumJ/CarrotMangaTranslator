@@ -1,0 +1,124 @@
+import type { MangaPage } from "../../shared/libraryTypes";
+import { inspectMcpReviewPage } from "./mcpReviewPage";
+import { McpEditError } from "./mcpEditPolicy";
+import { translationQualityPassed } from "../../shared/mcpTranslationQuality";
+import type { McpCompositeRecord } from "./mcpCompositeWorkflowPorts";
+import type { McpCompositeReviewReport } from "../../shared/mcpCompositeWorkflowReview";
+
+export function inspectTranslationSavedQuality(page: MangaPage) {
+  const { untranslated, missingSource, staleLettering, soundEffects } =
+    inspectMcpReviewPage(page, 0).counts;
+  const review = page.soundEffectReview;
+  const resolved = new Set(
+    review?.resolvedRegions
+      .filter((item) =>
+        page.blocks.some(
+          (block) => block.id === item.blockId && block.translatedText.trim(),
+        ),
+      )
+      .map((item) => item.regionId),
+  );
+  const dismissed = new Set(review?.dismissedRegionIds);
+  const regions = [
+    ...(review?.regions ?? []),
+    ...(review?.manualRegions ?? []),
+  ];
+  const pendingSoundEffects = new Set(
+    regions
+      .filter((region) => !resolved.has(region.id) && !dismissed.has(region.id))
+      .map((region) => region.id),
+  ).size;
+  return {
+    blocks: page.blocks.length,
+    generatedLettering: page.blocks.filter(
+      (block) =>
+        block.generatedLettering?.enabled !== false && block.generatedLettering,
+    ).length,
+    hasCleanedImage: Boolean(page.inpaintedImagePath),
+    untranslated,
+    missingSource,
+    staleLettering,
+    pendingSoundEffects,
+    soundEffects,
+  };
+}
+
+export function assertTranslationQualityReport(
+  record: McpCompositeRecord,
+  report: McpCompositeReviewReport,
+) {
+  if (!record.plan.qualityPolicy) return;
+  for (const assessment of report.assessments) {
+    const quality = assessment.quality;
+    const evidence = record.phases
+      .flatMap((phase) => phase.evidence ?? [])
+      .find((item) => item.id === assessment.evidenceId);
+    if (!quality || !evidence?.savedQuality)
+      throw new McpEditError(
+        "invalid_edit",
+        "Quality translation requires every page's visual assessment and server-issued saved-quality evidence.",
+      );
+    assertImageHistory(record, assessment);
+    if (report.verdict !== "accepted") continue;
+    const saved = evidence.savedQuality;
+    if (
+      !translationQualityPassed(quality) ||
+      [
+        saved.untranslated,
+        saved.missingSource,
+        saved.staleLettering,
+        saved.pendingSoundEffects,
+      ].some((count) => count > 0) ||
+      quality.soundEffectsFound < saved.soundEffects ||
+      !applicableChecksPassed(quality, saved)
+    )
+      throw new McpEditError(
+        "invalid_edit",
+        "Unresolved text, sound effects, artwork or visual checks require needs-correction/blocked, never accepted.",
+      );
+  }
+}
+
+function assertImageHistory(
+  record: McpCompositeRecord,
+  assessment: McpCompositeReviewReport["assessments"][number],
+) {
+  const previous = record.phases
+    .flatMap((phase) => phase.report?.assessments ?? [])
+    .filter(
+      (item) =>
+        item.chapterId === assessment.chapterId &&
+        item.pageId === assessment.pageId,
+    );
+  const current = new Map(
+    assessment.quality?.imageHistory.map((item) => [item.regionId, item]),
+  );
+  for (const prior of previous.flatMap(
+    (item) => item.quality?.imageHistory ?? [],
+  )) {
+    const next = current.get(prior.regionId);
+    if (
+      !next ||
+      next.hostAttempts < prior.hostAttempts ||
+      next.appAttempts < prior.appAttempts ||
+      (prior.outcome === "policy-refused" && next.outcome !== "policy-refused")
+    )
+      throw new McpEditError(
+        "invalid_edit",
+        "Image generation history is cumulative: preserve prior attempts, fallback reasons and terminal policy refusals across review passes.",
+      );
+  }
+}
+
+function applicableChecksPassed(
+  quality: NonNullable<
+    McpCompositeReviewReport["assessments"][number]["quality"]
+  >,
+  saved: ReturnType<typeof inspectTranslationSavedQuality>,
+) {
+  return (
+    (!saved.blocks || quality.typography === "passed") &&
+    (!saved.generatedLettering || quality.generatedGlyphs === "passed") &&
+    (!saved.hasCleanedImage || quality.backgroundRestoration === "passed")
+  );
+}

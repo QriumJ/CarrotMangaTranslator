@@ -59,7 +59,7 @@ export function createMcpReadTools(
     {
       name: "carrot_get_capabilities",
       description:
-        "Report what this Carrot connection actually exposes. No models are started.",
+        "Report what this Carrot connection actually exposes. For a complete translation start with carrot_get_translation_guide: all text/SFX, image-generation-first, typography planned from the original, batched edits and one final visual review. Correct observed defects only; do not schedule repetitive review cycles. Chat-host image tool availability is not observable here. No models are started.",
       inputSchema: objectSchema({}),
       invoke: async (args, context) => {
         allowArguments(args, []);
@@ -127,7 +127,10 @@ export function createMcpReadTools(
   ];
 }
 
-export function describeMcpTool(tool: McpTool) {
+export function describeMcpTool(
+  tool: McpTool,
+  options: { includeOutputSchema?: boolean } = {},
+) {
   const securitySchemes = [
     { type: "oauth2", scopes: tool.requiredScopes ?? ["carrot.read"] },
   ];
@@ -135,7 +138,9 @@ export function describeMcpTool(tool: McpTool) {
     name: tool.name,
     description: tool.description,
     inputSchema: tool.inputSchema,
-    outputSchema: mcpToolOutputSchema(tool.name),
+    ...(options.includeOutputSchema === false
+      ? {}
+      : { outputSchema: mcpToolOutputSchema(tool.name) }),
     ...(tool.oauth ? { securitySchemes, _meta: { securitySchemes } } : {}),
     annotations: {
       readOnlyHint: tool.readOnly !== false,

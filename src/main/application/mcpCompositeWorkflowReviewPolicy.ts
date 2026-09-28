@@ -1,3 +1,4 @@
+import { assertTranslationQualityReport } from "./mcpTranslationQuality";
 import { McpCompositeRenderEvidenceSchema } from "../../shared/mcpCompositeWorkflowReview";
 import type {
   McpCompositeRenderEvidence,
@@ -73,6 +74,7 @@ export function acceptCompositeReport(
   )
     compositeError("The next phase is not awaiting this host review.");
   assertReportEvidence(record, phase.evidence, report);
+  assertTranslationQualityReport(record, report);
   const pair = reviewPair(phase.evidence, report);
   const prior = record.reviewPairs.indexOf(pair);
   phase.report = structuredClone(report);

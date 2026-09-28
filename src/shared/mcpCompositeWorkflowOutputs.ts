@@ -15,6 +15,7 @@ import { McpCompositeWorkflowActionKindSchema } from "./mcpCompositeWorkflowActi
 import {
   McpCompositeRenderEvidenceSchema,
   McpCompositeFindingSchema,
+  McpCompositeReviewReportSchema,
 } from "./mcpCompositeWorkflowReview";
 import { mcpReviewOutputSchemas } from "./mcpReviewSchemas";
 
@@ -62,6 +63,7 @@ const reported = z
     verdict: z.enum(["accepted", "needs-correction", "blocked"]),
     findingsCount: count.max(250),
     findingsOverflow: z.boolean(),
+    assessments: McpCompositeReviewReportSchema.shape.assessments.optional(),
   })
   .strict();
 const binding = z
@@ -117,6 +119,9 @@ const summary = z
     phaseCount: count.min(1).max(32),
     completedPhases: count.max(32),
     usageUnknown: z.boolean(),
+    qualityReview: z
+      .enum(["pending", "partial", "accepted-at-reviewed-revision"])
+      .optional(),
     retention: z.literal(
       "seven-days; same-profile-and-owner; no-automatic-reexecution",
     ),

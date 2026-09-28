@@ -19617,6 +19617,50 @@
         "pct": 100
       }
     },
+    "src/main/application/mcpTranslationGuide.ts": {
+      "lines": {
+        "covered": 33,
+        "total": 35,
+        "pct": 94.28
+      },
+      "statements": {
+        "covered": 36,
+        "total": 39,
+        "pct": 92.3
+      },
+      "functions": {
+        "covered": 14,
+        "total": 17,
+        "pct": 82.35
+      },
+      "branches": {
+        "covered": 26,
+        "total": 31,
+        "pct": 83.87
+      }
+    },
+    "src/main/application/mcpTranslationQuality.ts": {
+      "lines": {
+        "covered": 31,
+        "total": 37,
+        "pct": 83.78
+      },
+      "statements": {
+        "covered": 33,
+        "total": 39,
+        "pct": 84.61
+      },
+      "functions": {
+        "covered": 13,
+        "total": 16,
+        "pct": 81.25
+      },
+      "branches": {
+        "covered": 33,
+        "total": 45,
+        "pct": 73.33
+      }
+    },
     "src/main/application/mcpTypographyAnalysisService.ts": {
       "lines": {
         "total": 56,
@@ -29536,6 +29580,28 @@
       "branches": {
         "covered": 12,
         "total": 12,
+        "pct": 100
+      }
+    },
+    "src/main/mcp/mcpTranslationGuideTool.ts": {
+      "lines": {
+        "covered": 6,
+        "total": 6,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 6,
+        "total": 6,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 4,
+        "total": 4,
         "pct": 100
       }
     },
@@ -43573,6 +43639,50 @@
         "covered": 0,
         "total": 0,
         "pct": 100
+      }
+    },
+    "src/shared/mcpTranslationGuide.ts": {
+      "lines": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/shared/mcpTranslationQuality.ts": {
+      "lines": {
+        "covered": 28,
+        "total": 31,
+        "pct": 90.32
+      },
+      "statements": {
+        "covered": 28,
+        "total": 33,
+        "pct": 84.84
+      },
+      "functions": {
+        "covered": 5,
+        "total": 8,
+        "pct": 62.5
+      },
+      "branches": {
+        "covered": 28,
+        "total": 32,
+        "pct": 87.5
       }
     },
     "src/shared/mcpTypographyAnalysis.ts": {

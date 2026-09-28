@@ -100,7 +100,7 @@ export function createMcpAppTools(options: {
       ),
     );
   const tools = createMcpToolSet(
-    { listLibrary, openChapter },
+    { listLibrary, openChapter, readContext: readWorkContextForEdit },
     options.preferences.allowImages ? renderMcpPagePreview : undefined,
     true,
     {

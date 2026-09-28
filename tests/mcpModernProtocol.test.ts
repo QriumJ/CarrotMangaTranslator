@@ -99,6 +99,52 @@ it("discovers and calls directly on separate requests without initialize or sess
     "complete",
   );
 });
+it("includes required cache metadata in modern tool discovery without caching across grants", async () => {
+  // MCP 2026-07-28 ListToolsResult requires ttlMs/cacheScope even on HTTP 200.
+  // https://modelcontextprotocol.io/specification/2026-07-28/schema#listtoolsresult
+  const f = await fixture();
+  const listed = await f.call("tools/list");
+  expect(listed.status).toBe(200);
+  expect(listed.body.result).toMatchObject({
+    resultType: "complete",
+    ttlMs: 0,
+    cacheScope: "private",
+    tools: [expect.objectContaining({ name: "carrot_list_works" })],
+  });
+  expect(listed.headers.get("cache-control")).toBe("no-store");
+  expect(f.invoke).not.toHaveBeenCalled();
+  const invalid = await f.call("tools/list", { cursor: "unsupported" });
+  expect(invalid.body).not.toHaveProperty("result");
+  const legacy = await handleMcpMessage(
+    { jsonrpc: "2.0", id: 1, method: "tools/list" },
+    [],
+    () => {},
+    { "mcp-protocol-version": ["2025-11-25"] },
+  );
+  expect(legacy.body).toEqual({ jsonrpc: "2.0", id: 1, result: { tools: [] } });
+});
+it.each([
+  { value: payload, valid: true },
+  { value: { ...payload, total: "wrong" }, valid: false },
+  { value: { ...payload, privatePath: "C:/private" }, valid: false },
+])(
+  "validates modern results after omitting discovery output schemas: $valid",
+  async ({ value, valid }) => {
+    const f = await fixture();
+    f.invoke.mockImplementation(async () => textContent(value));
+    const listed = await f.call("tools/list");
+    expect(listed.body.result.tools[0]).not.toHaveProperty("outputSchema");
+    const done = await f.call("tools/call", {
+      name: "carrot_list_works",
+      arguments: {},
+    });
+    expect(done.body.result.isError).toBe(!valid);
+    expect(done.body.result.structuredContent).toEqual(
+      valid ? payload : expect.objectContaining({ error: "operation_failed" }),
+    );
+    expect(JSON.stringify(done.body)).not.toContain("C:/private");
+  },
+);
 it.each([
   { "MCP-Protocol-Version": null },
   { "Mcp-Method": null },

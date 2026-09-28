@@ -127,6 +127,7 @@ const mcpDesktop = createMcpDesktopRuntime(
       }
     },
   },
+  (diagnostic) => logInfo("MCP HTTP request", diagnostic),
 );
 const inpaintingRevisionStore = new InpaintingRevisionStore();
 let mainWindow: BrowserWindow | null = null;

@@ -113,6 +113,9 @@ function summary(record: McpCompositeRecord) {
       (phase) => phase.status === "completed" || phase.status === "skipped",
     ).length,
     usageUnknown: record.usageUnknown,
+    ...(record.plan.qualityPolicy
+      ? { qualityReview: qualityReviewStatus(record) }
+      : {}),
     retention:
       "seven-days; same-profile-and-owner; no-automatic-reexecution" as const,
     automaticResume: false as const,
@@ -127,6 +130,9 @@ function reportSummary(report: NonNullable<McpCompositePhaseState["report"]>) {
     verdict: report.verdict,
     findingsCount: report.findings.length,
     findingsOverflow: report.findingsOverflow,
+    ...(report.assessments.some((item) => item.quality)
+      ? { assessments: report.assessments }
+      : {}),
   };
 }
 
@@ -150,4 +156,28 @@ function paginate<T>(items: T[], input: Window, snapshot: string) {
         : null,
     items: items.slice(input.offset, input.offset + input.limit),
   };
+}
+
+function qualityReviewStatus(record: McpCompositeRecord) {
+  const reviewed = record.phases.filter((phase) => phase.report).at(-1);
+  if (!reviewed)
+    return record.status === "held"
+      ? ("partial" as const)
+      : ("pending" as const);
+  const matches = reviewed.evidence?.every((evidence) =>
+    record.snapshot.pages.some(
+      (page) =>
+        page.chapterId === evidence.chapterId &&
+        page.pageId === evidence.pageId &&
+        page.revision === evidence.revision &&
+        page.reviewRevision === evidence.reviewRevision &&
+        page.contextFingerprint === evidence.contextFingerprint &&
+        page.fontFingerprint === evidence.fontFingerprint &&
+        page.settingsFingerprint === evidence.settingsFingerprint &&
+        page.sourceFingerprint === evidence.sourceFingerprint,
+    ),
+  );
+  return reviewed.report?.verdict === "accepted" && matches
+    ? ("accepted-at-reviewed-revision" as const)
+    : ("partial" as const);
 }

@@ -1,3 +1,4 @@
+import { createTranslationGuideTool } from "./mcpTranslationGuideTool";
 import type { McpTool } from "./mcpReadTools";
 import type { McpPageEditService } from "../application/mcpPageEditService";
 import { createMcpPageEditTools } from "./mcpPageEditTools";
@@ -34,6 +35,10 @@ export function createMcpToolSet(
         editing.lifetime,
       )
     : [];
+  const guide = createTranslationGuideTool(library, [
+    ...[...extensions, ...editTools].map((tool) => tool.name),
+    ...(renderApprovedPreview ? ["carrot_get_page_preview"] : []),
+  ]);
   const tools = createMcpReadTools(
     new McpLibraryReadService(library),
     renderApprovedPreview !== undefined,
@@ -41,7 +46,9 @@ export function createMcpToolSet(
     {
       readBlocks: !!editing,
       editTranslations: editing?.allowEditing ?? false,
-      additionalTools: [...extensions, ...editTools].map((tool) => tool.name),
+      additionalTools: [guide, ...extensions, ...editTools].map(
+        (tool) => tool.name,
+      ),
     },
   );
   if (renderApprovedPreview) {
@@ -54,7 +61,7 @@ export function createMcpToolSet(
       ),
     );
   }
-  tools.push(...editTools);
+  tools.push(guide, ...editTools);
   tools.push(...extensions);
   return tools.map((tool) => ({ ...tool, oauth }));
 }

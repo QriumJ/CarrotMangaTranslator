@@ -357,3 +357,28 @@ it("blocks further generation in this session after client cleanup failure", asy
     await f.close();
   }
 });
+
+it("counts host attempts against app internal generation retries", async () => {
+  const f = await soundEffectFixture();
+  try {
+    const block = (await f.snapshot()).pages[0].blocks[0];
+    f.readerTurn.mockResolvedValue({
+      itemId: "read",
+      threadId: "read",
+      turnId: "read",
+      text: JSON.stringify({ regions: [{ regionId: block.id, text: "□" }] }),
+    });
+    const request = command(f, [block.id]);
+    if (request.kind !== "generate") throw new Error("Expected generation");
+    request.priorGenerationAttempts = { [block.id]: 2 };
+    const plan = await f.preview(request);
+    const stored = f.service.readOwnedPlan(f.owner, plan.batchId, () => {});
+    expect(stored.generationCalls).toBe(1);
+    expect(stored.failedItems).toBe(1);
+    expect(
+      (await f.snapshot()).pages[0].blocks[0].generatedLettering,
+    ).toBeUndefined();
+  } finally {
+    await f.close();
+  }
+});

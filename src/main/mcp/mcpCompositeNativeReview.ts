@@ -1,3 +1,4 @@
+import { inspectTranslationSavedQuality } from "../application/mcpTranslationQuality";
 import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod/v4";
 import {
@@ -68,9 +69,13 @@ export class McpCompositeNativeReview {
     assertSnapshot(record, before.snapshot.fingerprint);
     const issued: Issued[] = [];
     let bytes = 0;
-    for (const page of before.snapshot.pages) {
+    for (const [index, page] of before.snapshot.pages.entries()) {
       signal.throwIfAborted();
       const captured = await this.render(record, phaseId, pass, page, guard);
+      if (record.plan.qualityPolicy)
+        captured.evidence.savedQuality = inspectTranslationSavedQuality(
+          before.values[index].page,
+        );
       bytes += captured.bytes.length;
       if (bytes > MAX_CACHE_BYTES) throw capacity();
       issued.push(captured);

@@ -86,6 +86,9 @@ const command = z.discriminatedUnion("kind", [
       replaceExisting: z.boolean().default(false),
       allowRenderAdjustment: z.boolean().default(false),
       invertColors: z.boolean().default(false),
+      priorGenerationAttempts: z
+        .record(z.string(), z.number().int().min(0).max(2))
+        .optional(),
     })
     .strict(),
 ]);

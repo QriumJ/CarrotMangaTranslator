@@ -28,7 +28,8 @@ export async function generateSoundEffectLayer(
   const render = target.blocks[0].renderBbox;
   const reading = translatedPageReading(target, "image");
   let issues: TypesettingIssue[] = [];
-  for (let attempt = 1; attempt <= 3; attempt++) {
+  const previousAttempts = command.priorGenerationAttempts?.[block.id] ?? 0;
+  for (let attempt = previousAttempts + 1; attempt <= 3; attempt++) {
     const result = await generateLetteringLayers(
       target,
       reading,
@@ -71,7 +72,7 @@ export async function generateSoundEffectLayer(
   }
   throw new McpEditError(
     "invalid_edit",
-    `Generated lettering failed independent readback after 3 attempts; use editable text or explicitly retry. ${issues.map((issue) => issue.reason).join("; ")}`,
+    `Generated lettering failed independent readback after 3 attempts; use editable text or report unresolved; do not reset the per-region attempt budget. ${issues.map((issue) => issue.reason).join("; ")}`,
   );
 }
 async function soundEffectTarget(page: MangaPage, block: TranslationBlock) {

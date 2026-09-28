@@ -15,7 +15,10 @@ import { McpEditorGuard } from "./application/mcpEditorGuard";
 import { McpEditError } from "./application/mcpEditPolicy";
 import { McpSecureStore } from "./mcp/mcpSecureStore";
 import { McpDesktopAuthorization } from "./mcp/mcpDesktopAuthorization";
-import { startMcpHttpServer } from "./mcp/mcpHttpServer";
+import {
+  startMcpHttpServer,
+  type McpRequestDiagnostic,
+} from "./mcp/mcpHttpServer";
 import { createMcpAppTools } from "./mcp/mcpAppTools";
 import {
   prepareTailscale,
@@ -36,6 +39,7 @@ export function createMcpDesktopRuntime(
   dataRoot: string,
   reportError: (error: unknown) => void,
   editing: EditingPorts,
+  reportRequest: (diagnostic: McpRequestDiagnostic) => void,
 ) {
   const store = new McpSecureStore(dataRoot);
   const authorization = new McpDesktopAuthorization(store);
@@ -52,6 +56,7 @@ export function createMcpDesktopRuntime(
         guard,
         editing,
         reportError,
+        reportRequest,
         preferences,
         signal,
         failed,
@@ -78,6 +83,7 @@ export function createMcpDesktopRuntime(
   });
 }
 type DesktopOptions = {
+  reportRequest: (diagnostic: McpRequestDiagnostic) => void;
   authorization: McpDesktopAuthorization;
   guard: McpEditorGuard;
   editing: EditingPorts;
@@ -195,6 +201,7 @@ async function openPageServer(
       }),
       reportError: options.reportError,
       enforceScopes: true,
+      reportRequest: options.reportRequest,
       oauthHttp: auth.http,
       artifacts: pageOperations.artifacts,
     });

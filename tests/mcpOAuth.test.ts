@@ -524,7 +524,7 @@ it("runs discovery, consent, tokens and MCP over actual HTTP with auth challenge
       body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
     });
     const listed = await response.json();
-    assert.equal(listed.result.tools.length, 4);
+    assert.equal(listed.result.tools.length, 5);
     assert.equal(listed.result.tools[0].securitySchemes[0].type, "oauth2");
     const badHost = await readStatusWithHost(
       `${local}/.well-known/oauth-protected-resource`,

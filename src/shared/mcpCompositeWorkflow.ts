@@ -1,4 +1,5 @@
 import { z } from "zod/v4";
+import { McpTranslationQualityPolicySchema } from "./mcpTranslationQuality";
 import {
   McpCompositeWorkflowActionKindSchema,
   McpCompositeWorkflowActionSchema,
@@ -115,6 +116,7 @@ export const McpCompositePrepareSchema = z
     targets: McpCompositeTargetEnvelopeSchema,
     phases: z.array(McpCompositePhaseSchema).min(1).max(MCP_COMPOSITE_PHASES),
     maxReviewPasses: count.min(1).max(3).default(1),
+    qualityPolicy: McpTranslationQualityPolicySchema.optional(),
     budgets: McpCompositeBudgetSchema,
   })
   .strict()
@@ -134,6 +136,20 @@ export const McpCompositePrepareSchema = z
         code: "custom",
         message: "Review phases exceed the explicitly authorized pass budget.",
       });
+    if (plan.qualityPolicy) {
+      const lastWork = plan.phases
+        .filter(
+          (phase) =>
+            phase.kind === "review" || !phase.action.endsWith("export"),
+        )
+        .at(-1);
+      if (lastWork?.kind !== "review")
+        context.addIssue({
+          code: "custom",
+          message:
+            "Quality translation requires final rendered review after every content-changing phase.",
+        });
+    }
     const target = plan.targets;
     if (
       target.kind === "reviewed-import" &&
