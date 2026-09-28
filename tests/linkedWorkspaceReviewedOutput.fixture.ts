@@ -1,4 +1,11 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { vi } from "vitest";
@@ -28,7 +35,10 @@ const WORK_ID = "11111111-1111-4111-8111-111111111111";
 const time = "2026-09-23T00:00:00.000Z";
 
 export async function reviewedWorkspace(counts = [2], inpainting = true) {
-  const directory = await mkdtemp(join(tmpdir(), "mgt-reviewed-output-"));
+  // Fixtures need a physical root; macOS tmpdir() can contain the /var symlink.
+  const directory = await realpath(
+    await mkdtemp(join(tmpdir(), "mgt-reviewed-output-")),
+  );
   const dataRoot = join(directory, "data");
   const output = join(directory, "approved");
   await mkdir(dataRoot);

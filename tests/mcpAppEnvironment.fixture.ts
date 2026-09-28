@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { vi } from "vitest";
@@ -6,7 +6,10 @@ import { vi } from "vitest";
 /** Use the real packaged path resolver and an isolated data root. Only Electron's
  * process/native boundary is replaced; no application or storage module is mocked. */
 export async function mcpAppEnvironment(nativeImage: unknown = {}) {
-  const root = await mkdtemp(join(tmpdir(), "mcp-app-environment-"));
+  // Match bootstrap's physical data root, including macOS /var -> /private/var.
+  const root = await realpath(
+    await mkdtemp(join(tmpdir(), "mcp-app-environment-")),
+  );
   const resources = Object.getOwnPropertyDescriptor(process, "resourcesPath");
   Object.defineProperty(process, "resourcesPath", {
     configurable: true,
