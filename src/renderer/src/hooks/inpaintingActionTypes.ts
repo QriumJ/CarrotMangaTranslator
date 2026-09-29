@@ -39,7 +39,7 @@ export type UseInpaintingActionsOptions = {
   savePageNow?: (chapterId: string, pageId: string) => Promise<void>;
   selectedPage: MangaPage | null;
   setInpaintingTool: Dispatch<SetStateAction<InpaintingTool>>;
-  setFlowActive: (active: boolean) => void;
+  setFlowActive: (active: boolean, mode?: "exclusive" | "shared") => void;
   setJobState: Dispatch<SetStateAction<JobState>>;
   setPatternMaskStrokesByPage: Dispatch<
     SetStateAction<Record<string, InpaintingMaskStroke[]>>

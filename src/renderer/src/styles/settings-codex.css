@@ -1,12 +1,10 @@
+/* An account row inside its section, not a card within the modal card. */
 .codex-account-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px 14px;
   align-items: center;
-  padding: 14px;
-  border: 1px solid var(--border-soft);
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--bg-sunken) 72%, transparent);
+  padding: var(--sp-2) 0;
 }
 
 .codex-account-summary {
@@ -51,12 +49,10 @@
   margin-top: 5px;
   border-radius: 50%;
   background: var(--text-dim);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-dim) 14%, transparent);
 }
 
 .codex-account-indicator.connected {
   background: var(--success-text);
-  box-shadow: 0 0 0 3px var(--success-soft);
 }
 
 .codex-account-error {
@@ -112,7 +108,7 @@
   align-items: center;
   padding: 14px;
   border: 1px solid var(--border-soft);
-  border-radius: 12px;
+  border-radius: var(--r-lg);
   background: color-mix(in srgb, var(--bg-sunken) 72%, transparent);
 }
 

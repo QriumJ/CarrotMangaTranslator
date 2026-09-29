@@ -31,7 +31,8 @@ type AppSidebarProps = {
   pageStructureBlocked?: boolean;
   lockedPageIds?: ReadonlySet<string>;
   removalLockedPageIds?: ReadonlySet<string>;
-  modelResourceBusy?: boolean;
+  /** A job the current translation provider cannot run beside. */
+  translationBlocked?: boolean;
   settingsBusy: boolean;
   settingsOpen: boolean;
   onOpenTranslationSource: () => void;
@@ -133,7 +134,7 @@ function LibrarySidebarContent(props: AppSidebarProps): React.JSX.Element {
         }
         lockedPageIds={props.lockedPageIds ?? EMPTY_PAGE_IDS}
         removalLockedPageIds={props.removalLockedPageIds}
-        translationBlocked={props.modelResourceBusy}
+        translationBlocked={props.translationBlocked}
         onSelect={actions.onSelectPage}
         onRetranslate={actions.onRetranslatePage}
         onRemove={actions.onRemovePage}
@@ -216,34 +217,46 @@ function SidebarToolbar({
   return (
     <section className="toolbar">
       <Button
-        variant="secondary"
         fullWidth
+        size="sm"
         onClick={onOpenTranslationSource}
         disabled={jobActive}
       >
         {label("open-translate-source", t("sidebar.translate"))}
       </Button>
-      <Button fullWidth onClick={onOpenBatchImport} disabled={jobActive}>
+      <Button
+        fullWidth
+        size="sm"
+        onClick={onOpenBatchImport}
+        disabled={jobActive}
+      >
         {label("open-batch", t("sidebar.batchTranslate"))}
       </Button>
       <Button
         fullWidth
+        size="sm"
         onClick={onOpenSettings}
         disabled={settingsBusy && !settingsOpen}
       >
         {label("open-settings", t("common.settings"))}
       </Button>
-      <Button fullWidth onClick={onOpenLibraryFolder}>
+      <Button fullWidth size="sm" onClick={onOpenLibraryFolder}>
         {label("open-library-folder", t("sidebar.libraryFolder"))}
       </Button>
       <Button
         fullWidth
+        size="sm"
         onClick={onOpenShareExport}
         disabled={jobActive || library.works.length === 0}
       >
         {label("open-share-export", t("sidebar.share"))}
       </Button>
-      <Button fullWidth onClick={onOpenShareImport} disabled={jobActive}>
+      <Button
+        fullWidth
+        size="sm"
+        onClick={onOpenShareImport}
+        disabled={jobActive}
+      >
         {label("open-share-import", t("sidebar.importWork"))}
       </Button>
     </section>

@@ -37,7 +37,7 @@ export class McpOAuthClients {
     )
       throw new McpOAuthError(
         "invalid_client_metadata",
-        "One to four ChatGPT or Codex callbacks are required.",
+        "One to four ChatGPT, Claude or loopback callbacks are required.",
       );
     const redirects = input.redirect_uris.map(readMcpOAuthRedirect);
     const method = readAuthMethod(input.token_endpoint_auth_method);

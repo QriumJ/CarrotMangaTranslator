@@ -17,7 +17,8 @@ type UseAppCommandsOptions = {
   startRegionTranslation?: () => void;
   currentChapter: ChapterSnapshot | null;
   jobActive: boolean;
-  aiUnavailable?: boolean;
+  /** AI is unavailable, or a running job blocks the current provider. */
+  translationUnavailable?: boolean;
   runAnalysis: (runMode: "pending" | "all") => void;
   openTranslateOptions: () => void;
   runCurrentPageInpainting: () => void;
@@ -45,7 +46,7 @@ export function useAppCommands(
     cancelJob,
     currentChapter,
     jobActive,
-    aiUnavailable,
+    translationUnavailable,
     openErrorReport,
     openImportPreview,
     openLibraryFolder,
@@ -71,7 +72,7 @@ export function useAppCommands(
         cancelJob,
         currentChapter,
         jobActive,
-        aiUnavailable,
+        translationUnavailable,
         openErrorReport,
         openImportPreview,
         openLibraryFolder,
@@ -96,7 +97,7 @@ export function useAppCommands(
       cancelJob,
       currentChapter,
       jobActive,
-      aiUnavailable,
+      translationUnavailable,
       openErrorReport,
       openImportPreview,
       openLibraryFolder,
@@ -156,14 +157,12 @@ type TranslationCommandId =
 function buildTranslationCommands({
   startRegionTranslation,
   currentChapter,
-  jobActive,
-  aiUnavailable,
+  translationUnavailable,
   openTranslateOptions,
   runAnalysis,
   t,
 }: LocalizedCommandOptions): Pick<AppCommandMap, TranslationCommandId> {
-  const paletteVisible =
-    Boolean(currentChapter) && !jobActive && !aiUnavailable;
+  const paletteVisible = Boolean(currentChapter) && !translationUnavailable;
   return {
     "open-translate-options": {
       id: "open-translate-options",

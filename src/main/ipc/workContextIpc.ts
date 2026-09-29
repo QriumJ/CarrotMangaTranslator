@@ -231,6 +231,8 @@ export async function runWorkContextAnalysisJob(
     abortController,
     request,
     repository,
+    // Only a local Gemma analysis loads a model for the whole request.
+    (context.executionSettings?.modelProvider ?? "gemma") === "gemma",
   );
   const emit = (event: JobEvent): void =>
     emitJobEvent(context.jobs, context.getMainWindow(), event);

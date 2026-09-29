@@ -1,6 +1,7 @@
 import type { AnalyzeWorkContextRequest } from "../../shared/workContextAnalysisTypes";
 import {
   libraryStructureResource,
+  modelRuntimeResource,
   type AppActivityResource,
 } from "../../shared/appActivityTypes";
 import type { listLibrary, openChapter } from "../library";
@@ -19,6 +20,7 @@ export async function startWorkContextAnalysisWithOwnership(
   abortController: AbortController,
   request: AnalyzeWorkContextRequest,
   repository: AnalysisRepository,
+  exclusiveModel = true,
 ): Promise<void> {
   await withLibraryRead(async () => {
     const chapter = await repository.openChapter(request.chapterId);
@@ -32,7 +34,7 @@ export async function startWorkContextAnalysisWithOwnership(
       ]),
     ];
     const resources: AppActivityResource[] = [
-      { kind: "model-runtime", scope: "*", access: "write" },
+      modelRuntimeResource(exclusiveModel),
       { kind: "codex-auth", scope: "*", access: "read" },
       { kind: "work-context", scope: chapter.workId, access: "write" },
       libraryStructureResource("work", chapter.workId, "read"),

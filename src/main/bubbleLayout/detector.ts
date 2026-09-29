@@ -19,6 +19,7 @@ import {
   resolveKoharuInferenceBackend,
   runKoharuWasmInference,
 } from "./wasmWorkerClient";
+import { runLocalInference } from "../runtimeSupport/localInferenceSection";
 
 type KoharuDetectorWasmDependencies = Readonly<{
   loadImage: (
@@ -40,7 +41,18 @@ const defaultWasmDependencies: KoharuDetectorWasmDependencies = {
   runWasmInference: runKoharuWasmInference,
 };
 
-export async function detectKoharuPageLayout(
+/** Layout detection is a local GPU stage shared with detection and OCR. */
+export function detectKoharuPageLayout(
+  options: Parameters<typeof detectKoharuPageLayoutNow>[0],
+  dependencies?: KoharuDetectorWasmDependencies,
+): Promise<ComicPageDetectionResult> {
+  return runLocalInference(
+    () => detectKoharuPageLayoutNow(options, dependencies),
+    options.signal,
+  );
+}
+
+async function detectKoharuPageLayoutNow(
   options: {
     /** Callers must pass the original page image, not an inpainted derivative. */
     imagePath: string;

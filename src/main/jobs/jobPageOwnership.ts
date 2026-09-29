@@ -26,6 +26,46 @@ export function reserveJobChapter(
   if (queuePages) jobs.pageHandoffs.reserve(jobId, chapter.id, pageIds);
 }
 
+/**
+ * Concurrent runs must not wait on each other's pages: two runs that each hold
+ * part of the other's selection would never finish. A run that targets a page
+ * another run has queued or is writing is refused before it takes any page.
+ */
+export function assertJobPagesAvailable(
+  jobs: ActiveJobStore,
+  jobId: string,
+  chapterId: string,
+  pageIds: readonly string[],
+): void {
+  const owner = jobs.activityOwnerFor(jobId);
+  const wanted = new Set(pageIds);
+  const reservedElsewhere = jobs.pageHandoffs.activities.some(
+    (page) =>
+      page.chapterId === chapterId &&
+      wanted.has(page.pageId) &&
+      page.phase !== "completed" &&
+      page.phase !== "failed" &&
+      jobs.activityOwnerFor(page.jobId) !== owner,
+  );
+  const writtenElsewhere = jobs.gate.findConflict(
+    pageIds.map((pageId) => pageContentResource(chapterId, pageId)),
+    owner,
+  );
+  if (reservedElsewhere || writtenElsewhere)
+    throw new Error(
+      "다른 작업이 처리 중인 페이지가 포함되어 있습니다. 그 작업이 끝난 뒤 다시 실행해 주세요.",
+    );
+}
+
+/** Renderer-started runs reserve only pages no other run is holding. */
+export function reserveAvailableJobChapter(
+  ...args: Parameters<typeof reserveJobChapter>
+): void {
+  const [jobs, jobId, chapter, pageIds] = args;
+  assertJobPagesAvailable(jobs, jobId, chapter.id, pageIds);
+  reserveJobChapter(...args);
+}
+
 export async function acquireJobPage(
   jobs: ActiveJobStore,
   jobId: string,

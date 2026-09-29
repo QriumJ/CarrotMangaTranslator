@@ -10,6 +10,10 @@ export type TranslationOptionsModalProps = {
   onStartPageWorkflow?: (
     request: import("../../../shared/pageWorkflowTypes").PageWorkflowRequest,
   ) => Promise<void>;
+  /** Why the request cannot start beside the running jobs, or null. */
+  pageWorkflowStartIssue?: (
+    request: import("../../../shared/pageWorkflowTypes").PageWorkflowRequest,
+  ) => string | null;
   settings?: AppSettings | null;
   chapter: ChapterSnapshot;
   currentPageId?: string | null;

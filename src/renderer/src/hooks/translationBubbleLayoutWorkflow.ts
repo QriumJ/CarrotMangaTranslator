@@ -36,6 +36,7 @@ type TranslationFlowActionContext = TranslationChapterContext &
     | "jobActive"
     | "naturalTextLayoutDefault"
     | "refreshLibrary"
+    | "rendererFlowActiveRef"
     | "saveNow"
     | "setFlowActive"
   > & { flowActiveRef: MutableRefObject<boolean> };
@@ -56,6 +57,8 @@ export async function runTranslationFlowAction(
     !currentChapter ||
     context.jobActive ||
     context.flowActiveRef.current ||
+    // This flow owns the shared cancellation flag; it never overlaps another.
+    context.rendererFlowActiveRef?.current ||
     options.selection.length === 0
   ) {
     return "no-op";

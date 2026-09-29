@@ -74,6 +74,35 @@ function pathScopeContains(directory: string, path: string): boolean {
   return directory.endsWith("/**") && path.startsWith(directory.slice(0, -2));
 }
 
+/**
+ * Local heavy models (Gemma translation, local inpainting) own the model
+ * runtime exclusively for the whole job. Remote API/Codex jobs only share it:
+ * their short local GPU stages take turns in the main process, so several of
+ * them can run while none of them overlaps an exclusive local model.
+ */
+export function modelRuntimeResource(exclusive: boolean): AppActivityResource {
+  return {
+    kind: "model-runtime",
+    scope: "*",
+    access: exclusive ? "write" : "read",
+  };
+}
+
+/** Whether a new model job with this access would be refused right now. */
+export function isModelRuntimeBlocked(
+  state: Pick<AppActivityState, "activities"> | null | undefined,
+  exclusive: boolean,
+): boolean {
+  return Boolean(
+    state?.activities.some((activity) =>
+      activityResourcesConflict(
+        [modelRuntimeResource(exclusive)],
+        activity.resources,
+      ),
+    ),
+  );
+}
+
 export function pageContentResource(
   chapterId: string,
   pageId: string,

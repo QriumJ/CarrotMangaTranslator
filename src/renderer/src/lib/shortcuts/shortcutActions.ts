@@ -14,7 +14,7 @@ import type { ShortcutActionDef, ShortcutContext } from "./shortcutActionTypes";
  */
 
 const canTranslate = (context: ShortcutContext): boolean =>
-  context.chapterOpen && !context.jobActive;
+  context.chapterOpen && !(context.translationBlocked ?? context.jobActive);
 
 export const SHORTCUT_ACTIONS: ShortcutActionDef[] = [
   {

@@ -17,6 +17,7 @@ import type { CumulativeContextDetail } from "../../../shared/settingsTypes";
 import type { LiveChapterMergeOptions } from "../lib/chapterSync";
 import type { ChapterRunSelection } from "../lib/translationSelection";
 import type { RunAnalysisOutcome } from "./translationFlowHelpers";
+import type { AppActivityState } from "../../../shared/appActivityTypes";
 
 export type RunAnalysisMode = "pending" | "all" | "single-page" | "page-set";
 
@@ -42,7 +43,15 @@ export type UseTranslationActionsOptions = {
   currentChapter: ChapterSnapshot | null;
   currentChapterRef: MutableRefObject<ChapterSnapshot | null>;
   flowCancellationRef?: MutableRefObject<boolean>;
+  /** A job the current provider cannot run beside (translation starts). */
   jobActive: boolean;
+  /** Any model job is running; exclusive local-model work waits for none. */
+  modelResourceBusy?: boolean;
+  /** Any renderer flow, including shared page workflows. */
+  rendererFlowActiveRef?: MutableRefObject<boolean>;
+  /** A multi-pass flow that owns the shared cancellation flag. */
+  exclusiveFlowActiveRef?: MutableRefObject<boolean>;
+  activities?: AppActivityState | null;
   library: LibraryIndex;
   mergeLiveChapter: (
     chapter: ChapterSnapshot,
@@ -72,7 +81,7 @@ export type UseTranslationActionsOptions = {
     label: string;
   }) => void;
   setCurrentChapter: Dispatch<SetStateAction<ChapterSnapshot | null>>;
-  setFlowActive: (active: boolean) => void;
+  setFlowActive: (active: boolean, mode?: "exclusive" | "shared") => void;
   setShowBlockChrome: (visible: boolean) => void;
   setJobState: Dispatch<SetStateAction<JobState>>;
   setSelectedBlockId: Dispatch<SetStateAction<string | null>>;
@@ -82,6 +91,10 @@ export type TranslationActions = {
   runPageWorkflow: (
     request: import("../../../shared/pageWorkflowTypes").PageWorkflowRequest,
   ) => Promise<void>;
+  /** Why the workflow cannot start beside running jobs, or null. */
+  pageWorkflowStartIssue: (
+    request: import("../../../shared/pageWorkflowTypes").PageWorkflowRequest,
+  ) => string | null;
   regionTranslationDialog?:
     | import("../lib/regionTranslationOptions").RegionTranslationDialog
     | null;

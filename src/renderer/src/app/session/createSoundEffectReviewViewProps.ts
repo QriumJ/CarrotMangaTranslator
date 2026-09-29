@@ -120,7 +120,8 @@ export function createSoundEffectTranslationModalProps({
     onRestore: libraryActions.restoreSoundEffectReview,
     settings: settingsDialog.settings,
     ...soundEffectExecutionSettings(settingsDialog),
-    jobActive: derivedState.modelResourceBusy,
+    jobActive: derivedState.translationModelBusy,
+    modelResourceBusy: derivedState.modelResourceBusy,
     onPersistDefaults: createPersistUiDefaults(settingsDialog),
     onClose: () => uiState.setSoundEffectTranslationOpen(false),
     onResume: (recovery) => {

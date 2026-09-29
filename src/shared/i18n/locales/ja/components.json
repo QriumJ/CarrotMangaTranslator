@@ -1643,7 +1643,13 @@
       "results": "結果の自動保存",
       "shortcuts": "ショートカット",
       "test": "確認/更新",
-      "image": "画像"
+      "image": "画像",
+      "groups": {
+        "basics": "基本",
+        "ai": "AIモデル",
+        "output": "出力・連携",
+        "about": "情報"
+      }
     },
     "general": {
       "language": "アプリの言語",

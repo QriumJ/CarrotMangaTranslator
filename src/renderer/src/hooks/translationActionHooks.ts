@@ -1,5 +1,8 @@
 import { useRegionTranslationDialog } from "./useRegionTranslationDialog";
-import { useRunPageWorkflow } from "./useRunPageWorkflow";
+import {
+  pageWorkflowStartIssue,
+  useRunPageWorkflow,
+} from "./useRunPageWorkflow";
 import { useCallback, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
@@ -97,8 +100,15 @@ export function useTranslationActionsImpl(
     notificationPort,
   );
 
+  const workflowStartIssue = useCallback(
+    (request: Parameters<TranslationActions["pageWorkflowStartIssue"]>[0]) =>
+      pageWorkflowStartIssue(request, options),
+    [options],
+  );
+
   return {
     runPageWorkflow,
+    pageWorkflowStartIssue: workflowStartIssue,
     runAnalysis,
     runTranslationFlow,
     translateSelectedRegion: region.open,

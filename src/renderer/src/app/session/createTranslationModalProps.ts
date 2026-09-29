@@ -18,6 +18,7 @@ export function createTranslationOptionsProps({
         onClose: uiState.closeTranslateOptions,
         onPersistDefaults: createPersistUiDefaults(settingsDialog),
         onStartPageWorkflow: translationActions.runPageWorkflow,
+        pageWorkflowStartIssue: translationActions.pageWorkflowStartIssue,
         onStart: (flowOptions) =>
           void translationActions.runTranslationFlow(flowOptions),
         sourceLanguage: settingsDialog.settings?.translation?.sourceLanguage,

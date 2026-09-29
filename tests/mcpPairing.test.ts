@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { it } from "vitest";
 import { McpPairingBroker } from "../src/main/mcp/mcpPairingBroker";
 import { mcpPairingPage } from "../src/main/mcp/mcpPairingPage";
@@ -7,8 +8,26 @@ import { McpOAuthSession } from "../src/main/mcp/mcpOAuthSession";
 import { McpOAuthHttp } from "../src/main/mcp/mcpOAuthHttp";
 import { startMcpHttpServer } from "../src/main/mcp/mcpHttpServer";
 import { oauthDigest } from "../src/main/mcp/mcpOAuthPolicy";
+import { MCP_PAGE_STYLE_SOURCE } from "../src/main/mcp/mcpOAuthPage";
 const issuer = "https://carrot.tail-test.ts.net";
 const password = "p".repeat(43);
+
+it("styles the approval page only through its own hashed stylesheet", () => {
+  const { html } = mcpPairingPage({
+    transaction: "transaction",
+    clientName: "Claude",
+    resource: `${issuer}/mcp`,
+    scope: "carrot.read offline_access",
+    code: "123456",
+  });
+  const styles = [...html.matchAll(/<style>([\s\S]*?)<\/style>/g)];
+  assert.equal(styles.length, 1);
+  assert.equal(
+    MCP_PAGE_STYLE_SOURCE,
+    `'sha256-${createHash("sha256").update(styles[0][1]).digest("base64")}'`,
+  );
+  assert.equal(/\sstyle=/.test(html), false);
+});
 
 it("describes current file, editing and model permissions while escaping untrusted client and scope labels", () => {
   const { html } = mcpPairingPage({
@@ -21,7 +40,7 @@ it("describes current file, editing and model permissions while escaping untrust
   });
   assert.ok(
     html.includes(
-      "보관함·텍스트·문맥 조회 · 이미지 및 이미지 포함 파일 전송 · 텍스트·서식·문맥 편집 · 블록·보관함 관리와 앱 모델 처리 · 다음 실행에도 승인 유지 · &lt;img&gt; · constructor · __proto__ · toString",
+      "<li>보관함·텍스트·문맥 조회</li><li>이미지 및 이미지 포함 파일 전송</li><li>텍스트·서식·문맥 편집</li><li>블록·보관함 관리와 앱 모델 처리</li><li>다음 실행에도 승인 유지</li><li>&lt;img&gt;</li><li>constructor</li><li>__proto__</li><li>toString</li>",
     ),
   );
   assert.ok(

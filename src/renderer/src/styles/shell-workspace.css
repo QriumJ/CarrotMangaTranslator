@@ -384,13 +384,7 @@
   left: 10px;
   width: 20px;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--canvas-rail-divider) 28%,
-    var(--canvas-rail-divider) 72%,
-    transparent
-  );
+  background: var(--canvas-rail-divider);
   content: "";
   pointer-events: none;
 }
@@ -464,13 +458,7 @@
   left: 10px;
   width: 20px;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--canvas-rail-divider) 28%,
-    var(--canvas-rail-divider) 72%,
-    transparent
-  );
+  background: var(--canvas-rail-divider);
   content: "";
   pointer-events: none;
 }
@@ -506,13 +494,7 @@
   left: 10px;
   width: 20px;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--canvas-rail-divider) 28%,
-    var(--canvas-rail-divider) 72%,
-    transparent
-  );
+  background: var(--canvas-rail-divider);
   content: "";
   pointer-events: none;
 }
@@ -581,7 +563,6 @@
   background: var(--canvas-view-panel-surface);
   box-shadow: 0 6px 18px var(--shadow-ink-40);
   overflow: visible;
-  backdrop-filter: blur(8px);
   transform-origin: right bottom;
   animation: ui-surface-enter var(--motion-surface) var(--ease-enter) both;
 }
@@ -744,7 +725,7 @@
   max-width: 280px;
   padding: 7px 10px;
   border: 1px solid var(--control-tooltip-bubble-border);
-  border-radius: 7px;
+  border-radius: var(--r-md);
   background: var(--control-tooltip-bubble-background);
   color: var(--control-tooltip-bubble-color);
   box-shadow: 0 8px 24px var(--shadow-ink-42);
@@ -1005,7 +986,6 @@
   padding: var(--sp-6);
   pointer-events: none;
   background: var(--library-drop-overlay-background);
-  backdrop-filter: blur(3px);
   animation: library-drop-fade-in 120ms ease-out;
 }
 

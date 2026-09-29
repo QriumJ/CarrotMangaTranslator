@@ -72,7 +72,6 @@ describe("settings draft safety", () => {
       });
       const onSubmit = vi.fn();
       renderSettings({ onSubmit });
-      fireEvent.click(screen.getByRole("tab", { name: "AI" }));
       fireEvent.click(screen.getByRole("tab", { name: "하드웨어" }));
       const apply = screen.getByRole("button", { name: "권장값 적용" });
       fireEvent.click(apply);
@@ -111,30 +110,34 @@ describe("settings draft safety", () => {
     );
   });
 
-  it("nests translation and internet research inside the single LLM section", () => {
+  it("lists every AI page in the one grouped settings navigation", () => {
     renderSettings();
 
     const settingsTabs = screen.getByRole("tablist", { name: "설정 영역" });
-    expect(
-      within(settingsTabs).queryByRole("tab", { name: "인터넷 조사" }),
-    ).toBeNull();
+    expect(settingsTabs.getAttribute("aria-orientation")).toBe("vertical");
+    for (const name of [
+      "번역",
+      "OCR",
+      "이미지 · 원문 제거",
+      "인터넷 조사",
+      "하드웨어",
+    ])
+      expect(within(settingsTabs).getByRole("tab", { name })).toBeTruthy();
+    expect(screen.queryByRole("tablist", { name: "AI" })).toBeNull();
 
-    fireEvent.click(within(settingsTabs).getByRole("tab", { name: "AI" }));
-    const llmTabs = screen.getByRole("tablist", { name: "AI" });
-    expect(within(llmTabs).getAllByRole("tab")).toHaveLength(5);
-    expect(within(llmTabs).getByRole("tab", { name: "번역" })).toHaveProperty(
-      "ariaSelected",
-      "true",
+    fireEvent.click(
+      within(settingsTabs).getByRole("tab", { name: "인터넷 조사" }),
     );
-
-    fireEvent.click(within(llmTabs).getByRole("tab", { name: "인터넷 조사" }));
     expect(screen.getByRole("heading", { name: "Tavily" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Codex" })).toBeTruthy();
     expect(screen.queryByText("조사 방식")).toBeNull();
     expect(
-      within(llmTabs).getByRole("tab", { name: "인터넷 조사" }),
+      within(settingsTabs).getByRole("tab", { name: "인터넷 조사" }),
     ).toHaveProperty("ariaSelected", "true");
     expect(screen.queryByRole("heading", { name: "번역 엔진" })).toBeNull();
+
+    fireEvent.click(within(settingsTabs).getByRole("tab", { name: "번역" }));
+    expect(screen.getByRole("heading", { name: "번역 엔진" })).toBeTruthy();
   });
 
   it("disables Save until the draft changes and protects dirty close", () => {
@@ -248,7 +251,7 @@ describe("settings draft safety", () => {
     };
     renderSettings({ onSubmit, settings: qatSettings });
 
-    fireEvent.click(screen.getByRole("tab", { name: "AI" }));
+    fireEvent.click(screen.getByRole("tab", { name: "번역" }));
     const familyGroup = screen.getByRole("group", { name: "모델 계열" });
     const presetGroup = screen.getByRole("group", { name: "모델 프리셋" });
 
@@ -298,7 +301,7 @@ describe("settings draft safety", () => {
     );
     renderSettings({ settings });
 
-    fireEvent.click(screen.getByRole("tab", { name: "AI" }));
+    fireEvent.click(screen.getByRole("tab", { name: "번역" }));
     const familyGroup = screen.getByRole("group", { name: "모델 계열" });
     const presetGroup = screen.getByRole("group", { name: "모델 프리셋" });
 
@@ -318,7 +321,7 @@ describe("settings draft safety", () => {
     };
     renderSettings({ settings });
 
-    fireEvent.click(screen.getByRole("tab", { name: "AI" }));
+    fireEvent.click(screen.getByRole("tab", { name: "번역" }));
     const presetGroup = screen.getByRole("group", { name: "모델 프리셋" });
     fireEvent.click(
       within(presetGroup).getByRole("button", { name: "26B (16GB)" }),
@@ -341,7 +344,7 @@ describe("settings draft safety", () => {
     settings.gemma = { ...settings.gemma, fitTargetMb: 777 };
     renderSettings({ onSubmit, settings });
 
-    fireEvent.click(screen.getByRole("tab", { name: "AI" }));
+    fireEvent.click(screen.getByRole("tab", { name: "번역" }));
     const input = screen.getByRole("spinbutton", {
       name: "여유 VRAM (MiB)",
     });
@@ -407,7 +410,7 @@ describe("settings draft safety", () => {
       ctx: 65536,
     };
     renderSettings({ settings });
-    fireEvent.click(screen.getByRole("tab", { name: "AI" }));
+    fireEvent.click(screen.getByRole("tab", { name: "번역" }));
 
     await screen.findByText("로그인되지 않음");
     expect(screen.queryByRole("combobox", { name: "Codex 모델" })).toBeNull();

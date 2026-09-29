@@ -82,7 +82,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  min-height: 36px;
+  min-height: var(--ctl-h);
   margin-right: auto;
   color: var(--text-dim);
   font-size: var(--font-sm);
@@ -911,11 +911,10 @@
 
 .translate-chapter-tag {
   flex: none;
-  padding: 0 8px;
-  border: 1px solid var(--accent-bd);
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent-bd);
+  padding: 0 6px;
+  border-radius: var(--r-sm);
+  background: var(--tag-surface);
+  color: var(--text-dim);
   font-size: var(--font-xs);
   line-height: 1.6;
 }

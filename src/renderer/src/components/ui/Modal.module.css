@@ -203,21 +203,13 @@
   @keyframes modal-card-enter {
     from {
       opacity: 0;
-      transform: translateY(14px) scale(0.985);
-      filter: blur(3px);
-      clip-path: inset(2% 1% 0 round var(--r-lg));
+      transform: translateY(6px);
       box-shadow: var(--shadow-overlay-enter);
-    }
-
-    68% {
-      filter: blur(0);
     }
 
     to {
       opacity: 1;
-      transform: translateY(0) scale(1);
-      filter: blur(0);
-      clip-path: inset(0 round var(--r-lg));
+      transform: translateY(0);
       box-shadow: var(--shadow-overlay), var(--surface-highlight);
     }
   }

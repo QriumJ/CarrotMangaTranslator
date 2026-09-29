@@ -3,7 +3,10 @@ import type {
   PageWorkflowResult,
 } from "../../shared/pageWorkflowTypes";
 import { createPageWorkflowProgress } from "./pageWorkflowProgress";
-import { preflightPageWorkflow } from "../../shared/pageWorkflowPolicy";
+import {
+  pageWorkflowNeedsExclusiveModel,
+  preflightPageWorkflow,
+} from "../../shared/pageWorkflowPolicy";
 import { executePageWorkflow } from "../application/pageWorkflowService";
 import { getRunPaths, openChapter } from "../library";
 import { preparePageWorkflowRun } from "../pageWorkflowRunStore";
@@ -13,6 +16,7 @@ import { createDefaultWholePagePipelineDependencies } from "../pipeline/wholePag
 import { isNonRetriableRuntimeError } from "../pipeline/failure";
 import {
   acquireJobPageOwnership,
+  assertJobPagesAvailable,
   releaseJobPage,
   reserveJobChapter,
 } from "./jobPageOwnership";
@@ -51,7 +55,14 @@ export async function startPageWorkflowJob(
     abortController,
     cleanup: lifetime.cleanup,
     resources: [
-      { kind: "model-runtime", scope: "*", access: "write" },
+      {
+        kind: "model-runtime",
+        scope: "*",
+        // Local Gemma or local erasure keeps the runtime; other plans share it.
+        access: pageWorkflowNeedsExclusiveModel(run.request, settings)
+          ? "write"
+          : "read",
+      },
       ...((run.request.plan.stages.includes("translate") &&
         settings.modelProvider === "openai-codex") ||
       (run.request.plan.stages.includes("erase") &&
@@ -116,6 +127,14 @@ async function runWorkflowJob({
   });
   lifetime.registerResourceCleanup(runtime.dispose);
   try {
+    for (const chapter of chapters)
+      assertJobPagesAvailable(
+        context.jobs,
+        run.id,
+        chapter.id,
+        run.request.selection.find((s) => s.chapterId === chapter.id)
+          ?.pageIds ?? [],
+      );
     for (const chapter of chapters)
       reserveJobChapter(
         context.jobs,

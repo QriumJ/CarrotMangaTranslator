@@ -122,20 +122,45 @@ function useEditorTextTabRequest() {
   return { editorTextTabRequestToken, requestEditorTextTab };
 }
 
+/**
+ * Multi-pass flows share one cancellation flag, so they stay one at a time.
+ * Page workflows are single jobs cancelled by id; several may run together
+ * (the main process refuses any that would need the same model or pages).
+ */
 function useJobFlowState() {
   const [jobFlowActive, setJobFlowActiveState] = useState(false);
+  const [exclusiveFlowActive, setExclusiveFlowActive] = useState(false);
   const jobFlowActiveRef = useRef(false);
+  const exclusiveFlowActiveRef = useRef(false);
+  const sharedFlowCountRef = useRef(0);
   const jobFlowCancellationRef = useRef(false);
-  const setJobFlowActive = useCallback((active: boolean) => {
-    if (active) jobFlowCancellationRef.current = false;
-    jobFlowActiveRef.current = active;
-    setJobFlowActiveState(active);
-  }, []);
+  const setJobFlowActive = useCallback(
+    (active: boolean, mode: "exclusive" | "shared" = "exclusive") => {
+      if (mode === "shared") {
+        sharedFlowCountRef.current = Math.max(
+          0,
+          sharedFlowCountRef.current + (active ? 1 : -1),
+        );
+      } else {
+        if (active) jobFlowCancellationRef.current = false;
+        exclusiveFlowActiveRef.current = active;
+        setExclusiveFlowActive(active);
+      }
+      const next =
+        exclusiveFlowActiveRef.current || sharedFlowCountRef.current > 0;
+      jobFlowActiveRef.current = next;
+      setJobFlowActiveState(next);
+    },
+    [],
+  );
   const requestJobFlowCancellation = useCallback(() => {
-    if (jobFlowActiveRef.current) jobFlowCancellationRef.current = true;
+    if (exclusiveFlowActiveRef.current) jobFlowCancellationRef.current = true;
   }, []);
   return {
+    exclusiveFlowActive,
+    exclusiveFlowActiveRef,
     jobFlowActive,
+    jobFlowActiveRef,
     jobFlowCancellationRef,
     requestJobFlowCancellation,
     setJobFlowActive,

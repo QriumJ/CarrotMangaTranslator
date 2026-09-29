@@ -430,7 +430,7 @@
   padding: 10px;
   pointer-events: auto;
   border: 1px solid var(--sound-effect-review-actions-border);
-  border-radius: 9px;
+  border-radius: var(--r-lg);
   color: var(--sound-effect-review-actions-color);
   background: var(--sound-effect-review-actions-background);
   box-shadow: 0 14px 36px var(--shadow-ink-50);
@@ -471,7 +471,7 @@
   min-height: 28px;
   padding: 5px 9px;
   border: 1px solid var(--sound-effect-review-action-button-border);
-  border-radius: 6px;
+  border-radius: var(--r-md);
   color: var(--sound-effect-review-action-button-color);
   background: var(--control-highlight);
   font: inherit;
@@ -699,15 +699,10 @@
 }
 
 .bubble-layout-context-modes button[aria-pressed="true"] {
-  border-color: var(
-    --bubble-layout-context-modes-button-aria-pressed-true-border-color
-  );
-  background: var(
-    --bubble-layout-context-modes-button-aria-pressed-true-background
-  );
-  color: var(--bubble-layout-context-modes-button-aria-pressed-true-color);
-  box-shadow: inset 0 0 0 1px
-    var(--bubble-layout-context-modes-button-aria-pressed-true-box-shadow);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 .bubble-layout-context-radius {
@@ -1060,7 +1055,6 @@ kbd {
   background: var(--canvas-view-panel-surface);
   color: var(--canvas-view-panel-text);
   box-shadow: 0 6px 18px var(--shadow-ink-40);
-  backdrop-filter: blur(8px);
   transform-origin: right bottom;
   animation: ui-surface-enter var(--motion-surface) var(--ease-enter) both;
 }

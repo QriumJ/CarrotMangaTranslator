@@ -120,7 +120,6 @@ function FontManagerControls({
         onChange={(event) => model.setQuery(event.target.value)}
       />
       <Button
-        size="sm"
         disabled={model.disabled}
         onClick={() => void model.registerFont()}
       >

@@ -298,7 +298,10 @@
 }
 
 .patternChip[data-active="true"] {
-  border-color: var(--accent-bd);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 .patternChip:focus-within {
@@ -412,10 +415,10 @@
 }
 
 .patternMenu button {
-  min-height: 34px;
+  min-height: var(--ctl-h);
   padding: 6px 9px;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--r-sm);
   background: transparent;
   color: var(--text);
   font-size: var(--font-sm);
@@ -491,7 +494,7 @@
 .patternAdvanced code {
   min-width: 0;
   padding: 5px 7px;
-  border-radius: 4px;
+  border-radius: var(--r-sm);
   background: var(--bg-input);
   color: var(--text);
   overflow-wrap: anywhere;
@@ -665,7 +668,7 @@
   align-items: center;
   gap: var(--sp-2);
   width: fit-content;
-  min-height: 34px;
+  min-height: var(--ctl-h);
   color: var(--accent-hi);
   font-size: var(--font-sm);
   font-weight: 650;
@@ -1357,8 +1360,10 @@
 }
 
 .resultRow[data-active="true"] {
-  background: var(--accent-soft);
-  box-shadow: inset 3px 0 0 var(--accent-bd);
+  background: var(--selected-surface);
+  box-shadow: none;
+  border-color: var(--selected-edge);
+  color: var(--selected-text);
 }
 
 .resultRow[data-included="false"] {

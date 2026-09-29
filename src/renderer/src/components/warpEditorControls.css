@@ -32,9 +32,10 @@
 }
 
 .warp-grid-size-row button[aria-pressed="true"] {
-  border-color: var(--accent-bd);
-  background: var(--accent-soft);
-  color: var(--accent-text);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 .warp-grid-size-row button:disabled {

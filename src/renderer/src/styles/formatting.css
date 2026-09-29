@@ -20,9 +20,6 @@
 .editor-word-break-field [data-ui-select-trigger] {
   width: 100%;
   min-width: 0;
-  height: 32px;
-  padding-block: 3px;
-  font-size: var(--font-sm);
 }
 
 .text-wrapping-select-control {
@@ -95,11 +92,10 @@
 }
 
 .format-apply-scope-button[aria-pressed="true"] {
-  border-color: var(--accent-bd);
-  background: var(
-    --accent-bg,
-    var(--format-apply-scope-button-aria-pressed-true-background)
-  );
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 .format-apply-scope-button:disabled {
@@ -164,7 +160,7 @@
   align-items: center;
   gap: var(--sp-2);
   width: 100%;
-  min-height: 36px;
+  min-height: var(--ctl-h);
   padding: 7px 9px;
   border: 0;
   border-radius: var(--r-sm);
@@ -279,9 +275,10 @@
 
 .rich-editor-toolbar button[aria-pressed="true"],
 .rich-editor-toolbar button[aria-expanded="true"] {
-  border-color: color-mix(in srgb, var(--accent) 58%, var(--border-strong));
-  background: var(--accent-soft);
-  color: var(--accent-text);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 .rich-editor-surface,
@@ -395,9 +392,10 @@
 }
 
 .rich-inline-emphasis-tools button[aria-pressed="true"] {
-  border-color: color-mix(in srgb, var(--accent) 58%, var(--border-strong));
-  background: var(--accent-soft);
-  color: var(--accent-text);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 .rich-inline-appearance-list {
@@ -422,14 +420,6 @@
 
 .rich-inline-outline-width {
   min-width: 0;
-}
-
-/* Compact density for the font picker inside the inline rich-text panel. */
-.rich-inline-style-panel .font-select [data-ui-select-trigger] {
-  min-height: 34px;
-  padding-top: 4px;
-  padding-bottom: 4px;
-  font-size: 12px;
 }
 
 @container editor-panel (max-width: 480px) {
@@ -626,7 +616,7 @@
 }
 
 .editor-font-size-auto {
-  min-height: 34px;
+  min-height: var(--ctl-h);
   justify-self: start;
 }
 
@@ -733,7 +723,7 @@
   min-height: 42px;
   padding: 7px 10px;
   border: 1px solid var(--block-type-preview-border);
-  border-radius: 8px;
+  border-radius: var(--r-lg);
   background: var(--block-type-preview-background);
   color: var(--block-type-preview-color);
   font-size: 13px;
@@ -745,7 +735,7 @@
   height: 20px;
   flex: 0 0 auto;
   border: 2px solid;
-  border-radius: 5px;
+  border-radius: var(--r-sm);
   box-shadow: inset 0 0 0 1px var(--shadow-ink-16);
 }
 
@@ -768,7 +758,7 @@
 .color-picker-button {
   position: relative;
   min-width: 0;
-  min-height: 34px;
+  min-height: var(--ctl-h);
   display: grid;
   grid-template-columns: 18px minmax(0, 1fr);
   align-items: center;
@@ -844,7 +834,7 @@
   display: grid;
   gap: 8px;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: var(--r-lg);
   background: var(--bg-rail);
   border: 1px solid var(--progress-card-border);
   min-width: 0;
@@ -867,7 +857,7 @@
       var(--job-completed-card-border-start) 54%,
       var(--job-completed-card-border-end)
     );
-  border-radius: 8px;
+  border-radius: var(--r-lg);
   background: color-mix(
     in srgb,
     var(--job-completed-card-background-start) 24%,

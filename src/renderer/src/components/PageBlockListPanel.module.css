@@ -9,5 +9,6 @@
   white-space: nowrap;
 }
 .readingSize > :last-child {
+  --number-field-h: var(--ctl-h-sm);
   width: 72px;
 }

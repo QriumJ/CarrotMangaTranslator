@@ -83,7 +83,7 @@
   place-items: center;
   width: 34px;
   min-width: 34px;
-  height: 34px;
+  height: var(--ctl-h);
   padding: 0;
 }
 
@@ -91,7 +91,7 @@
   display: flex;
   width: 100%;
   min-width: 0;
-  height: 34px;
+  height: var(--ctl-h);
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
@@ -186,7 +186,7 @@
 }
 
 .block-style-preset-menu-row[data-active="true"] {
-  background: var(--accent-soft);
+  background: var(--selected-surface);
 }
 
 .block-style-preset-menu-item,
@@ -222,7 +222,10 @@
 }
 
 .block-style-preset-menu-item[aria-checked="true"] {
-  color: var(--accent-text);
+  color: var(--selected-text);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  box-shadow: none;
 }
 
 .block-style-preset-menu-delete {
@@ -364,17 +367,14 @@
 }
 
 .page-block-badge.review {
-  border-color: var(--page-block-badge-review-border-color);
   color: var(--review-warning-text);
 }
 
 .page-block-badge.sound {
-  border-color: var(--page-block-badge-sound-border-color);
   color: var(--page-block-badge-sound-color);
 }
 
 .page-block-badge.excluded {
-  border-color: var(--page-block-badge-excluded-border-color);
   color: var(--page-block-badge-excluded-color);
 }
 
@@ -443,10 +443,10 @@
 }
 
 .style-preset-tab[aria-pressed="true"] {
-  border-color: var(--accent-bd);
-  background: var(--accent-soft);
-  color: var(--accent-text);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 .style-preset-group-tab {
@@ -564,9 +564,10 @@
 }
 
 .style-preset-editing-groups > button[aria-pressed="true"] {
-  border-color: var(--accent-bd);
-  background: var(--accent-soft);
-  color: var(--accent-text);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 .style-preset-editing-groups > button:focus-visible {
@@ -759,7 +760,7 @@
 
 .style-preset-library-group-header > input {
   min-width: 0;
-  height: 30px;
+  height: var(--ctl-h);
   border-color: transparent;
   background: transparent;
   color: var(--text-head);
@@ -834,8 +835,10 @@
 }
 
 .style-preset-library-item[aria-selected="true"] {
-  border-color: var(--accent-bd);
-  background: var(--accent-soft);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 .style-preset-library-item[data-grouped="true"] {
@@ -911,7 +914,7 @@
 .style-preset-definition-name {
   width: 100%;
   min-width: 0;
-  height: 38px;
+  height: var(--ctl-h);
   color: var(--text-head);
   font-size: var(--font-md);
   font-weight: 700;

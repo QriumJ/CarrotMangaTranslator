@@ -3,6 +3,7 @@ import type { ChapterSnapshot } from "../../shared/libraryTypes";
 import type { StartInpaintingRequest } from "../../shared/inpaintingTypes";
 import {
   libraryStructureResource,
+  modelRuntimeResource,
   type AppActivityResource,
 } from "../../shared/appActivityTypes";
 
@@ -26,13 +27,19 @@ export function inpaintingActivityResources(
   return resources;
 }
 
-/** OCR, font inference and local translation share one conservative runtime owner. */
+/**
+ * Local Gemma owns the model runtime for the whole job. API/Codex jobs share
+ * it: their OCR, detection and font stages take turns through the local
+ * inference section, while remote requests run concurrently. A job that also
+ * erases with a local inpainting model stays exclusive.
+ */
 export function translationActivityResources(
   settings: AppSettings,
   codexImages = false,
+  localInpainting = false,
 ): AppActivityResource[] {
   return [
-    { kind: "model-runtime", scope: "*", access: "write" },
+    modelRuntimeResource(settings.modelProvider === "gemma" || localInpainting),
     ...(settings.modelProvider === "openai-codex" || codexImages
       ? [{ kind: "codex-auth" as const, scope: "*", access: "read" as const }]
       : []),

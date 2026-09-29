@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import {
   IconAlertTriangle,
   IconDownload,
+  IconEraser,
   IconFolderOpen,
   IconLayersSelected,
   IconWand,
@@ -254,7 +255,7 @@ function BubbleLayoutAction({
         aria-label={label}
         disabled={disabled}
         fullWidth
-        iconLeft={<IconWand size={17} stroke={2.1} />}
+        iconLeft={<IconWand size={16} stroke={2.1} />}
         onClick={onRun}
         size="sm"
       >
@@ -277,6 +278,7 @@ function AutomaticEraseActions({
       aria-label={t("inpainting.auto.currentPageAction")}
       disabled={disabled}
       fullWidth
+      iconLeft={<IconEraser size={16} stroke={2.1} />}
       onClick={() => onOpenScope("select")}
       size="sm"
     >

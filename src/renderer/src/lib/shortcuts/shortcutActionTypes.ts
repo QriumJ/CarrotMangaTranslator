@@ -39,6 +39,8 @@ export type ShortcutContext = {
   chapterOpen: boolean;
   editLocked: boolean;
   jobActive: boolean;
+  /** A job the current translation provider cannot run beside. */
+  translationBlocked?: boolean;
   retouchToolActive: boolean;
   blockSelected: boolean;
 };

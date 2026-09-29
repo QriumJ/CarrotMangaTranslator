@@ -19,7 +19,7 @@
   background: var(--control-bg);
   color: var(--text);
   font-size: var(--font-md);
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.2;
   white-space: nowrap;
   cursor: pointer;
@@ -70,16 +70,25 @@
   align-items: center;
 }
 
+/* A toggle button that is on uses the app's one selected state. */
+.button[aria-pressed="true"],
+.button[aria-pressed="true"]:hover:not(:disabled) {
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+}
+
 /* variants */
 .primary {
   background: var(--accent);
-  border-color: var(--accent-bd);
+  border-color: var(--accent);
   color: var(--accent-text);
+  font-weight: 600;
 }
 
 .primary:hover:not(:disabled) {
   background: var(--accent-hover);
-  border-color: var(--accent-hi);
+  border-color: var(--accent-hover);
 }
 
 .danger {
@@ -100,13 +109,13 @@
 
 .ghost {
   background: transparent;
-  border-color: var(--border);
+  border-color: transparent;
   color: var(--text-dim);
 }
 
 .ghost:hover:not(:disabled) {
-  background: var(--control-bg);
-  border-color: var(--control-border-hover);
+  background: var(--bg-hover);
+  border-color: transparent;
   color: var(--text);
 }
 

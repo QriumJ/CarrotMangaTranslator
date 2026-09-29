@@ -57,12 +57,6 @@
   --stage-drag-hud-invalid-color: #ffe9e9;
   --vertex-service-account-guide-modal-role-box-code-background: #11151b;
   --sound-effect-translation-modal-creation-box-z-index: 4;
-  --format-apply-scope-button-aria-pressed-true-background: rgba(
-    239,
-    68,
-    68,
-    0.12
-  );
   --editor-overflow-menu-background: #191b21;
   --inline-toggle-color: #cfc7bb;
   --block-type-preview-border: #343b45;
@@ -94,12 +88,6 @@
   --gather-direct-preview-head-background: #171a20;
   --preview-stage-glow: rgba(255, 255, 255, 0.035);
   --gather-direct-preview-badge-background: rgba(17, 19, 24, 0.82);
-  --gather-direct-pill-toggle-aria-pressed-true-border-color: rgba(
-    193,
-    95,
-    65,
-    0.55
-  );
   --gather-direct-pill-toggle-aria-pressed-true-span-box-shadow: rgba(
     193,
     95,
@@ -110,9 +98,6 @@
   --shadow-ink-22: rgba(0, 0, 0, 0.22);
   --gather-review-warnings-background: rgba(245, 158, 11, 0.08);
   --gather-text-page-title-background: #1f232b;
-  --gather-text-block-selected-background: #1b1f25;
-  --shadow-ink-14: rgba(0, 0, 0, 0.14);
-  --gather-text-block-selection-surface-data-selected-true-background: #1b1f25;
   --gather-text-block-clickable-hover-background: #1a1d23;
   --gather-text-mark-background: rgba(193, 95, 65, 0.45);
   --preview-select-background: #24282f;
@@ -168,10 +153,7 @@
   --share-merge-item-incoming-background: #172522;
   --block-style-preset-menu-background: #171a20;
   --page-block-list-panel-header-background: #171a20;
-  --page-block-badge-review-border-color: rgba(230, 183, 116, 0.45);
-  --page-block-badge-sound-border-color: rgba(126, 170, 255, 0.45);
   --page-block-badge-sound-color: #a9c3ff;
-  --page-block-badge-excluded-border-color: rgba(192, 132, 252, 0.4);
   --page-block-badge-excluded-color: #d8b4fe;
   --style-preset-application-groups-background: #191c22;
   --style-preset-manager-screen-background: #1f232b;
@@ -187,8 +169,6 @@
   --sortable-item-dragging-box-shadow: rgba(106, 169, 255, 0.28);
   --sortable-scroll-drag-active-sortable-item-not-dragging-border-color: #3f5367;
   --drag-handle-color: #8f9ba8;
-  --drag-handle-hover-not-disabled-border-color: #425063;
-  --drag-handle-hover-not-disabled-background: #202733;
   --drag-handle-hover-not-disabled-color: #dce7f4;
   --settings-api-status-border: #4f9f89;
   --settings-api-status-background: #4f9f89;
@@ -290,25 +270,6 @@
   --bubble-layout-context-bar-box-shadow: rgba(255, 220, 169, 0.05);
   --bubble-layout-context-info-strong-color: #ffe2b6;
   --bubble-layout-context-hint-bubble-layout-editor-notice-color: #ffaaa2;
-  --bubble-layout-context-modes-button-aria-pressed-true-border-color: rgba(
-    119,
-    239,
-    196,
-    0.74
-  );
-  --bubble-layout-context-modes-button-aria-pressed-true-background: rgba(
-    29,
-    132,
-    104,
-    0.34
-  );
-  --bubble-layout-context-modes-button-aria-pressed-true-color: #d9fff1;
-  --bubble-layout-context-modes-button-aria-pressed-true-box-shadow: rgba(
-    95,
-    220,
-    175,
-    0.16
-  );
   --bubble-layout-context-actions-button-primary-border-color: rgba(
     255,
     184,
@@ -350,10 +311,8 @@
     255,
     0.42
   );
-  --status-sound-popover-background-start: rgba(27, 30, 36, 0.99);
   --status-sound-popover-background-end: rgba(17, 19, 23, 0.99);
   --status-sound-popover-box-shadow-start: rgb(0 0 0 / 46%);
-  --status-sound-popover-box-shadow-end: rgb(255 255 255 / 3%);
   --status-sound-popover-before-background: rgba(25, 28, 33, 0.99);
   --status-sound-category-row-background: rgb(255 255 255 / 2.5%);
   --status-sound-category-row-hover-background: rgb(255 255 255 / 6%);
@@ -379,7 +338,7 @@
   /* text */
   --text: #ece7dc;
   --text-dim: #b8b1a6;
-  --text-muted: #95a4b3;
+  --text-muted: #9a9ea6;
   --text-head: #d6cbbb;
   /* lines */
   --border: #333841;
@@ -390,8 +349,8 @@
   --control-bg: #20242b;
   --control-bg-hover: #292e37;
   --control-bg-pressed: #181b21;
-  --control-border: #454d59;
-  --control-border-hover: #626d7b;
+  --control-border: #373c45;
+  --control-border-hover: #4d535e;
   --control-highlight: rgba(255, 255, 255, 0.08);
   --control-thumb: #d3d9e1;
   --scroll-thumb: #536174;
@@ -425,9 +384,9 @@
   --sp-7: 20px;
   --sp-8: 24px;
   /* radius */
-  --r-sm: 6px;
-  --r-md: 8px;
-  --r-lg: 10px;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
   /* control sizing (density) */
   --ctl-h: 32px;
   --ctl-h-sm: 28px;
@@ -451,6 +410,19 @@
   --r-pill: 999px;
   /* interaction states */
   --bg-hover: #262a31;
+  /* One selected/pressed language for every row, option, tab and card:
+     accent edge plus accent-tinted fill, readable at a glance. No side bars,
+     glows or lifts. The solid accent fill stays for the primary action. */
+  --selected-surface: color-mix(in srgb, var(--accent) 22%, var(--bg-panel));
+  --selected-surface-hover: color-mix(
+    in srgb,
+    var(--accent) 28%,
+    var(--bg-panel)
+  );
+  --selected-edge: var(--accent-bd);
+  --selected-text: var(--accent-text);
+  /* Quiet inline tags (current chapter, review state): tint, no pill border. */
+  --tag-surface: rgba(255, 255, 255, 0.06);
   --accent-hover: #b05239;
   --danger-hover: #8f4141;
   --accent-soft: rgba(166, 78, 54, 0.17);
@@ -528,7 +500,6 @@
   --canvas-chrome-text: #aeb8c7;
   --canvas-chrome-text-strong: #f5f7fb;
   --canvas-chrome-text-disabled: #5d6672;
-  --canvas-chrome-active-end: #211a1a;
   --canvas-chrome-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
 
   --motion-fast: 120ms;
@@ -549,26 +520,12 @@
 @keyframes ui-surface-enter {
   from {
     opacity: 0;
-    translate: var(--motion-enter-x, 0px) var(--motion-enter-y, -6px);
-    scale: 0.985;
-    filter: blur(1.5px);
-    clip-path: inset(
-      var(--motion-clip-top, 0%) var(--motion-clip-right, 0%)
-        var(--motion-clip-bottom, 7%) var(--motion-clip-left, 0%) round
-        var(--r-md)
-    );
-  }
-
-  68% {
-    filter: blur(0);
+    translate: var(--motion-enter-x, 0px) var(--motion-enter-y, -3px);
   }
 
   to {
     opacity: 1;
     translate: none;
-    scale: none;
-    filter: none;
-    clip-path: none;
   }
 }
 
@@ -702,17 +659,20 @@ textarea:focus-visible {
    (otherwise the neutral global button:hover would strip it). */
 .settings-preset-button.active:hover:not(:disabled),
 .inpaint-step.active:hover:not(:disabled) {
-  border-color: var(--accent-bd);
-  background: var(--accent-hover);
-  color: var(--accent-text);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface-hover);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 .chip-toggle.active:hover:not(:disabled),
 .retouch-toolbar button.active:hover:not(:disabled),
 .peek-button.active:hover:not(:disabled),
 .inpainting-actions button.active:hover:not(:disabled) {
-  border-color: var(--accent-bd);
-  background: var(--accent-soft);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface-hover);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 /*
@@ -1020,13 +980,7 @@ input[type="radio"]:disabled {
   left: 10px;
   width: 20px;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(151, 163, 179, 0.64) 28%,
-    rgba(151, 163, 179, 0.64) 72%,
-    transparent
-  );
+  background: rgba(151, 163, 179, 0.64);
   content: "";
   pointer-events: none;
 }
@@ -1076,7 +1030,6 @@ input[type="radio"]:disabled {
   border-radius: var(--r-md);
   background: rgba(20, 22, 27, 0.98);
   box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(10px);
   overflow: visible;
   transform-origin: left top;
   animation: ui-surface-enter var(--motion-surface) var(--ease-enter) both;

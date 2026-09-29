@@ -45,13 +45,21 @@ export function modelCleanupIsBlocked(): boolean {
 }
 
 /** Shared by UI and MCP admission. Lightweight, explicitly scoped work remains
- * available; undeclared legacy jobs conservatively count as model consumers. */
+ * available; undeclared legacy jobs conservatively count as model consumers.
+ * Shared (read) model jobs only load the small pooled detectors, whose pools
+ * already wait for an in-flight release, so they are refused only after a
+ * release has actually failed. Exclusive loads still wait for every release. */
 export function assertModelCleanupComplete(
-  resources?: readonly { kind: string }[],
+  resources?: readonly { kind: string; access?: string }[],
 ): void {
-  if (resources && !resources.some((item) => item.kind === "model-runtime"))
-    return;
-  if (modelCleanupIsBlocked())
+  const model = resources?.filter((item) => item.kind === "model-runtime");
+  if (model && model.length === 0) return;
+  const sharedOnly =
+    model !== undefined && model.every((item) => item.access === "read");
+  const blocked = sharedOnly
+    ? [...cleanups.values()].some((entry) => entry.failure !== undefined)
+    : modelCleanupIsBlocked();
+  if (blocked)
     throw new ModelCleanupError(
       new AggregateError(
         [...cleanups.values()].map((entry) => entry.failure),

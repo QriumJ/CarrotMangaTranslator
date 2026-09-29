@@ -29,6 +29,7 @@
   text-align: left;
   font-weight: 400;
   line-height: 1.2;
+  font-size: var(--font-md);
 }
 
 .trigger:hover:not(:disabled) {
@@ -38,8 +39,7 @@
 
 .trigger:focus-visible,
 .open .trigger {
-  border-color: var(--accent-bd);
-  outline: 2px solid color-mix(in srgb, var(--focus) 72%, transparent);
+  outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
 
@@ -100,9 +100,10 @@
 .search.search {
   min-height: var(--ctl-h);
   padding: var(--ctl-pad-y) var(--ctl-pad-x);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--control-border);
   border-radius: var(--r-md);
-  background: var(--bg-app);
+  background: var(--bg-sunken);
+  font-size: var(--font-md);
 }
 
 .options {
@@ -125,7 +126,7 @@
   grid-auto-columns: auto;
   align-items: center;
   gap: var(--sp-3);
-  min-height: 36px;
+  min-height: var(--ctl-h);
   padding: 7px 9px;
   border: 1px solid transparent;
   border-radius: var(--r-md);

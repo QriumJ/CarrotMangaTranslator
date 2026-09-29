@@ -41,8 +41,8 @@
 }
 
 .root:focus-within {
-  border-color: var(--accent-bd);
-  box-shadow: 0 0 0 2px var(--accent-soft);
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
 }
 
 .root:hover:not(:has(:disabled)) {
@@ -126,7 +126,7 @@
   outline: 0;
   background: transparent;
   color: var(--text);
-  font-size: var(--font-sm);
+  font-size: var(--font-md);
   font-variant-numeric: tabular-nums;
   /* Keep the editable value centred; the unit remains pinned on the right. */
   text-align: center;
@@ -172,6 +172,12 @@
  * Applies to every NumberField input, framed or not. The native stepper is
  * tiny, appears only on hover, and sits on top of the value.
  */
+/* Same type size and line box as every other text-entry control. */
+.numberInput {
+  font-size: var(--font-md);
+  line-height: 1.2;
+}
+
 .numberInput::-webkit-inner-spin-button,
 .numberInput::-webkit-outer-spin-button {
   display: none;

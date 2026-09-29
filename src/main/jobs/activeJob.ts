@@ -12,6 +12,7 @@ import { withLibraryActivityOwner } from "../library/lock";
 import type { AppSettings } from "../../shared/settingsTypes";
 import { withExecutionSettings } from "../settings/executionSettings";
 import { PageEditHandoffs } from "./pageEditHandoffs";
+import { withLocalInferenceOwner } from "../runtimeSupport/localInferenceSection";
 
 export type JobCleanupDiagnostics = {
   error: (message: string, detail?: unknown) => void;
@@ -68,8 +69,11 @@ export class ActiveJobStore {
   }
 
   run<T>(id: string, run: () => T, settings?: AppSettings): T {
-    return withLibraryActivityOwner(this.activityOwnerFor(id), () =>
-      withExecutionSettings(settings, run),
+    const ownerId = this.activityOwnerFor(id);
+    return withLibraryActivityOwner(ownerId, () =>
+      withLocalInferenceOwner(ownerId, () =>
+        withExecutionSettings(settings, run),
+      ),
     );
   }
 

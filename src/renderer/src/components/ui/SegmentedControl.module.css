@@ -59,7 +59,7 @@
   background: transparent;
   color: var(--text-dim);
   font-size: var(--font-sm);
-  font-weight: 650;
+  font-weight: 500;
   line-height: 1.25;
 }
 
@@ -74,10 +74,11 @@
 }
 
 .button[aria-checked="true"] {
-  border-color: var(--accent-bd);
-  background: var(--accent-soft);
-  color: var(--accent-hi);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
   box-shadow: none;
+  font-weight: 600;
 }
 
 /*
@@ -85,9 +86,9 @@
  * option, so the active state restates it.
  */
 .button[aria-checked="true"]:hover:not(:disabled) {
-  border-color: var(--accent-bd);
-  background: var(--accent-soft);
-  color: var(--accent-hi);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface-hover);
+  color: var(--selected-text);
   box-shadow: none;
 }
 

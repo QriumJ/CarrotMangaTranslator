@@ -28,8 +28,19 @@ export function oauthEqual(left: string, right: string): boolean {
     Buffer.from(oauthDigest(right)),
   );
 }
-/** DCR accepts ChatGPT and Codex's numeric loopback callback shapes. Each registration
- * stores exact URIs, and authorization must match one of those exact strings.
+/** Hosted AI-app callbacks accepted by DCR, compared as exact strings. */
+const CLAUDE_CALLBACKS: ReadonlySet<string> = new Set([
+  "https://claude.ai/api/mcp/auth_callback",
+  "https://claude.com/api/mcp/auth_callback",
+]);
+/** Origins a consent form may hand the browser back to. */
+export const MCP_HOSTED_CALLBACK_ORIGINS = [
+  "https://chatgpt.com",
+  "https://claude.ai",
+  "https://claude.com",
+] as const;
+/** DCR accepts ChatGPT and Claude's hosted callbacks plus the loopback callback
+ * shapes Codex and Claude Code listen on. Each registration stores exact URIs.
  * Never fetch a caller-supplied client_uri, logo_uri or metadata URL. */
 export function readMcpOAuthRedirect(value: unknown): string {
   const text = oauthText(value);
@@ -46,7 +57,7 @@ export function readMcpOAuthRedirect(value: unknown): string {
   )
     throw new McpOAuthError(
       "invalid_redirect_uri",
-      "Use an exact ChatGPT callback or Codex HTTP callback on 127.0.0.1 with an explicit unprivileged port.",
+      "Use an exact ChatGPT or Claude callback, or a loopback HTTP callback on 127.0.0.1 or localhost with an explicit unprivileged port.",
     );
   return text;
 }
@@ -55,12 +66,40 @@ function isSupportedMcpCallback(url: URL): boolean {
     url.origin === "https://chatgpt.com" &&
     (/^\/connector\/oauth\/[A-Za-z0-9_-]{1,200}$/.test(url.pathname) ||
       url.pathname === "/connector_platform_oauth_redirect");
-  const codex =
+  return chatGpt || CLAUDE_CALLBACKS.has(url.href) || isLoopbackCallback(url);
+}
+/** Codex listens on 127.0.0.1; Claude Code registers `localhost`. */
+function isLoopbackCallback(url: URL): boolean {
+  return (
     url.protocol === "http:" &&
-    url.hostname === "127.0.0.1" &&
+    (url.hostname === "127.0.0.1" || url.hostname === "localhost") &&
     Number(url.port) >= 1024 &&
-    /^\/callback(?:\/[A-Za-z0-9_-]{1,200})?$/.test(url.pathname);
-  return chatGpt || codex;
+    /^\/callback(?:\/[A-Za-z0-9_-]{1,200})?$/.test(url.pathname)
+  );
+}
+/** Hosted callbacks must match a registered URI exactly. A loopback callback
+ * keeps its registered host and path but may use any unprivileged port
+ * (RFC 8252 section 7.3): native clients listen on a fresh port per sign-in. */
+export function matchesMcpOAuthRedirect(
+  registered: readonly string[],
+  requested: string,
+): boolean {
+  if (registered.includes(requested)) return true;
+  let url: URL;
+  try {
+    url = new URL(readMcpOAuthRedirect(requested));
+  } catch (_error) {
+    return false;
+  }
+  if (!isLoopbackCallback(url)) return false;
+  return registered.some((item) => {
+    const known = new URL(item);
+    return (
+      isLoopbackCallback(known) &&
+      known.hostname === url.hostname &&
+      known.pathname === url.pathname
+    );
+  });
 }
 export function readOAuthScope(
   value: unknown,

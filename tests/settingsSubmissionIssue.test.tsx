@@ -124,7 +124,7 @@ it("keeps API errors beside Save across tabs and returns focus to the invalid fi
       onSubmit={onSubmit}
     />,
   );
-  fireEvent.click(screen.getByRole("tab", { name: "AI" }));
+  fireEvent.click(screen.getByRole("tab", { name: "번역" }));
   const label = appI18n.t("settings.api.advanced.extraBody", {
     ns: "components",
   });

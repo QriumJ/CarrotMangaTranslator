@@ -1,3 +1,15 @@
+/*
+ * Every text-entry control uses the same type size instead of inheriting
+ * whatever its container happens to use (12px in a field, 16px in a toolbar).
+ */
+.control {
+  font-size: var(--font-md);
+}
+
+input.control {
+  line-height: 1.2;
+}
+
 .control:where(:focus-visible) {
   outline: 2px solid var(--focus);
   outline-offset: 1px;

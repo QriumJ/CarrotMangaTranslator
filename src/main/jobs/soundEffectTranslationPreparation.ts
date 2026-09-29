@@ -8,7 +8,7 @@ import { resolveStoredSoundEffectTargets } from "./soundEffectTranslationTargets
 import type { createDefaultWholePagePipelineDependencies } from "../pipeline/wholePagePipelinePorts";
 import type { SoundEffectPreparationDependencies } from "./translationJobTypes";
 import type { SoundEffectTranslationJobInput } from "./translationJobTypes";
-import { acquireJobPage, reserveJobChapter } from "./jobPageOwnership";
+import { acquireJobPage, reserveAvailableJobChapter } from "./jobPageOwnership";
 import { createSoundEffectReviewPageRevision } from "../../shared/pageRevision";
 export async function prepareSoundEffectTranslationRun(
   input: SoundEffectTranslationJobInput,
@@ -23,7 +23,7 @@ export async function prepareSoundEffectTranslationRun(
   throwIfAborted(abortController.signal);
   const chapter = await dependencies.openChapter(request.chapterId);
   state.chapter = chapter;
-  reserveJobChapter(
+  reserveAvailableJobChapter(
     input.context.jobs,
     id,
     chapter,

@@ -24,7 +24,7 @@ import { loadAutoMatchActiveCandidateSelection } from "./autoMatchActiveCatalog"
 import type { AutoMatchActiveCandidateSelection } from "./autoMatchActiveCatalogTypes";
 import { FONT_MATCHING_ACTIVE_CATALOG_FILE } from "./fontMatchingRuntimeArtifactContract";
 import { resolveFontMatchingArtifactDirSync } from "./fontMatchingRuntimePaths";
-import { createWorkerFontMatchingPageInferencePort } from "./fontMatchingInferenceWorkerClient";
+import { createLocalFontMatchingPageInferencePort } from "./localInferenceRuntimePort";
 import type { FontMatchingPageInferencePort } from "./fontMatchingPagePixelInferenceTypes";
 import { createFontChapterC18Port } from "./fontChapterC18";
 import type { FontChapterC18Port } from "./fontChapterC18Types";
@@ -113,7 +113,7 @@ export function createDefaultWholePagePipelineDependencies(
         return selection.renderCandidates ?? selection.candidates;
       },
       loadProfile: readWorkTypographyProfile,
-      pageInference: createWorkerFontMatchingPageInferencePort({
+      pageInference: createLocalFontMatchingPageInferencePort({
         paths,
         loadSelection,
         reportInfo: logInfo,

@@ -77,8 +77,10 @@
   text-align: left;
 }
 .historyItem[aria-current="true"] {
-  background: var(--accent-soft);
-  box-shadow: inset 3px 0 var(--accent);
+  background: var(--selected-surface);
+  box-shadow: none;
+  border-color: var(--selected-edge);
+  color: var(--selected-text);
 }
 .historyThumbnail,
 .historyPlaceholder {

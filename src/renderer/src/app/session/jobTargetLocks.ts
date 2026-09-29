@@ -7,6 +7,7 @@ import type {
 import { resolveJobActive } from "./appSessionSelectors";
 import {
   activityResourcesConflict,
+  isModelRuntimeBlocked,
   libraryStructureResource,
   pageContentResource,
   type AppActivityState,
@@ -72,13 +73,13 @@ function resolveChapterActivityLocks(
       activities && chapter ? removal : progress.jobTargetPageIds,
     editingLockedPageIds:
       activities && chapter ? editing : progress.jobTargetPageIds,
+    // Any model job: exclusive local work (Gemma, local erasure) waits for it.
     modelResourceBusy: activities
-      ? activities.activities.some((activity) =>
-          activityResourcesConflict(
-            [{ kind: "model-runtime", scope: "*", access: "write" }],
-            activity.resources,
-          ),
-        )
+      ? isModelRuntimeBlocked(activities, true)
+      : progress.jobActive,
+    // Only an exclusive local model: shared API/Codex work waits for this.
+    exclusiveModelBusy: activities
+      ? isModelRuntimeBlocked(activities, false)
       : progress.jobActive,
     chapterStructureLocked: Boolean(
       chapter &&
@@ -91,6 +92,19 @@ function resolveChapterActivityLocks(
     ),
     jobTargetPageIds: activities ? targets : progress.jobTargetPageIds,
   };
+}
+
+/**
+ * Translation with a remote provider only shares the model runtime, so it is
+ * blocked by exclusive local work alone; local Gemma waits for any model job.
+ */
+export function isTranslationModelBusy(
+  locks: { modelResourceBusy: boolean; exclusiveModelBusy: boolean },
+  settings: { modelProvider?: string } | null | undefined,
+): boolean {
+  return (settings?.modelProvider ?? "gemma") === "gemma"
+    ? locks.modelResourceBusy
+    : locks.exclusiveModelBusy;
 }
 
 function collectChapterReservations(

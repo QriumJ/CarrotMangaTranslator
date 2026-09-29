@@ -1643,7 +1643,13 @@
       "results": "Automatic result saving",
       "shortcuts": "Shortcuts",
       "test": "Check/update",
-      "image": "Images"
+      "image": "Images",
+      "groups": {
+        "basics": "General",
+        "ai": "AI models",
+        "output": "Output & connections",
+        "about": "About"
+      }
     },
     "general": {
       "language": "Application language",

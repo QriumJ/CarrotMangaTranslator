@@ -1633,7 +1633,7 @@
     "tabs": {
       "ariaLabel": "설정 영역",
       "llmAriaLabel": "AI",
-      "mcp": "AI 연결 / MCP",
+      "mcp": "AI 앱 연결 (MCP)",
       "general": "일반",
       "engine": "AI",
       "translation": "번역",
@@ -1642,8 +1642,14 @@
       "format": "기본 서식",
       "results": "결과물 자동 저장",
       "shortcuts": "단축키",
-      "test": "확인/업데이트",
-      "image": "이미지"
+      "test": "확인 · 업데이트",
+      "image": "이미지 · 원문 제거",
+      "groups": {
+        "basics": "기본",
+        "ai": "AI 모델",
+        "output": "결과물 · 연결",
+        "about": "정보"
+      }
     },
     "general": {
       "language": "앱 언어",

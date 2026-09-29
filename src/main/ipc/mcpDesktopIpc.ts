@@ -4,6 +4,15 @@ import type { IpcContext } from "./context";
 import { readTailscaleSetupUrl } from "../mcp/mcpTailscalePolicy";
 import { trustedHandleContract } from "./trustedIpc";
 
+/** Fixed help pages; the Tailscale setup page comes from the live status. */
+const MCP_HELP_URLS = {
+  tailscale: "https://tailscale.com/download",
+  chatgpt: "https://chatgpt.com/",
+  codex: "https://learn.chatgpt.com/docs/extend/mcp?surface=cli",
+  claude: "https://claude.ai/",
+  "claude-code": "https://code.claude.com/docs/en/mcp",
+} as const;
+
 /** App configuration is available to the trusted main renderer only, never MCP. */
 export function registerMcpDesktopIpc(context: IpcContext): void {
   trustedHandleContract(
@@ -44,13 +53,9 @@ export function registerMcpDesktopIpc(context: IpcContext): void {
     async (_event, page) => {
       const setup = (await requireService(context).getStatus()).setupUrl;
       const url =
-        page === "tailscale"
-          ? "https://tailscale.com/download"
-          : page === "chatgpt"
-            ? "https://chatgpt.com/"
-            : page === "codex"
-              ? "https://learn.chatgpt.com/docs/extend/mcp?surface=cli"
-              : setup && readTailscaleSetupUrl(setup);
+        page === "setup"
+          ? setup && readTailscaleSetupUrl(setup)
+          : MCP_HELP_URLS[page];
       if (!url) throw new Error("현재 열 수 있는 설정 주소가 없습니다.");
       await shell.openExternal(url);
       return { completed: true };

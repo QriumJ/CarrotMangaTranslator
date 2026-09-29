@@ -7,14 +7,28 @@ import {
   type HayaiRegionManifest,
 } from "./hayaiRegionGeometry";
 import { detectPageTextRegions } from "./pageTextRegionDetector";
+import { runLocalInference } from "../runtimeSupport/localInferenceSection";
 
-export async function prepareHayaiRegions(
-  options: TranslationOptions,
-  detect: typeof detectPageTextRegions = detectPageTextRegions,
-): Promise<{
+type PreparedHayaiRegions = {
   manifest: HayaiRegionManifest;
   manifestPath: string;
-}> {
+};
+
+/** Region detection is a local GPU stage shared in turn with other model jobs. */
+export function prepareHayaiRegions(
+  options: TranslationOptions,
+  detect: typeof detectPageTextRegions = detectPageTextRegions,
+): Promise<PreparedHayaiRegions> {
+  return runLocalInference(
+    () => prepareHayaiRegionsNow(options, detect),
+    options.abortSignal,
+  );
+}
+
+async function prepareHayaiRegionsNow(
+  options: TranslationOptions,
+  detect: typeof detectPageTextRegions,
+): Promise<PreparedHayaiRegions> {
   if (!isHayaiOcrPipeline(options.ocrPipeline)) {
     throw new Error("HayaiOCR 영역 전처리는 최신 OCR 경로에서만 실행됩니다.");
   }

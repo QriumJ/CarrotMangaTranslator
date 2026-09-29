@@ -323,6 +323,10 @@ function resolveShortcutRuntime(
       chapterOpen: Boolean(chapter.core.currentChapter),
       editLocked,
       jobActive,
+      translationBlocked:
+        chapter.derivedState.translationModelBusy ||
+        chapter.uiState.exclusiveFlowActive ||
+        translation.workspaceHistory.busy,
       retouchToolActive: chapter.derivedState.inpaintingToolActive,
       blockSelected: Boolean(chapter.derivedState.selectedBlock),
     },

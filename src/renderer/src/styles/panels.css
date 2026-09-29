@@ -1,7 +1,7 @@
 .toolbar {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: var(--sp-2);
 }
 
 .run-panel,
@@ -289,8 +289,8 @@
 .editor-panel-tabs {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2px;
-  padding: 2px;
+  gap: 3px;
+  padding: 3px;
   border: 1px solid var(--border-soft);
   border-radius: var(--r-md);
   background: var(--bg-sunken);
@@ -298,14 +298,14 @@
 
 .editor-panel-tabs button {
   min-width: 0;
-  min-height: 32px;
-  padding: 4px var(--sp-2);
+  min-height: 30px;
+  padding: 4px 10px;
   border: 1px solid transparent;
   border-radius: var(--r-sm);
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text-dim);
   font-size: var(--font-sm);
-  font-weight: 700;
+  font-weight: 500;
   cursor: pointer;
 }
 
@@ -315,10 +315,11 @@
 }
 
 .editor-panel-tabs button[aria-selected="true"] {
-  border-color: var(--accent-bd);
-  background: var(--accent-soft);
-  color: var(--accent-hi);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
   box-shadow: none;
+  font-weight: 600;
 }
 
 .editor-panel-tabs button:focus-visible {
@@ -343,7 +344,7 @@
   gap: var(--sp-3);
   padding: var(--sp-5);
   border: 1px dashed var(--surface-border);
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   background: var(--surface-rail);
   color: var(--text-muted);
 }
@@ -381,7 +382,7 @@
   min-height: 280px;
   background: var(--surface-panel);
   border: 1px solid var(--surface-border);
-  border-radius: 12px;
+  border-radius: var(--r-lg);
   box-shadow: var(--shadow-overlay);
   overflow: hidden;
   transform-origin: center center;
@@ -470,7 +471,7 @@
 .editor-bubble-layout-status button {
   width: 100%;
   min-width: 0;
-  min-height: 36px;
+  min-height: var(--ctl-h);
   border-color: var(--accent-bd);
   color: var(--accent-hi);
 }
@@ -513,9 +514,10 @@
 
 .transform-mode-tabs button[aria-pressed="true"],
 .transform-mini-segments button[aria-pressed="true"] {
-  background: var(--accent-soft);
-  color: var(--accent-text);
-  box-shadow: inset 0 0 0 1px var(--accent-bd);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
+  border-color: var(--selected-edge);
 }
 
 .transform-mode-tabs button:disabled,
@@ -646,9 +648,10 @@
 }
 
 .transform-status-chip.active {
-  border-color: var(--accent-bd);
-  background: var(--accent-soft);
-  color: var(--accent-text);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 .transform-status-chip.suspended {
@@ -668,9 +671,6 @@
 
 .transform-select-row [data-ui-select-trigger] {
   min-width: 0;
-  height: 30px;
-  padding-block: 3px;
-  font-size: var(--font-sm);
 }
 
 .transform-advanced {
@@ -834,24 +834,17 @@
   max-width: 260px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 12px;
-  border: 1px solid var(--surface-border);
-  border-radius: var(--r-pill);
+  gap: var(--sp-2);
+  padding: 0 var(--ctl-pad-x);
+  border: 1px solid var(--control-border);
+  border-radius: var(--r-md);
   background: var(--bg-sunken);
-  box-shadow: var(--surface-highlight);
-  transition:
-    border-color 140ms ease,
-    box-shadow 140ms ease,
-    background 140ms ease;
+  min-height: var(--ctl-h);
 }
 
 .library-search-shell:focus-within {
-  border-color: var(--accent-bd);
-  background: var(--bg-sunken);
-  box-shadow:
-    0 0 0 1px var(--accent-soft),
-    var(--surface-highlight);
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
 }
 
 .library-search-icon {
@@ -869,8 +862,10 @@
   background: transparent;
   color: var(--text);
   caret-color: var(--accent-hi);
-  padding: 10px 0;
+  padding: 0;
   box-shadow: none;
+  font-size: var(--font-md);
+  line-height: 1.2;
 }
 
 .library-search-input:focus {
@@ -941,9 +936,10 @@
 }
 
 .library-sort-option.selected {
-  border-color: var(--accent-bd);
-  background: var(--accent-soft);
-  color: var(--accent-hi);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 .library-sort-check {
@@ -981,9 +977,10 @@
 }
 
 .library-sort-dir.selected {
-  border-color: var(--accent-bd);
-  background: var(--accent-soft);
-  color: var(--accent-hi);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 .run-title {
@@ -1016,13 +1013,17 @@
   padding-right: 4px;
 }
 
+/* The rail is already the surface: a work is a heading plus its chapters,
+   separated from the next work by a divider instead of a nested card. */
 .work-group {
   display: grid;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 10px;
-  background: var(--status-muted-surface);
-  border: 1px solid var(--status-muted-border);
+  gap: var(--sp-1);
+  padding: var(--sp-2) 0 var(--sp-4);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.work-group:last-child {
+  border-bottom: 0;
 }
 
 .work-row {
@@ -1038,11 +1039,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  color: var(--text-head);
+  font-size: var(--font-md);
+  font-weight: 700;
 }
 
 .chapter-list {
   display: grid;
-  gap: 8px;
+  gap: 2px;
 }
 
 .chapter-item,
@@ -1055,7 +1059,7 @@
 
 .sortable-item {
   position: relative;
-  border-radius: 8px;
+  border-radius: var(--r-md);
   transition:
     border-color 140ms ease,
     background 140ms ease,
@@ -1102,13 +1106,26 @@
   height: 32px;
 }
 
+/* The grip is a quiet affordance: it only brightens with its row, never
+   becomes a boxed control of its own. */
 .drag-handle:hover:not(:disabled),
 .sortable-item:hover .drag-handle:not(:disabled),
 .share-final-item:hover .drag-handle:not(:disabled),
 .candidate-card:hover .drag-handle:not(:disabled) {
-  border-color: var(--drag-handle-hover-not-disabled-border-color);
-  background: var(--drag-handle-hover-not-disabled-background);
+  border-color: transparent;
+  background: transparent;
   color: var(--drag-handle-hover-not-disabled-color);
+}
+
+.sortable-item .drag-grip {
+  opacity: 0.45;
+  transition: opacity var(--motion-fast) var(--ease-standard);
+}
+
+.sortable-item:hover .drag-grip,
+.sortable-item:focus-within .drag-grip,
+.sortable-item.active .drag-grip {
+  opacity: 0.9;
 }
 
 .drag-handle:active:not(:disabled) {

@@ -20,6 +20,7 @@ import type {
 } from "./fontChapterC18Types";
 import { logPipelineInfo } from "./pipelineLogger";
 import { withFontChapterC18Worker } from "./fontChapterC18Lifecycle";
+import { runLocalInference } from "../runtimeSupport/localInferenceSection";
 
 const resultSchema = z.object({
   version: z.literal("c23.0"),
@@ -34,8 +35,12 @@ const resultSchema = z.object({
   ),
 });
 
+/** The chapter font worker runs locally; share it in turn with other model jobs. */
 export function createFontChapterC18Port(paths: AppPaths): FontChapterC18Port {
-  return { prepare: (pages, signal) => prepareChapter(paths, pages, signal) };
+  return {
+    prepare: (pages, signal) =>
+      runLocalInference(() => prepareChapter(paths, pages, signal), signal),
+  };
 }
 
 async function prepareChapter(

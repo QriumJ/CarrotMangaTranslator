@@ -28,7 +28,7 @@ describe("chapter display commands", () => {
     const options = {
       ...makeCommandOptions(),
       jobActive: true,
-      aiUnavailable: true,
+      translationUnavailable: true,
       redactionPreparation: { currentPageId: null, open: vi.fn() },
     };
     const { result } = renderHook(() => useAppCommands(options));

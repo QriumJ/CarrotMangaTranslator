@@ -68,6 +68,11 @@ function useSessionCommands(
       chapter.uiState.translationFlowActive ||
       translation.workspaceHistory.busy ||
       Boolean(chapter.uiState.redactionPreparationRequest),
+    translationBlocked:
+      chapter.derivedState.translationModelBusy ||
+      chapter.uiState.exclusiveFlowActive ||
+      translation.workspaceHistory.busy ||
+      Boolean(chapter.uiState.redactionPreparationRequest),
     openImportPreview: translation.importShareActions.openImportPreview,
     openLibraryFolder: chapter.bridgeActions.openLibraryFolder,
     openLogFolder: chapter.bridgeActions.openLogFolder,

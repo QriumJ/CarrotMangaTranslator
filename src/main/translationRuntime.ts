@@ -8,6 +8,7 @@ import {
   type TranslationRuntimePort,
 } from "./pipeline/translationRuntimePort";
 import { loadRuntimeModules } from "./pipeline/runtimeModules";
+import { withLocalInferenceStages } from "./pipeline/localInferenceRuntimePort";
 import type { OcrBboxResult, RuntimeModules } from "./pipeline/types";
 import { getAppPaths } from "./appPaths";
 import { createAnimeTextEvidencePort } from "./textDetection/animeTextEvidence";
@@ -59,12 +60,14 @@ function getTranslationRuntimeResources(): TranslationRuntimeResources {
 
 export function loadTranslationRuntimePort(): TranslationRuntimePort {
   const { groupingEvidence, runtime } = getTranslationRuntimeResources();
-  return createTranslationRuntimePort({
-    gpuMemory: gpuMemoryCoordinator,
-    groupingEvidence,
-    hayaiRegionPrepass,
-    runtime,
-  });
+  return withLocalInferenceStages(
+    createTranslationRuntimePort({
+      gpuMemory: gpuMemoryCoordinator,
+      groupingEvidence,
+      hayaiRegionPrepass,
+      runtime,
+    }),
+  );
 }
 
 export async function disposeTranslationRuntimeResources(

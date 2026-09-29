@@ -10,6 +10,23 @@ import {
   type PageWorkflowStage,
 } from "./pageWorkflowStages";
 
+/**
+ * Local Gemma translation and local-engine erasure keep the model runtime for
+ * the whole run. Other plans only share the short local detection/OCR/font
+ * stages, so they may run beside other API/Codex jobs.
+ */
+export function pageWorkflowNeedsExclusiveModel(
+  request: Pick<PageWorkflowRequest, "plan">,
+  settings: { modelProvider?: string } | null | undefined,
+): boolean {
+  const { plan } = request;
+  return (
+    (plan.stages.includes("translate") &&
+      (settings?.modelProvider ?? "gemma") === "gemma") ||
+    (plan.stages.includes("erase") && plan.erasureEngine !== "codex")
+  );
+}
+
 /** Resuming uses frozen rules, but must never redirect the caller's targets. */
 export function assertPageWorkflowResumeSelection(
   requested: PageWorkflowRequest["selection"],

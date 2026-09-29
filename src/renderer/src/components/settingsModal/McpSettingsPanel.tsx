@@ -38,7 +38,7 @@ function McpServerSection({ status, error, busy, run }: Props) {
   return (
     <Section
       title="AI 연결"
-      description="Codex·ChatGPT에서 보관함을 조회하고 번역·편집합니다."
+      description="Codex·ChatGPT·Claude에서 보관함을 조회하고 번역·편집합니다."
       density="compact"
       bodyClassName={styles.body}
       actions={<McpServerActions status={status} busy={busy} run={run} />}
@@ -103,7 +103,7 @@ function McpConnections({
       {connections.length === 0 && status.pending.length === 0 && (
         <p className={styles.note}>
           {status.state === "online"
-            ? "아직 연결된 앱이 없습니다. 위 연결 방법에서 Codex 또는 ChatGPT를 선택하세요."
+            ? "아직 연결된 앱이 없습니다. 위 연결 방법에서 Codex·ChatGPT·Claude 중 하나를 선택하세요."
             : "연결된 앱이 없습니다. MCP를 켜고 사용할 AI 앱을 연결하세요."}
         </p>
       )}

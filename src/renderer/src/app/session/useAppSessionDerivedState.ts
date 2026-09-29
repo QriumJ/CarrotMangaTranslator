@@ -27,6 +27,7 @@ import {
   type NeighborImageTarget,
 } from "./appSessionSelectors";
 import {
+  isTranslationModelBusy,
   usePageActivityLocks,
   resolveLockedJobTargetPageIds,
 } from "./jobTargetLocks";
@@ -43,6 +44,8 @@ type UseAppSessionDerivedStateArgs = {
   inpaintingTool: InpaintingTool;
   jobFlowActive: boolean;
   jobState: JobState;
+  /** Decides whether translation may run beside shared model jobs. */
+  modelProvider?: string;
   patternMaskStrokesByPage: Record<string, InpaintingMaskStroke[]>;
   peekOriginal: boolean;
   regionSelection: RegionSelectionState | null;
@@ -60,6 +63,7 @@ export function useAppSessionDerivedState({
   inpaintingTool,
   jobFlowActive,
   jobState,
+  modelProvider,
   patternMaskStrokesByPage,
   peekOriginal,
   regionSelection,
@@ -119,6 +123,7 @@ export function useAppSessionDerivedState({
     inpaintingToolActive: inpaintingTool !== "none",
     regionSelectionRect,
     ...pageLocks,
+    translationModelBusy: isTranslationModelBusy(pageLocks, { modelProvider }),
     selectedPageImageDataUrl: pageImages.selectedPageImageDataUrl,
     selectedPageImageDataUrlPageId: pageImages.selectedPageImageDataUrlPageId,
     selectedPageOriginalImageDataUrl:

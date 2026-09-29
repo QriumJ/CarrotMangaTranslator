@@ -69,6 +69,7 @@ export function useChapterSessionController() {
     inpaintingTool: uiState.inpaintingTool,
     jobFlowActive: uiState.jobFlowActive,
     jobState: core.jobState,
+    modelProvider: modalController.settingsDialog.settings?.modelProvider,
     patternMaskStrokesByPage: uiState.patternMaskStrokesByPage,
     peekOriginal: uiState.peekOriginal,
     regionSelection: core.regionSelection,

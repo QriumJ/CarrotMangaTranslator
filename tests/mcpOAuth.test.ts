@@ -94,7 +94,13 @@ for (const callback of [
   "https://chatgpt.com/connector/oauth/../evil",
   "https://chatgpt.com/anything",
   "file:///etc/passwd",
-  "http://localhost:43123/callback",
+  "http://localhost.evil.example:43123/callback",
+  "http://localhost:80/callback",
+  "https://localhost:43123/callback",
+  "https://claude.ai/api/mcp/other",
+  "https://claude.ai/api/mcp/auth_callback?next=evil",
+  "https://claude.ai.evil.example/api/mcp/auth_callback",
+  "http://claude.ai/api/mcp/auth_callback",
   "http://127.0.0.1.evil.example:43123/callback",
   "http://127.1:43123/callback",
   "http://2130706433:43123/callback",
@@ -144,12 +150,19 @@ it("supports Codex DCR with an exact loopback callback and PKCE after restart", 
     code_challenge: oauthDigest(VERIFIER),
     code_challenge_method: "S256",
   };
-  assert.throws(() =>
+  // A loopback client may listen on a fresh port, never another host or path.
+  assert.doesNotThrow(() =>
     provider.begin({
       ...input,
       redirect_uri: callback.replace("43123", "43124"),
     }),
   );
+  for (const redirect of [
+    callback.replace("127.0.0.1", "localhost"),
+    callback.replace("carrot-codex", "other"),
+    callback.replace("43123", "80"),
+  ])
+    assert.throws(() => provider.begin({ ...input, redirect_uri: redirect }));
   const consent = provider.begin(input);
   const location = new URL(
     provider.approve(
@@ -177,6 +190,74 @@ it("supports Codex DCR with an exact loopback callback and PKCE after restart", 
   assert.equal(
     restored.connectionIdFor(`Bearer ${tokens.access_token}`),
     provider.connectionIdFor(`Bearer ${tokens.access_token}`),
+  );
+});
+
+it("supports Claude's hosted callback and Claude Code's localhost callback", () => {
+  for (const callback of [
+    "https://claude.ai/api/mcp/auth_callback",
+    "https://claude.com/api/mcp/auth_callback",
+    "http://localhost:3118/callback",
+  ])
+    assert.equal(readMcpOAuthRedirect(callback), callback);
+  const provider = new McpOAuthProvider(ISSUER, PASSWORD);
+  for (const callback of [
+    "https://claude.ai/api/mcp/auth_callback",
+    "http://localhost:3118/callback",
+  ]) {
+    const client = provider.register({
+      client_name: "Claude",
+      redirect_uris: [callback],
+      token_endpoint_auth_method: "none",
+    });
+    const input = {
+      response_type: "code",
+      client_id: client.client_id,
+      redirect_uri: callback,
+      resource: RESOURCE,
+      state: "claude-state",
+      scope: "carrot.read offline_access",
+      code_challenge: oauthDigest(VERIFIER),
+      code_challenge_method: "S256",
+    };
+    const consent = provider.begin(input);
+    assert.equal(consent.redirectOrigin, new URL(callback).origin);
+    const location = new URL(
+      provider.approve(
+        {
+          transaction: consent.transaction,
+          decision: "approve",
+          pairing_secret: PASSWORD,
+        },
+        consent.cookie,
+      ),
+    );
+    assert.equal(location.origin + location.pathname, callback);
+    assert.equal(location.searchParams.get("state"), "claude-state");
+    const tokens = provider.token({
+      grant_type: "authorization_code",
+      client_id: client.client_id,
+      redirect_uri: callback,
+      resource: RESOURCE,
+      code: location.searchParams.get("code"),
+      code_verifier: VERIFIER,
+    });
+    assert.ok(tokens.access_token);
+  }
+  const hosted = provider.register({
+    redirect_uris: ["https://claude.ai/api/mcp/auth_callback"],
+    token_endpoint_auth_method: "none",
+  });
+  assert.throws(() =>
+    provider.begin({
+      response_type: "code",
+      client_id: hosted.client_id,
+      redirect_uri: "https://claude.com/api/mcp/auth_callback",
+      resource: RESOURCE,
+      state: "claude-state",
+      code_challenge: oauthDigest(VERIFIER),
+      code_challenge_method: "S256",
+    }),
   );
 });
 

@@ -24,10 +24,11 @@ export function buildPanelSyncState({
   | "uiState"
   | "workspaceHistory"
 >): PanelSyncState {
-  const interactionBusy =
-    inpaintingBridge.contextValue.jobActive ||
-    uiState.translationFlowActive ||
-    workspaceHistory.busy;
+  const interactionBusy = isAreaTranslationBusy(
+    derivedState,
+    uiState,
+    workspaceHistory,
+  );
   const selectedIds = resolvePanelSelectedIds(derivedState);
   const selectedIdSet = new Set(selectedIds);
   const selectedBlocks =
@@ -105,6 +106,23 @@ function resolvePanelSelectedIds(
     return derivedState.selectedBlockIds;
   }
   return derivedState.selectedBlock ? [derivedState.selectedBlock.id] : [];
+}
+
+/**
+ * Area translation is its own job: it only waits for work the current
+ * provider cannot run beside, for this page, or for the renderer's own flow.
+ */
+function isAreaTranslationBusy(
+  derivedState: AppSessionViewModel["derivedState"],
+  uiState: AppSessionViewModel["uiState"],
+  workspaceHistory: AppSessionViewModel["workspaceHistory"],
+): boolean {
+  return (
+    derivedState.translationModelBusy ||
+    derivedState.selectedPageEditLocked ||
+    uiState.exclusiveFlowActive ||
+    workspaceHistory.busy
+  );
 }
 
 function panelRegionAvailable(

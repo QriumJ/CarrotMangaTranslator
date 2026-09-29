@@ -10,6 +10,7 @@ import { McpOAuthRefreshTokens } from "./mcpOAuthRefreshTokens";
 import {
   McpOAuthError,
   assertOAuthResource,
+  matchesMcpOAuthRedirect,
   oauthEqual,
   oauthText,
   readOAuthScope,
@@ -107,7 +108,7 @@ export class McpOAuthProvider {
     const clientId = oauthText(input.client_id, 128);
     const client = this.clients.get(clientId);
     const redirect = oauthText(input.redirect_uri);
-    if (!client.redirects.includes(redirect))
+    if (!matchesMcpOAuthRedirect(client.redirects, redirect))
       throw new McpOAuthError(
         "invalid_request",
         "Callback does not match this registered client.",

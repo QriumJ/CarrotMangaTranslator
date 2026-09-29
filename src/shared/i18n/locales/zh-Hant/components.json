@@ -1643,7 +1643,13 @@
       "results": "結果自動儲存",
       "shortcuts": "快速鍵",
       "test": "檢查／更新",
-      "image": "圖像"
+      "image": "圖像",
+      "groups": {
+        "basics": "基本",
+        "ai": "AI 模型",
+        "output": "輸出與連接",
+        "about": "關於"
+      }
     },
     "general": {
       "language": "應用程式語言",

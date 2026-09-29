@@ -1,4 +1,4 @@
-import { reserveJobChapter } from "./jobPageOwnership";
+import { reserveAvailableJobChapter } from "./jobPageOwnership";
 import type { SoundEffectTranslationJobState } from "./translationJobTypes";
 import { randomUUID } from "node:crypto";
 import { translationActivityResources } from "./jobActivityResources";
@@ -128,7 +128,7 @@ export async function startAnalysisJob(
         );
         throwIfAborted(abortController.signal);
         assertResolvedRequestedPages(request, state.resolved);
-        reserveJobChapter(
+        reserveAvailableJobChapter(
           context.jobs,
           id,
           state.resolved.chapter,
@@ -278,6 +278,7 @@ export async function translateRegionJob(
           ...translationActivityResources(
             context.executionSettings,
             Boolean(request.codexTypesetting),
+            request.eraseOriginal === true && !request.codexTypesetting,
           ),
           pageContentResource(request.chapterId, request.pageId),
         ]
@@ -365,6 +366,7 @@ export async function startSoundEffectTranslationJob(
         : translationActivityResources(
             context.executionSettings,
             Boolean(request.codexTypesetting),
+            request.inpaintAfterTranslation,
           )
       : undefined,
     abortController,

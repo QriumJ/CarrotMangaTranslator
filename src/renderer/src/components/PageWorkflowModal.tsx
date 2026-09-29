@@ -26,8 +26,16 @@ export function PageWorkflowModal(
     state.setResume(null);
     setConfirmed(false);
   };
+  const startIssue = state.request
+    ? (props.pageWorkflowStartIssue?.(state.request) ?? null)
+    : null;
   const start = () => {
-    if (!state.request || starting.current || !props.onStartPageWorkflow)
+    if (
+      !state.request ||
+      starting.current ||
+      startIssue ||
+      !props.onStartPageWorkflow
+    )
       return;
     starting.current = true;
     if (saveDefault)
@@ -49,28 +57,16 @@ export function PageWorkflowModal(
       onClose={props.onClose}
       bodyClassName={styles.body}
       footer={
-        <div className={styles.footer}>
-          <CheckboxField
-            checked={saveDefault}
-            onCheckedChange={setSaveDefault}
-            label="기본 구성으로 저장"
-          />
-          <Button onClick={props.onClose}>취소</Button>
-          <Button
-            variant="primary"
-            onClick={start}
-            disabled={
-              !props.onStartPageWorkflow ||
-              !state.request ||
-              !state.preflight ||
-              !!state.error ||
-              state.preflight.issues.length > 0 ||
-              (state.plan.overwrite.length > 0 && !confirmed)
-            }
-          >
-            {state.resume ? "이어서 실행" : "작업 시작"}
-          </Button>
-        </div>
+        <WorkflowFooter
+          state={state}
+          startIssue={startIssue}
+          canStart={Boolean(props.onStartPageWorkflow)}
+          confirmed={confirmed}
+          saveDefault={saveDefault}
+          setSaveDefault={setSaveDefault}
+          onCancel={props.onClose}
+          onStart={start}
+        />
       }
     >
       <PageWorkflowOptions
@@ -89,6 +85,53 @@ export function PageWorkflowModal(
         setConfirmed={setConfirmed}
       />
     </Modal>
+  );
+}
+
+function WorkflowFooter({
+  state,
+  startIssue,
+  canStart,
+  confirmed,
+  saveDefault,
+  setSaveDefault,
+  onCancel,
+  onStart,
+}: {
+  state: ReturnType<typeof usePageWorkflowModalState>;
+  startIssue: string | null;
+  canStart: boolean;
+  confirmed: boolean;
+  saveDefault: boolean;
+  setSaveDefault: (value: boolean) => void;
+  onCancel: () => void;
+  onStart: () => void;
+}) {
+  const blocked =
+    !canStart ||
+    !state.request ||
+    !state.preflight ||
+    Boolean(startIssue) ||
+    !!state.error ||
+    state.preflight.issues.length > 0 ||
+    (state.plan.overwrite.length > 0 && !confirmed);
+  return (
+    <div className={styles.footer}>
+      <CheckboxField
+        checked={saveDefault}
+        onCheckedChange={setSaveDefault}
+        label="기본 구성으로 저장"
+      />
+      {startIssue ? (
+        <span className={styles.startIssue} role="status">
+          {startIssue}
+        </span>
+      ) : null}
+      <Button onClick={onCancel}>취소</Button>
+      <Button variant="primary" onClick={onStart} disabled={blocked}>
+        {state.resume ? "이어서 실행" : "작업 시작"}
+      </Button>
+    </div>
   );
 }
 

@@ -10,6 +10,8 @@ type UseAppSessionCommandControllerArgs = {
   cancelJob: () => void;
   currentChapter: ChapterSnapshot | null;
   jobActive: boolean;
+  /** A running job the current translation provider cannot run beside. */
+  translationBlocked?: boolean;
   aiUnavailable?: boolean;
   openImportPreview: (mode: "zip-folder") => Promise<void>;
   openLibraryFolder: () => void;
@@ -34,6 +36,7 @@ export function useAppSessionCommandController({
   cancelJob,
   currentChapter,
   jobActive,
+  translationBlocked,
   aiUnavailable,
   openImportPreview,
   openLibraryFolder,
@@ -57,7 +60,8 @@ export function useAppSessionCommandController({
     cancelJob,
     currentChapter,
     jobActive,
-    aiUnavailable,
+    translationUnavailable:
+      Boolean(aiUnavailable) || (translationBlocked ?? jobActive),
     openImportPreview,
     openLibraryFolder,
     openLogFolder,

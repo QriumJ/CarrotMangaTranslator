@@ -46,6 +46,25 @@ describe("unified workspace interaction state", () => {
     expect(result.current.jobFlowCancellationRef.current).toBe(false);
   });
 
+  it("counts shared page workflows without touching the cancel flag", () => {
+    const { result } = renderHook(() => useAppSessionUiState());
+
+    act(() => {
+      result.current.setJobFlowActive(true, "shared");
+      result.current.setJobFlowActive(true, "shared");
+    });
+    expect(result.current.jobFlowActive).toBe(true);
+    expect(result.current.exclusiveFlowActive).toBe(false);
+
+    act(() => result.current.requestJobFlowCancellation());
+    expect(result.current.jobFlowCancellationRef.current).toBe(false);
+
+    act(() => result.current.setJobFlowActive(false, "shared"));
+    expect(result.current.jobFlowActive).toBe(true);
+    act(() => result.current.setJobFlowActive(false, "shared"));
+    expect(result.current.jobFlowActive).toBe(false);
+  });
+
   it("resets batch translation selection when the options modal closes", () => {
     const { result } = renderHook(() => useAppSessionUiState());
 

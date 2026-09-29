@@ -194,6 +194,10 @@
 .footer > :first-child {
   margin-right: auto;
 }
+.startIssue {
+  color: var(--text-dim);
+  font-size: var(--font-sm);
+}
 .counts {
   width: 100%;
   border-collapse: collapse;

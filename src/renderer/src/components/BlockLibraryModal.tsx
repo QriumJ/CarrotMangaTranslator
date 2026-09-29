@@ -75,7 +75,7 @@ function BlockLibraryToolbar({ model }: { model: BlockLibraryModel }) {
   return (
     <div className={styles.toolbar}>
       <label className={styles.search}>
-        <IconSearch size={17} aria-hidden="true" />
+        <IconSearch size={15} aria-hidden="true" />
         <Input
           aria-label={t("blockLibrary.search")}
           placeholder={t("blockLibrary.searchPlaceholder")}

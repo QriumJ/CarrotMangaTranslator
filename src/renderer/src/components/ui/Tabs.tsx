@@ -6,6 +6,8 @@ export type TabDefinition<T extends string> = {
   label: string;
   id: string;
   panelId: string;
+  /** Visual heading shown before the first tab of each run of equal groups. */
+  group?: string;
 };
 
 /**
@@ -15,14 +17,18 @@ export type TabDefinition<T extends string> = {
 export function Tabs<T extends string>({
   ariaLabel,
   className,
+  groupClassName,
   items,
+  orientation,
   tabClassName,
   value,
   onChange,
 }: {
   ariaLabel: string;
   className?: string;
+  groupClassName?: string;
   items: readonly TabDefinition<T>[];
+  orientation?: "horizontal" | "vertical";
   tabClassName?: string;
   value: T;
   onChange: (value: T) => void;
@@ -36,27 +42,41 @@ export function Tabs<T extends string>({
   });
 
   return (
-    <div className={className} role="tablist" aria-label={ariaLabel}>
+    <div
+      className={className}
+      role="tablist"
+      aria-label={ariaLabel}
+      aria-orientation={orientation}
+    >
       {items.map((item, index) => {
         const selected = value === item.value;
+        // Group headings only orient sighted users; each tab keeps its own name.
+        const heading =
+          item.group && item.group !== items[index - 1]?.group ? (
+            <span className={groupClassName} aria-hidden="true">
+              {item.group}
+            </span>
+          ) : null;
         return (
-          <button
-            key={item.value}
-            ref={roving.register(index)}
-            type="button"
-            role="tab"
-            id={item.id}
-            aria-selected={selected}
-            aria-controls={item.panelId}
-            tabIndex={selected ? 0 : -1}
-            className={[tabClassName ?? "", selected ? "active" : ""]
-              .filter(Boolean)
-              .join(" ")}
-            onClick={() => onChange(item.value)}
-            onKeyDown={(event) => roving.handleKeyDown(index, event)}
-          >
-            {item.label}
-          </button>
+          <React.Fragment key={item.value}>
+            {heading}
+            <button
+              ref={roving.register(index)}
+              type="button"
+              role="tab"
+              id={item.id}
+              aria-selected={selected}
+              aria-controls={item.panelId}
+              tabIndex={selected ? 0 : -1}
+              className={[tabClassName ?? "", selected ? "active" : ""]
+                .filter(Boolean)
+                .join(" ")}
+              onClick={() => onChange(item.value)}
+              onKeyDown={(event) => roving.handleKeyDown(index, event)}
+            >
+              {item.label}
+            </button>
+          </React.Fragment>
         );
       })}
     </div>

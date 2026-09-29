@@ -10,20 +10,24 @@
 .gather-text-tabs {
   display: flex;
   flex: 0 0 auto;
-  gap: var(--sp-2);
-  padding: var(--sp-3) var(--sp-6);
-  border-bottom: 1px solid var(--border-soft);
-  background: var(--bg-raised);
+  gap: 3px;
+  padding: 3px;
+  background: var(--bg-sunken);
+  margin: var(--sp-3) var(--sp-6);
+  align-self: flex-start;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
 }
 
 .gather-text-tabs button {
-  min-height: var(--ctl-h);
-  padding: var(--ctl-pad-y) var(--ctl-pad-x);
+  min-height: 30px;
+  padding: 4px 10px;
   border: 1px solid transparent;
-  border-radius: var(--r-md);
+  border-radius: var(--r-sm);
   background: transparent;
   color: var(--text-dim);
   font-size: var(--font-sm);
+  font-weight: 500;
 }
 
 .gather-text-tabs button:hover:not(.active) {
@@ -32,10 +36,11 @@
 }
 
 .gather-text-tabs button.active {
-  border-color: var(--accent-bd);
-  background: var(--accent-soft);
-  color: var(--accent-hi);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
   font-weight: 600;
+  box-shadow: none;
 }
 
 .gather-text-tabpanel {
@@ -299,7 +304,6 @@
   background: var(--gather-direct-preview-badge-background);
   color: var(--text-muted);
   font-size: 10px;
-  backdrop-filter: blur(6px);
 }
 
 .gather-direct-editor-section {
@@ -372,49 +376,15 @@
 
 .gather-direct-font-picker [data-ui-select-trigger] {
   width: 100%;
-  height: 34px;
-  padding: 0 30px 0 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-md);
-  background-color: var(--surface-rail);
-  color: var(--text);
-  font-size: var(--font-sm);
 }
 
 .gather-direct-select-control [data-ui-select-trigger] {
   width: 100%;
-  height: 34px;
   min-width: 0;
-  padding: 0 30px 0 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-md);
-  background-color: var(--surface-rail);
-  color: var(--text);
-  font-size: var(--font-sm);
-}
-
-.gather-direct-select-control [data-ui-select-trigger]:hover:not(:disabled) {
-  border-color: var(--border-hover);
-}
-
-.gather-direct-select-control [data-ui-select-trigger]:focus-visible {
-  border-color: var(--accent-bd);
-  outline: 2px solid var(--accent-soft);
-  outline-offset: 1px;
 }
 
 .gather-direct-select-control [data-ui-select-trigger]:disabled {
   opacity: 0.55;
-}
-
-.gather-direct-font-picker [data-ui-select-trigger]:hover:not(:disabled) {
-  border-color: var(--border-hover);
-}
-
-.gather-direct-font-picker [data-ui-select-trigger]:focus-visible {
-  border-color: var(--accent-bd);
-  outline: 2px solid var(--accent-soft);
-  outline-offset: 1px;
 }
 
 .gather-direct-size-stepper {
@@ -426,7 +396,7 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  height: 34px;
+  height: var(--ctl-h);
   padding: 0 10px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
@@ -444,9 +414,10 @@
 }
 
 .gather-direct-pill-toggle[aria-pressed="true"] {
-  border-color: var(--gather-direct-pill-toggle-aria-pressed-true-border-color);
-  background: var(--accent-soft);
-  color: var(--accent-text);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
 }
 
 .gather-direct-pill-toggle[aria-pressed="true"] > span {
@@ -503,8 +474,10 @@
 }
 
 .gather-direct-tool-button[aria-pressed="true"] {
-  background: var(--accent-soft);
-  color: var(--accent-hi);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  border-color: var(--selected-edge);
+  box-shadow: none;
 }
 
 .gather-direct-tool-button[aria-pressed="mixed"]::after {
@@ -555,7 +528,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 34px;
+  height: var(--ctl-h);
   padding: 0 10px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
@@ -720,9 +693,10 @@
 }
 
 .gather-text-block.selected {
-  border-color: var(--border-strong);
-  background: var(--gather-text-block-selected-background);
-  box-shadow: inset 2px 0 0 var(--accent);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  box-shadow: none;
+  color: var(--selected-text);
 }
 
 .gather-text-block-checkbox {
@@ -760,17 +734,16 @@
 }
 
 /* One selection surface language across modal cards, checklist rows, page
-   thumbnails, settings provider cards, and composite gather-text rows. */
+   thumbnails, settings provider cards, and composite gather-text rows.
+   Selection uses the shared selected tokens; no glow, lift or accent side bar. */
 .selection-surface {
   position: relative;
   isolation: isolate;
-  border-color: var(--border-soft);
-  background: color-mix(in srgb, var(--bg-sunken) 88%, var(--bg-panel));
+  border-color: var(--border);
+  background: transparent;
   transition:
-    transform 120ms ease,
     border-color 120ms ease,
-    background 120ms ease,
-    box-shadow 120ms ease;
+    background 120ms ease;
 }
 
 .selection-surface-card,
@@ -778,44 +751,15 @@
   overflow: hidden;
 }
 
-.selection-surface-card::before,
-.selection-surface-row::before {
-  position: absolute;
-  z-index: var(--z-base);
-  top: 7px;
-  bottom: 7px;
-  left: 0;
-  width: 3px;
-  border-radius: 0 var(--r-pill) var(--r-pill) 0;
-  background: var(--accent);
-  content: "";
-  opacity: 0;
-  transform: scaleY(0.45);
-  transition:
-    opacity 120ms ease,
-    transform 120ms ease;
-  pointer-events: none;
-}
-
 .selection-surface:hover:not([data-disabled="true"]) {
-  border-color: color-mix(in srgb, var(--accent-bd) 72%, var(--border-hover));
-  background: color-mix(in srgb, var(--accent-soft) 28%, var(--bg-sunken));
-  box-shadow: 0 8px 20px var(--shadow-ink-16);
-  transform: translateY(-1px);
+  border-color: var(--border-hover);
+  background: var(--bg-hover);
 }
 
-.selection-surface[data-selected="true"] {
-  border-color: var(--accent-bd);
-  background: color-mix(in srgb, var(--accent-soft) 64%, var(--bg-sunken));
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--accent) 14%, transparent),
-    0 8px 22px var(--shadow-ink-14);
-}
-
-.selection-surface-card[data-selected="true"]::before,
-.selection-surface-row[data-selected="true"]::before {
-  opacity: 1;
-  transform: scaleY(1);
+.selection-surface[data-selected="true"],
+.selection-surface[data-selected="true"]:hover:not([data-disabled="true"]) {
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
 }
 
 .selection-surface:has(input[type="checkbox"]:focus-visible),
@@ -860,12 +804,8 @@
 }
 
 .gather-text-block.selection-surface[data-selected="true"] {
-  border-color: var(--accent-bd);
-  background: color-mix(
-    in srgb,
-    var(--accent-soft) 52%,
-    var(--gather-text-block-selection-surface-data-selected-true-background)
-  );
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
 }
 
 .gather-text-block-navigate:hover,
@@ -1004,7 +944,7 @@
 
 .gather-text-exchange-menu button {
   width: 100%;
-  min-height: 34px;
+  min-height: var(--ctl-h);
   padding: 7px 10px;
   border: 0;
   border-radius: var(--r-sm);

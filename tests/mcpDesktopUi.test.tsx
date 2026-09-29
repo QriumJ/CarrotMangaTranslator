@@ -346,6 +346,39 @@ it("renders human-readable permissions and preserves unrecognized scope text saf
   ).toBeTruthy();
 });
 
+it("shows Claude connector screenshots and a separate Claude Code tab", async () => {
+  const copy = vi.fn(async () => {});
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText: copy },
+  });
+  show();
+  fireEvent.click(screen.getByRole("button", { name: "연결 방법 및 도움말" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Claude" }));
+  expect(
+    screen.getByRole("tab", { name: "Claude" }).getAttribute("aria-selected"),
+  ).toBe("true");
+  expect(screen.getByText("커넥터 → 추가 → 커스텀 커넥터 추가")).toBeTruthy();
+  expect(
+    screen.getAllByRole("img").map((image) => image.getAttribute("alt")),
+  ).toEqual([
+    "이름 메뉴의 설정",
+    "설정의 커넥터 화면",
+    "추가 메뉴의 커스텀 커넥터 추가",
+    "커스텀 커넥터 이름·주소 입력 · 연결 주소는 가린 예시",
+    "커스텀 커넥터 인증 설정 · 연결 주소는 가린 예시",
+    "커넥터의 연결 버튼 · 연결 주소는 가린 예시",
+  ]);
+  expect(screen.queryByRole("button", { name: "명령 복사" })).toBeNull();
+  fireEvent.click(screen.getByRole("tab", { name: "Claude Code" }));
+  fireEvent.click(screen.getByRole("button", { name: "명령 복사" }));
+  await waitFor(() =>
+    expect(copy).toHaveBeenCalledWith(
+      'claude mcp add --transport http --scope user carrot "https://carrot.tail-test.ts.net/mcp"',
+    ),
+  );
+});
+
 it("shows all first-use options checked and receives requests online without an enrollment button", () => {
   const current = { ...status(), preferences: { ...DEFAULT_MCP_PREFERENCES } };
   const view = show(current);
@@ -353,7 +386,9 @@ it("shows all first-use options checked and receives requests online without an 
   expect(options).toHaveLength(4);
   expect(options.every((option) => option.checked)).toBe(true);
   expect(screen.queryByRole("button", { name: /새 연결 허용/ })).toBeNull();
-  expect(screen.getByText(/Codex 또는 ChatGPT를 선택하세요/)).toBeTruthy();
+  expect(
+    screen.getByText(/Codex·ChatGPT·Claude 중 하나를 선택하세요/),
+  ).toBeTruthy();
   view.unmount();
   show({ ...current, state: "off" });
   expect(screen.queryByText(/새 연결 요청을 항상 받습니다/)).toBeNull();

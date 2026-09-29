@@ -28,7 +28,10 @@ export type SoundEffectTranslationModalProps = {
   settings?: AppSettings | null;
   sfxRenderingDefault?: "image" | "font";
   chapter: ChapterSnapshot;
+  /** A job the current translation provider cannot run beside. */
   jobActive: boolean;
+  /** Any model job; erasing afterwards needs the local model to itself. */
+  modelResourceBusy?: boolean;
   autoFontMatchingDefault?: boolean;
   inpaintAfterTranslationDefault?: boolean;
   onClose: () => void;
@@ -50,6 +53,7 @@ export function SoundEffectTranslationModal({
   sfxRenderingDefault = "image",
   chapter,
   jobActive,
+  modelResourceBusy = jobActive,
   autoFontMatchingDefault = false,
   inpaintAfterTranslationDefault = false,
   onClose,
@@ -80,11 +84,13 @@ export function SoundEffectTranslationModal({
         : onStart(request, erase, font),
   });
 
-  const useCodex =
-    execution.output === "image" ||
-    (state.inpaintAfterTranslation && execution.eraseEngine === "codex");
   const busy = jobActive || state.resetReview.busy;
-  const executionDisabled = busy || (useCodex && !execution.codexAvailable);
+  const executionDisabled = isSoundEffectRunDisabled({
+    busy,
+    modelResourceBusy,
+    inpaintAfterTranslation: state.inpaintAfterTranslation,
+    execution,
+  });
   return (
     <PagePickerModalShell
       title={t("soundEffectReview.modalTitle")}
@@ -233,5 +239,30 @@ function SoundEffectTranslationFooter({
         onCheckedChange={state.setSaveDefaults}
       />
     </div>
+  );
+}
+
+/** Erasing afterwards needs the local model to itself; Codex needs a login. */
+function isSoundEffectRunDisabled({
+  busy,
+  modelResourceBusy,
+  inpaintAfterTranslation,
+  execution,
+}: {
+  busy: boolean;
+  modelResourceBusy: boolean;
+  inpaintAfterTranslation: boolean;
+  execution: Pick<
+    ReturnType<typeof useSoundEffectExecution>,
+    "output" | "eraseEngine" | "codexAvailable"
+  >;
+}): boolean {
+  const useCodex =
+    execution.output === "image" ||
+    (inpaintAfterTranslation && execution.eraseEngine === "codex");
+  return (
+    busy ||
+    (inpaintAfterTranslation && modelResourceBusy) ||
+    (useCodex && !execution.codexAvailable)
   );
 }

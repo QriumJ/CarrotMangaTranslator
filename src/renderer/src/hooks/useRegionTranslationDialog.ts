@@ -143,10 +143,7 @@ function useRegionTranslationRun({
     if (
       !bbox ||
       inFlight.current ||
-      options.jobActive ||
-      ((choices.output === "image" ||
-        (choices.eraseOriginal && choices.eraseEngine === "codex")) &&
-        !imageAvailable)
+      isRegionRunBlocked(choices, options, imageAvailable)
     )
       return;
     const selected = bbox;
@@ -171,4 +168,24 @@ function useRegionTranslationRun({
       });
   };
   return run;
+}
+
+function isRegionRunBlocked(
+  choices: RegionTranslationChoices,
+  options: Pick<
+    UseTranslationActionsOptions,
+    "jobActive" | "modelResourceBusy"
+  >,
+  imageAvailable: boolean,
+): boolean {
+  const codexImage =
+    choices.output === "image" ||
+    (choices.eraseOriginal && choices.eraseEngine === "codex");
+  // Local erasure needs the model runtime to itself.
+  const localErase = choices.eraseOriginal && choices.eraseEngine !== "codex";
+  return (
+    options.jobActive ||
+    (localErase && options.modelResourceBusy === true) ||
+    (codexImage && !imageAvailable)
+  );
 }

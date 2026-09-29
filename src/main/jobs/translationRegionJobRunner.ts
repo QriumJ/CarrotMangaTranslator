@@ -1,5 +1,5 @@
 import { waitForRegionTextReview } from "./regionTranslationReview";
-import { reserveJobChapter } from "./jobPageOwnership";
+import { reserveAvailableJobChapter } from "./jobPageOwnership";
 import { completeRegionTranslation } from "./translationRegionCompletion";
 import { matchesRegionPageRevision } from "../../shared/pageRevision";
 import type {
@@ -78,7 +78,7 @@ export async function runRegionTranslationJob(
 ): Promise<RegionAnalysisResult> {
   throwIfAborted(abortController.signal);
   state.chapter = await dependencies.openChapter(request.chapterId);
-  reserveJobChapter(
+  reserveAvailableJobChapter(
     context.jobs,
     id,
     state.chapter,

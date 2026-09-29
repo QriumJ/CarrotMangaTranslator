@@ -28,7 +28,8 @@
 }
 
 .sortButton[aria-pressed="true"] {
-  border-color: var(--accent-bd);
-  background: var(--accent-soft);
-  color: var(--accent-hi);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
 }

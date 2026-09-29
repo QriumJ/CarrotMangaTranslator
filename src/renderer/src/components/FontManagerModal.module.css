@@ -28,20 +28,6 @@
 .search {
   width: 100%;
   min-width: 0;
-  min-height: 32px;
-  padding: 4px var(--sp-2);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-sm);
-  background: var(--bg-sunken);
-  color: var(--text);
-  font-size: var(--font-sm);
-}
-
-.defaultSelect [data-ui-select-trigger] {
-  min-height: 32px;
-  padding: 4px var(--sp-2);
-  border-radius: var(--r-sm);
-  font-size: var(--font-sm);
 }
 
 .group {

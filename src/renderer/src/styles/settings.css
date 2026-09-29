@@ -46,39 +46,52 @@
   top: 0;
   align-self: start;
   height: max-content;
-  gap: var(--sp-1);
-  padding: 0 var(--sp-6) 0 0;
+  gap: 1px;
+  padding: 0 var(--sp-5) 0 0;
   border-right: 1px solid var(--border-soft);
   background: transparent;
 }
 
+/* Section labels between runs of pages; decorative, tabs keep their names. */
+.settings-tab-group {
+  padding: var(--sp-5) var(--sp-4) var(--sp-2);
+  color: var(--text-muted);
+  font-size: var(--font-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.settings-tab-group:first-child {
+  padding-top: 0;
+}
+
 .settings-tab {
   position: relative;
-  min-height: 38px;
+  min-height: 32px;
   text-align: left;
-  padding: var(--sp-3) var(--sp-5) var(--sp-3) var(--sp-6);
+  padding: var(--sp-2) var(--sp-4);
   border: 1px solid transparent;
   border-radius: var(--r-md);
   background: transparent;
   color: var(--text-dim);
-  font-size: var(--font-sm);
+  font-size: var(--font-md);
   cursor: pointer;
   transition:
     background var(--motion-fast) var(--ease-standard),
-    color var(--motion-fast) var(--ease-standard),
-    border-color var(--motion-fast) var(--ease-standard);
+    color var(--motion-fast) var(--ease-standard);
 }
 
 .settings-tab:hover {
+  border-color: transparent;
   background: var(--bg-hover);
   color: var(--text);
 }
 
 .settings-tab.active,
 .settings-tab.active:hover:not(:disabled) {
-  background: var(--accent-soft);
-  border-color: var(--accent-bd);
-  color: var(--accent-hi);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
   font-weight: 600;
   box-shadow: none;
 }
@@ -89,44 +102,10 @@
   min-width: 0;
 }
 
-.settings-llm-panel,
-.settings-llm-tabpanel {
+.settings-llm-panel {
   display: grid;
   min-width: 0;
   gap: var(--sp-3);
-}
-
-.settings-llm-tabs {
-  display: flex;
-  gap: var(--sp-2);
-  padding: 0 0 var(--sp-2);
-  overflow-x: auto;
-  border-bottom: 1px solid var(--border-soft);
-}
-
-.settings-llm-tabs button {
-  min-height: var(--ctl-h);
-  padding: var(--ctl-pad-y) var(--ctl-pad-x);
-  border: 1px solid transparent;
-  border-radius: var(--r-md);
-  background: transparent;
-  color: var(--text-dim);
-  font-size: var(--font-sm);
-  white-space: nowrap;
-}
-
-.settings-llm-tabs button:hover:not(.active) {
-  background: var(--bg-hover);
-  color: var(--text);
-}
-
-.settings-llm-tabs button.active,
-.settings-llm-tabs button.active:hover:not(:disabled) {
-  border-color: var(--accent-bd);
-  background: var(--accent-soft);
-  color: var(--accent-hi);
-  box-shadow: none;
-  font-weight: 600;
 }
 
 .settings-field-stack {
@@ -153,6 +132,14 @@
   min-width: 0;
 }
 
+/* Same label rhythm as the other settings fields. */
+.settings-language-field > label {
+  display: grid;
+  gap: var(--field-gap);
+  color: var(--text);
+  font-size: var(--font-sm);
+}
+
 .settings-language-swap {
   /* 라벨 텍스트 한 줄만큼 내려서 두 select와 같은 줄에 놓는다. */
   margin-top: 1.5em;
@@ -168,10 +155,20 @@
   color: var(--danger-text);
 }
 
+/* Hand-built one-of-N pickers render exactly like ui/SegmentedControl:
+   a sunken track with option buttons that take the shared selected state. */
+.settings-mode-group,
+.settings-preset-group {
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+}
+
 .settings-mode-group {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
 }
 
 .settings-mode-group > button,
@@ -183,7 +180,6 @@
 .settings-preset-group {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
 }
 
 .settings-ocr-quality-group {
@@ -194,10 +190,40 @@
   width: 100%;
 }
 
-.settings-preset-button.active {
-  background: var(--accent);
-  border-color: var(--accent-bd);
-  color: var(--accent-text);
+.settings-mode-group .settings-preset-button,
+.settings-preset-group .settings-preset-button {
+  min-height: 30px;
+  padding: 4px 9px;
+  border-color: transparent;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-dim);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.settings-mode-group .settings-preset-button:hover:not(:disabled),
+.settings-preset-group .settings-preset-button:hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.settings-preset-button.active,
+.settings-mode-group .settings-preset-button.active,
+.settings-preset-group .settings-preset-button.active {
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: none;
+}
+
+.settings-mode-group .settings-preset-button.active:hover:not(:disabled),
+.settings-preset-group .settings-preset-button.active:hover:not(:disabled) {
+  border-color: var(--selected-edge);
+  background: var(--selected-surface-hover);
+  color: var(--selected-text);
 }
 
 .gemma-fit-target-controls {
@@ -319,7 +345,7 @@
   display: grid;
   gap: 6px;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   border: 1px solid var(--border-soft);
   background: var(--bg-sunken);
 }
@@ -353,7 +379,7 @@
   overflow-x: hidden;
   overflow-y: auto;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   border: 1px solid var(--border-strong);
   background: var(--bg-sunken);
 }
@@ -487,7 +513,7 @@
   padding: 10px 12px;
   border: 1px solid
     color-mix(in srgb, var(--success-bd) 55%, var(--border-soft));
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   background: var(--success-soft);
   color: var(--text-muted);
   font-size: var(--font-xs);
@@ -517,7 +543,7 @@
   padding: 10px 12px;
   border: 1px solid
     color-mix(in srgb, var(--warning-bd) 65%, var(--border-soft));
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   background: var(--warning-soft);
   color: var(--text-muted);
   font-size: var(--font-xs);
@@ -726,9 +752,9 @@
   min-width: 0;
   min-height: 40px;
   padding: 10px 12px;
-  border: 1px solid var(--border-strong);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--bg-sunken) 88%, transparent);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: transparent;
   color: var(--text-dim);
   text-align: left;
   transition:
@@ -737,15 +763,16 @@
 }
 
 .settings-provider-card:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--accent-bd) 72%, var(--border-strong));
-  background: color-mix(in srgb, var(--accent-soft) 30%, var(--bg-sunken));
+  border-color: var(--border-hover);
+  background: var(--bg-hover);
 }
 
-.settings-provider-card[data-selected="true"] {
-  border-color: var(--accent-bd);
-  background: color-mix(in srgb, var(--accent-soft) 56%, var(--bg-sunken));
+.settings-provider-card[data-selected="true"],
+.settings-provider-card[data-selected="true"]:hover:not(:disabled) {
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
   box-shadow: none;
-  color: var(--text);
+  color: var(--selected-text);
 }
 
 .settings-provider-card::before {
@@ -795,7 +822,7 @@
   gap: 14px;
   padding: 12px 13px;
   border: 1px solid color-mix(in srgb, var(--accent-bd) 42%, var(--border-soft));
-  border-radius: 10px;
+  border-radius: var(--r-lg);
   background: color-mix(in srgb, var(--accent-soft) 19%, var(--bg-sunken));
 }
 
@@ -824,7 +851,7 @@
 
 .settings-limit-apply {
   flex: 0 0 auto;
-  min-height: 34px;
+  min-height: var(--ctl-h);
   padding: 6px 11px;
   border-color: color-mix(in srgb, var(--accent-bd) 68%, var(--border-strong));
   background: color-mix(in srgb, var(--accent-soft) 42%, var(--bg-sunken));
@@ -842,10 +869,6 @@
 
 .settings-limit-field {
   align-content: start;
-  padding: 12px;
-  border: 1px solid var(--border-soft);
-  border-radius: 9px;
-  background: color-mix(in srgb, var(--bg-sunken) 64%, transparent);
 }
 
 .settings-limit-field .modal-note {
@@ -874,20 +897,6 @@
 
 .settings-ocr-quality-group .settings-preset-button {
   white-space: nowrap;
-}
-
-.settings-tabpanel .settings-preset-button {
-  min-height: 38px;
-  border-color: var(--border-strong);
-  background: color-mix(in srgb, var(--bg-sunken) 82%, transparent);
-  color: var(--text-dim);
-}
-
-.settings-tabpanel .settings-preset-button.active {
-  border-color: var(--accent-bd);
-  background: color-mix(in srgb, var(--accent-soft) 58%, var(--bg-sunken));
-  box-shadow: none;
-  color: var(--accent-hi);
 }
 
 .settings-api-stack {
@@ -960,7 +969,7 @@
       var(--success, var(--settings-api-status-border)) 46%,
       transparent
     );
-  border-radius: 8px;
+  border-radius: var(--r-lg);
   background: color-mix(
     in srgb,
     var(--success, var(--settings-api-status-background)) 10%,
@@ -1036,6 +1045,10 @@
   .settings-tab {
     flex: 0 0 auto;
     white-space: nowrap;
+  }
+
+  .settings-tab-group {
+    display: none;
   }
 }
 

@@ -4,9 +4,9 @@
   width: var(--ctl-h);
   height: var(--ctl-h);
   padding: 0;
-  border: 1px solid var(--control-border);
+  border: 1px solid transparent;
   border-radius: var(--r-md);
-  background: var(--control-bg);
+  background: transparent;
   color: var(--text-dim);
   cursor: pointer;
   transition:
@@ -17,8 +17,8 @@
 }
 
 .iconButton:hover:not(:disabled) {
-  border-color: var(--control-border-hover);
-  background: var(--control-bg-hover);
+  border-color: transparent;
+  background: var(--bg-hover);
   color: var(--text);
 }
 
@@ -28,7 +28,7 @@
 }
 
 .iconButton:active:not(:disabled) {
-  transform: scale(0.96);
+  background: var(--control-bg-pressed);
 }
 
 .iconButton:disabled {
@@ -37,9 +37,9 @@
 }
 
 .iconButton[aria-pressed="true"] {
-  border-color: transparent;
-  background: var(--accent-soft);
-  color: var(--accent-text);
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
 }
 
 .iconButton[aria-pressed="mixed"] {
@@ -63,7 +63,7 @@
 }
 
 .danger:hover:not(:disabled) {
-  border-color: var(--danger-bd);
+  border-color: transparent;
   background: var(--danger-soft);
   color: var(--danger-text);
 }
@@ -71,7 +71,7 @@
 /* Chrome floating over the artwork: no frame, so it does not compete with the page. */
 .canvas {
   border: 0;
-  border-radius: 5px;
+  border-radius: var(--r-md);
   background: transparent;
   color: var(--canvas-chrome-text);
 }
@@ -96,7 +96,6 @@
   background: var(--canvas-chrome-bg);
   color: var(--canvas-chrome-text);
   box-shadow: var(--canvas-chrome-shadow);
-  backdrop-filter: blur(8px);
 }
 
 .dock:hover:not(:disabled),
@@ -114,19 +113,11 @@
   color: var(--canvas-chrome-text-disabled);
 }
 
+/* Same selected language as every other option; the frameless canvas
+   control draws its edge inside so the rail keeps its width. */
 .canvas[aria-pressed="true"],
 .canvas[aria-checked="true"] {
-  background: linear-gradient(
-    145deg,
-    color-mix(in srgb, var(--accent) 26%, transparent),
-    var(--canvas-chrome-active-end)
-  );
-  color: var(--accent-hi);
-  box-shadow: inset 0 -2px 0 var(--accent);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .iconButton:active:not(:disabled) {
-    transform: none;
-  }
+  background: var(--selected-surface);
+  color: var(--selected-text);
+  box-shadow: inset 0 0 0 1px var(--selected-edge);
 }

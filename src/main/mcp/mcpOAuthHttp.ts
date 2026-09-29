@@ -4,11 +4,12 @@ import type { McpPairingBroker } from "./mcpPairingBroker";
 import { mcpPairingPage } from "./mcpPairingPage";
 import { McpOAuthProvider } from "./mcpOAuthProvider";
 import {
+  MCP_HOSTED_CALLBACK_ORIGINS,
   McpOAuthError,
   oauthRecord,
   uniqueOAuthParams,
 } from "./mcpOAuthPolicy";
-import { mcpOAuthConsentPage } from "./mcpOAuthPage";
+import { MCP_PAGE_STYLE_SOURCE, mcpOAuthConsentPage } from "./mcpOAuthPage";
 import { readBoundedBody, readMcpBody } from "./mcpRequestBody";
 
 const COOKIE = "__Host-carrot-link";
@@ -133,7 +134,7 @@ export class McpOAuthHttp {
       // default no-referrer policy so the callback never receives consent URLs.
       response.setHeader("Referrer-Policy", "same-origin");
       response.setHeader("Content-Type", "text/html; charset=utf-8");
-      const consentPolicy = `default-src 'none'; form-action 'self' ${consent.redirectOrigin}; frame-ancestors 'none'; base-uri 'none'`;
+      const consentPolicy = `default-src 'none'; style-src ${MCP_PAGE_STYLE_SOURCE}; form-action 'self' ${consent.redirectOrigin}; frame-ancestors 'none'; base-uri 'none'`;
       response.setHeader("Content-Security-Policy", consentPolicy);
       if ("code" in consent && typeof consent.code === "string") {
         const page = mcpPairingPage({ ...consent, code: consent.code });
@@ -281,7 +282,7 @@ function secureResponse(response: ServerResponse): void {
   // The only cross-origin form navigation is the strictly validated OAuth callback.
   response.setHeader(
     "Content-Security-Policy",
-    "default-src 'none'; form-action 'self' https://chatgpt.com; frame-ancestors 'none'; base-uri 'none'",
+    `default-src 'none'; form-action 'self' ${MCP_HOSTED_CALLBACK_ORIGINS.join(" ")}; frame-ancestors 'none'; base-uri 'none'`,
   );
 }
 

@@ -512,22 +512,28 @@
 /* Tabs mirror the settings-modal tab styling so the two read as one app. */
 .style-guide-tabs {
   display: flex;
-  gap: var(--sp-2);
-  padding: var(--sp-4) var(--sp-6);
-  border-bottom: 1px solid var(--border-soft);
+  gap: 3px;
+  padding: 3px;
   overflow-x: auto;
   flex: 0 0 auto;
+  margin: var(--sp-4) var(--sp-6);
+  align-self: flex-start;
+  max-width: calc(100% - 2 * var(--sp-6));
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
 }
 
 .style-guide-tabs button {
-  min-height: var(--ctl-h);
-  padding: var(--ctl-pad-y) var(--ctl-pad-x);
+  min-height: 30px;
+  padding: 4px 10px;
   border: 1px solid transparent;
-  border-radius: var(--r-md);
+  border-radius: var(--r-sm);
   background: transparent;
   color: var(--text-dim);
   font-size: var(--font-sm);
   white-space: nowrap;
+  font-weight: 500;
 }
 
 .style-guide-tabs button:hover:not(.active) {
@@ -536,10 +542,11 @@
 }
 
 .style-guide-tabs button.active {
-  background: var(--accent-soft);
-  border-color: var(--accent-bd);
-  color: var(--accent-hi);
+  background: var(--selected-surface);
+  border-color: var(--selected-edge);
+  color: var(--selected-text);
   font-weight: 600;
+  box-shadow: none;
 }
 
 .style-guide-tabpanel {

@@ -24,49 +24,38 @@
   gap: 12px;
 }
 
+/* A one-line legend of the mirrored folders, not four boxed tiles. */
 .linked-workspace-folder-roles {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1) var(--sp-6);
   min-width: 0;
   margin: 0;
 }
 
 .linked-workspace-folder-roles > div {
-  display: grid;
+  display: flex;
   min-width: 0;
-  gap: 2px;
-  padding: 7px 8px;
-  border: 1px solid var(--border-soft);
-  border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--bg-sunken) 74%, transparent);
+  align-items: baseline;
+  gap: var(--sp-2);
 }
 
 .linked-workspace-folder-roles dt,
 .linked-workspace-folder-roles dd {
   min-width: 0;
   margin: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .linked-workspace-folder-roles dt {
-  color: var(--accent-hi);
+  color: var(--text);
   font-family: var(--font-mono);
   font-size: var(--font-xs);
-  font-weight: 700;
 }
 
 .linked-workspace-folder-roles dd {
-  color: var(--text-dim);
+  color: var(--text-muted);
   font-size: var(--font-xs);
-}
-
-@media (max-width: 720px) {
-  .linked-workspace-folder-roles {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 .linked-workspace-settings-message,
@@ -271,7 +260,7 @@
   gap: 8px;
   width: 100%;
   min-width: 0;
-  min-height: 34px;
+  min-height: var(--ctl-h);
   padding: 7px 9px;
   border: 0;
   border-radius: var(--r-sm);

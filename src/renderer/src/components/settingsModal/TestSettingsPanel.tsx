@@ -36,7 +36,7 @@ export function TestSettingsPanel({
             type="button"
             onClick={() => void runModelTest()}
             disabled={controlsBusy || !canSubmit || jobActive}
-            variant="bare"
+            size="sm"
           >
             {testState.status === "running"
               ? t("settings.test.running")
@@ -111,7 +111,7 @@ function UpdateSection(): React.JSX.Element {
               );
             });
           }}
-          variant="bare"
+          size="sm"
         >
           {t("settings.update.check")}
         </Button>
