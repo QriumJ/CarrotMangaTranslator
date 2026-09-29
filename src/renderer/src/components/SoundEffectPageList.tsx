@@ -4,6 +4,7 @@ import { PageListThumbnail } from "./pageList/PageListRowChrome";
 import { usePageThumbnailObserver } from "./pageThumbnails";
 import type { SoundEffectDraftPage } from "./soundEffectTranslationDraftModel";
 import styles from "./SoundEffectTranslationModal.module.css";
+import { Button } from "./ui/Button";
 
 export function SoundEffectPageList({
   activePageId,
@@ -53,7 +54,7 @@ function SoundEffectPageListItem({
   const visible = item.regions.filter((region) => !region.deleted);
   const selected = visible.filter((region) => region.included).length;
   return (
-    <button
+    <Button
       className={`${styles.pageButton} ${active ? styles.pageButtonActive : ""}`}
       aria-current={active ? "page" : undefined}
       aria-label={t("soundEffectReview.pageListLabel", {
@@ -63,6 +64,7 @@ function SoundEffectPageListItem({
       })}
       onClick={() => onSelectPage(item.page.id)}
       type="button"
+      variant="bare"
     >
       <PageListThumbnail observeThumbnail={observeThumbnail} page={item.page} />
       <span className={styles.pageButtonCopy}>
@@ -74,6 +76,6 @@ function SoundEffectPageListItem({
           })}
         </span>
       </span>
-    </button>
+    </Button>
   );
 }

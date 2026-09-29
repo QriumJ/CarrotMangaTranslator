@@ -1,5 +1,8 @@
 import { pageWorkflowIpcContracts } from "../../shared/ipcPageWorkflowContracts";
-import { preflightPageWorkflow } from "../../shared/pageWorkflowPolicy";
+import {
+  preflightPageWorkflow,
+  assertPageWorkflowResumeSelection,
+} from "../../shared/pageWorkflowPolicy";
 import {
   freezeWorkflowRules,
   workflowRuleEffects,
@@ -23,6 +26,11 @@ export function registerPageWorkflowIpc(context: IpcContext): void {
             request.resumeRunId,
           )
         : null;
+      if (previous)
+        assertPageWorkflowResumeSelection(
+          request.selection,
+          previous.request.selection,
+        );
       const resolved = previous?.request ?? request;
       const chapters = await Promise.all(
         resolved.selection.map((s) => openChapter(s.chapterId)),

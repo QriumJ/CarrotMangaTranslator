@@ -5,6 +5,7 @@ import { settingsGateway } from "../../api/settingsGateway";
 import { Modal } from "../ui/Modal";
 import { ModalActionBar, ModalActionButtons } from "../ui/ModalActionBar";
 import styles from "./VertexServiceAccountGuideModal.module.css";
+import { Button } from "../ui/Button";
 
 export function VertexServiceAccountGuideModal({
   onClose,
@@ -223,13 +224,14 @@ function GuideLinkButton({
   page: VertexSetupPageId;
 }): React.JSX.Element {
   return (
-    <button
+    <Button
       type="button"
       className={styles.linkButton}
       disabled={openingPage !== null}
       onClick={() => void onOpen(page)}
+      variant="bare"
     >
       {openingPage === page ? `${label}…` : label}
-    </button>
+    </Button>
   );
 }

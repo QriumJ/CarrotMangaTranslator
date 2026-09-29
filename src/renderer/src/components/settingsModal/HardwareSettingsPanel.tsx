@@ -7,6 +7,7 @@ import { GpuAssignmentSettings } from "./GpuAssignmentSettings";
 import { FluxBackendSettings } from "./FluxBackendSettings";
 import { HardwareStatusSummary } from "./HardwareStatusSummary";
 import type { HardwareSettingsPanelProps } from "./hardwareSettingsTypes";
+import { Button } from "../ui/Button";
 
 export function HardwareSettingsPanel(
   props: HardwareSettingsPanelProps,
@@ -112,7 +113,7 @@ function OcrPipelineSettings({
             )}
             key={pipeline}
           >
-            <button
+            <Button
               key={pipeline}
               type="button"
               className={`settings-preset-button ${ocrPipeline === pipeline ? "active" : ""}`}
@@ -122,9 +123,10 @@ function OcrPipelineSettings({
                 clearTestState();
                 setOcrPipeline(pipeline);
               }}
+              variant="bare"
             >
               {t(`settings.hardware.ocrPipelines.${pipeline}.label`)}
-            </button>
+            </Button>
           </ControlTooltip>
         ))}
       </div>
@@ -211,7 +213,7 @@ function OcrQualitySettings({
             content={t(option.descriptionKey)}
             key={option.id}
           >
-            <button
+            <Button
               key={option.id}
               type="button"
               className={`settings-preset-button ${ocrQualityMode === option.id ? "active" : ""}`}
@@ -229,9 +231,10 @@ function OcrQualitySettings({
               }}
               disabled={controlsBusy}
               aria-pressed={ocrQualityMode === option.id}
+              variant="bare"
             >
               {t(option.labelKey)}
-            </button>
+            </Button>
           </ControlTooltip>
         ))}
       </div>
@@ -298,7 +301,7 @@ function OcrDeviceSettings({
                     : option.descriptionKey,
                 )}
               >
-                <button
+                <Button
                   type="button"
                   className={`settings-preset-button ${activeOcrOptionId === option.id ? "active" : ""}`}
                   onClick={() => {
@@ -310,9 +313,10 @@ function OcrDeviceSettings({
                   }}
                   disabled={controlsBusy || unsupported}
                   aria-pressed={activeOcrOptionId === option.id}
+                  variant="bare"
                 >
                   {t(option.labelKey)}
-                </button>
+                </Button>
               </ControlTooltip>
             </div>
           );

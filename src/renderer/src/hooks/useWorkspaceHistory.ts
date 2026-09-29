@@ -92,6 +92,7 @@ export function useWorkspaceHistory({
     busyRef,
     chapterId,
     coalesceMs,
+    hasReplayGuard: Boolean(replayBlockedReason),
     maxEntries,
     releaseTransactions,
   });
@@ -119,12 +120,10 @@ export function useWorkspaceHistory({
   const undoEntry = peekWorkspaceHistory(store.state, "undo");
   const redoEntry = peekWorkspaceHistory(store.state, "redo");
 
-  const canUndo = Boolean(
-    undoEntry && !replay.busy && !replayBlockedReason?.(undoEntry, "undo"),
-  );
-  const canRedo = Boolean(
-    redoEntry && !replay.busy && !replayBlockedReason?.(redoEntry, "redo"),
-  );
+  const canUndo =
+    !!undoEntry && !replay.busy && !replayBlockedReason?.(undoEntry, "undo");
+  const canRedo =
+    !!redoEntry && !replay.busy && !replayBlockedReason?.(redoEntry, "redo");
   const undoLabel = undoEntry?.label ?? null;
   const redoLabel = redoEntry?.label ?? null;
   return useMemo(
@@ -189,6 +188,7 @@ function useWorkspaceHistoryStore({
   busyRef,
   chapterId,
   coalesceMs,
+  hasReplayGuard,
   maxEntries,
   releaseTransactions,
 }: Pick<
@@ -196,6 +196,7 @@ function useWorkspaceHistoryStore({
   "chapterId" | "coalesceMs" | "maxEntries"
 > & {
   busyRef: MutableRefObject<boolean>;
+  hasReplayGuard: boolean;
   releaseTransactions: ReleaseTransactions;
 }): WorkspaceHistoryStore {
   const stateRef = useRef<WorkspaceHistoryState>(emptyWorkspaceHistory());
@@ -240,10 +241,11 @@ function useWorkspaceHistoryStore({
       });
       if (
         result.coalesced &&
+        !hasReplayGuard &&
         hasSameVisibleWorkspaceHistoryState(previous, result.state)
       ) {
         // Coalescing still replaces the latest "after" snapshot and timestamp.
-        // Keep replay state current without rerendering unchanged undo/redo UI.
+        // A replay guard needs the latest snapshot in rendered availability.
         stateRef.current = result.state;
       } else {
         publish(result.state);
@@ -251,7 +253,15 @@ function useWorkspaceHistoryStore({
       releaseTransactions(result.releasedTransactionIds);
       return true;
     },
-    [busyRef, chapterId, coalesceMs, maxEntries, publish, releaseTransactions],
+    [
+      busyRef,
+      chapterId,
+      coalesceMs,
+      hasReplayGuard,
+      maxEntries,
+      publish,
+      releaseTransactions,
+    ],
   );
   return { state, stateRef, publish, recordEntry, reset };
 }

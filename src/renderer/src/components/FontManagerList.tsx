@@ -10,6 +10,7 @@ import { IconEye, IconEyeOff, IconTrash } from "@tabler/icons-react";
 import { DEFAULT_BLOCK_FONT_ID } from "../../../shared/blockFontCatalog";
 import type { BlockFontOption } from "../lib/fonts";
 import styles from "./FontManagerModal.module.css";
+import { Button } from "./ui/Button";
 
 export function FontManagerGroup({
   disabled,
@@ -112,7 +113,7 @@ function SortableFontRow(props: FontRowProps): React.JSX.Element {
         transition,
       }}
     >
-      <button
+      <Button
         ref={setActivatorNodeRef}
         type="button"
         className={styles.dragHandle}
@@ -123,9 +124,10 @@ function SortableFontRow(props: FontRowProps): React.JSX.Element {
         title={t("common.dragToMove")}
         {...attributes}
         {...listeners}
+        variant="bare"
       >
         <span aria-hidden="true">⠿</span>
-      </button>
+      </Button>
       <FontRowContent {...props} />
     </div>
   );
@@ -146,7 +148,7 @@ function FontRowContent({
   const { t } = useTranslation("components");
   return (
     <>
-      <button
+      <Button
         type="button"
         className={`${styles.star} ${favorite ? styles.starActive : ""}`}
         disabled={disabled || favoriteDisabled}
@@ -158,11 +160,12 @@ function FontRowContent({
           { label: option.label },
         )}
         onClick={onToggleFavorite}
+        variant="bare"
       >
         <span aria-hidden="true">{favorite ? "★" : "☆"}</span>
-      </button>
+      </Button>
       <FontRowPreview option={option} />
-      <button
+      <Button
         type="button"
         className={styles.rowAction}
         disabled={disabled || hideDisabled}
@@ -172,24 +175,26 @@ function FontRowContent({
         )}
         title={t(hidden ? "fontManager.showFont" : "fontManager.hideFont")}
         onClick={onToggleHidden}
+        variant="bare"
       >
         {hidden ? (
           <IconEye size={16} aria-hidden="true" />
         ) : (
           <IconEyeOff size={16} aria-hidden="true" />
         )}
-      </button>
+      </Button>
       {custom ? (
-        <button
+        <Button
           type="button"
           className={`${styles.rowAction} ${styles.deleteAction}`}
           disabled={disabled}
           aria-label={t("fontSelect.deleteNamedFont", { label: option.label })}
           title={t("fontSelect.deleteFont")}
           onClick={onRemove}
+          variant="bare"
         >
           <IconTrash size={16} aria-hidden="true" />
-        </button>
+        </Button>
       ) : (
         <span aria-hidden="true" />
       )}

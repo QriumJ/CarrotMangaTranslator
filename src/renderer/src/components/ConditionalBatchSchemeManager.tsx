@@ -6,14 +6,15 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import React from "react";
+import styles from "./ConditionalBatchEditor.module.css";
 import type { ConditionalBatchRulePanelProps } from "./conditionalBatchRulePanelTypes";
 import { ConfirmModal } from "./ConfirmModal";
-import { Button, Select } from "./ConditionalBatchControls";
+import { Button } from "./ui/Button";
 import { FavoriteToggleButton } from "./ui/FavoriteToggleButton";
 import { TextareaField, TextField } from "./ui/Field";
 import { IconButton } from "./ui/IconButton";
+import { Select } from "./ui/Select";
 import { usePopupController } from "./ui/usePopupController";
-import styles from "./ConditionalBatchEditor.module.css";
 
 type ConditionalBatchSchemeManagerProps = Pick<
   ConditionalBatchRulePanelProps,

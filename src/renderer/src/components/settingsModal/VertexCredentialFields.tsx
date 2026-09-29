@@ -7,6 +7,8 @@ import type {
 } from "./useApiProviderConnection";
 import { ApiKeyVisibilityButton } from "./ApiKeyVisibilityButton";
 import { VertexServiceAccountGuideModal } from "./VertexServiceAccountGuideModal";
+import { Button } from "../ui/Button";
+import { Textarea } from "../ui/Field";
 
 type VertexCredentialFieldsProps = Pick<
   ApiProviderConnectionProps,
@@ -43,20 +45,21 @@ export function VertexCredentialFields({
           aria-label={t("settings.api.vertexAuthMode")}
         >
           {(["access-token", "service-account"] as const).map((mode) => (
-            <button
+            <Button
               key={mode}
               type="button"
               className={`settings-preset-button ${apiVertexAuthMode === mode ? "active" : ""}`}
               aria-pressed={apiVertexAuthMode === mode}
               disabled={disabled}
               onClick={() => connection.updateVertexAuthMode(mode)}
+              variant="bare"
             >
               {t(
                 mode === "access-token"
                   ? "settings.api.vertexAuthAccessToken"
                   : "settings.api.vertexAuthServiceAccount",
               )}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -75,7 +78,7 @@ export function VertexCredentialFields({
           setApiKey={setApiKey}
         />
       )}
-      <button
+      <Button
         type="button"
         className="settings-external-link"
         disabled={controlsBusy}
@@ -86,9 +89,10 @@ export function VertexCredentialFields({
           }
           void connection.openProviderPage();
         }}
+        variant="bare"
       >
         {t("settings.api.openVertexAuth")}
-      </button>
+      </Button>
       {guideOpen ? (
         <VertexServiceAccountGuideModal onClose={() => setGuideOpen(false)} />
       ) : null}
@@ -115,7 +119,7 @@ function AccessTokenCredential({
       <label>
         {t("settings.api.vertexAccessToken")}
         <div className="settings-api-key-shell">
-          <textarea
+          <Textarea
             className={`settings-api-key-textarea ${connection.showApiKey ? "" : "masked"}`}
             value={apiKey}
             disabled={disabled}
@@ -170,25 +174,27 @@ function ServiceAccountCredential({
           ) : null}
         </div>
         <div className="inline-actions">
-          <button
+          <Button
             type="button"
             disabled={disabled}
             onClick={() => void connection.pickVertexServiceAccount()}
+            variant="bare"
           >
             {t(
               filePath
                 ? "settings.api.vertexServiceAccountChange"
                 : "settings.api.vertexServiceAccountSelect",
             )}
-          </button>
+          </Button>
           {filePath ? (
-            <button
+            <Button
               type="button"
               disabled={disabled}
               onClick={connection.clearVertexServiceAccount}
+              variant="bare"
             >
               {t("settings.api.vertexServiceAccountClear")}
-            </button>
+            </Button>
           ) : null}
         </div>
       </div>

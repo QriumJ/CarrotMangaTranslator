@@ -55,17 +55,18 @@ export function CurveOverflowWarning({
       <p>{t("transform.curve.overflow", { amount: overflowPx })}</p>
       <div>
         {!curve.fitSpacing && spacingCanFit ? (
-          <button
+          <Button
             type="button"
             disabled={disabled}
             onClick={() =>
               onUpdate({ curveLayout: { ...curve, fitSpacing: true } })
             }
+            variant="bare"
           >
             {t("transform.curve.fitAction")}
-          </button>
+          </Button>
         ) : null}
-        <button
+        <Button
           type="button"
           disabled={disabled || block.fontSizePx <= MIN_FONT_SIZE_PX}
           onClick={() =>
@@ -75,9 +76,10 @@ export function CurveOverflowWarning({
               fontSizeIntent: "manual",
             })
           }
+          variant="bare"
         >
           {t("transform.curve.shrinkText")}
-        </button>
+        </Button>
       </div>
     </div>
   );

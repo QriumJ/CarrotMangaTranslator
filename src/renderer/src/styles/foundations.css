@@ -1,4 +1,370 @@
 :root {
+  /* Component and canvas roles: exact existing colours, centralized without recolouring. */
+  --canvas-transform-accent: #58b9ff;
+  --canvas-transform-handle-light: #dff3ff;
+  --canvas-curve-accent: #ffb647;
+  --canvas-contrast-light: #fff;
+  --action-danger-text: #e7a3a3;
+  --review-warning-text: #e6b774;
+  --job-error-accent: #ef6f6c;
+  --save-complete-text: #7ed6ba;
+  --status-muted-surface: #16191e;
+  --status-muted-border: #2b3138;
+  --task-title-text: #f3ecdf;
+  --value-emphasis-text: #f6efe4;
+  --canvas-control-text: #aeb8c5;
+  --canvas-control-text-hover: #f4f6f8;
+  --canvas-view-panel-surface: rgba(20, 22, 27, 0.96);
+  --canvas-view-panel-text: #d7dde6;
+  --canvas-rail-divider: rgba(151, 163, 179, 0.64);
+  --pattern-action-surface: #6f4716;
+  --pattern-action-text: #fff4d8;
+  --pattern-action-border-hover: #fbbf24;
+  --pattern-action-surface-hover: #83551d;
+  --inpainting-panel-border: #33404c;
+  --gather-toolbar-surface: #171a1f;
+  --preview-grid-line: rgba(255, 255, 255, 0.018);
+  --sound-control-thumb-shadow: rgb(0 0 0 / 42%);
+  --block-library-modals-preview-background-start: rgb(255 255 255 / 3%);
+  --block-library-modals-preview-background-end: rgb(255 255 255 / 3%);
+  --block-library-modals-editor-font-warning-color: #e7aa46;
+  --block-library-modals-warning-color: #e7aa46;
+  --block-library-modals-error-color: #ff9e91;
+  --conditional-batch-editor-scheme-bar-z-index: 30;
+  --conditional-batch-editor-scheme-menu-popover-z-index: 40;
+  --conditional-batch-editor-pattern-menu-z-index: 20;
+  --error-report-dialog-privacy-notice-border: rgba(230, 177, 80, 0.34);
+  --error-report-dialog-privacy-notice-background: rgba(230, 177, 80, 0.08);
+  --error-report-dialog-load-error-background: rgba(201, 81, 62, 0.1);
+  --error-report-dialog-action-error-background: rgba(201, 81, 62, 0.1);
+  --error-report-dialog-action-error-color: #f1c2ba;
+  --shadow-ink-28: rgba(0, 0, 0, 0.28);
+  --bubble-layout-guide-filter-start: rgba(5, 10, 18, 0.92);
+  --bubble-layout-guide-filter-end: rgba(70, 211, 196, 0.24);
+  --bubble-layout-guide-polygon-stroke: rgba(111, 238, 219, 0.98);
+  --bubble-layout-guide-manual-polygon-stroke: rgba(255, 191, 92, 0.98);
+  --transform-guide-filter: rgba(4, 9, 15, 0.92);
+  --curve-controls-curve-control-line-stroke: rgba(255, 255, 255, 0.64);
+  --rotation-stem-box-shadow: #07111c;
+  --curve-controls-curve-control-after-background: #fff3d9;
+  --warp-controls-warp-grid-line-stroke: rgba(88, 185, 255, 0.76);
+  --warp-controls-warp-grid-line-hover-stroke: #b9e4ff;
+  --warp-controls-warp-selection-rect-fill: rgba(88, 185, 255, 0.14);
+  --warp-controls-warp-selection-rect-stroke: #8fd2ff;
+  --warp-controls-warp-point-selected-after-background: #ffbf58;
+  --stage-drag-hud-invalid-border-color: rgba(255, 108, 108, 0.86);
+  --stage-drag-hud-invalid-background: rgba(85, 20, 24, 0.92);
+  --stage-drag-hud-invalid-color: #ffe9e9;
+  --vertex-service-account-guide-modal-role-box-code-background: #11151b;
+  --sound-effect-translation-modal-creation-box-z-index: 4;
+  --format-apply-scope-button-aria-pressed-true-background: rgba(
+    239,
+    68,
+    68,
+    0.12
+  );
+  --editor-overflow-menu-background: #191b21;
+  --inline-toggle-color: #cfc7bb;
+  --block-type-preview-border: #343b45;
+  --block-type-preview-background: #15191f;
+  --block-type-preview-color: #d9e0ea;
+  --shadow-ink-16: rgba(0, 0, 0, 0.16);
+  --color-picker-button-hover-border-color: #536274;
+  --color-picker-button-hover-background: #15191f;
+  --color-swatch-border: rgba(255, 255, 255, 0.36);
+  --shadow-ink-26: rgba(0, 0, 0, 0.26);
+  --progress-card-border: #2d333b;
+  --job-completed-card-border-start: #65c9a9;
+  --job-completed-card-border-end: #2d333b;
+  --job-completed-card-background-start: #2b6f60;
+  --job-completed-card-color: #e2f8f0;
+  --job-completed-heading-span-color: #adddce;
+  --job-completed-card-p-color: #c4e8dd;
+  --chapter-save-status-error-color: #f3918f;
+  --progress-meta-color: #ddd5ca;
+  --job-pill-background: #272b33;
+  --job-pill-color: #f5f0e8;
+  --job-pill-running-background: #2b4d72;
+  --job-pill-failed-background: #773434;
+  --job-pill-partial-background: #79561e;
+  --job-pill-completed-background: #2f6f61;
+  --job-pill-cancelled-background: #454a54;
+  --gather-direct-editor-body-background: #191c22;
+  --gather-direct-preview-background: #101217;
+  --gather-direct-preview-head-background: #171a20;
+  --preview-stage-glow: rgba(255, 255, 255, 0.035);
+  --gather-direct-preview-badge-background: rgba(17, 19, 24, 0.82);
+  --gather-direct-pill-toggle-aria-pressed-true-border-color: rgba(
+    193,
+    95,
+    65,
+    0.55
+  );
+  --gather-direct-pill-toggle-aria-pressed-true-span-box-shadow: rgba(
+    193,
+    95,
+    65,
+    0.16
+  );
+  --gather-direct-color-swatch-border: rgba(255, 255, 255, 0.38);
+  --shadow-ink-22: rgba(0, 0, 0, 0.22);
+  --gather-review-warnings-background: rgba(245, 158, 11, 0.08);
+  --gather-text-page-title-background: #1f232b;
+  --gather-text-block-selected-background: #1b1f25;
+  --shadow-ink-14: rgba(0, 0, 0, 0.14);
+  --gather-text-block-selection-surface-data-selected-true-background: #1b1f25;
+  --gather-text-block-clickable-hover-background: #1a1d23;
+  --gather-text-mark-background: rgba(193, 95, 65, 0.45);
+  --preview-select-background: #24282f;
+  --preview-select-color: #f5f0e8;
+  --page-status-badge-border: #343941;
+  --page-status-badge-background: #1a1d22;
+  --page-status-badge-color: #ddd5ca;
+  --page-remove-color: #f0c7c7;
+  --page-remove-border-color: #5f3939;
+  --page-remove-background: #2f2020;
+  --panel-empty-color: #9f998f;
+  --markup-hint-code-background: rgba(255, 255, 255, 0.07);
+  --area-translate-progress-card-background: rgba(14, 17, 22, 0.72);
+  --area-translate-progress-card-failed-border-color: rgba(196, 67, 67, 0.55);
+  --area-translate-progress-card-failed-background: rgba(48, 28, 30, 0.72);
+  --inpainting-run-card-background: #151a20;
+  --inpainting-run-card-pattern-border-color: rgba(245, 158, 11, 0.55);
+  --inpainting-run-card-pattern-background: rgba(70, 45, 15, 0.18);
+  --peek-button-border-color: #3a4654;
+  --peek-button-color: #dce7f4;
+  --inpainting-progress-card-background: #14181e;
+  --inpainting-progress-card-partial-border-color: #a7772e;
+  --inpainting-progress-card-partial-background: #352a1c;
+  --inpainting-progress-card-small-color: #d2cabe;
+  --drawn-mask-panel-border-color: rgba(245, 158, 11, 0.35);
+  --drawn-mask-panel-panel-header-small-color: #f9c86f;
+  --brush-swatch-border: rgba(255, 255, 255, 0.72);
+  --shadow-ink-45: rgba(0, 0, 0, 0.45);
+  --retouch-color-picker-border: rgba(255, 255, 255, 0.28);
+  --shadow-ink-32: rgba(0, 0, 0, 0.32);
+  --type-stat-review-border-color: rgba(79, 148, 104, 0.55);
+  --type-stat-review-background: rgba(79, 148, 104, 0.14);
+  --type-stat-review-color: #8fcfa6;
+  --inpainting-actions-button-border-color: #333b45;
+  --linked-workspace-status-badge-idle-border-color: #4f9f89;
+  --shortcut-binding-label-color: #e6ddcf;
+  --shortcut-binding-conflict-color: #ffb5b5;
+  --toast-warn-border-left-color: #d6a23f;
+  --toast-success-toast-icon-color: #6fc08a;
+  --toast-warn-toast-icon-color: #d6a23f;
+  --inpainting-guide-content-background: #111820;
+  --inpainting-guide-content-p-color: #d8d0c3;
+  --inpainting-guide-content-ol-color: #f5eee3;
+  --guide-hide-check-color: #d8d0c3;
+  --share-warning-strip-border-color: #8d6841;
+  --share-warning-strip-background: rgba(111, 75, 39, 0.22);
+  --share-final-item-box-shadow: rgba(255, 255, 255, 0.025);
+  --shadow-ink-42: rgba(0, 0, 0, 0.42);
+  --share-merge-item-border: #303640;
+  --share-merge-item-background: #1a1d22;
+  --share-merge-item-existing-border-color: #3d4a58;
+  --share-merge-item-incoming-border-color: #3e6a5e;
+  --share-merge-item-incoming-background: #172522;
+  --block-style-preset-menu-background: #171a20;
+  --page-block-list-panel-header-background: #171a20;
+  --page-block-badge-review-border-color: rgba(230, 183, 116, 0.45);
+  --page-block-badge-sound-border-color: rgba(126, 170, 255, 0.45);
+  --page-block-badge-sound-color: #a9c3ff;
+  --page-block-badge-excluded-border-color: rgba(192, 132, 252, 0.4);
+  --page-block-badge-excluded-color: #d8b4fe;
+  --style-preset-application-groups-background: #191c22;
+  --style-preset-manager-screen-background: #1f232b;
+  --chapter-save-badge-dirty-color: #f0c36c;
+  --chapter-save-badge-saving-color: #9dbbff;
+  --editor-state-badge-border: rgba(230, 183, 116, 0.38);
+  --editor-state-badge-background: rgba(230, 183, 116, 0.08);
+  --transform-status-chip-suspended-border-color: rgba(230, 183, 116, 0.45);
+  --transform-status-chip-suspended-background: rgba(230, 183, 116, 0.08);
+  --transform-overflow-warning-border: rgba(230, 183, 116, 0.35);
+  --transform-overflow-warning-background: rgba(230, 183, 116, 0.07);
+  --library-search-input-placeholder-color: #83909d;
+  --sortable-item-dragging-box-shadow: rgba(106, 169, 255, 0.28);
+  --sortable-scroll-drag-active-sortable-item-not-dragging-border-color: #3f5367;
+  --drag-handle-color: #8f9ba8;
+  --drag-handle-hover-not-disabled-border-color: #425063;
+  --drag-handle-hover-not-disabled-background: #202733;
+  --drag-handle-hover-not-disabled-color: #dce7f4;
+  --settings-api-status-border: #4f9f89;
+  --settings-api-status-background: #4f9f89;
+  --settings-api-status-error-background: #8d4949;
+  --shadow-ink-40: rgba(0, 0, 0, 0.4);
+  --mac-alpha-badge-border: rgba(255, 171, 64, 0.55);
+  --mac-alpha-badge-color: #ffe0aa;
+  --mac-alpha-badge-background: rgba(131, 73, 10, 0.32);
+  --mac-alpha-badge-span-last-child-color: #f4c878;
+  --mac-alpha-badge-dot-background: #ffad42;
+  --mac-alpha-badge-dot-box-shadow: rgba(255, 173, 66, 0.7);
+  --control-tooltip-bubble-border: #3a4351;
+  --control-tooltip-bubble-background: rgba(25, 29, 36, 0.98);
+  --control-tooltip-bubble-color: #f4f6fa;
+  --library-drop-overlay-background: rgba(10, 13, 18, 0.68);
+  --retouch-cursor-border: #111;
+  --retouch-cursor-background: #111;
+  --retouch-cursor-outer-ring: rgba(255, 255, 255, 0.95);
+  --shadow-ink-35: rgba(0, 0, 0, 0.35);
+  --retouch-cursor-inner-ring: rgba(255, 255, 255, 0.72);
+  --retouch-preview-brush-path-filter-start: rgba(255, 255, 255, 0.65);
+  --shadow-ink-55: rgba(0, 0, 0, 0.55);
+  --retouch-preview-mask-path-stroke: rgba(255, 159, 28, 0.5);
+  --retouch-preview-mask-path-filter-start: rgba(255, 255, 255, 0.65);
+  --retouch-preview-committed-mask-path-stroke: rgba(255, 159, 28, 0.34);
+  --retouch-preview-outline-stroke: rgba(112, 183, 255, 0.9);
+  --retouch-preview-outline-filter: rgba(255, 255, 255, 0.75);
+  --retouch-cursor-span-border: rgba(255, 255, 255, 0.95);
+  --retouch-cursor-span-background: rgba(0, 0, 0, 0.72);
+  --retouch-cursor-eraser-background: rgba(112, 183, 255, 0.16);
+  --retouch-cursor-mask-background: rgba(255, 159, 28, 0.18);
+  --page-image-placeholder-border: #2f3540;
+  --page-image-placeholder-background: #12151a;
+  --page-image-placeholder-color: #9ca6b5;
+  --page-image-loading-overlay-background: rgba(7, 9, 12, 0.12);
+  --page-image-loading-spinner-border: rgba(255, 255, 255, 0.3);
+  --page-image-loading-spinner-background: rgba(10, 12, 16, 0.38);
+  --page-image-loading-spinner-box-shadow-start: rgba(10, 12, 16, 0.32);
+  --overlay-block-chrome-border: rgba(50, 50, 50, 0.32);
+  --shadow-ink-12: rgba(0, 0, 0, 0.12);
+  --overlay-excluded-badge-background: #17191e;
+  --shadow-ink-48: rgba(0, 0, 0, 0.48);
+  --overlay-block-pattern-pending-border-color: #ef4444;
+  --pattern-pending-marker-before-background: rgba(239, 68, 68, 0.92);
+  --pattern-pending-marker-before-box-shadow: rgba(255, 255, 255, 0.72);
+  --pattern-pending-marker-span-color: #ff7777;
+  --region-selection-box-box-shadow-start: rgba(9, 15, 22, 0.72);
+  --region-selection-box-box-shadow-end: rgba(5, 7, 10, 0.18);
+  --sound-effect-review-box-border: rgba(255, 52, 78, 0.96);
+  --sound-effect-review-box-background: rgba(255, 42, 67, 0.07);
+  --sound-effect-review-box-box-shadow-start: rgba(39, 2, 8, 0.8);
+  --sound-effect-review-box-box-shadow-end: rgba(255, 52, 78, 0.16);
+  --sound-effect-review-box-hover-background: rgba(255, 42, 67, 0.15);
+  --sound-effect-review-box-hover-box-shadow-start: rgba(255, 235, 238, 0.94);
+  --sound-effect-review-box-hover-box-shadow-end: rgba(255, 52, 78, 0.32);
+  --sound-effect-review-box-focus-visible-outline: rgba(255, 255, 255, 0.98);
+  --sound-effect-review-box-span-background: #d92b43;
+  --sound-effect-review-box-span-box-shadow: rgba(20, 0, 4, 0.42);
+  --sound-effect-review-actions-border: rgba(255, 104, 122, 0.8);
+  --sound-effect-review-actions-color: #f7f8fb;
+  --sound-effect-review-actions-background: rgba(23, 25, 31, 0.97);
+  --shadow-ink-50: rgba(0, 0, 0, 0.5);
+  --sound-effect-review-actions-strong-color: #ff9ca8;
+  --sound-effect-review-actions-span-not-sound-effect-review-reading-color: #aeb6c4;
+  --sound-effect-review-action-button-border: rgba(255, 255, 255, 0.16);
+  --sound-effect-review-action-button-color: #f7f8fb;
+  --sound-effect-review-action-button-is-primary-border-color: rgba(
+    255,
+    84,
+    105,
+    0.95
+  );
+  --sound-effect-review-action-button-is-primary-background: #d92b43;
+  --sound-effect-review-action-button-is-dismiss-color: #c8ced8;
+  --bubble-layout-draft-layer-filter-start: rgba(5, 8, 13, 0.95);
+  --bubble-layout-draft-layer-filter-end: rgba(255, 177, 64, 0.28);
+  --bubble-layout-draft-fill-fill: rgba(255, 178, 63, 0.14);
+  --bubble-layout-draft-fill-stroke: rgba(255, 201, 117, 0.96);
+  --bubble-layout-draft-shape-polygon-fill: rgba(255, 177, 64, 0.17);
+  --bubble-layout-draft-shape-polygon-stroke: rgba(255, 211, 142, 0.98);
+  --bubble-layout-draft-shape-add-polygon-fill: rgba(78, 226, 172, 0.16);
+  --bubble-layout-draft-shape-add-polygon-stroke: rgba(111, 245, 197, 0.98);
+  --bubble-layout-draft-shape-subtract-polygon-fill: rgba(255, 121, 112, 0.13);
+  --bubble-layout-draft-shape-subtract-polygon-stroke: rgba(
+    255,
+    151,
+    139,
+    0.98
+  );
+  --bubble-layout-draft-line-stroke: #ffc66d;
+  --bubble-layout-brush-stroke-stroke: #75f1c3;
+  --bubble-layout-brush-stroke-subtract-stroke: #ff8d82;
+  --bubble-layout-draft-layer-circle-fill: #fff8e9;
+  --bubble-layout-draft-layer-circle-stroke: #d87624;
+  --bubble-layout-draft-layer-circle-first-fill: #ffad42;
+  --bubble-layout-draft-layer-circle-first-stroke: #fff4df;
+  --bubble-layout-context-bar-border-bottom: rgba(255, 184, 83, 0.58);
+  --bubble-layout-context-bar-background: #15161b;
+  --bubble-layout-context-bar-box-shadow: rgba(255, 220, 169, 0.05);
+  --bubble-layout-context-info-strong-color: #ffe2b6;
+  --bubble-layout-context-hint-bubble-layout-editor-notice-color: #ffaaa2;
+  --bubble-layout-context-modes-button-aria-pressed-true-border-color: rgba(
+    119,
+    239,
+    196,
+    0.74
+  );
+  --bubble-layout-context-modes-button-aria-pressed-true-background: rgba(
+    29,
+    132,
+    104,
+    0.34
+  );
+  --bubble-layout-context-modes-button-aria-pressed-true-color: #d9fff1;
+  --bubble-layout-context-modes-button-aria-pressed-true-box-shadow: rgba(
+    95,
+    220,
+    175,
+    0.16
+  );
+  --bubble-layout-context-actions-button-primary-border-color: rgba(
+    255,
+    184,
+    83,
+    0.64
+  );
+  --bubble-layout-context-actions-button-primary-background: rgba(
+    195,
+    89,
+    34,
+    0.36
+  );
+  --bubble-layout-context-actions-button-primary-color: #fff3df;
+  --stage-drag-hud-background: rgba(10, 11, 14, 0.82);
+  --style-guide-budget-warning-color: #f6bc7b;
+  --translation-overwrite-warning-border: rgba(239, 111, 108, 0.48);
+  --translation-overwrite-warning-background: rgba(124, 48, 48, 0.16);
+  --translation-overwrite-warning-color: #f1aaa7;
+  --translation-overwrite-warning-strong-color: #ffd0cd;
+  --translation-overwrite-warning-span-color: #dca8a5;
+  --web-import-progress-track-background: rgba(255, 255, 255, 0.12);
+  --web-import-card-image-background-start: #171a20;
+  --web-import-card-image-background-end: #171a20;
+  --web-import-card-index-background: rgba(8, 10, 13, 0.82);
+  --web-import-card-check-background: rgba(8, 10, 13, 0.82);
+  --status-dock-button-unread-status-dock-indicator-background: #8da9ff;
+  --status-dock-button-running-status-dock-indicator-border: rgba(
+    126,
+    170,
+    255,
+    0.28
+  );
+  --status-dock-button-running-status-dock-bell-color: #c8d1dd;
+  --status-dock-button-partial-status-dock-indicator-background: #e8b34f;
+  --status-popover-background: rgba(20, 22, 27, 0.98);
+  --status-dock-button-running-status-dock-indicator-border-color: rgba(
+    126,
+    170,
+    255,
+    0.42
+  );
+  --status-sound-popover-background-start: rgba(27, 30, 36, 0.99);
+  --status-sound-popover-background-end: rgba(17, 19, 23, 0.99);
+  --status-sound-popover-box-shadow-start: rgb(0 0 0 / 46%);
+  --status-sound-popover-box-shadow-end: rgb(255 255 255 / 3%);
+  --status-sound-popover-before-background: rgba(25, 28, 33, 0.99);
+  --status-sound-category-row-background: rgb(255 255 255 / 2.5%);
+  --status-sound-category-row-hover-background: rgb(255 255 255 / 6%);
+  --status-sound-category-row-aria-pressed-true-background: rgb(
+    255 255 255 / 1.5%
+  );
+  --status-sound-category-icon-background: rgb(255 255 255 / 6%);
+  --status-sound-category-row-aria-pressed-true-status-sound-category-icon-background: rgb(
+    255 255 255 / 5%
+  );
+
   /* surfaces */
   --bg-app: #101114;
   --bg-rail: #15181d;

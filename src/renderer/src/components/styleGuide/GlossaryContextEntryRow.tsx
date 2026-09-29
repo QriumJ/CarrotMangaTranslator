@@ -2,7 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import type {
   GlossaryEntry,
-  GlossaryEntryCategory,
+  GlossaryEntryCategory as Category,
 } from "../../../../shared/workContextTypes";
 import { CheckboxField } from "../ui/CheckboxField";
 import { Select } from "../ui/Select";
@@ -15,6 +15,7 @@ import {
 } from "./ContextEntryList";
 import type { ContextEntryTableRowProps } from "./contextEntryTableModel";
 import { CATEGORY_IDS } from "./styleGuideUtils";
+import { Input } from "../ui/Field";
 
 export function GlossaryContextEntryRow({
   entry,
@@ -31,7 +32,7 @@ export function GlossaryContextEntryRow({
 }: ContextEntryTableRowProps<GlossaryEntry>): React.JSX.Element {
   const { t } = useTranslation("components");
   const entryName = entry.source || entry.target;
-  const categories: readonly GlossaryEntryCategory[] =
+  const categories: readonly Category[] =
     entry.category === "sfx" ? ["sfx", ...CATEGORY_IDS] : CATEGORY_IDS;
   return (
     <div className={`style-guide-row glossary${draft ? " is-draft" : ""}`}>
@@ -45,15 +46,17 @@ export function GlossaryContextEntryRow({
           onCheckedChange={onToggleSelected}
         />
       )}
-      <input
+      <Input
         ref={primaryInputRef}
         required={draft}
         value={entry.source}
+        aria-label={t("styleGuide.glossary.source")}
         placeholder={t("styleGuide.glossary.source")}
         onChange={(event) => onUpdate({ source: event.target.value })}
       />
-      <input
+      <Input
         value={entry.target}
+        aria-label={t("styleGuide.glossary.translation")}
         placeholder={t("styleGuide.glossary.translation")}
         onChange={(event) => onUpdate({ target: event.target.value })}
       />
@@ -64,17 +67,16 @@ export function GlossaryContextEntryRow({
           value: id,
           label: t(`styleGuide.glossary.categories.${id}`),
         }))}
-        onValueChange={(nextValue) =>
-          onUpdate({ category: nextValue as GlossaryEntryCategory })
-        }
+        onValueChange={(id) => onUpdate({ category: id as Category })}
       />
       <ContextEntryDelimitedInput
         values={entry.aliases ?? []}
         placeholder={t("styleGuide.glossary.aliases")}
         onValuesChange={(aliases) => onUpdate({ aliases })}
       />
-      <input
+      <Input
         value={entry.note ?? ""}
+        aria-label={t("styleGuide.note")}
         placeholder={t("styleGuide.note")}
         onChange={(event) => onUpdate({ note: event.target.value })}
       />

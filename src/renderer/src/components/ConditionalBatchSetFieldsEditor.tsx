@@ -7,27 +7,27 @@ import type {
   ConditionalBatchSetFieldsActionV2,
   ConditionalBatchWritableField,
 } from "../../../shared/conditionalBatchRules";
-import {
-  CONDITIONAL_BATCH_FIELD_LABELS,
-  conditionalBatchEnumOptions,
-  isNewConditionalBatchWritableField,
-  listConditionalBatchFields,
-  resolveConditionalBatchNumberPresentation,
-} from "./conditionalBatchUi";
+import { ColorField } from "./ColorField";
+import styles from "./ConditionalBatchEditor.module.css";
+import { ConditionalBatchIdentityField } from "./ConditionalBatchIdentityField";
+import { resolveConditionalBatchNumberPresentation } from "./conditionalBatchPresentation";
+import { ConditionalBatchSetFieldPicker } from "./ConditionalBatchSetFieldPicker";
 import {
   appendConditionalBatchSetFieldDependencies as appendSetFieldDependencies,
   createConditionalBatchSetFieldChange as createSetFieldChange,
   isConditionalBatchSetFieldClearable,
 } from "./conditionalBatchSetFieldsModel";
-import { ConditionalBatchSetFieldPicker } from "./ConditionalBatchSetFieldPicker";
-import { ConditionalBatchIdentityField } from "./ConditionalBatchIdentityField";
-import { ColorField } from "./ColorField";
-import { Select } from "./ConditionalBatchControls";
+import {
+  CONDITIONAL_BATCH_FIELD_LABELS,
+  conditionalBatchEnumOptions,
+  isNewConditionalBatchWritableField,
+  listConditionalBatchFields,
+} from "./conditionalBatchUi";
 import { Field, TextField } from "./ui/Field";
 import { IconButton } from "./ui/IconButton";
 import { NumberField } from "./ui/NumberField";
 import { SegmentedControl } from "./ui/SegmentedControl";
-import styles from "./ConditionalBatchEditor.module.css";
+import { Select } from "./ui/Select";
 
 export function ConditionalBatchSetFieldsEditor({
   action,

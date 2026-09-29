@@ -340,7 +340,8 @@
     "copiedBlocks_one": "블록 {{count}}개를 복사했습니다.",
     "copiedBlocks_other": "블록 {{count}}개를 복사했습니다.",
     "copyFailed": "블록을 복사하지 못했습니다. 선택 개수를 줄여 다시 시도해 주세요.",
-    "pasteFailed": "블록을 붙여넣지 못했습니다. 다시 복사해 주세요. 페이지당 최대 {{count}}개까지 넣을 수 있습니다."
+    "pasteFailed": "블록을 붙여넣지 못했습니다. 다시 복사해 주세요. 페이지당 최대 {{count}}개까지 넣을 수 있습니다.",
+    "capacityReached": "페이지당 블록은 최대 {{count}}개입니다. 불필요한 블록을 삭제한 뒤 다시 추가해 주세요."
   },
   "chapter": {
     "saveFailed": "저장 실패: {{message}}",

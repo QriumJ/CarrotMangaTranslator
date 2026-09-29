@@ -127,15 +127,16 @@ function TransformModeTabs({
       aria-label={t("transform.modeLabel")}
     >
       {modes.map((entry) => (
-        <button
+        <Button
           key={entry}
           type="button"
           aria-pressed={mode === entry}
           disabled={disabled}
           onClick={() => onSelectMode(entry)}
+          variant="bare"
         >
           {t(`transform.modes.${entry}`)}
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -300,14 +301,15 @@ function RotationControl({
           onUpdate({ rotationDeg: normalizeRotationDeg(rotationDeg) })
         }
       />
-      <button
+      <Button
         type="button"
         className="transform-inline-reset"
         disabled={disabled || angle === 0}
         onClick={() => onUpdate({ rotationDeg: 0 })}
+        variant="bare"
       >
         {t("transform.resetRotation")}
-      </button>
+      </Button>
     </div>
   );
 }

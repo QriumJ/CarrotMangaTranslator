@@ -84,7 +84,15 @@ it("commits HTTP token exchange and revocation and resumes after a new server in
     );
     assert.equal(response.status, 200);
     const tokens = await response.json();
-    assert.ok(saved?.refresh.length);
+    assert.ok(saved?.version === 2);
+    assert.equal(saved.refresh.length, 0);
+    assert.equal(saved.families.length, 1);
+    assert.equal(saved.grants.length, 1);
+    const issuedFamily = { ...saved.families[0] };
+    assert.equal(issuedFamily.generation, 1);
+    assert.equal(issuedFamily.grantId, saved.grants[0].id);
+    assert.equal(saved.grants[0].clientId, client.client_id);
+    assert.equal(saved.grants[0].revoked, false);
     await first.server.close();
     second = await start();
     assert.equal(second.session.accepts(`Bearer ${tokens.access_token}`), true);
@@ -99,6 +107,16 @@ it("commits HTTP token exchange and revocation and resumes after a new server in
     );
     assert.equal(refreshed.status, 200);
     const renewed = await refreshed.json();
+    assert.ok(saved?.version === 2);
+    assert.equal(saved.refresh.length, 0);
+    assert.equal(saved.families.length, 1);
+    assert.equal(saved.families[0].grantId, issuedFamily.grantId);
+    assert.equal(saved.families[0].generation, issuedFamily.generation + 1);
+    assert.equal(saved.families[0].key === issuedFamily.key, true);
+    assert.equal(
+      second.session.accepts(`Bearer ${renewed.access_token}`),
+      true,
+    );
     const revoked = await second.post(
       "/oauth/revoke",
       new URLSearchParams({
@@ -107,12 +125,23 @@ it("commits HTTP token exchange and revocation and resumes after a new server in
       }),
     );
     assert.equal(revoked.status, 200);
+    assert.equal(saved.grants[0].revoked, true);
     await second.server.close();
     const restored = new McpOAuthProvider(issuer, password, Date.now, {
       persistent: true,
     });
     restored.restore(saved);
     assert.equal(restored.accepts(`Bearer ${renewed.access_token}`), false);
+    assert.throws(
+      () =>
+        restored.token({
+          client_id: client.client_id,
+          grant_type: "refresh_token",
+          resource: `${issuer}/mcp`,
+          refresh_token: renewed.refresh_token,
+        }),
+      { code: "invalid_grant" },
+    );
   } finally {
     await first.server.close();
     await second?.server.close();

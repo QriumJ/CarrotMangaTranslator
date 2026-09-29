@@ -57,7 +57,7 @@ export function FluxBackendSettings({
                   : option.descriptionKey,
               )}
             >
-              <button
+              <Button
                 type="button"
                 className={`settings-preset-button ${fluxBackend === option.id ? "active" : ""}`}
                 onClick={() => {
@@ -68,9 +68,10 @@ export function FluxBackendSettings({
                   controlsBusy || isFluxBackendOptionDisabled(option.id)
                 }
                 aria-pressed={fluxBackend === option.id}
+                variant="bare"
               >
                 {t(option.labelKey)}
-              </button>
+              </Button>
             </ControlTooltip>
           </div>
         ))}

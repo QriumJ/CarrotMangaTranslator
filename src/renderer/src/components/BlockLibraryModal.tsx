@@ -17,6 +17,7 @@ import { EditBlockLibraryModal } from "./EditBlockLibraryModal";
 import { Modal } from "./ui/Modal";
 import { Select } from "./ui/Select";
 import styles from "./BlockLibraryModals.module.css";
+import { Input } from "./ui/Field";
 
 export function BlockLibraryModal({
   canInsert,
@@ -75,7 +76,7 @@ function BlockLibraryToolbar({ model }: { model: BlockLibraryModel }) {
     <div className={styles.toolbar}>
       <label className={styles.search}>
         <IconSearch size={17} aria-hidden="true" />
-        <input
+        <Input
           aria-label={t("blockLibrary.search")}
           placeholder={t("blockLibrary.searchPlaceholder")}
           value={model.query}

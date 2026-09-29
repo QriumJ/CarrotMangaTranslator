@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { settingsGateway } from "../../api/settingsGateway";
 import { toast } from "../../lib/toastStore";
 import { formatSettingsErrorMessage } from "../settingsModalHelpers";
+import { Button } from "../ui/Button";
 
 export function FluxHardwareContextNote({
   usesAppleHardware,
@@ -23,7 +24,7 @@ export function FluxHardwareContextNote({
 export function AmdHipSdkDownloadButton(): React.JSX.Element {
   const { t } = useTranslation("components");
   return (
-    <button
+    <Button
       type="button"
       className="settings-external-link"
       onClick={() => {
@@ -36,8 +37,9 @@ export function AmdHipSdkDownloadButton(): React.JSX.Element {
           );
         });
       }}
+      variant="bare"
     >
       {t("settings.hardware.downloadHipSdk")}
-    </button>
+    </Button>
   );
 }

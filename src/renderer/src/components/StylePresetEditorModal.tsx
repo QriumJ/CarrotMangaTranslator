@@ -9,6 +9,7 @@ import type { CreateBlockStylePresetInput } from "../../../shared/blockStylePres
 import { Modal } from "./ui/Modal";
 import { ModalActionBar, ModalActionButtons } from "./ui/ModalActionBar";
 import { CheckboxField } from "./ui/CheckboxField";
+import { Input } from "./ui/Field";
 
 export type StylePresetDraft = CreateBlockStylePresetInput;
 
@@ -133,7 +134,7 @@ export function StylePresetRenameModal({
     >
       <label className="style-preset-rename-field">
         <span>{t("stylePresets.name")}</span>
-        <input
+        <Input
           autoFocus
           maxLength={MAX_BLOCK_STYLE_PRESET_NAME_LENGTH}
           value={name}
@@ -205,7 +206,7 @@ function StylePresetEditorForm({
     <div className="style-preset-editor-form">
       <label>
         <span>{t("stylePresets.name")}</span>
-        <input
+        <Input
           autoFocus
           maxLength={MAX_BLOCK_STYLE_PRESET_NAME_LENGTH}
           value={name}

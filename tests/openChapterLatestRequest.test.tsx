@@ -27,6 +27,102 @@ afterEach(() => {
 });
 
 describe("useOpenChapterAction latest request policy", () => {
+  it("preserves a mask drawn during a pending chapter read when discard is declined", async () => {
+    const reading = createDeferred<ChapterSnapshot>();
+    openChapter.mockReturnValue(reading.promise);
+    const options = makeOptions();
+    options.askConfirm = vi.fn().mockResolvedValue(false);
+    const current = options.currentChapterRef.current;
+    const { result, rerender } = renderHook(() =>
+      useOpenChapterAction(options),
+    );
+    let opening!: Promise<void>;
+    await act(async () => {
+      opening = result.current("next");
+    });
+    expect(options.askConfirm).not.toHaveBeenCalled();
+    options.hasPendingInpaintingMask = true;
+    rerender();
+    await act(async () => {
+      reading.resolve(makeChapter("next"));
+      await opening;
+    });
+    expect(options.askConfirm).toHaveBeenCalledOnce();
+    expect(options.clearPendingInpaintingMasks).not.toHaveBeenCalled();
+    expect(options.currentChapterRef.current).toBe(current);
+  });
+
+  it("flushes edits made during the read before installing the next chapter", async () => {
+    const reading = createDeferred<ChapterSnapshot>();
+    const saving = createDeferred<void>();
+    openChapter.mockReturnValue(reading.promise);
+    const options = makeOptions();
+    const chapter = options.currentChapter;
+    if (!chapter) throw new Error("Expected the current chapter fixture");
+    const edited = {
+      ...chapter,
+      title: "Edited while opening",
+    };
+    options.saveNow = vi.fn(async () => {
+      expect(options.currentChapterRef.current).toBe(edited);
+      await saving.promise;
+    });
+    const { result } = renderHook(() => useOpenChapterAction(options));
+    let opening!: Promise<void>;
+    await act(async () => {
+      opening = result.current("next");
+    });
+    options.currentChapterRef.current = edited;
+    await act(async () => {
+      reading.resolve(makeChapter("next"));
+    });
+    expect(options.saveNow).toHaveBeenCalledOnce();
+    expect(options.clearDirtyTracking).not.toHaveBeenCalled();
+    expect(options.setCurrentChapter).not.toHaveBeenCalled();
+    await act(async () => {
+      saving.resolve();
+      await opening;
+    });
+    expect(options.currentChapterRef.current?.id).toBe("next");
+  });
+
+  it("keeps the edited chapter and dirty state when the final save fails", async () => {
+    openChapter.mockResolvedValue(makeChapter("next"));
+    const options = makeOptions();
+    const original = options.currentChapterRef.current;
+    options.saveNow = vi.fn().mockRejectedValue(new Error("disk full"));
+    const { result } = renderHook(() => useOpenChapterAction(options));
+    await act(async () => {
+      await result.current("next");
+    });
+    expect(options.currentChapterRef.current).toBe(original);
+    expect(options.clearDirtyTracking).not.toHaveBeenCalled();
+    expect(options.pushStatus).toHaveBeenCalled();
+  });
+
+  it("does not install an obsolete selection after its final save", async () => {
+    const saving = createDeferred<void>();
+    openChapter.mockResolvedValue(makeChapter("next"));
+    const options = makeOptions();
+    options.saveNow = vi.fn().mockReturnValue(saving.promise);
+    const { result } = renderHook(() => useOpenChapterAction(options));
+    let opening!: Promise<void>;
+    await act(async () => {
+      opening = result.current("next");
+    });
+    await act(async () => {
+      const chapter = options.currentChapter;
+      if (!chapter) throw new Error("Expected the current chapter fixture");
+      await result.current(chapter.id);
+    });
+    await act(async () => {
+      saving.resolve();
+      await opening;
+    });
+    expect(options.setCurrentChapter).not.toHaveBeenCalled();
+    expect(options.clearDirtyTracking).not.toHaveBeenCalled();
+  });
+
   it("keeps the most recent chapter when IPC responses finish out of order", async () => {
     const chapterA = makeChapter("chapter-a");
     const chapterB = makeChapter("chapter-b");

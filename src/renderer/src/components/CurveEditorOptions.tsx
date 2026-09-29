@@ -11,6 +11,7 @@ import { resolveCurveBend, updateCurveBend } from "../lib/transformEditorModel";
 import { RangeInput } from "./ui/Field";
 import { TransformNumberField } from "./TransformNumberField";
 import { CheckboxField } from "./ui/CheckboxField";
+import { Button } from "./ui/Button";
 
 const CURVE_PRESET_NAMES: CurvePresetName[] = [
   "straight",
@@ -82,16 +83,17 @@ function CurvePresetButtons({
       <span>{t("transform.curve.quickShape")}</span>
       <div className="transform-mini-segments">
         {CURVE_PRESET_NAMES.map((preset) => (
-          <button
+          <Button
             key={preset}
             type="button"
             disabled={disabled}
             onClick={() =>
               onUpdate({ ...curve, path: createCurvePreset(preset).path })
             }
+            variant="bare"
           >
             {t(`transform.curve.presets.${preset}`)}
-          </button>
+          </Button>
         ))}
       </div>
     </div>
@@ -156,15 +158,16 @@ function CurveSegmentedRow({
       <span>{label}</span>
       <div className="transform-mini-segments">
         {entries.map((entry) => (
-          <button
+          <Button
             key={entry}
             type="button"
             aria-pressed={active === entry}
             disabled={disabled}
             onClick={() => onSelect(entry)}
+            variant="bare"
           >
             {t(`${labelPrefix}.${entry}`)}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

@@ -8,6 +8,7 @@ import { CheckboxField } from "../ui/CheckboxField";
 import { MenuSurface } from "../ui/MenuSurface";
 import { ModalActionBar } from "../ui/ModalActionBar";
 import { usePopupController } from "../ui/usePopupController";
+import { Input } from "../ui/Field";
 
 type GatherTextFooterProps = {
   excludeHeaders: boolean;
@@ -99,7 +100,7 @@ export function GatherTextSearchBar({
         {t("gatherText.searchLabel")}
       </label>
       <div className="gather-text-search">
-        <input
+        <Input
           id="gather-text-search-input"
           type="search"
           value={search.query}
@@ -256,7 +257,7 @@ function GatherTextExchangeMenuItems({
           {index === 2 ? (
             <span className="gather-text-menu-separator" role="separator" />
           ) : null}
-          <button
+          <Button
             type="button"
             role="menuitem"
             disabled={action.disabled}
@@ -265,9 +266,10 @@ function GatherTextExchangeMenuItems({
               action.run();
               onClose(false);
             }}
+            variant="bare"
           >
             {action.label}
-          </button>
+          </Button>
         </React.Fragment>
       ))}
     </MenuSurface>

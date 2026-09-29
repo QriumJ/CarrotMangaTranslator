@@ -13,6 +13,7 @@ import {
   resolvePageStatusLabel,
   type PageStatusMode,
 } from "./pageListStatus";
+import { Button } from "../ui/Button";
 
 export function PageListDragOverlay({
   activePage,
@@ -82,27 +83,29 @@ export function PageItemMenu({
           ariaLabel={t("pageList.actionsLabel", { name: pageName })}
           onClose={close}
         >
-          <button
+          <Button
             type="button"
             role="menuitem"
             onClick={() => runAction(onRetranslate)}
             disabled={translateDisabled}
             title={translateDisabled ? t("pageList.actionBlocked") : undefined}
+            variant="bare"
           >
             <RefreshIcon size={15} />
             <span>{t("pageList.retranslate")}</span>
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             role="menuitem"
             className="danger"
             onClick={() => runAction(onRemove)}
             disabled={removeDisabled}
             title={removeDisabled ? t("pageList.actionBlocked") : undefined}
+            variant="bare"
           >
             <CloseIcon size={15} />
             <span>{t("common.delete")}</span>
-          </button>
+          </Button>
         </MenuSurface>
       ) : null}
     </div>

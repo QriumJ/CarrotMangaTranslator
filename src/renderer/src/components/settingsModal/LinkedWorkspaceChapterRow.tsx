@@ -15,6 +15,7 @@ import { CheckboxField } from "../ui/CheckboxField";
 import { IconButton } from "../ui/IconButton";
 import { MenuSurface } from "../ui/MenuSurface";
 import { usePopupController } from "../ui/usePopupController";
+import { Button } from "../ui/Button";
 
 export function LinkedWorkspaceChapterRow({
   busy,
@@ -201,15 +202,16 @@ function ConnectionActionsMenu({
       className="linked-workspace-actions-menu"
       onClose={onClose}
     >
-      <button
+      <Button
         role="menuitem"
         type="button"
         onClick={() => onRun(() => viewChapterResults(chapterId))}
+        variant="bare"
       >
         <IconFolderOpen size={17} stroke={2.1} aria-hidden="true" />
         <span>{t("settings.results.viewResults")}</span>
-      </button>
-      <button
+      </Button>
+      <Button
         role="menuitem"
         type="button"
         onClick={() =>
@@ -217,10 +219,11 @@ function ConnectionActionsMenu({
             linkedWorkspaceGateway.reconnectLinkedWorkspace(connectionId),
           )
         }
+        variant="bare"
       >
         <IconFolderSymlink size={17} stroke={2.1} aria-hidden="true" />
         <span>{t("settings.results.changeLocation")}</span>
-      </button>
+      </Button>
       <ResetLocationMenuItem
         connectionId={connectionId}
         destinationKind={destinationKind}
@@ -242,7 +245,7 @@ function ResetLocationMenuItem({
   const { t } = useTranslation("components");
   if (destinationKind !== "custom") return null;
   return (
-    <button
+    <Button
       role="menuitem"
       type="button"
       onClick={() =>
@@ -250,10 +253,11 @@ function ResetLocationMenuItem({
           linkedWorkspaceGateway.resetLinkedWorkspaceLocation(connectionId),
         )
       }
+      variant="bare"
     >
       <IconRestore size={17} stroke={2.1} aria-hidden="true" />
       <span>{t("settings.results.resetLocation")}</span>
-    </button>
+    </Button>
   );
 }
 

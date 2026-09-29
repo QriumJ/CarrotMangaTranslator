@@ -340,7 +340,8 @@
     "copiedBlocks_one": "已复制{{count}}个区块。",
     "copiedBlocks_other": "已复制{{count}}个区块。",
     "copyFailed": "无法复制区块。请减少选择数量后重试。",
-    "pasteFailed": "无法粘贴区块。请重新复制。每页最多可包含{{count}}个区块。"
+    "pasteFailed": "无法粘贴区块。请重新复制。每页最多可包含{{count}}个区块。",
+    "capacityReached": "每页最多{{count}}个区块。请删除不需要的区块后再添加。"
   },
   "chapter": {
     "saveFailed": "保存失败：{{message}}",

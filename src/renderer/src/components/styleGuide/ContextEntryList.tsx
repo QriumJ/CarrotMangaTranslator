@@ -14,6 +14,7 @@ import type {
 import { formatContextUsage } from "./contextEntryListModel";
 import { splitList } from "./styleGuideUtils";
 import { CheckboxField } from "../ui/CheckboxField";
+import { Input } from "../ui/Field";
 
 type ContextEntryToolbarProps = {
   query: string;
@@ -144,9 +145,9 @@ export const ContextEntryDelimitedInput = React.forwardRef<
   }, [formattedValue]);
 
   return (
-    <input
+    <Input
       ref={ref}
-      aria-label={ariaLabel}
+      aria-label={ariaLabel ?? placeholder}
       required={required}
       value={editingValue}
       placeholder={placeholder}
@@ -235,7 +236,7 @@ function ContextEntryToolbar({
   const { t } = useTranslation("components");
   return (
     <div className="style-guide-list-toolbar">
-      <input
+      <Input
         type="search"
         value={query}
         aria-label={t("styleGuide.usage.search")}

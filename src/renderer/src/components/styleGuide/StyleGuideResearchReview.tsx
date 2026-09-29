@@ -5,8 +5,8 @@ import type {
   WorkContextResearchProposal,
 } from "../../../../shared/workContextResearchTypes";
 import { appGateway } from "../../api/appGateway";
-import buttonStyles from "../ui/Button.module.css";
-import checkboxStyles from "../ui/CheckboxField.module.css";
+import { CheckboxField } from "../ui/CheckboxField";
+import { Button } from "../ui/Button";
 
 export function StyleGuideResearchReview({
   proposal,
@@ -40,22 +40,22 @@ export function StyleGuideResearchReview({
           })}
         </div>
         <div className="style-guide-research-selection-actions">
-          <button
+          <Button
             type="button"
-            className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.sm}`}
+            size="sm"
             disabled={operationIds.length === 0 || allSelected}
             onClick={() => onSelectedIdsChange(new Set(operationIds))}
           >
-            <span className={buttonStyles.label}>{t("common.selectAll")}</span>
-          </button>
-          <button
+            {t("common.selectAll")}
+          </Button>
+          <Button
             type="button"
-            className={`${buttonStyles.button} ${buttonStyles.secondary} ${buttonStyles.sm}`}
+            size="sm"
             disabled={selectedIds.size === 0}
             onClick={() => onSelectedIdsChange(new Set())}
           >
-            <span className={buttonStyles.label}>{t("common.clearAll")}</span>
-          </button>
+            {t("common.clearAll")}
+          </Button>
         </div>
       </div>
       {proposal.warnings.length ? (
@@ -97,14 +97,12 @@ function ResearchOperationRow({
   const { t } = useTranslation("components");
   return (
     <article className="style-guide-research-operation">
-      <input
-        type="checkbox"
-        className={checkboxStyles.input}
+      <CheckboxField
         checked={selected}
-        aria-label={t("styleGuide.research.selectChange", {
+        ariaLabel={t("styleGuide.research.selectChange", {
           name: operationName(operation),
         })}
-        onChange={onToggle}
+        onCheckedChange={onToggle}
       />
       <div className="style-guide-research-operation-body">
         <div className="style-guide-research-operation-title">
@@ -128,7 +126,7 @@ function ResearchOperationRow({
         {operation.sources.length ? (
           <div className="style-guide-research-sources">
             {operation.sources.map((source) => (
-              <button
+              <Button
                 key={source.url}
                 type="button"
                 title={source.url}
@@ -137,9 +135,10 @@ function ResearchOperationRow({
                     .openResearchSource(source.url)
                     .catch((error) => console.error(error));
                 }}
+                variant="bare"
               >
                 {source.title}
-              </button>
+              </Button>
             ))}
           </div>
         ) : null}

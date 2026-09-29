@@ -104,7 +104,7 @@ function FormatGroupChecklist({
     <div className="format-apply-section">
       <div className="format-apply-section-head">
         <span>{t("formatBatch.items")}</span>
-        <button
+        <Button
           type="button"
           className="format-apply-toggle-all"
           onClick={() =>
@@ -112,9 +112,10 @@ function FormatGroupChecklist({
               allChecked ? new Set() : new Set(ALL_BLOCK_FORMAT_GROUP_IDS),
             )
           }
+          variant="bare"
         >
           {t(allChecked ? "common.clearAll" : "common.selectAll")}
-        </button>
+        </Button>
       </div>
       <div className="format-apply-grid">
         {BLOCK_FORMAT_GROUPS.map((group) => (

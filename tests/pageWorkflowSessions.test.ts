@@ -13,7 +13,6 @@ import {
 } from "./helpers/wholePagePipelineHarness";
 import { buildBaseOptions } from "../src/main/pipeline/options";
 import type { PageWorkflowRuntimeContext } from "../src/main/pageWorkflow/pageWorkflowRuntimeTypes";
-import type { MangaPage } from "../src/shared/libraryTypes";
 import type { TranslationRuntimePort } from "../src/main/pipeline/translationRuntimePort";
 
 afterEach(cleanupPipelineTempDirs);
@@ -233,8 +232,7 @@ describe("workflow process ownership", () => {
         {
           ...runtime,
           readChapter: async () => structuredClone(chapter),
-          acquirePage: async (_, id) =>
-            chapter.pages.find((p) => p.id === id) as MangaPage,
+          acquirePage: async () => {},
           releasePage: vi.fn(),
           progress: vi.fn(),
           isFatal: () => false,

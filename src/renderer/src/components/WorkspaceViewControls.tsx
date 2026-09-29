@@ -15,6 +15,7 @@ import { ControlTooltip } from "./ui/ControlTooltip";
 import { IconButton } from "./ui/IconButton";
 import { Select } from "./ui/Select";
 import { usePopupController } from "./ui/usePopupController";
+import { Button } from "./ui/Button";
 
 export type WorkspaceViewControlsProps = {
   effectiveScale: number;
@@ -197,41 +198,44 @@ function WorkspaceZoomRow({
         content={labels.zoomIn}
         placement="bottom"
       >
-        <button
+        <Button
           type="button"
           aria-label={labels.zoomIn}
           disabled={zoom >= MAX_WORKSPACE_ZOOM}
           onClick={onZoomIn}
+          variant="bare"
         >
           <IconPlus size={18} stroke={2.2} aria-hidden="true" />
-        </button>
+        </Button>
       </ControlTooltip>
       <ControlTooltip
         className="workspace-view-control workspace-zoom-percent"
         content={labels.resetZoom}
         placement="bottom"
       >
-        <button
+        <Button
           type="button"
           aria-label={labels.resetZoom}
           onClick={onResetZoom}
+          variant="bare"
         >
           {zoomPercent}%
-        </button>
+        </Button>
       </ControlTooltip>
       <ControlTooltip
         className="workspace-view-control"
         content={labels.zoomOut}
         placement="bottom"
       >
-        <button
+        <Button
           type="button"
           aria-label={labels.zoomOut}
           disabled={zoom <= MIN_WORKSPACE_ZOOM}
           onClick={onZoomOut}
+          variant="bare"
         >
           <IconMinus size={18} stroke={2.2} aria-hidden="true" />
-        </button>
+        </Button>
       </ControlTooltip>
     </div>
   );

@@ -10,6 +10,8 @@ import {
 import type { EngineSettingsPanelProps } from "./EngineSettingsPanelTypes";
 import { Select } from "../ui/Select";
 import type { SelectOption } from "../ui/selectTypes";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Field";
 
 type TranslationLanguageFieldsProps = Pick<
   EngineSettingsPanelProps,
@@ -76,16 +78,17 @@ export function TranslationLanguageFields({
         disabled={controlsBusy}
         onChange={setSourceLanguage}
       />
-      <button
+      <Button
         type="button"
         className="settings-language-swap"
         onClick={swapLanguages}
         disabled={controlsBusy}
         title={t("settings.translation.swapTitle")}
         aria-label={t("settings.translation.swapAria")}
+        variant="bare"
       >
         ⇄
-      </button>
+      </Button>
       <LanguageField
         label={t("settings.translation.target")}
         value={targetLanguage}
@@ -150,7 +153,7 @@ function LanguageField({
       </label>
       {showCustomInput ? (
         <>
-          <input
+          <Input
             type="text"
             value={value}
             disabled={disabled}

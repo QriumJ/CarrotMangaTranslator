@@ -4,6 +4,7 @@ import type { MangaPage } from "../../../shared/libraryTypes";
 import type { BBox } from "../../../shared/textTypes";
 import type { SoundEffectReviewRegion } from "../../../shared/soundEffectReview";
 import { resolveVisibleSoundEffectReviewRegions } from "../lib/soundEffectReviewRegions";
+import { Button } from "./ui/Button";
 
 type Props = {
   page: MangaPage;
@@ -64,7 +65,7 @@ export const SoundEffectReviewLayer = React.memo(
         }}
       >
         {regions.map((region, index) => (
-          <button
+          <Button
             aria-label={t("soundEffectReview.regionLabel", {
               index: index + 1,
               text: region.recognizedText || t("soundEffectReview.unreadable"),
@@ -80,9 +81,10 @@ export const SoundEffectReviewLayer = React.memo(
             onPointerDown={(event) => event.stopPropagation()}
             style={bboxStyle(region.bbox)}
             type="button"
+            variant="bare"
           >
             <span>{t("soundEffectReview.boxTag")}</span>
-          </button>
+          </Button>
         ))}
         {selected ? (
           <ReviewActions
@@ -124,30 +126,33 @@ function ReviewActions({
       </span>
       <span>{t("soundEffectReview.inpaintHint")}</span>
       <div>
-        <button
+        <Button
           className="sound-effect-review-action-button is-primary"
           disabled={disabled}
           onClick={onOpenBatch}
           type="button"
+          variant="bare"
         >
           {t("soundEffectReview.runAll")}
-        </button>
-        <button
+        </Button>
+        <Button
           className="sound-effect-review-action-button"
           disabled={disabled}
           onClick={onTranslate}
           type="button"
+          variant="bare"
         >
           {t("soundEffectReview.translateOne")}
-        </button>
-        <button
+        </Button>
+        <Button
           className="sound-effect-review-action-button is-dismiss"
           disabled={disabled}
           onClick={onDismiss}
           type="button"
+          variant="bare"
         >
           {t("soundEffectReview.dismiss")}
-        </button>
+        </Button>
       </div>
     </div>
   );

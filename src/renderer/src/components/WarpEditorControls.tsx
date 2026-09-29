@@ -22,6 +22,7 @@ import {
 import { TransformNumberField } from "./TransformNumberField";
 import { Select } from "./ui/Select";
 import "./warpEditorControls.css";
+import { Button } from "./ui/Button";
 
 type WarpEditorProps = {
   block: TranslationBlock;
@@ -59,16 +60,17 @@ function InactiveWarpEditor({
   return (
     <div className="transform-mode-panel warp-editor-panel warp-editor-empty">
       <p>{t("transform.warp.disabledDescription")}</p>
-      <button
+      <Button
         className="warp-action-button primary"
         disabled={disabled}
         onClick={() =>
           onUpdate({ warpTransform: createIdentityWarpTransform(3) })
         }
         type="button"
+        variant="bare"
       >
         {t("transform.warp.start")}
-      </button>
+      </Button>
       <p className="transform-help">{t("transform.hints.warp")}</p>
     </div>
   );
@@ -142,7 +144,7 @@ function WarpGridPresetFields({
       >
         <span>{t("transform.warp.gridSize")}</span>
         {[3, 5].map((gridSize) => (
-          <button
+          <Button
             aria-pressed={warp.gridSize === gridSize}
             disabled={disabled}
             key={gridSize}
@@ -150,9 +152,10 @@ function WarpGridPresetFields({
               switchGrid(warp, gridSize as WarpGridSize, onUpdate, setSelected)
             }
             type="button"
+            variant="bare"
           >
             {gridSize}×{gridSize}
-          </button>
+          </Button>
         ))}
       </div>
       <label className="warp-preset-field">
@@ -264,7 +267,7 @@ function WarpEditorActions({
   const { t } = useTranslation("components");
   return (
     <div className="warp-editor-actions">
-      <button
+      <Button
         className="warp-action-button"
         disabled={disabled || selected.length === 0}
         onClick={() => {
@@ -272,10 +275,11 @@ function WarpEditorActions({
           if (isValidWarpTransform(next)) onUpdate({ warpTransform: next });
         }}
         type="button"
+        variant="bare"
       >
         {t("transform.warp.resetSelected")}
-      </button>
-      <button
+      </Button>
+      <Button
         className="warp-action-button ghost"
         disabled={disabled}
         onClick={() =>
@@ -284,17 +288,19 @@ function WarpEditorActions({
           })
         }
         type="button"
+        variant="bare"
       >
         {t("transform.warp.resetMesh")}
-      </button>
-      <button
+      </Button>
+      <Button
         className="warp-action-button ghost"
         disabled={disabled}
         onClick={() => onUpdate({ warpTransform: undefined })}
         type="button"
+        variant="bare"
       >
         {t("transform.warp.remove")}
-      </button>
+      </Button>
     </div>
   );
 }

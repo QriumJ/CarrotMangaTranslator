@@ -108,7 +108,7 @@
   width: 34px;
   height: 34px;
   object-fit: contain;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 1px 2px var(--shadow-ink-40));
   transform-origin: center;
 }
 
@@ -175,24 +175,24 @@
   gap: 7px;
   min-height: 30px;
   padding: 5px 10px;
-  border: 1px solid rgba(255, 171, 64, 0.55);
+  border: 1px solid var(--mac-alpha-badge-border);
   border-radius: 999px;
-  color: #ffe0aa;
-  background: rgba(131, 73, 10, 0.32);
+  color: var(--mac-alpha-badge-color);
+  background: var(--mac-alpha-badge-background);
   font-size: 12px;
   letter-spacing: 0.01em;
 }
 
 .mac-alpha-badge > span:last-child {
-  color: #f4c878;
+  color: var(--mac-alpha-badge-span-last-child-color);
 }
 
 .mac-alpha-badge-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #ffad42;
-  box-shadow: 0 0 8px rgba(255, 173, 66, 0.7);
+  background: var(--mac-alpha-badge-dot-background);
+  box-shadow: 0 0 8px var(--mac-alpha-badge-dot-box-shadow);
 }
 
 .right-rail {
@@ -336,8 +336,8 @@
   width: 42px;
   border: 1px solid var(--border-soft);
   border-radius: var(--r-md);
-  background: #14161b;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  background: var(--canvas-chrome-bg);
+  box-shadow: 0 6px 18px var(--shadow-ink-40);
   overflow: visible;
 }
 
@@ -367,7 +367,7 @@
   border: 0;
   border-radius: 0 0 calc(var(--r-md) - 1px) calc(var(--r-md) - 1px);
   background: transparent;
-  color: #aeb8c5;
+  color: var(--canvas-control-text);
   cursor: pointer;
 }
 
@@ -387,8 +387,8 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(151, 163, 179, 0.64) 28%,
-    rgba(151, 163, 179, 0.64) 72%,
+    var(--canvas-rail-divider) 28%,
+    var(--canvas-rail-divider) 72%,
     transparent
   );
   content: "";
@@ -397,8 +397,8 @@
 
 .right-quick-rail-toggle > button:hover,
 .right-quick-rail-toggle > button:focus-visible {
-  background: #20242b;
-  color: #f4f6f8;
+  background: var(--control-bg);
+  color: var(--canvas-control-text-hover);
 }
 
 .right-quick-rail-toggle > button:focus-visible {
@@ -467,8 +467,8 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(151, 163, 179, 0.64) 28%,
-    rgba(151, 163, 179, 0.64) 72%,
+    var(--canvas-rail-divider) 28%,
+    var(--canvas-rail-divider) 72%,
     transparent
   );
   content: "";
@@ -509,8 +509,8 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(151, 163, 179, 0.64) 28%,
-    rgba(151, 163, 179, 0.64) 72%,
+    var(--canvas-rail-divider) 28%,
+    var(--canvas-rail-divider) 72%,
     transparent
   );
   content: "";
@@ -578,8 +578,8 @@
   height: 42px;
   border: 1px solid var(--border-soft);
   border-radius: var(--r-md);
-  background: rgba(20, 22, 27, 0.96);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  background: var(--canvas-view-panel-surface);
+  box-shadow: 0 6px 18px var(--shadow-ink-40);
   overflow: visible;
   backdrop-filter: blur(8px);
   transform-origin: right bottom;
@@ -609,7 +609,7 @@
   padding: 0;
   border: 0;
   background: transparent;
-  color: #aeb8c5;
+  color: var(--canvas-control-text);
   cursor: pointer;
 }
 
@@ -630,7 +630,7 @@
 }
 
 .workspace-view-control > button:disabled {
-  color: #5d6672;
+  color: var(--canvas-chrome-text-disabled);
   cursor: not-allowed;
 }
 
@@ -660,7 +660,7 @@
   place-items: center;
   width: 40px;
   height: 40px;
-  color: #aeb8c5;
+  color: var(--canvas-control-text);
   pointer-events: none;
 }
 
@@ -717,7 +717,7 @@
 .workspace-view-reveal > button {
   align-content: center;
   gap: 1px;
-  color: #d7dde6;
+  color: var(--canvas-view-panel-text);
   font-size: 10px;
   font-variant-numeric: tabular-nums;
 }
@@ -743,11 +743,11 @@
   width: max-content;
   max-width: 280px;
   padding: 7px 10px;
-  border: 1px solid #3a4351;
+  border: 1px solid var(--control-tooltip-bubble-border);
   border-radius: 7px;
-  background: rgba(25, 29, 36, 0.98);
-  color: #f4f6fa;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.42);
+  background: var(--control-tooltip-bubble-background);
+  color: var(--control-tooltip-bubble-color);
+  box-shadow: 0 8px 24px var(--shadow-ink-42);
   font-size: 12px;
   font-weight: 600;
   line-height: 1.35;
@@ -1004,7 +1004,7 @@
   place-items: center;
   padding: var(--sp-6);
   pointer-events: none;
-  background: rgba(10, 13, 18, 0.68);
+  background: var(--library-drop-overlay-background);
   backdrop-filter: blur(3px);
   animation: library-drop-fade-in 120ms ease-out;
 }

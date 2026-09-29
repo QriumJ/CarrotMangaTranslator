@@ -1,3 +1,12 @@
+.control:where(:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+:where(.control:disabled) {
+  cursor: not-allowed;
+}
+
 .field {
   display: grid;
   gap: var(--field-gap);

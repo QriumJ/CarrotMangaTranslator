@@ -2,6 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { PNG } from "pngjs";
 import { vi } from "vitest";
 import { imageEditingFixture } from "./mcpImageEditing.fixture";
+import { createImageWorkerBoundary } from "./mcpImageWorker.fixture";
 import { createPageRevision } from "../src/shared/pageRevision";
 import { mcpContextRevision } from "../src/shared/mcpContextEditing";
 import {
@@ -20,7 +21,13 @@ export async function externalImageFixture() {
   const { createMcpExternalImageSession } =
     await import("../src/main/mcp/mcpExternalImageSession");
   const { mcpToolResult } = await import("../src/main/mcp/mcpToolResult");
-  const external = createMcpExternalImageSession(f.app, f.editing, true, true);
+  const external = createMcpExternalImageSession(
+    f.app,
+    f.editing,
+    true,
+    true,
+    createImageWorkerBoundary,
+  );
   const invoke = async (name: string, args: object, caller = f.auth()) => {
     const tool = external.tools.find((tool) => tool.name === name);
     if (!tool) throw new Error(`Missing external tool ${name}`);

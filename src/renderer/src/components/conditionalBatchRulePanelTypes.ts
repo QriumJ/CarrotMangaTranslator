@@ -1,5 +1,4 @@
 import type { BlockStylePreset } from "../../../shared/blockStylePresets";
-import type { ConditionalBatchSpeakerCatalog } from "./conditionalBatchSpeakers";
 import type {
   ConditionalBatchPreviewResult,
   ConditionalBatchRecipeId,
@@ -8,10 +7,11 @@ import type {
   ConditionalBatchSequencePreview,
   ConditionalBatchSequenceV2,
 } from "../../../shared/conditionalBatchRules";
-import type {
+import {
   ConditionalBatchApplyNotice,
   ConditionalBatchTemporaryScheme,
-} from "./useConditionalBatchSchemeController";
+} from "./conditionalBatchSchemeDrafts";
+import type { ConditionalBatchSpeakerCatalog } from "./conditionalBatchSpeakers";
 
 type ConditionalBatchScopeKind = "selection" | "page" | "chapter";
 

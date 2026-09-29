@@ -101,11 +101,11 @@
 }
 
 .chapter-save-badge.dirty {
-  color: #f0c36c;
+  color: var(--chapter-save-badge-dirty-color);
 }
 
 .chapter-save-badge.saving {
-  color: #9dbbff;
+  color: var(--chapter-save-badge-saving-color);
 }
 
 .chapter-save-badge.saving::before {
@@ -113,7 +113,7 @@
 }
 
 .chapter-save-badge.saved {
-  color: #7ed6ba;
+  color: var(--save-complete-text);
 }
 
 @keyframes chapter-save-pulse {
@@ -139,7 +139,7 @@
 }
 
 .chapter-task-header h2 {
-  color: #f3ecdf;
+  color: var(--task-title-text);
   font-size: 16px;
   font-weight: 650;
 }
@@ -269,10 +269,10 @@
   max-width: 170px;
   padding: 2px 7px;
   overflow: hidden;
-  border: 1px solid rgba(230, 183, 116, 0.38);
+  border: 1px solid var(--editor-state-badge-border);
   border-radius: var(--r-pill);
-  background: rgba(230, 183, 116, 0.08);
-  color: #e6b774;
+  background: var(--editor-state-badge-background);
+  color: var(--review-warning-text);
   font-size: 10px;
   font-weight: 700;
   text-overflow: ellipsis;
@@ -624,7 +624,7 @@
 
 .transform-warning,
 .transform-overflow-warning p {
-  color: #e6b774;
+  color: var(--review-warning-text);
 }
 
 .transform-status-row,
@@ -652,9 +652,9 @@
 }
 
 .transform-status-chip.suspended {
-  border-color: rgba(230, 183, 116, 0.45);
-  background: rgba(230, 183, 116, 0.08);
-  color: #e6b774;
+  border-color: var(--transform-status-chip-suspended-border-color);
+  background: var(--transform-status-chip-suspended-background);
+  color: var(--review-warning-text);
 }
 
 .transform-select-row,
@@ -693,9 +693,9 @@
   display: grid;
   gap: var(--sp-1);
   padding: 6px 7px;
-  border: 1px solid rgba(230, 183, 116, 0.35);
+  border: 1px solid var(--transform-overflow-warning-border);
   border-radius: var(--r-sm);
-  background: rgba(230, 183, 116, 0.07);
+  background: var(--transform-overflow-warning-background);
 }
 
 .transform-overflow-warning button {
@@ -858,7 +858,7 @@
   width: 15px;
   height: 15px;
   flex: 0 0 auto;
-  color: #95a4b3;
+  color: var(--text-muted);
 }
 
 .library-search-input {
@@ -878,7 +878,7 @@
 }
 
 .library-search-input::placeholder {
-  color: #83909d;
+  color: var(--library-search-input-placeholder-color);
 }
 
 .library-sort {
@@ -994,7 +994,7 @@
 .run-title h2 {
   margin: 0;
   font-size: 16px;
-  color: #f3ecdf;
+  color: var(--task-title-text);
 }
 
 .run-title small,
@@ -1002,7 +1002,7 @@
 .page-item small,
 .chapter-item small,
 .draft-meta {
-  color: #b8b1a6;
+  color: var(--text-dim);
 }
 
 .library-scroll,
@@ -1021,8 +1021,8 @@
   gap: 10px;
   padding: 10px;
   border-radius: 10px;
-  background: #16191e;
-  border: 1px solid #2b3138;
+  background: var(--status-muted-surface);
+  border: 1px solid var(--status-muted-border);
 }
 
 .work-row {
@@ -1065,18 +1065,20 @@
 
 .sortable-item.dragging {
   opacity: 0.32;
-  box-shadow: inset 0 0 0 1px rgba(106, 169, 255, 0.28);
+  box-shadow: inset 0 0 0 1px var(--sortable-item-dragging-box-shadow);
 }
 
 .sortable-scroll.drag-active .sortable-item:not(.dragging) {
-  border-color: #3f5367;
+  border-color: var(
+    --sortable-scroll-drag-active-sortable-item-not-dragging-border-color
+  );
 }
 
 .drag-preview {
   width: min(560px, 72vw);
   border-color: var(--focus) !important;
   background: var(--bg-raised) !important;
-  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.42);
+  box-shadow: 0 18px 46px var(--shadow-ink-42);
   cursor: grabbing;
 }
 
@@ -1089,7 +1091,7 @@
   place-items: center;
   border-color: transparent;
   background: transparent;
-  color: #8f9ba8;
+  color: var(--drag-handle-color);
   cursor: grab;
   touch-action: none;
 }
@@ -1104,9 +1106,9 @@
 .sortable-item:hover .drag-handle:not(:disabled),
 .share-final-item:hover .drag-handle:not(:disabled),
 .candidate-card:hover .drag-handle:not(:disabled) {
-  border-color: #425063;
-  background: #202733;
-  color: #dce7f4;
+  border-color: var(--drag-handle-hover-not-disabled-border-color);
+  background: var(--drag-handle-hover-not-disabled-background);
+  color: var(--drag-handle-hover-not-disabled-color);
 }
 
 .drag-handle:active:not(:disabled) {

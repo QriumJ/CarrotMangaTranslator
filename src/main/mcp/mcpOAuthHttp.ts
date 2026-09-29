@@ -133,11 +133,13 @@ export class McpOAuthHttp {
       // default no-referrer policy so the callback never receives consent URLs.
       response.setHeader("Referrer-Policy", "same-origin");
       response.setHeader("Content-Type", "text/html; charset=utf-8");
+      const consentPolicy = `default-src 'none'; form-action 'self' ${consent.redirectOrigin}; frame-ancestors 'none'; base-uri 'none'`;
+      response.setHeader("Content-Security-Policy", consentPolicy);
       if ("code" in consent && typeof consent.code === "string") {
         const page = mcpPairingPage({ ...consent, code: consent.code });
         response.setHeader(
           "Content-Security-Policy",
-          `default-src 'none'; script-src 'nonce-${page.nonce}'; connect-src 'self'; form-action 'self' https://chatgpt.com; frame-ancestors 'none'; base-uri 'none'`,
+          `${consentPolicy}; script-src 'nonce-${page.nonce}'; connect-src 'self'`,
         );
         response.end(page.html);
       } else response.end(mcpOAuthConsentPage(consent));

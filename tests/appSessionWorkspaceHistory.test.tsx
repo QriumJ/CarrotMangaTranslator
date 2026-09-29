@@ -37,6 +37,62 @@ beforeEach(() => {
 });
 
 describe("app-session workspace history", () => {
+  it("keeps Undo available after successive coalesced edits with the live revision guard", async () => {
+    const before = makeChapter("C:/before.png");
+    before.pages[0].blocks = [makeBlock()];
+    const first = structuredClone(before);
+    first.pages[0].blocks[0].translatedText = "a";
+    const second = structuredClone(first);
+    second.pages[0].blocks[0].translatedText = "ab";
+    const controller = makeChapterController({
+      chapter: first,
+      clearPageImageCache: vi.fn(),
+      mergeLiveChapter: vi.fn(),
+      refreshLibrary: vi.fn(),
+    });
+    const selection = {
+      selectedPageId: PAGE_ID,
+      selectedBlockId: first.pages[0].blocks[0].id,
+      selectedBlockIds: [],
+    };
+    const snapshot = (chapter: ChapterSnapshot) =>
+      captureWorkspaceChapterEditSnapshot(chapter, selection, [PAGE_ID]);
+    const { result, rerender } = renderHook(
+      ({ session }) => useAppSessionWorkspaceHistory(session),
+      { initialProps: { session: controller } },
+    );
+    act(() => {
+      result.current.recordChapterEdit({
+        label: "Typing",
+        mergeKey: "text",
+        time: 100,
+        before: snapshot(before),
+        after: snapshot(first),
+      });
+    });
+    expect(result.current.canUndo).toBe(true);
+    act(() => {
+      controller.core.currentChapter = second;
+      controller.core.currentChapterRef.current = second;
+      result.current.recordChapterEdit({
+        label: "Typing",
+        mergeKey: "text",
+        time: 200,
+        before: snapshot(first),
+        after: snapshot(second),
+      });
+      rerender({ session: { ...controller, core: { ...controller.core } } });
+    });
+    expect(result.current.canUndo).toBe(true);
+    await act(async () => {
+      expect(await result.current.undo()).toBe(true);
+    });
+    expect(
+      controller.core.currentChapterRef.current?.pages[0].blocks[0]
+        .translatedText,
+    ).toBe(before.pages[0].blocks[0].translatedText);
+  });
+
   it.each(["other-page", "same-page", "handoff", "later-result"])(
     "replays only a compatible page basis (%s)",
     async (mode) => {

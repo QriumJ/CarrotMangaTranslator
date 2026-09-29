@@ -7,6 +7,7 @@ import { ActiveJobStore } from "../src/main/jobs/activeJob";
 import { AppOperationRegistry } from "../src/main/appOperationRegistry";
 import {
   acquireJobPage,
+  acquireJobPageOwnership,
   releaseJobPage,
 } from "../src/main/jobs/jobPageOwnership";
 import { libraryMutationCoordinator } from "../src/main/libraryStore/libraryMutationCoordinator";
@@ -62,6 +63,41 @@ function start(id: string, resources: AppActivityResource[]) {
 }
 
 describe("activity ownership across concurrent work", () => {
+  it("acquires workflow content only after acknowledgement while other pages remain editable", async () => {
+    start("workflow", [model]);
+    jobs.pageHandoffs.reserve("workflow", "chapter", ["A"]);
+    let acquired = false;
+    const pending = acquireJobPageOwnership(
+      jobs,
+      "workflow",
+      "chapter",
+      "A",
+    ).then(() => {
+      acquired = true;
+    });
+    await Promise.resolve();
+    expect(acquired).toBe(false);
+    await withLibraryContentEdit(
+      [pageContentResource("chapter", "B")],
+      async () => {},
+    );
+    jobs.pageHandoffs.respond({
+      requestId: requirePresent(jobs.pageHandoffs.activities[0].requestId),
+    });
+    await pending;
+    expect(() =>
+      gate.assertAvailable([pageContentResource("chapter", "A")]),
+    ).toThrow();
+    await withLibraryContentEdit(
+      [pageContentResource("chapter", "B")],
+      async () => {},
+    );
+    releaseJobPage(jobs, "workflow", "chapter", "A");
+    expect(() =>
+      gate.assertAvailable([pageContentResource("chapter", "A")]),
+    ).not.toThrow();
+  });
+
   it("scopes context analysis without admitting another model or conflicting input/context writes", async () => {
     const repository = {
       openChapter: async () =>

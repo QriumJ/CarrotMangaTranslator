@@ -45,8 +45,11 @@ const auth = vi.fn(async () => ({
   appServerVersion: "test",
   models: [],
 }));
+const getRun = vi.fn<typeof window.mangaApi.getPageWorkflowRun>();
 beforeEach(() => {
+  getRun.mockReset();
   window.mangaApi = createTestMangaGatewayStub({
+    getPageWorkflowRun: getRun,
     getCodexAccount: auth,
     getPageImageDataUrl: async () => "",
     listConditionalBatchSchemes: async () =>
@@ -100,6 +103,37 @@ function show(
 }
 
 describe("Hayai page work modal", () => {
+  it("refuses a foreign imported run without replacing the current target selection", async () => {
+    const runId = "11111111-1111-4111-8111-111111111111";
+    chapter.pages[0].pageWorkflow = {
+      runId,
+      planKey: "foreign",
+      steps: {},
+      findings: [],
+    };
+    getRun.mockResolvedValue({
+      resumeRunId: runId,
+      plan: createPageWorkflowPlan(["erase"]),
+      selection: [{ chapterId: "foreign-chapter", pageIds: ["foreign-page"] }],
+    });
+    try {
+      const f = show();
+      fireEvent.click(
+        screen.getByRole("combobox", { name: "이전 페이지 작업 이어하기" }),
+      );
+      fireEvent.click(
+        await screen.findByRole("option", { name: /이전 작업 1/ }),
+      );
+      await screen.findByText(/현재 페이지와 연결되지 않은/);
+      expect(
+        screen.queryByText("저장된 실행 이어하기 · 설정 변경 시 새 실행"),
+      ).toBeNull();
+      expect(f.onStart).not.toHaveBeenCalled();
+    } finally {
+      delete chapter.pages[0].pageWorkflow;
+    }
+  });
+
   it("switches Hayai versions, remembers the choice and animates from the measured width", async () => {
     const f = show();
     await waitFor(() =>

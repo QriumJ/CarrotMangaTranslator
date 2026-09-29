@@ -1,10 +1,8 @@
+import type { ConditionalBatchEditorModelProps } from "../src/renderer/src/components/conditionalBatchEditorTypes";
 /** @vitest-environment jsdom */
 import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import {
-  useConditionalBatchEditorModel,
-  type ConditionalBatchEditorModelProps,
-} from "../src/renderer/src/components/useConditionalBatchEditorModel";
+import { useConditionalBatchEditorModel } from "../src/renderer/src/components/useConditionalBatchEditorModel";
 import {
   clearBlockFontLoadCache,
   loadBlockFonts,

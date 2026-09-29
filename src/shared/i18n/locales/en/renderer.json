@@ -340,7 +340,8 @@
     "copiedBlocks_one": "Copied {{count}} block.",
     "copiedBlocks_other": "Copied {{count}} blocks.",
     "copyFailed": "Could not copy blocks. Select fewer blocks and try again.",
-    "pasteFailed": "Could not paste blocks. Copy them again. A page can contain up to {{count}} blocks."
+    "pasteFailed": "Could not paste blocks. Copy them again. A page can contain up to {{count}} blocks.",
+    "capacityReached": "This page has reached its {{count}}-block limit. Remove an unneeded block before adding another."
   },
   "chapter": {
     "saveFailed": "Save failed: {{message}}",

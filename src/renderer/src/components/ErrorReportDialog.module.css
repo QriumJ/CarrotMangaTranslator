@@ -28,9 +28,9 @@
 
 .privacyNotice {
   padding: var(--sp-3) var(--sp-4);
-  border: 1px solid rgba(230, 177, 80, 0.34);
+  border: 1px solid var(--error-report-dialog-privacy-notice-border);
   border-radius: var(--r-md);
-  background: rgba(230, 177, 80, 0.08);
+  background: var(--error-report-dialog-privacy-notice-background);
   color: var(--text);
   font-size: var(--font-sm);
   line-height: 1.55;
@@ -96,7 +96,7 @@
   padding: var(--sp-4);
   border: 1px solid var(--danger-bd);
   border-radius: var(--r-md);
-  background: rgba(201, 81, 62, 0.1);
+  background: var(--error-report-dialog-load-error-background);
   color: var(--text);
 }
 
@@ -119,8 +119,8 @@
 
 .actionError {
   border: 1px solid var(--danger-bd);
-  background: rgba(201, 81, 62, 0.1);
-  color: #f1c2ba;
+  background: var(--error-report-dialog-action-error-background);
+  color: var(--error-report-dialog-action-error-color);
 }
 
 .actionSuccess {

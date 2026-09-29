@@ -24,11 +24,7 @@ function harness(
   const abort = new AbortController();
   const port: PageWorkflowExecutionPort = {
     readChapter: async () => structuredClone(chapter),
-    acquirePage: vi.fn(async (_chapter, id) =>
-      structuredClone(
-        chapter.pages.find((p) => p.id === id) ?? chapter.pages[0],
-      ),
-    ),
+    acquirePage: vi.fn(async () => {}),
     releasePage: vi.fn(),
     prepareStage: vi.fn(async () => {}),
     progress: vi.fn(),
@@ -66,6 +62,31 @@ function harness(
 }
 
 describe("Hayai page workflow commits", () => {
+  it("fails a missing target before stage preparation and releases all ownership", async () => {
+    const h = harness(["ocr"]);
+    h.input.selection[0].pageIds.push("deleted-during-handoff");
+    const result = await executePageWorkflow(h.input, h.port);
+    expect(result.status).toBe("failed");
+    expect(h.port.prepareStage).not.toHaveBeenCalled();
+    expect(h.port.execute).not.toHaveBeenCalled();
+    expect(h.port.save).not.toHaveBeenCalled();
+    expect(h.port.releasePage).toHaveBeenCalledTimes(2);
+  });
+
+  it("reads current data before each page without acquisition reads for 100 targets", async () => {
+    const h = harness(["ocr"]);
+    for (let i = 1; i < 100; i++)
+      h.addPage({ ...makePage(), id: `page-${i + 1}` });
+    h.port.acquirePage = vi.fn(async () => {});
+    h.port.readChapter = vi.fn(h.port.readChapter);
+    const result = await executePageWorkflow(h.input, h.port);
+    expect(result.status).toBe("completed");
+    expect(h.port.acquirePage).toHaveBeenCalledTimes(100);
+    expect(h.port.readChapter).toHaveBeenCalledTimes(102);
+    expect(h.port.execute).toHaveBeenCalledTimes(100);
+    expect(h.port.releasePage).toHaveBeenCalledTimes(100);
+  });
+
   it("finishes each stage before preparing the next", async () => {
     const order: string[] = [];
     const h = harness(["ocr", "translate"]);

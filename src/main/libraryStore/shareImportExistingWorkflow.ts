@@ -26,6 +26,7 @@ import { makeUniqueTitleInList, sanitizeTitle } from "./titles";
 
 type ExistingShareImportPlan = {
   currentChapters: Map<string, ChapterFile>;
+  originalChapterIds: ReadonlySet<string>;
   usedTitles: Set<string>;
   usedExistingIds: Set<string>;
   usedPackageIds: Set<string>;
@@ -60,7 +61,10 @@ export async function importWorkShareIntoExistingWork(
   return runLibraryTransaction(
     "share-import-existing-work",
     async (transaction) => {
-      const plan = createExistingShareImportPlan(currentChapters);
+      const plan = createExistingShareImportPlan(
+        currentChapters,
+        work.chapterOrder,
+      );
       await populateExistingShareImportPlan({
         entries: request.entries,
         plan,
@@ -76,6 +80,7 @@ export async function importWorkShareIntoExistingWork(
       };
       transaction.beforePublish(async () => {
         const latestWork = await ensureExistingWork(work.id);
+        plan.now = new Date().toISOString();
         plan.updatedExistingChapters = await Promise.all(
           plan.updatedExistingChapters.map(async (chapter) => {
             const latest = await readChapterFile(work.id, chapter.id);
@@ -118,9 +123,11 @@ async function readCurrentChapters(
 
 function createExistingShareImportPlan(
   currentChapters: Map<string, ChapterFile>,
+  originalChapterIds: readonly string[],
 ): ExistingShareImportPlan {
   return {
     currentChapters,
+    originalChapterIds: new Set(originalChapterIds),
     usedTitles: new Set<string>(),
     usedExistingIds: new Set<string>(),
     usedPackageIds: new Set<string>(),
@@ -305,16 +312,24 @@ async function stageExistingShareImport({
     await stageChapterFile(transaction, chapter);
   }
 
+  const finalChapterIdSet = new Set(plan.finalChapterIds);
+  for (const chapterId of work.chapterOrder) {
+    if (!plan.originalChapterIds.has(chapterId))
+      finalChapterIdSet.add(chapterId);
+  }
+  const finalChapterIds = [...finalChapterIdSet];
   const nextWork: WorkFile = {
     ...work,
-    chapterOrder: plan.finalChapterIds,
+    chapterOrder: finalChapterIds,
     updatedAt: plan.now,
   };
   await stageWorkFile(transaction, nextWork);
 
-  const finalChapterIdSet = new Set(plan.finalChapterIds);
   for (const previousChapterId of work.chapterOrder) {
-    if (finalChapterIdSet.has(previousChapterId)) {
+    if (
+      !plan.originalChapterIds.has(previousChapterId) ||
+      finalChapterIdSet.has(previousChapterId)
+    ) {
       continue;
     }
     await transaction.retireDirectory(
@@ -334,7 +349,7 @@ async function stageExistingShareImport({
   }
   return {
     workId: work.id,
-    chapterIds: plan.finalChapterIds,
+    chapterIds: finalChapterIds,
     openedChapter: hydrateChapter(openedChapter),
   };
 }

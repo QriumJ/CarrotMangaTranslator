@@ -10,6 +10,10 @@ const stageStylesheet = readFileSync(
   resolve(process.cwd(), "src/renderer/src/styles/stage-overlay.css"),
   "utf8",
 );
+const foundationStylesheet = readFileSync(
+  resolve(process.cwd(), "src/renderer/src/styles/foundations.css"),
+  "utf8",
+);
 
 describe("transform handle presentation", () => {
   it("keeps a 24px pointer target around a viewport-responsive marker", () => {
@@ -87,10 +91,24 @@ describe("transform handle presentation", () => {
       stylesheet,
       ".overlay-block.transform-mode-select.selected",
     );
-    expect(transformSelection).toMatch(/outline:\s*1px solid #58b9ff;/);
+    expect(transformSelection).toMatch(
+      /outline:\s*1px solid var\(--canvas-transform-accent\);/,
+    );
+    expect(resolveRootTokens(transformSelection)).toMatch(
+      /outline:\s*1px solid #58b9ff;/,
+    );
     expect(transformSelection).toMatch(/outline-offset:\s*0;/);
   });
 });
+
+function resolveRootTokens(declarations: string): string {
+  const root = declarationBlock(foundationStylesheet, ":root");
+  return declarations.replace(/var\((--[\w-]+)\)/g, (_match, name: string) => {
+    const value = root.match(new RegExp(`${name}:\\s*([^;]+);`))?.[1].trim();
+    if (!value) throw new Error(`Missing root CSS token: ${name}`);
+    return value;
+  });
+}
 
 function declarationBlock(source: string, selector: string): string {
   const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

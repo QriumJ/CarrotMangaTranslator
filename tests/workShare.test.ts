@@ -1,4 +1,8 @@
-import { makeChapter } from "./helpers/workShareFixtures";
+import {
+  makeChapter,
+  seedLibrary,
+  writeJson,
+} from "./helpers/workShareFixtures";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { existsSync } from "node:fs";
 import {
@@ -13,7 +17,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { LibraryChapter, LibraryWork } from "../src/shared/libraryTypes";
+import type { LibraryChapter } from "../src/shared/libraryTypes";
 import { hashTranslationBlocks } from "../src/shared/blockFingerprint";
 import { MAX_SHARE_IMAGE_BYTES } from "../src/main/libraryStore/zipSafety";
 import { makePngImage as makePngHeader } from "./helpers/imageFixtures";
@@ -404,6 +408,88 @@ describe("work share packages", () => {
     );
     expect(chapterDirs).not.toContain(".trash");
   });
+  it("preserves concurrent additions and page edits while removing only planned omissions", async () => {
+    const rootDir = await createTempLibrary();
+    const library = await loadLibrary(rootDir);
+    await seedLibrary(rootDir);
+    const packagePath = join(rootDir, "concurrent-additions.mgtshare");
+    await library.exportWorkShareToFile({
+      workId: "work-1",
+      chapterIds: ["chapter-a"],
+      outputPath: packagePath,
+    });
+    const { importWorkShareUnlocked } =
+      await import("../src/main/libraryStore/shareWorkflow");
+    const { withLibraryMutation } = await import("../src/main/library/lock");
+    const { readWorkFile, writeWorkFile, readChapterFile, writeChapterFile } =
+      await import("../src/main/libraryStore/libraryFiles");
+    const addedImages: string[] = [];
+    const result = await importWorkShareUnlocked(
+      {
+        packagePath,
+        target: { mode: "existing", workId: "work-1" },
+        entries: [
+          { source: "existing", chapterId: "chapter-b", title: "Kept" },
+          {
+            source: "package",
+            packageChapterId: "chapter-a",
+            title: "Imported",
+          },
+        ],
+      },
+      undefined,
+      undefined,
+      async (publish) => {
+        await withLibraryMutation(async () => {
+          for (const id of ["added-second", "added-first"]) {
+            const directory = join(
+              rootDir,
+              "works",
+              "work-1",
+              "chapters",
+              id,
+              "pages",
+            );
+            await mkdir(directory, { recursive: true });
+            await writeChapterFile(
+              makeChapter(rootDir, id, id, `page-${id}`, `block-${id}`),
+            );
+            const image = join(directory, "user-image.png");
+            await writeFile(image, "concurrent user image");
+            addedImages.push(image);
+          }
+          const work = await readWorkFile("work-1");
+          if (!work) throw new Error("Missing work fixture");
+          await writeWorkFile({
+            ...work,
+            chapterOrder: [...work.chapterOrder, "added-second", "added-first"],
+          });
+          const kept = await readChapterFile("work-1", "chapter-b");
+          if (!kept) throw new Error("Missing chapter fixture");
+          kept.pages[0].blocks[0].translatedText = "Edited during import";
+          await writeChapterFile(kept);
+        });
+        return publish();
+      },
+    );
+    expect(result.chapterIds.slice(-2)).toEqual([
+      "added-second",
+      "added-first",
+    ]);
+    expect((await readWorkFile("work-1"))?.chapterOrder).toEqual(
+      result.chapterIds,
+    );
+    expect(result.openedChapter?.id).toBe("chapter-b");
+    expect(result.openedChapter?.pages[0].blocks[0].translatedText).toBe(
+      "Edited during import",
+    );
+    expect(
+      existsSync(join(rootDir, "works", "work-1", "chapters", "chapter-a")),
+    ).toBe(false);
+    for (const image of addedImages)
+      expect(await readFile(image, "utf8")).toBe("concurrent user image");
+  });
+
   it("refuses publication if a retained chapter disappears during preparation", async () => {
     const rootDir = await createTempLibrary();
     const library = await loadLibrary(rootDir);
@@ -1152,75 +1238,6 @@ async function loadLibrary(
   return import("../src/main/library");
 }
 
-async function seedLibrary(rootDir: string): Promise<void> {
-  const work: LibraryWork = {
-    id: "work-1",
-    title: "원본 작품",
-    chapterOrder: ["chapter-a", "chapter-b"],
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
-  };
-  await mkdir(
-    join(rootDir, "works", work.id, "chapters", "chapter-a", "pages"),
-    { recursive: true },
-  );
-  await mkdir(
-    join(rootDir, "works", work.id, "chapters", "chapter-b", "pages"),
-    { recursive: true },
-  );
-  await mkdir(
-    join(rootDir, "works", work.id, "chapters", "chapter-a", "runs", "run-1"),
-    { recursive: true },
-  );
-  await writeJson(join(rootDir, "index.json"), { workOrder: [work.id] });
-  await writeJson(join(rootDir, "works", work.id, "work.json"), work);
-  await writeFile(
-    join(
-      rootDir,
-      "works",
-      work.id,
-      "chapters",
-      "chapter-a",
-      "pages",
-      "001-page-a.png",
-    ),
-    makePngHeader(100, 120),
-  );
-  await writeFile(
-    join(
-      rootDir,
-      "works",
-      work.id,
-      "chapters",
-      "chapter-b",
-      "pages",
-      "001-page-b.png",
-    ),
-    makePngHeader(100, 120),
-  );
-  await writeJson(
-    join(rootDir, "works", work.id, "chapters", "chapter-a", "chapter.json"),
-    makeChapter(rootDir, "chapter-a", "1화", "page-a", "block-a"),
-  );
-  await writeJson(
-    join(rootDir, "works", work.id, "chapters", "chapter-b", "chapter.json"),
-    makeChapter(rootDir, "chapter-b", "2화", "page-b", "block-b"),
-  );
-  await writeFile(
-    join(
-      rootDir,
-      "works",
-      work.id,
-      "chapters",
-      "chapter-a",
-      "runs",
-      "run-1",
-      "debug.txt",
-    ),
-    "skip",
-  );
-}
-
 async function attachInpaintedImage(
   rootDir: string,
   chapterId: string,
@@ -1253,8 +1270,4 @@ async function attachInpaintedImage(
     inpaintedImagePath: inpaintedPath,
   };
   await writeJson(chapterPath, chapter);
-}
-
-async function writeJson(path: string, payload: unknown): Promise<void> {
-  await writeFile(path, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 }

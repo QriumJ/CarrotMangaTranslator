@@ -13,6 +13,7 @@ import {
   type WorkspaceInteractionPreviewStore,
 } from "../lib/workspaceInteractionPreview";
 import { RangeInput } from "./ui/Field";
+import { Button } from "./ui/Button";
 
 type BubbleLayoutContextBarProps = {
   interactionPreviewStore: WorkspaceInteractionPreviewStore;
@@ -90,24 +91,26 @@ function BubbleLayoutContextBarContent({
         className="bubble-layout-context-actions"
         role="toolbar"
       >
-        <button
+        <Button
           disabled={draft.history.length === 0}
           onClick={onUndoPoint}
           type="button"
+          variant="bare"
         >
           {t("bubbleLayoutEditor.undo")}
-        </button>
-        <button onClick={onCancel} type="button">
+        </Button>
+        <Button onClick={onCancel} type="button" variant="bare">
           {t("common.cancel")}
-        </button>
-        <button
+        </Button>
+        <Button
           className="primary"
           disabled={!canApply}
           onClick={onApply}
           type="button"
+          variant="bare"
         >
           {t("bubbleLayoutEditor.apply")}
-        </button>
+        </Button>
       </div>
     </section>
   );
@@ -128,7 +131,7 @@ function BubbleLayoutModeToolbar({
       role="toolbar"
     >
       {(["polygon", "add", "subtract"] as const).map((mode) => (
-        <button
+        <Button
           aria-pressed={draft.mode === mode}
           disabled={mode !== "polygon" && !draft.shape}
           key={mode}
@@ -136,9 +139,10 @@ function BubbleLayoutModeToolbar({
             selectBubbleLayoutDraftMode(interactionPreviewStore, mode)
           }
           type="button"
+          variant="bare"
         >
           {t(`bubbleLayoutEditor.modes.${mode}`)}
-        </button>
+        </Button>
       ))}
       <label className="bubble-layout-context-radius">
         <span>{t("bubbleLayoutEditor.radius")}</span>

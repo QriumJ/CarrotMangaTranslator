@@ -278,7 +278,7 @@
 }
 
 .creationBox {
-  z-index: 4;
+  z-index: var(--sound-effect-translation-modal-creation-box-z-index);
   border-color: var(--danger-bd);
   border-style: dashed;
   background: var(--danger-soft);

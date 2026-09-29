@@ -14,6 +14,7 @@ import {
   type PresetFontDetail,
 } from "./stylePresetManager/PresetManagerScreen";
 import { BlockStylePresetTabs } from "./BlockStylePresetTabs";
+import { Button } from "../ui/Button";
 
 export function BlockStylePresetManager({
   activePresetId = null,
@@ -64,24 +65,25 @@ export function BlockStylePresetManager({
         onActivePresetChange={onActivePresetChange}
         onExpandedGroupChange={model.setExpandedGroupId}
       />
-      <button
+      <Button
         type="button"
         className="style-preset-quick-add"
         aria-label={t("stylePresets.createQuick")}
         title={t("stylePresets.createQuick")}
         disabled={presets.length >= MAX_BLOCK_STYLE_PRESETS}
         onClick={model.addPreset}
-      >
-        <IconPlus size={16} aria-hidden="true" />
-      </button>
-      <button
+        variant="bare"
+        children={<IconPlus size={16} aria-hidden="true" />}
+      />
+      <Button
         type="button"
         className="style-preset-manager-open"
         onClick={() => model.setManagerOpen(true)}
+        variant="bare"
       >
         <span>{t("stylePresets.manage")}</span>
         <IconChevronRight size={16} aria-hidden="true" />
-      </button>
+      </Button>
       <PresetManagerLayer
         activePresetId={activePresetId}
         defaults={defaults}

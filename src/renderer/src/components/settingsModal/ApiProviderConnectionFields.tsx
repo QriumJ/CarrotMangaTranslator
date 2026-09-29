@@ -25,6 +25,8 @@ import {
   type ApiProviderConnectionState,
   type DiscoveryState,
 } from "./useApiProviderConnection";
+import { Button } from "../ui/Button";
+import { Input, Textarea } from "../ui/Field";
 
 const PROVIDER_LABEL_KEYS: Record<ApiProviderPresetId, string> = {
   custom: "settings.api.providers.custom",
@@ -133,7 +135,7 @@ function VertexFields({
     <div className="settings-advanced-grid">
       <label>
         {t("settings.api.vertexProject")}
-        <input
+        <Input
           value={connection.vertexProject}
           disabled={disabled}
           placeholder="my-gcp-project"
@@ -147,7 +149,7 @@ function VertexFields({
       </label>
       <label>
         {t("settings.api.vertexLocation")}
-        <input
+        <Input
           value={connection.vertexLocation}
           disabled={disabled}
           placeholder="global"
@@ -178,7 +180,7 @@ function BaseUrlField({
   return (
     <label>
       {t("settings.api.baseUrl")}
-      <input
+      <Input
         value={apiBaseUrl}
         disabled={controlsBusy || discovery.status === "loading"}
         onChange={(event) => {
@@ -225,7 +227,6 @@ function CredentialFields({
       />
     );
   }
-  const keyLabel = "settings.api.key";
   const linkLabel =
     connection.provider === "ollama"
       ? "settings.api.openOllamaLibrary"
@@ -233,9 +234,9 @@ function CredentialFields({
   return (
     <>
       <label>
-        {t(keyLabel)}
+        {t("settings.api.key")}
         <div className="settings-api-key-shell">
-          <textarea
+          <Textarea
             className={`settings-api-key-textarea ${connection.showApiKey ? "" : "masked"}`}
             value={apiKey}
             disabled={controlsBusy || connection.discovery.status === "loading"}
@@ -262,14 +263,15 @@ function CredentialFields({
         {t("settings.api.keyDescription", { count: connection.keyCount })}
       </p>
       {connection.isDiscoverable ? (
-        <button
+        <Button
           type="button"
           className="settings-external-link"
           disabled={controlsBusy}
           onClick={() => void connection.openProviderPage()}
+          variant="bare"
         >
           {t(linkLabel)}
-        </button>
+        </Button>
       ) : null}
     </>
   );

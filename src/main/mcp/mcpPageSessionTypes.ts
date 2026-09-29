@@ -12,6 +12,7 @@ import type { createMcpRetentionSession } from "./mcpRetentionSession";
 import type { McpArtifactStore } from "./mcpArtifactStore";
 import type { McpOutputSyncRepository } from "./mcpOutputSyncRepository";
 import type { McpCompositeRepository } from "./mcpCompositeRepository";
+import type { McpImageWorkerFactory } from "./mcpImageWorkerClient";
 
 export type McpPageSessionEditing = {
   assertChapterClosed?: (chapterId: string) => Promise<void>;
@@ -26,6 +27,7 @@ export type PageSessionOptions = {
   origin: string;
   jobPersistence?: McpJobPersistence;
   retentionCodec?: McpRetentionCodec;
+  createImageWorker?: McpImageWorkerFactory;
   preferences: McpPreferences;
   app: InpaintingJobContext;
   outputSync?: ReviewedLinkedOutputPort;

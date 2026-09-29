@@ -7,13 +7,14 @@ import {
   type ConditionalBatchWritableField,
 } from "../../../shared/conditionalBatchRules";
 import { stripRichTextMarkup } from "../../../shared/richTextMarkup";
+import styles from "./ConditionalBatchEditor.module.css";
+import { formatConditionalBatchDisplayValue } from "./conditionalBatchPresentation";
 import {
   CONDITIONAL_BATCH_FIELD_LABELS,
   conditionalBatchEnumOptions,
-  formatConditionalBatchDisplayValue,
 } from "./conditionalBatchUi";
-import { Button, CheckboxField } from "./ConditionalBatchControls";
-import styles from "./ConditionalBatchEditor.module.css";
+import { Button, Button as UiButton } from "./ui/Button";
+import { CheckboxField } from "./ui/CheckboxField";
 
 export type ConditionalBatchResultsCardProps = {
   currentResult: ConditionalBatchPreviewResult | null;
@@ -225,12 +226,16 @@ function ResultList(
                 props.onToggleResult(result.key, checked)
               }
             />
-            <button type="button" onClick={() => props.onSelectResult(result)}>
+            <UiButton
+              type="button"
+              onClick={() => props.onSelectResult(result)}
+              variant="bare"
+            >
               <span>
                 {index + 1}. {result.pageName}
               </span>
               <small>{resultListSummary(result, props.preview)}</small>
-            </button>
+            </UiButton>
           </div>
         );
       })}
@@ -353,9 +358,8 @@ function readChangedField(
   }
   if (value === undefined) return "지정 없음";
   if (value === "") return "비어 있음";
-  if (typeof value === "boolean") {
+  if (typeof value === "boolean")
     return readChangedBoolean(block, field, value);
-  }
   if (typeof value === "number")
     return formatConditionalBatchDisplayValue(field, value);
   if (typeof value === "object") return JSON.stringify(value);

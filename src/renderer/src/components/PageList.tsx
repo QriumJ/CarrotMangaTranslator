@@ -27,6 +27,7 @@ import { usePageThumbnailObserver } from "./pageThumbnails";
 import { PageTimingDialogPortal } from "./pageList/PageTimingDialogPortal";
 import { usePageListWindow } from "./pageList/usePageListWindow";
 import windowStyles from "./pageList/PageListWindow.module.css";
+import { Button } from "./ui/Button";
 
 type PageListProps = {
   collapsed: boolean;
@@ -282,7 +283,7 @@ const SortablePageItem = React.memo(function SortablePageItem(
       aria-setsize={props.total}
       style={style}
     >
-      <button
+      <Button
         ref={setActivatorNodeRef}
         className="drag-handle compact"
         disabled={props.disabled}
@@ -290,14 +291,16 @@ const SortablePageItem = React.memo(function SortablePageItem(
         title={t("common.dragToMove")}
         {...attributes}
         {...listeners}
+        variant="bare"
       >
         <span className="drag-grip" aria-hidden="true" />
-      </button>
-      <button
+      </Button>
+      <Button
         className="page-select"
         onClick={() => props.onSelect(props.page.id)}
         title={props.page.name}
         aria-current={props.selected ? "page" : undefined}
+        variant="bare"
       >
         <PageListThumbnail
           observeThumbnail={props.observeThumbnail}
@@ -308,7 +311,7 @@ const SortablePageItem = React.memo(function SortablePageItem(
           statusMode={props.statusMode}
           locked={props.locked}
         />
-      </button>
+      </Button>
       {props.statusMode === "translation" ? (
         <PageItemMenu
           removeDisabled={props.removeDisabled}

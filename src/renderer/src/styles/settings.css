@@ -954,20 +954,33 @@
 .settings-api-status,
 .settings-validation-summary > p {
   padding: 9px 10px;
-  border: 1px solid color-mix(in srgb, var(--success, #4f9f89) 46%, transparent);
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--success, var(--settings-api-status-border)) 46%,
+      transparent
+    );
   border-radius: 8px;
-  background: color-mix(in srgb, var(--success, #4f9f89) 10%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--success, var(--settings-api-status-background)) 10%,
+    transparent
+  );
 }
 
 .settings-api-status.error,
 .settings-validation-summary > p {
-  color: var(--danger-text, #ffb4ab);
+  color: var(--danger-text, var(--danger-text));
   border-color: color-mix(
     in srgb,
-    var(--danger-text, #ffb4ab) 38%,
+    var(--danger-text, var(--danger-text)) 38%,
     transparent
   );
-  background: color-mix(in srgb, var(--danger, #8d4949) 14%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--danger, var(--settings-api-status-error-background)) 14%,
+    transparent
+  );
 }
 
 .settings-validation-summary:empty {

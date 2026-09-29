@@ -1,5 +1,42 @@
 # 코드 경계와 품질 규칙
 
+## 2026-09-29 감사 후 공용 계약 재사용
+
+일반 UI 컨트롤 188곳은 기존 `Button`의 bare 변형과 `Field`의 native `Input`/`Textarea`,
+`CheckboxField`로 이동했다. bare 버튼은 자식·ref·기본 submit 의미를 유지하고, Input은
+값 변환이나 wrapper 없이 네이티브 입력·IME·validity 계약을 보존한다. primitive CSS를
+feature에서 직접 가져오던 세 의존은 제거했다. `FormatDefaultsPanel`의 직접 import
+상한 13은 이 공개 primitive 소비를 위한 값이며 다른 모듈의 일반 상한은 유지한다.
+후속 책임 분리로 `ConditionalBatchActionCard`/`ConditionalBatchConditionsCard`의 예외는
+제거했다. 실제 하위 조립인 `ConditionalBatchActionSentence`, `ConditionalBatchSetFieldsEditor`,
+`ConditionalBatchConditionEditor`는 각각 직접 import 13개, 공용 feature stylesheet
+`ConditionalBatchEditor.module.css`는 직접 소비자 30개를 기록한다. 공용 계약과 primitive를
+직접 사용하는 경계이며 새로운 barrel이나 forwarding wrapper를 만들지 않는다.
+조건 편집과 가져오기 31개 상태의 DOM 동등성, 회귀 테스트 및 실제 넓은/좁은/확대
+화면 검증은 `docs/audit-remediation-20260929.md`에 기록한다.
+
+블록 추가 세 경로는 `ipcSchemaPrimitives`의 기존 500개 제한을 사용하므로 직접 소비 상한은
+32다. 복제·라이브러리·직접 그리기의 최신 chapter updater에서 검사하며, 거부 시 선택·history·
+dirty 상태를 바꾸지 않는 행동 테스트가 이를 보호한다. 장 전환은 `useEventCallback`으로
+읽기 중 새로 생긴 마스크를 확인한다. 이 공용 hook의 직접 소비 상한 31은 새 콜백 구현이나
+alias를 만들지 않기 위한 것이다. `openChapterLatestRequest`, `blockInsertionLimits`,
+`workspaceBlockCreationLimits`, `nativeControlPrimitives` 및 각 feature의 기존 테스트가 검증한다.
+
+페이지 작업의 소유권 전용 acquisition은 기존 handoff·activity gate·mutation 경계를 재사용한다.
+읽기·검증이 필요한 기존 acquisition은 유지하며, 워크플로는 모든 handoff 후 첫 최신 snapshot에서
+대상 전체를 확인한다. 각 페이지 처리 직전의 최신 읽기는 유지한다. 100페이지·1단계의 전체
+chapter 읽기는 preflight 포함 203회에서 103회로 줄어든다. `activityConcurrency`와
+`pageWorkflowService`가 대상 누락, 다른 페이지의 편집 가능성 및 읽기 횟수를 검사한다.
+
+단축키의 공통 명령 실행은 기존 command registry를 사용한다. 단축키의 다시 누르면 닫기 동작은
+진입점에 유지하고, 열기·실행 함수는 같은 `AppCommandId`의 권위를 따른다.
+
+PNG worker의 client·entry·순수 raster kernel은 기존 `McpEditError` 계약을 직접 사용한다.
+`mcpEditPolicy`의 실측 소비 상한은 이 세 파일 때문에 242에서 245가 된다. 워커 경계의
+오류 직렬화·복원에도 기존 invalid-edit/revision-conflict 의미를 유지하며 별도 오류 권위나
+import 우회 wrapper를 만들지 않는다. `mcpImageWorkerLifecycle`과
+`mcpExternalImageRaster`가 종료·취소·정리 실패 및 픽셀·PNG·오류 parity를 검증한다.
+
 이 문서는 새 기능과 리팩터링에서 지켜야 할 의존 방향, 공용 계약, 오류 처리, 테스트 기준을 정의한다. 실제 강제 규칙은 `.dependency-cruiser.cjs`, `eslint.config.mjs`, `scripts/check-*.cjs`가 담당한다.
 
 ## 의존 방향

@@ -11,6 +11,8 @@ import {
   type BlockStylePreset,
   type BlockStylePresetGroup,
 } from "../../../../../shared/blockStylePresets";
+import { Button } from "../../ui/Button";
+import { Input } from "../../ui/Field";
 
 type PresetLibraryProps = {
   groups: BlockStylePresetGroup[];
@@ -185,7 +187,7 @@ function PresetGroupHeader({
   return (
     <div className="style-preset-library-group-header">
       <IconFolder size={15} aria-hidden="true" />
-      <input
+      <Input
         data-style-preset-group-name={group.id}
         aria-label={t("stylePresets.groupName")}
         maxLength={MAX_BLOCK_STYLE_PRESET_GROUP_NAME_LENGTH}
@@ -269,13 +271,14 @@ function PresetLibraryItem({
 }): React.JSX.Element {
   const { t } = useTranslation("components");
   return (
-    <button
+    <Button
       type="button"
       className="style-preset-library-item"
       data-grouped={grouped}
       aria-selected={selected}
       role="option"
       onClick={onSelect}
+      variant="bare"
     >
       <span className="style-preset-library-name">{preset.name}</span>
       {preset.pinned ? (
@@ -291,7 +294,7 @@ function PresetLibraryItem({
           ⚠
         </span>
       ) : null}
-    </button>
+    </Button>
   );
 }
 
@@ -309,15 +312,16 @@ function GroupHeaderAction({
   onClick: () => void;
 }): React.JSX.Element {
   return (
-    <button
+    <Button
       type="button"
       className={`style-preset-group-action ${danger ? "danger" : ""}`}
       aria-label={label}
       title={label}
       disabled={disabled}
       onClick={onClick}
+      variant="bare"
     >
       {children}
-    </button>
+    </Button>
   );
 }

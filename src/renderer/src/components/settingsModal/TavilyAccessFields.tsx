@@ -9,9 +9,9 @@ import { appGateway } from "../../api/appGateway";
 import { settingsGateway } from "../../api/settingsGateway";
 import { toast } from "../../lib/toastStore";
 import { formatSettingsErrorMessage } from "../settingsModalHelpers";
-import buttonStyles from "../ui/Button.module.css";
 import { TextField } from "../ui/Field";
 import { SettingsNumberField } from "./SettingsNumberField";
+import { Button } from "../ui/Button";
 
 export type TavilyAccessFieldsProps = {
   apiKey: string;
@@ -44,14 +44,15 @@ export function TavilyAccessFields(
           props.setApiKey(event.target.value);
         }}
       />
-      <button
+      <Button
         type="button"
         className="settings-external-link tavily-site-link"
         disabled={props.controlsBusy}
         onClick={() => void openTavilySite(t)}
+        variant="bare"
       >
         {t("settings.research.tavily.openSite")}
-      </button>
+      </Button>
       <SettingsNumberField
         ariaLabel={t("settings.research.tavily.perRun")}
         value={props.maxCreditsPerRun}
@@ -94,18 +95,15 @@ function TavilyUsageCard({
           </small>
         ) : null}
       </div>
-      <button
+      <Button
         type="button"
-        className={`${buttonStyles.button} ${buttonStyles.secondary}`}
         onClick={() => void usage.refresh(true)}
         disabled={controlsBusy || usage.loading || !apiKey.trim()}
       >
-        <span className={buttonStyles.label}>
-          {usage.loading
-            ? t("settings.research.tavily.checking")
-            : t("settings.research.tavily.check")}
-        </span>
-      </button>
+        {usage.loading
+          ? t("settings.research.tavily.checking")
+          : t("settings.research.tavily.check")}
+      </Button>
       {usage.error ? (
         <p className="codex-account-error">{usage.error}</p>
       ) : null}

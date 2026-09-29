@@ -30,7 +30,10 @@ function measurePixels(data: Buffer, purpose: McpImageUploadBegin["purpose"]) {
   let hasTransparency = false,
     selectedPixels = 0;
   for (let i = 0; i < data.length; i += 4) {
-    const [r, g, b, a] = data.subarray(i, i + 4);
+    const r = data[i],
+      g = data[i + 1],
+      b = data[i + 2],
+      a = data[i + 3];
     if (a !== 255) hasTransparency = true;
     if (purpose !== "mask") continue;
     if (a !== 255 || r !== g || r !== b || (r !== 0 && r !== 255))

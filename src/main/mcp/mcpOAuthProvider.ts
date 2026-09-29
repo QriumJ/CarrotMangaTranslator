@@ -6,6 +6,7 @@ import {
 } from "./mcpOAuthSnapshot";
 import { McpOAuthClients } from "./mcpOAuthClients";
 import { McpOAuthState } from "./mcpOAuthState";
+import { McpOAuthRefreshTokens } from "./mcpOAuthRefreshTokens";
 import {
   McpOAuthError,
   assertOAuthResource,
@@ -30,7 +31,6 @@ type Code = {
   used: boolean;
 };
 type Pending = { code: Code; state: string; cookie: string; name: string };
-type Refresh = { grant: Grant; used: boolean };
 const DAY = 24 * 60 * 60 * 1000;
 
 /** Authorization policy with an explicit durable snapshot boundary. Pending browser
@@ -42,7 +42,7 @@ export class McpOAuthProvider {
   private readonly pending: McpOAuthState<Pending>;
   private readonly codes: McpOAuthState<Code>;
   private readonly access: McpOAuthState<Grant>;
-  private readonly refresh: McpOAuthState<Refresh>;
+  private readonly refresh: McpOAuthRefreshTokens<Grant>;
   constructor(
     readonly issuer: string,
     private readonly pairingSecret: string,
@@ -54,7 +54,7 @@ export class McpOAuthProvider {
     this.pending = new McpOAuthState(now, 64);
     this.codes = new McpOAuthState(now, 64);
     this.access = new McpOAuthState(now, 8192);
-    this.refresh = new McpOAuthState(now, 8192);
+    this.refresh = new McpOAuthRefreshTokens(now, this.grants);
   }
   resourceMetadata() {
     return {
@@ -150,6 +150,7 @@ export class McpOAuthProvider {
       clientName: client.name,
       scope,
       resource: this.resource,
+      redirectOrigin: new URL(redirect).origin,
     };
   }
   approve(input: Record<string, unknown>, cookie: string) {
@@ -264,15 +265,13 @@ export class McpOAuthProvider {
   }
   snapshot(): McpOAuthSnapshot {
     return structuredClone({
-      version: 1,
+      version: 2,
       issuer: this.issuer,
       clients: this.clients.snapshot(),
       grants: [...this.grants.values()],
       access: this.access.snapshot((grant) => grant.id),
-      refresh: this.refresh.snapshot((entry) => ({
-        grantId: entry.grant.id,
-        used: entry.used,
-      })),
+      refresh: this.refresh.legacySnapshot(),
+      families: this.refresh.snapshot(),
     });
   }
   restore(value: unknown): void {
@@ -285,10 +284,11 @@ export class McpOAuthProvider {
     };
     this.clients.restore(state.clients);
     this.access.restore(state.access, (id) => requireGrant(id));
-    this.refresh.restore(state.refresh, (entry) => ({
-      grant: requireGrant(entry.grantId),
-      used: entry.used,
-    }));
+    this.refresh.restore(
+      state.refresh,
+      state.version === 2 ? state.families : [],
+      requireGrant,
+    );
     this.grants.clear();
     for (const [id, grant] of grants) this.grants.set(id, grant);
     this.pending.clear();
@@ -314,7 +314,7 @@ export class McpOAuthProvider {
     const inactive = (grant: Grant) =>
       grant.revoked || grant.expiresAt <= this.now();
     this.access.removeWhere(inactive);
-    this.refresh.removeWhere((entry) => inactive(entry.grant));
+    this.refresh.prune(inactive);
     this.codes.removeWhere((entry) => inactive(entry.grant));
     for (const [id, grant] of this.grants)
       if (inactive(grant)) this.grants.delete(id);
@@ -338,8 +338,9 @@ export class McpOAuthProvider {
         "Authorization code was already used. Reconnect.",
       );
     }
+    const tokens = this.issueTokens(code.grant);
     code.used = true;
-    return this.issueTokens(code.grant);
+    return tokens;
   }
   private exchangeRefresh(input: Record<string, unknown>, clientId: string) {
     const entry = this.refresh.get(oauthText(input.refresh_token, 128));
@@ -360,8 +361,9 @@ export class McpOAuthProvider {
         "invalid_scope",
         "Reauthorization is required to change scope.",
       );
+    const tokens = this.issueTokens(entry.grant);
     entry.used = true;
-    return this.issueTokens(entry.grant);
+    return tokens;
   }
   private issueTokens(grant: Grant) {
     if (grant.revoked || grant.expiresAt <= this.now())
@@ -370,16 +372,22 @@ export class McpOAuthProvider {
         "Authorization expired or was revoked. Reconnect.",
       );
     const lifetime = Math.min(60 * 60_000, grant.expiresAt - this.now());
-    return {
-      access_token: this.access.issue(grant, lifetime),
-      token_type: "Bearer",
-      expires_in: Math.floor(lifetime / 1000),
-      refresh_token: this.refresh.issue(
-        { grant, used: false },
-        Math.min(90 * DAY, grant.expiresAt - this.now()),
-      ),
-      scope: grant.scope,
-    };
+    const access = this.access.issue(grant, lifetime);
+    try {
+      return {
+        access_token: access,
+        token_type: "Bearer",
+        expires_in: Math.floor(lifetime / 1000),
+        refresh_token: this.refresh.issue(
+          grant,
+          Math.min(90 * DAY, grant.expiresAt - this.now()),
+        ),
+        scope: grant.scope,
+      };
+    } catch (error) {
+      this.access.take(access);
+      throw error;
+    }
   }
 }
 function persistentExpiry(persistent: boolean, now: number): number {

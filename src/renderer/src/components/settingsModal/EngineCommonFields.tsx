@@ -15,6 +15,7 @@ import type { ModelProvider } from "../../../../shared/settingsTypes";
 import type { EngineSettingsPanelProps } from "./EngineSettingsPanelTypes";
 import { SettingsNumberField } from "./SettingsNumberField";
 import { SelectionSurface } from "../ui/SelectionCard";
+import { Button } from "../ui/Button";
 
 type TranslationEngineSelectorProps = Pick<
   EngineSettingsPanelProps,
@@ -185,7 +186,7 @@ export function GenerationLimitsFields(
             </span>
             {modelLimits ? <small>{modelLimits}</small> : null}
           </div>
-          <button
+          <Button
             type="button"
             className="settings-limit-apply"
             disabled={props.controlsBusy || alreadyRecommended}
@@ -194,11 +195,12 @@ export function GenerationLimitsFields(
               props.setMaxTokens(String(recommendation.maxTokens));
               props.setContextTokens(String(recommendation.contextTokens));
             }}
+            variant="bare"
           >
             {alreadyRecommended
               ? t("settings.engine.limits.recommendedApplied")
               : t("settings.engine.limits.applyRecommended")}
-          </button>
+          </Button>
         </div>
       )}
       <div className="settings-limit-grid">

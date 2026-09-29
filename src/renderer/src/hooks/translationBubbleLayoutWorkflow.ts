@@ -1,119 +1,52 @@
-/* eslint-disable complexity, max-lines, max-lines-per-function -- combined-flow cancellation and timing settlement boundaries stay co-located */
-import type { TFunction } from "i18next";
 import type { MutableRefObject } from "react";
-import type {
-  AutoInpaintingChapterSelection,
-  InpaintingPostprocessOptions,
-} from "../../../shared/inpaintingTypes";
-import type { ChapterSnapshot } from "../../../shared/libraryTypes";
-import type { JobFailureGuidance } from "../../../shared/jobTypes";
-import type { NotificationPort } from "../lib/notificationPort";
-import { formatJobFailureGuidance } from "../lib/appHelpers";
-import type { ChapterRunSelection } from "../lib/translationSelection";
-import { runInpaintingSelectionsSequentially } from "./inpaintingSelectionFlow";
-import {
-  setFlowTerminal,
-  type RunAnalysisOutcome,
-} from "./translationFlowHelpers";
+import type { PageTimingSessionRef } from "../../../shared/pageProcessingTiming";
+import type { RunAnalysisOutcome } from "./translationFlowHelpers";
 import type {
   TranslationFlowOptions,
   UseTranslationActionsOptions,
 } from "./translationActionTypes";
 import {
-  resolvePersistedInpaintingSelection,
-  resolveTranslationChapterSelections,
-} from "./translationChapterSelections";
-import type { PageTimingSessionRef } from "../../../shared/pageProcessingTiming";
-import {
   createRendererPageTimingSession,
   finishRendererPageTimingSession,
 } from "../lib/pageTimingSession";
 import {
-  applyTranslationInpaintingResult,
   refreshTranslationLibrary,
   resolveNaturalTextLayout,
   resolveTranslationCompletionOptions,
 } from "./translationBubbleLayoutWorkflowSupport";
+import {
+  runTranslationChapter,
+  type ChapterFlowResult,
+  type TranslationChapterContext,
+  type TranslationChapterExecution,
+} from "./translationChapterFlow";
+import {
+  failTranslationFlow,
+  finishTranslationFlow,
+  type FlowAggregate,
+  type TranslationFlowOutcomeContext,
+} from "./translationFlowOutcome";
 
-type TranslationFlowActionContext = Pick<
-  UseTranslationActionsOptions,
-  | "clearPageImageCache"
-  | "clearRetouchHistory"
-  | "currentChapter"
-  | "flowCancellationRef"
-  | "jobActive"
-  | "mergeLiveChapter"
-  | "naturalTextLayoutDefault"
-  | "pushStatus"
-  | "recordImageEdit"
-  | "refreshLibrary"
-  | "saveNow"
-  | "setFlowActive"
-  | "setShowBlockChrome"
-  | "setJobState"
-> & {
-  flowActiveRef: MutableRefObject<boolean>;
-  failureGuidanceRef: MutableRefObject<JobFailureGuidance | undefined>;
-  notificationPort: NotificationPort;
-  runPasses: (
-    selection: ChapterRunSelection,
-    timingSession: PageTimingSessionRef,
-  ) => Promise<RunAnalysisOutcome>;
-  t: TFunction<"renderer">;
-};
-
-type FlowAggregate = {
-  anyAttempted: boolean;
-  anyFailed: boolean;
-  anyPartial: boolean;
-  firstError?: string;
-};
-
-type TranslationCompletion = ReturnType<
-  typeof resolveTranslationCompletionOptions
->;
-
-type FlowExecution = {
-  options: TranslationFlowOptions;
+type TranslationFlowActionContext = TranslationChapterContext &
+  TranslationFlowOutcomeContext &
+  Pick<
+    UseTranslationActionsOptions,
+    | "currentChapter"
+    | "flowCancellationRef"
+    | "jobActive"
+    | "naturalTextLayoutDefault"
+    | "refreshLibrary"
+    | "saveNow"
+    | "setFlowActive"
+  > & { flowActiveRef: MutableRefObject<boolean> };
+type FlowExecution = TranslationChapterExecution & {
   context: TranslationFlowActionContext;
-  currentChapter: ChapterSnapshot;
-  completion: TranslationCompletion;
-  naturalTextLayout: boolean;
 };
-
-type ChapterFlowResult =
-  | {
-      status: "continue";
-      attempted: boolean;
-      failed: boolean;
-      stopQueue: boolean;
-      partial: boolean;
-      error?: string;
-    }
-  | {
-      status: "cancelled";
-      inpainting: boolean;
-      refreshLibrary: boolean;
-    };
-
-const FLOW_MESSAGE_KEYS = {
-  completed: [
-    "translation.flow.completed",
-    "translation.eraseOriginalWorkflowCompleted",
-    "translation.bubbleLayoutWorkflowCompleted",
-  ],
-  failed: [
-    "translation.errors.jobFailed",
-    "translation.eraseOriginalWorkflowFailed",
-    "translation.bubbleLayoutWorkflowFailed",
-  ],
-  partial: [
-    "translation.flow.partial",
-    "translation.eraseOriginalWorkflowPartial",
-    "translation.bubbleLayoutWorkflowPartial",
-  ],
-} as const;
-
+type PendingFinalTiming = {
+  chapterId: string;
+  result: ChapterFlowResult;
+  session: PageTimingSessionRef;
+};
 export async function runTranslationFlowAction(
   options: TranslationFlowOptions,
   context: TranslationFlowActionContext,
@@ -165,13 +98,6 @@ async function executeTranslationFlow(
     anyPartial: false,
   };
   const firstTimingSession = createRendererPageTimingSession();
-  let pendingFinalTiming:
-    | {
-        chapterId: string;
-        result: ChapterFlowResult;
-        session: PageTimingSessionRef;
-      }
-    | undefined;
   await context.saveNow();
   if (isFlowCancellationRequested(context)) {
     await finishRendererPageTimingSession(
@@ -181,58 +107,13 @@ async function executeTranslationFlow(
     );
     return finishCancelledFlow(context, completion.eraseOriginal);
   }
-  for (let index = 0; index < options.selection.length; index += 1) {
-    if (isFlowCancellationRequested(context)) {
-      if (index === 0) {
-        await finishRendererPageTimingSession(
-          options.selection[0]?.chapterId ?? execution.currentChapter.id,
-          firstTimingSession,
-          "interrupted",
-        );
-      }
-      return finishCancelledFlow(context, completion.eraseOriginal);
-    }
-    const timingSession =
-      index === 0 ? firstTimingSession : createRendererPageTimingSession();
-    let result: ChapterFlowResult;
-    try {
-      result = await runTranslationChapter(execution, index, timingSession);
-    } catch (error) {
-      await finishRendererPageTimingSession(
-        options.selection[index]?.chapterId ?? execution.currentChapter.id,
-        timingSession,
-        "interrupted",
-      );
-      throw error;
-    }
-    if (result.status === "cancelled") {
-      if (result.refreshLibrary) await refreshTranslationLibrary(context);
-      await finishRendererPageTimingSession(
-        options.selection[index]?.chapterId ?? execution.currentChapter.id,
-        timingSession,
-        "interrupted",
-      );
-      return finishCancelledFlow(context, result.inpainting);
-    }
-    mergeChapterFlowResult(aggregate, result);
-    const isLastProcessedChapter =
-      result.stopQueue || index === options.selection.length - 1;
-    if (isLastProcessedChapter) {
-      pendingFinalTiming = {
-        chapterId:
-          options.selection[index]?.chapterId ?? execution.currentChapter.id,
-        result,
-        session: timingSession,
-      };
-    } else {
-      await finishRendererPageTimingSession(
-        options.selection[index]?.chapterId ?? execution.currentChapter.id,
-        timingSession,
-        resolveChapterTimingState(result),
-      );
-    }
-    if (result.stopQueue) break;
-  }
+  const queue = await runTranslationChapterQueue(
+    execution,
+    aggregate,
+    firstTimingSession,
+  );
+  if (queue === "cancelled") return queue;
+  const { pendingFinalTiming } = queue;
   if (completion.eraseOriginal) await refreshTranslationLibrary(context);
   if (isFlowCancellationRequested(context)) {
     if (pendingFinalTiming) {
@@ -259,118 +140,78 @@ async function executeTranslationFlow(
   );
 }
 
-async function runTranslationChapter(
+async function runTranslationChapterQueue(
+  execution: FlowExecution,
+  aggregate: FlowAggregate,
+  firstTimingSession: PageTimingSessionRef,
+): Promise<"cancelled" | { pendingFinalTiming?: PendingFinalTiming }> {
+  const { completion, context, options } = execution;
+  let pendingFinalTiming: PendingFinalTiming | undefined;
+  for (let index = 0; index < options.selection.length; index += 1) {
+    const chapterId =
+      options.selection[index]?.chapterId ?? execution.currentChapter.id;
+    if (isFlowCancellationRequested(context)) {
+      if (index === 0) {
+        await finishRendererPageTimingSession(
+          chapterId,
+          firstTimingSession,
+          "interrupted",
+        );
+      }
+      return finishCancelledFlow(context, completion.eraseOriginal);
+    }
+    const timingSession =
+      index === 0 ? firstTimingSession : createRendererPageTimingSession();
+    const result = await runTimedTranslationChapter(
+      execution,
+      index,
+      timingSession,
+    );
+    if (result.status === "cancelled") {
+      if (result.refreshLibrary) await refreshTranslationLibrary(context);
+      await finishRendererPageTimingSession(
+        chapterId,
+        timingSession,
+        "interrupted",
+      );
+      return finishCancelledFlow(context, result.inpainting);
+    }
+    mergeChapterFlowResult(aggregate, result);
+    const isLastProcessedChapter =
+      result.stopQueue || index === options.selection.length - 1;
+    if (isLastProcessedChapter) {
+      pendingFinalTiming = { chapterId, result, session: timingSession };
+    } else {
+      await finishRendererPageTimingSession(
+        chapterId,
+        timingSession,
+        resolveChapterTimingState(result),
+      );
+    }
+    if (result.stopQueue) break;
+  }
+  return { pendingFinalTiming };
+}
+
+async function runTimedTranslationChapter(
   execution: FlowExecution,
   index: number,
   timingSession: PageTimingSessionRef,
 ): Promise<ChapterFlowResult> {
-  const { completion, context, options } = execution;
-  const selection = options.selection[index];
-  reportChapterProgress(index, options.selection.length, context);
-  const selections = await resolveTranslationChapterSelections(
-    selection,
-    completion,
-  );
-  if (isFlowCancellationRequested(context)) {
-    return {
-      status: "cancelled",
-      inpainting: completion.eraseOriginal,
-      refreshLibrary: false,
-    };
-  }
-  const translationOutcome = selections.analysis
-    ? await context.runPasses(selections.analysis, timingSession)
-    : "completed";
-  if (isFlowCancellationRequested(context)) {
-    return {
-      status: "cancelled",
-      inpainting: completion.eraseOriginal,
-      refreshLibrary: false,
-    };
-  }
-  const translationResult = resolveTranslationChapterResult(
-    translationOutcome,
-    completion,
-  );
-  if (translationResult && translationOutcome !== "page-failed")
-    return translationResult;
-  const inpaintingSelection =
-    translationOutcome === "page-failed" && selections.inpainting
-      ? await resolvePersistedInpaintingSelection(
-          selections.inpainting,
-          completion,
-        )
-      : selections.inpainting;
-  if (!inpaintingSelection) {
-    return (
-      translationResult ??
-      continuationResult(translationOutcome === "completed", false)
+  try {
+    return await runTranslationChapter(execution, index, timingSession, () =>
+      isFlowCancellationRequested(execution.context),
     );
+  } catch (error) {
+    await finishRendererPageTimingSession(
+      execution.options.selection[index]?.chapterId ??
+        execution.currentChapter.id,
+      timingSession,
+      "interrupted",
+    );
+    throw error;
   }
-  const inpaintingResult = await runTranslationInpaintingChapter(
-    inpaintingSelection,
-    execution,
-    timingSession,
-  );
-  if (
-    inpaintingResult.status === "cancelled" ||
-    isFlowCancellationRequested(context)
-  ) {
-    return { status: "cancelled", inpainting: true, refreshLibrary: true };
-  }
-  const result = continuationResult(
-    true,
-    inpaintingResult.status === "failed",
-    inpaintingResult.error,
-    inpaintingResult.status === "partial",
-  );
-  if (translationOutcome === "page-failed") result.failed = true;
-  return result;
 }
-
-function resolveTranslationChapterResult(
-  outcome: RunAnalysisOutcome,
-  completion: TranslationCompletion,
-): ChapterFlowResult | null {
-  if (outcome === "cancelled") {
-    return {
-      status: "cancelled",
-      inpainting: completion.eraseOriginal,
-      refreshLibrary: false,
-    };
-  }
-  if (outcome === "failed") return continuationResult(true, true);
-  if (outcome === "page-failed") {
-    return {
-      status: "continue",
-      attempted: true,
-      failed: true,
-      stopQueue: false,
-      partial: false,
-    };
-  }
-  if (outcome === "partial") {
-    return continuationResult(true, false, undefined, true);
-  }
-  return null;
-}
-
-function continuationResult(
-  attempted: boolean,
-  failed: boolean,
-  error?: string,
-  partial = false,
-): Extract<ChapterFlowResult, { status: "continue" }> {
-  return {
-    status: "continue",
-    attempted,
-    failed,
-    stopQueue: failed,
-    partial,
-    error,
-  };
-}
-
 function mergeChapterFlowResult(
   aggregate: FlowAggregate,
   result: Extract<ChapterFlowResult, { status: "continue" }>,
@@ -381,64 +222,6 @@ function mergeChapterFlowResult(
   if (!aggregate.firstError && result.error)
     aggregate.firstError = result.error;
 }
-
-function failTranslationFlow(
-  error: unknown,
-  context: TranslationFlowActionContext,
-): "failed" {
-  console.error(error);
-  const fallback = context.t("translation.errors.jobFailedTitle");
-  const message =
-    error instanceof Error && error.message.trim() ? error.message : fallback;
-  setFlowTerminal(context, "failed", fallback, message);
-  context.notificationPort.error(message);
-  return "failed";
-}
-
-function resolveFlowMessageKey(
-  completion: TranslationCompletion,
-  status: "completed" | "partial" | "failed",
-) {
-  const workflowIndex = !completion.eraseOriginal
-    ? 0
-    : completion.bubbleLayout
-      ? 2
-      : 1;
-  return FLOW_MESSAGE_KEYS[status][workflowIndex];
-}
-
-async function runTranslationInpaintingChapter(
-  selection: AutoInpaintingChapterSelection,
-  execution: FlowExecution,
-  timingSession: PageTimingSessionRef,
-) {
-  const { completion, currentChapter, naturalTextLayout } = execution;
-  const postprocess: InpaintingPostprocessOptions = {
-    bubbleLayout: {
-      enabled: completion.bubbleLayout,
-      policy: "balanced",
-      ...(completion.bubbleLayout && naturalTextLayout
-        ? { naturalTextLayout: true }
-        : {}),
-    },
-  };
-  return runInpaintingSelectionsSequentially({
-    workId: currentChapter.workId,
-    selections: [selection],
-    engine: execution.options.inpaintingEngine,
-    postprocess,
-    timingSession,
-    shouldCancel: () => isFlowCancellationRequested(execution.context),
-    onResult: (result) =>
-      applyTranslationInpaintingResult(
-        result,
-        selection,
-        currentChapter,
-        execution.context,
-      ),
-  });
-}
-
 function resolveChapterTimingState(
   result: ChapterFlowResult,
 ): "completed" | "interrupted" {
@@ -446,56 +229,11 @@ function resolveChapterTimingState(
     ? "completed"
     : "interrupted";
 }
-
 function isFlowCancellationRequested(
   context: Pick<TranslationFlowActionContext, "flowCancellationRef">,
 ): boolean {
   return context.flowCancellationRef?.current === true;
 }
-
-function finishTranslationFlow(
-  aggregate: FlowAggregate,
-  completion: { eraseOriginal: boolean; bubbleLayout: boolean },
-  context: TranslationFlowActionContext,
-  elapsedMs: number,
-): RunAnalysisOutcome {
-  if (!aggregate.anyAttempted) return "no-op";
-  if (aggregate.anyFailed) {
-    const fallback = context.t(resolveFlowMessageKey(completion, "failed"));
-    const failureGuidance = context.failureGuidanceRef.current;
-    const guidanceMessage = formatJobFailureGuidance(
-      { failureGuidance },
-      context.t,
-    );
-    const message =
-      guidanceMessage ?? (aggregate.firstError?.trim() || fallback);
-    setFlowTerminal(
-      context,
-      "failed",
-      guidanceMessage ?? fallback,
-      message,
-      undefined,
-      failureGuidance,
-    );
-    context.notificationPort.error(message);
-    return "failed";
-  }
-  if (aggregate.anyPartial) {
-    const message = context.t(resolveFlowMessageKey(completion, "partial"));
-    setFlowTerminal(context, "partial", message, message);
-    context.notificationPort.warn(message);
-    return "partial";
-  }
-
-  const message = context.t(resolveFlowMessageKey(completion, "completed"));
-  setFlowTerminal(context, "completed", message, undefined, elapsedMs);
-  if (completion.eraseOriginal) {
-    context.setShowBlockChrome(false);
-  }
-  context.notificationPort.success(message);
-  return "completed";
-}
-
 function finishCancelledFlow(
   context: TranslationFlowActionContext,
   inpainting: boolean,
@@ -508,19 +246,4 @@ function finishCancelledFlow(
     phase: "cancelled",
   });
   return "cancelled";
-}
-
-function reportChapterProgress(
-  index: number,
-  total: number,
-  context: TranslationFlowActionContext,
-): void {
-  if (total <= 1) return;
-  context.pushStatus(
-    context.t("translation.flow.chapterProgress", {
-      pass: context.t("translation.flow.translation"),
-      current: index + 1,
-      total,
-    }),
-  );
 }

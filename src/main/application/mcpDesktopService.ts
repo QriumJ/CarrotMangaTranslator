@@ -85,7 +85,7 @@ export class McpDesktopService implements McpDesktopControl {
       this.lease?.stopAccepting();
     }
     return this.enqueue(async () => {
-      if (this.wanted && !this.disposed) await this.start();
+      if (enabled && this.wanted && !this.disposed) await this.start();
       else await this.stop();
       return this.getStatus();
     });

@@ -1,4 +1,5 @@
 import { hashStableValue } from "./blockFingerprint";
+import { resolveBlockDisplayText } from "./blockDisplayText";
 import { getActiveGeneratedLettering } from "./generatedLettering";
 import type { MangaPage } from "./libraryTypes";
 import type { PageRevision } from "./pageRevisionTypes";
@@ -66,7 +67,7 @@ export function matchesRegionPageRevision(
 }
 
 /**
- * Only values that can change page pixels belong in this revision. Source OCR,
+ * Only values that can change page pixels belong in this revision. Hidden OCR,
  * review metadata and other workflow-only fields are intentionally removed.
  */
 export function createPageVisualRevision(
@@ -90,10 +91,14 @@ export function createPageVisualRevision(
       speakerId: _speakerId,
       glossaryEntryIds: _glossaryEntryIds,
       ...visual
-    }) =>
-      visual.generatedLettering
+    }) => ({
+      ...visual,
+      translatedText: resolveBlockDisplayText({
+        ...visual,
+        sourceText: _sourceText,
+      }),
+      ...(visual.generatedLettering
         ? {
-            ...visual,
             generatedLetteringActive: Boolean(
               getActiveGeneratedLettering({
                 ...visual,
@@ -101,7 +106,8 @@ export function createPageVisualRevision(
               }),
             ),
           }
-        : visual,
+        : {}),
+    }),
   );
   return `page-visual-v1:${hashStableValue({
     id: page.id,

@@ -84,12 +84,8 @@ export function createShortcutHandlers({
 }: AppSessionShortcutsArgs): AppShortcutHandlers {
   const handlers = {
     ...createWorkspaceShortcutHandlers(chapter, inpainting),
-    ...createTranslationAndRetouchShortcutHandlers(
-      chapter,
-      inpainting,
-      translation,
-    ),
-    ...createEditAndGlobalShortcutHandlers(chapter, translation),
+    ...createTranslationAndRetouchShortcutHandlers(chapter, inpainting),
+    ...createEditAndGlobalShortcutHandlers(chapter, translation, inpainting),
   } satisfies FixedShortcutHandlers;
   return {
     ...handlers,
@@ -107,8 +103,10 @@ function createWorkspaceShortcutHandlers(
   const { uiState } = chapter;
   const selectStageTool = createStageToolSelector(chapter);
   return {
-    "toggle-block-chrome": () => uiState.setShowBlockChrome((value) => !value),
-    "toggle-text-blocks": () => uiState.setShowTextBlocks((value) => !value),
+    "toggle-block-chrome":
+      inpainting.commandRegistry.byId["toggle-block-chrome"].run,
+    "toggle-text-blocks":
+      inpainting.commandRegistry.byId["toggle-text-blocks"].run,
     "toggle-peek-original": () => uiState.setPeekOriginal((value) => !value),
     "zoom-in": () => {
       const controller = chapter.core.workspaceZoomControllerRef?.current;
@@ -146,28 +144,24 @@ function createWorkspaceShortcutHandlers(
 function createTranslationAndRetouchShortcutHandlers(
   chapter: ChapterSessionController,
   inpainting: InpaintingController,
-  translation: TranslationController,
 ) {
   const { uiState } = chapter;
-  const { translationActions } = translation;
+  const commands = inpainting.commandRegistry.byId;
   return {
     "open-translate-options": () => {
       if (uiState.translateOptionsOpen) {
         uiState.closeTranslateOptions();
       } else {
-        uiState.openTranslateOptions();
+        commands["open-translate-options"].run();
       }
     },
-    "translate-pending": () => void translationActions.runAnalysis("pending"),
-    "translate-all": () => void translationActions.runAnalysis("all"),
+    "translate-pending": commands["translate-pending"].run,
+    "translate-all": commands["translate-all"].run,
     "gather-text": () => {
       if (uiState.textViewOpen) uiState.setTextViewOpen(false);
-      else uiState.openTextView();
+      else commands["gather-text"].run();
     },
-    "cancel-job": () =>
-      chapter.operationActivity?.active
-        ? void chapter.operationActivity.cancel()
-        : chapter.bridgeActions.cancelJob(),
+    "cancel-job": commands["cancel-job"].run,
     "toggle-inpainting": () => {
       if (uiState.autoInpaintingOptionsOpen) {
         uiState.setAutoInpaintingOptionsOpen(false);
@@ -192,6 +186,7 @@ function createTranslationAndRetouchShortcutHandlers(
 function createEditAndGlobalShortcutHandlers(
   chapter: ChapterSessionController,
   translation: TranslationController,
+  inpainting: InpaintingController,
 ) {
   const { core, uiState } = chapter;
   const { blockEditingActions, workspaceHistory } = translation;
@@ -233,12 +228,15 @@ function createEditAndGlobalShortcutHandlers(
     },
     "toggle-command-palette": () =>
       uiState.setCommandPaletteOpen((open) => !open),
-    "toggle-shortcut-help": () => uiState.setShortcutHelpOpen((open) => !open),
+    "toggle-shortcut-help": () => {
+      if (uiState.shortcutHelpOpen) uiState.setShortcutHelpOpen(false);
+      else inpainting.commandRegistry.byId["show-shortcuts"].run();
+    },
     "open-settings": () => {
       if (chapter.settingsDialog.settingsOpen) {
         chapter.settingsDialog.closeSettings();
       } else {
-        void chapter.settingsDialog.openSettings();
+        inpainting.commandRegistry.byId["open-settings"].run();
       }
     },
   };

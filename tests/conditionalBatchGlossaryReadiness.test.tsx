@@ -1,10 +1,8 @@
+import type { ConditionalBatchEditorModelProps } from "../src/renderer/src/components/conditionalBatchEditorTypes";
 /** @vitest-environment jsdom */
 import { act, cleanup, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import {
-  useConditionalBatchEditorModel,
-  type ConditionalBatchEditorModelProps,
-} from "../src/renderer/src/components/useConditionalBatchEditorModel";
+import { useConditionalBatchEditorModel } from "../src/renderer/src/components/useConditionalBatchEditorModel";
 import type { AppWorkspaceProps } from "../src/renderer/src/components/appWorkspaceTypes";
 import type { ConditionalBatchSchemeDraftV2 } from "../src/shared/conditionalBatchRules";
 import type { WorkStyleGuide } from "../src/shared/workContextTypes";

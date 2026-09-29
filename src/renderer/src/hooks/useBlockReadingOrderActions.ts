@@ -5,6 +5,9 @@ import {
   inferPageBlockOrder,
   resolvePageBlockOrder,
 } from "../../../shared/blockReadingOrder";
+import { MAX_BLOCKS_PER_PAGE } from "../../../shared/ipcSchemaPrimitives";
+import type { MangaPage } from "../../../shared/libraryTypes";
+import type { TranslationBlock } from "../../../shared/textTypes";
 import { normalizeTranslationBlockPatch } from "./useUpdateSelectedBlockAction";
 import {
   instantiateBlockLibraryEntry,
@@ -235,109 +238,108 @@ function findDeletionNeighbor(
   return null;
 }
 
-export function useDuplicateSelectedBlockAction({
-  selectedBlock,
-  selectedPage,
-  selectedPageEditLocked,
-  readingDirection = "rtl",
-  setSelectedBlockId,
-  setSelectedBlockIds,
-  updateCurrentChapter,
-}: UseBlockEditingActionsOptions): BlockEditingActions["duplicateSelectedBlock"] {
+export function useDuplicateSelectedBlockAction(
+  options: UseBlockEditingActionsOptions,
+): BlockEditingActions["duplicateSelectedBlock"] {
   const { t } = useTranslation("renderer");
+  const { selectedBlock } = options;
+  const insertBlock = useInsertPageBlockAction(options);
   return useCallback(() => {
-    if (!selectedPage || !selectedBlock || selectedPageEditLocked) return;
-    const copy = {
-      ...offsetBlockBboxes(selectedBlock, 16, 16, {
-        width: selectedPage.width,
-        height: selectedPage.height,
-      }),
-      id: `${selectedBlock.id}-copy-${Date.now()}`,
-    };
-    const blockOrder = resolvePageBlockOrder(selectedPage, readingDirection);
-    const sourceIndex = blockOrder.indexOf(selectedBlock.id);
-    blockOrder.splice(
-      sourceIndex < 0 ? blockOrder.length : sourceIndex + 1,
-      0,
-      copy.id,
-    );
-    updateCurrentChapter(
-      selectedPage.id,
-      (current) => ({
-        ...current,
-        pages: current.pages.map((page) =>
-          page.id === selectedPage.id
-            ? {
-                ...page,
-                updatedAt: new Date().toISOString(),
-                blocks: [...page.blocks, copy],
-                blockOrder,
-              }
-            : page,
-        ),
-      }),
-      {
-        label: t("workspaceHistory.duplicateBlock"),
-        selectionAfter: {
-          selectedPageId: selectedPage.id,
-          selectedBlockId: copy.id,
-          selectedBlockIds: [copy.id],
-        },
+    if (!selectedBlock) return;
+    insertBlock(
+      (page, id) => {
+        const source = page.blocks.find(
+          (block) => block.id === selectedBlock.id,
+        );
+        return source
+          ? { ...offsetBlockBboxes(source, 16, 16, page), id }
+          : null;
       },
+      t("workspaceHistory.duplicateBlock"),
+      selectedBlock.id,
     );
-    setSelectedBlockId(copy.id);
-    setSelectedBlockIds([copy.id]);
-  }, [
-    selectedBlock,
-    selectedPage,
-    selectedPageEditLocked,
-    readingDirection,
-    setSelectedBlockId,
-    setSelectedBlockIds,
-    t,
-    updateCurrentChapter,
-  ]);
+  }, [insertBlock, selectedBlock, t]);
 }
 
-export function useInsertBlockLibraryEntryAction({
+export function useInsertBlockLibraryEntryAction(
+  options: UseBlockEditingActionsOptions,
+): BlockEditingActions["insertBlockLibraryEntry"] {
+  const { t } = useTranslation("renderer");
+  const { stageRef } = options;
+  const insertBlock = useInsertPageBlockAction(options);
+  return useCallback(
+    (entry: BlockLibraryEntryV1) =>
+      insertBlock(
+        (page, id) =>
+          instantiateBlockLibraryEntry(
+            entry,
+            id,
+            resolveVisibleStageCenter(stageRef?.current ?? null),
+            page,
+          ),
+        t("workspaceHistory.insertLibraryBlock"),
+      ),
+    [insertBlock, stageRef, t],
+  );
+}
+
+function useInsertPageBlockAction({
+  pushStatus,
   selectedPage,
   selectedPageEditLocked,
   readingDirection = "rtl",
-  stageRef,
   setSelectedBlockId,
   setSelectedBlockIds,
   updateCurrentChapter,
-}: UseBlockEditingActionsOptions): BlockEditingActions["insertBlockLibraryEntry"] {
+}: UseBlockEditingActionsOptions) {
   const { t } = useTranslation("renderer");
   return useCallback(
-    (entry: BlockLibraryEntryV1) => {
+    (
+      createBlock: (page: MangaPage, id: string) => TranslationBlock | null,
+      label: string,
+      afterBlockId?: string,
+    ) => {
       if (!selectedPage || selectedPageEditLocked) return;
       const id = createLibraryBlockId(selectedPage.id);
-      const block = instantiateBlockLibraryEntry(
-        entry,
-        id,
-        resolveVisibleStageCenter(stageRef?.current ?? null),
-        { width: selectedPage.width, height: selectedPage.height },
-      );
-      const blockOrder = resolvePageBlockOrder(selectedPage, readingDirection);
-      blockOrder.push(id);
+      let inserted = false;
       updateCurrentChapter(
         selectedPage.id,
-        (current) => ({
-          ...current,
-          pages: current.pages.map((page) =>
-            page.id === selectedPage.id
-              ? {
-                  ...page,
-                  updatedAt: new Date().toISOString(),
-                  blocks: [...page.blocks, block],
-                  blockOrder,
-                }
-              : page,
-          ),
-        }),
+        (current) => {
+          const page = current.pages.find(
+            (page) => page.id === selectedPage.id,
+          );
+          if (!page) return current;
+          if (page.blocks.length >= MAX_BLOCKS_PER_PAGE) {
+            pushStatus(
+              t("blockEditing.capacityReached", { count: MAX_BLOCKS_PER_PAGE }),
+            );
+            return current;
+          }
+          const block = createBlock(page, id);
+          if (!block) return current;
+          const blockOrder = resolvePageBlockOrder(page, readingDirection);
+          const sourceIndex = blockOrder.indexOf(afterBlockId ?? "");
+          blockOrder.splice(
+            sourceIndex < 0 ? blockOrder.length : sourceIndex + 1,
+            0,
+            id,
+          );
+          inserted = true;
+          const insertedPage = {
+            ...page,
+            blocks: [...page.blocks, block],
+            blockOrder,
+            updatedAt: new Date().toISOString(),
+          };
+          return {
+            ...current,
+            pages: current.pages.map((target) =>
+              target === page ? insertedPage : target,
+            ),
+          };
+        },
         {
-          label: t("workspaceHistory.insertLibraryBlock"),
+          label,
           selectionAfter: {
             selectedPageId: selectedPage.id,
             selectedBlockId: id,
@@ -345,14 +347,15 @@ export function useInsertBlockLibraryEntryAction({
           },
         },
       );
+      if (!inserted) return;
       setSelectedBlockId(id);
       setSelectedBlockIds([id]);
     },
     [
-      readingDirection,
+      pushStatus,
       selectedPage,
       selectedPageEditLocked,
-      stageRef,
+      readingDirection,
       setSelectedBlockId,
       setSelectedBlockIds,
       t,

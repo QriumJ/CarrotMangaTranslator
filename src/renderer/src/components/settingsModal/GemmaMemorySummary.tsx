@@ -8,6 +8,8 @@ import {
 import { MODEL_PRESETS, type ModelPresetId } from "../settingsOptions";
 import { formatDownloadGb, formatMemoryGb } from "./gemmaMemoryRisk";
 import type { EngineSettingsPanelProps } from "./EngineSettingsPanelTypes";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Field";
 
 const FIT_TARGET_INCREMENT_MB = [128, 256, 512] as const;
 const MAX_FIT_TARGET_MB = 16_384;
@@ -57,7 +59,7 @@ function GemmaFitTargetField({
         >
           {(descriptionId) => (
             <label className="gemma-fit-target-input">
-              <input
+              <Input
                 type="number"
                 min={0}
                 max={MAX_FIT_TARGET_MB}
@@ -76,7 +78,7 @@ function GemmaFitTargetField({
           )}
         </ControlTooltip>
         {FIT_TARGET_INCREMENT_MB.map((increment) => (
-          <button
+          <Button
             key={increment}
             type="button"
             className="settings-preset-button gemma-fit-target-increment"
@@ -89,9 +91,10 @@ function GemmaFitTargetField({
                 Math.min(MAX_FIT_TARGET_MB, gemmaFitTargetMb + increment),
               )
             }
+            variant="bare"
           >
             +{increment} MiB
-          </button>
+          </Button>
         ))}
       </div>
     </div>
@@ -117,7 +120,7 @@ function GemmaMmprojField({
           floating
           content={t("settings.gemma.vramTuning.mmprojGpuDescription")}
         >
-          <button
+          <Button
             type="button"
             className={`settings-preset-button ${gemmaMmprojOffload ? "active" : ""}`}
             disabled={controlsBusy}
@@ -126,15 +129,16 @@ function GemmaMmprojField({
               clearTestState();
               setGemmaMmprojOffload(true);
             }}
+            variant="bare"
           >
             {t("settings.gemma.vramTuning.mmprojGpu")}
-          </button>
+          </Button>
         </ControlTooltip>
         <ControlTooltip
           floating
           content={t("settings.gemma.vramTuning.mmprojCpuDescription")}
         >
-          <button
+          <Button
             type="button"
             className={`settings-preset-button ${gemmaMmprojOffload ? "" : "active"}`}
             disabled={controlsBusy}
@@ -143,9 +147,10 @@ function GemmaMmprojField({
               clearTestState();
               setGemmaMmprojOffload(false);
             }}
+            variant="bare"
           >
             {t("settings.gemma.vramTuning.mmprojCpu")}
-          </button>
+          </Button>
         </ControlTooltip>
       </div>
     </div>

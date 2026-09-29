@@ -3,6 +3,7 @@ import { PNG } from "pngjs";
 import { expect, it } from "vitest";
 import { McpImageUploadStore } from "../src/main/mcp/mcpImageUploadStore";
 import { decodeMcpUploadPng } from "../src/main/mcp/mcpImageUploadPng";
+import { createImageWorkerBoundary } from "./mcpImageWorker.fixture";
 import {
   McpImageUploadBeginSchema,
   McpImageUploadChunkSchema,
@@ -45,7 +46,7 @@ async function upload(
   return { ...f, uploadId: receipt.uploadId };
 }
 it("receives exact byte chunks, resumes, rejects changed retries and validates before ready", async () => {
-  const store = new McpImageUploadStore();
+  const store = new McpImageUploadStore(Date.now, createImageWorkerBoundary);
   try {
     const f = fixture(),
       first = await store.begin("owner", f.input, [], guard);
@@ -91,7 +92,7 @@ it("receives exact byte chunks, resumes, rejects changed retries and validates b
   }
 });
 it("requires exact file digest, declared dimensions and complete CRC-valid PNG data", async () => {
-  const store = new McpImageUploadStore();
+  const store = new McpImageUploadStore(Date.now, createImageWorkerBoundary);
   try {
     const f = fixture();
     const receipt = await store.begin(
@@ -143,7 +144,7 @@ it("accepts opaque binary masks and rejects grayscale or transparent selection a
 });
 it("does not expose foreign uploads and fixes expiry independently from repeated reads", async () => {
   let now = 1_000_000;
-  const store = new McpImageUploadStore(() => now);
+  const store = new McpImageUploadStore(() => now, createImageWorkerBoundary);
   try {
     const f = await upload(store);
     const receipt = await store.finish("owner", f.uploadId, guard);
@@ -168,7 +169,7 @@ it("does not expose foreign uploads and fixes expiry independently from repeated
   }
 });
 it("retains in-use uploads, rechecks authorization and waits for consumers on close", async () => {
-  const store = new McpImageUploadStore();
+  const store = new McpImageUploadStore(Date.now, createImageWorkerBoundary);
   try {
     const f = await upload(store);
     await store.finish("owner", f.uploadId, guard);

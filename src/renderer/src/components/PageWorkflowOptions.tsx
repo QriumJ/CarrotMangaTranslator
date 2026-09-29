@@ -22,6 +22,7 @@ type Props = {
 };
 
 export function PageWorkflowOptions({ props, state, changePlan }: Props) {
+  const selectResume = useWorkflowResumeSelection(props, state);
   return (
     <section className={styles.toolbar} aria-label="작업 구성">
       <WorkflowPresets props={props} state={state} changePlan={changePlan} />
@@ -34,30 +35,72 @@ export function PageWorkflowOptions({ props, state, changePlan }: Props) {
             value: id,
             label: `이전 작업 ${index + 1} · ${id.slice(0, 8)}`,
           }))}
-          onValueChange={(id) => {
-            void pageWorkflowGateway.getPageWorkflowRun(id).then(
-              (request) => {
-                state.setPlan(request.plan);
-                state.setResume(request);
-                state.setSelection(
-                  new Map(
-                    request.selection.map((s) => [
-                      s.chapterId,
-                      { kind: "pages", pageIds: new Set(s.pageIds) },
-                    ]),
-                  ),
-                );
-              },
-              (error: unknown) => state.setError(String(error)),
-            );
-          }}
+          onValueChange={selectResume.select}
         />
       )}
       {state.resume && (
         <p role="status">저장된 실행 이어하기 · 설정 변경 시 새 실행</p>
       )}
+      {selectResume.error && (
+        <p className={styles.error} role="alert">
+          {selectResume.error}
+        </p>
+      )}
     </section>
   );
+}
+
+function useWorkflowResumeSelection(
+  props: Props["props"],
+  state: Props["state"],
+) {
+  const latest = React.useRef(0);
+  const [error, setError] = React.useState("");
+  React.useEffect(
+    () => () => {
+      latest.current++;
+    },
+    [props.chapter.id],
+  );
+  const select = (id: string) => {
+    const requestId = ++latest.current;
+    setError("");
+    void pageWorkflowGateway.getPageWorkflowRun(id).then(
+      (request) => {
+        if (requestId !== latest.current) return;
+        const target = request.selection.find(
+          (item) => item.chapterId === props.chapter.id,
+        );
+        const receiptPages = props.chapter.pages.filter(
+          (page) => page.pageWorkflow?.runId === id,
+        );
+        if (
+          !target ||
+          !receiptPages.length ||
+          receiptPages.some((page) => !target.pageIds.includes(page.id))
+        ) {
+          setError(
+            "현재 페이지와 연결되지 않은 이전 작업입니다. 현재 대상을 새 작업으로 실행하세요.",
+          );
+          return;
+        }
+        state.setPlan(request.plan);
+        state.setResume(request);
+        state.setSelection(
+          new Map(
+            request.selection.map((s) => [
+              s.chapterId,
+              { kind: "pages", pageIds: new Set(s.pageIds) },
+            ]),
+          ),
+        );
+      },
+      (error: unknown) => {
+        if (requestId === latest.current) setError(String(error));
+      },
+    );
+  };
+  return { select, error };
 }
 
 function WorkflowPresets({ props, state, changePlan }: Props) {

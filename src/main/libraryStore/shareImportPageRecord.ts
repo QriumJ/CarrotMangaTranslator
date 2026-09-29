@@ -83,6 +83,17 @@ export function buildMaterializedSharedPage({
             (id) => blockIdMap.get(id) as string,
           ),
     translationCompletion,
+    soundEffectReview: packagePage.soundEffectReview
+      ? {
+          ...packagePage.soundEffectReview,
+          resolvedRegions: packagePage.soundEffectReview.resolvedRegions.map(
+            (region) => ({
+              ...region,
+              blockId: blockIdMap.get(region.blockId) ?? region.blockId,
+            }),
+          ),
+        }
+      : undefined,
     createdAt: now,
     updatedAt: now,
   };

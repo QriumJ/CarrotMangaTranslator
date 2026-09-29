@@ -13,6 +13,8 @@ import {
 import { GemmaModelPresetSelector } from "./GemmaModelPresetSelector";
 import { LocalModelFields } from "./GemmaLocalModelFields";
 import { LlamaRuntimeCompatibilityWarning } from "./LlamaRuntimeCompatibilityWarning";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Field";
 
 type GemmaSettingsFieldsProps = Pick<
   EngineSettingsPanelProps,
@@ -93,7 +95,7 @@ function ModelSourceSelector({
             content={t(option.descriptionKey)}
             key={option.id}
           >
-            <button
+            <Button
               key={option.id}
               type="button"
               className={`settings-preset-button ${modelSource === option.id ? "active" : ""}`}
@@ -103,9 +105,10 @@ function ModelSourceSelector({
               }}
               disabled={controlsBusy}
               aria-pressed={modelSource === option.id}
+              variant="bare"
             >
               {t(option.labelKey)}
-            </button>
+            </Button>
           </ControlTooltip>
         ))}
       </div>
@@ -178,7 +181,7 @@ function CustomHfModelFields({
     <>
       <label>
         {t("settings.gemma.hfRepo")}
-        <input
+        <Input
           ref={modelRepoInputRef}
           value={customModelRepo}
           disabled={controlsBusy}
@@ -195,7 +198,7 @@ function CustomHfModelFields({
       </label>
       <label>
         {t("settings.gemma.ggufFile")}
-        <input
+        <Input
           value={customModelFile}
           disabled={controlsBusy}
           onChange={(event) => {
@@ -252,7 +255,7 @@ function LlamaRuntimeSelector({
             content={t(option.descriptionKey)}
             key={option.id}
           >
-            <button
+            <Button
               key={option.id}
               type="button"
               className={`settings-preset-button ${llamaRuntimeProfile === option.id ? "active" : ""}`}
@@ -262,9 +265,10 @@ function LlamaRuntimeSelector({
               }}
               disabled={isLlamaRuntimeOptionDisabled(option.id)}
               aria-pressed={llamaRuntimeProfile === option.id}
+              variant="bare"
             >
               {t(option.labelKey)}
-            </button>
+            </Button>
           </ControlTooltip>
         ))}
       </div>

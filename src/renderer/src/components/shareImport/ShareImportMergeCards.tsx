@@ -4,6 +4,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { PlusIcon, TrashIcon } from "../ui/icons";
 import type { LeftItem } from "./shareImportTypes";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Field";
 
 export function SortableFinalChapterCard({
   busy,
@@ -39,7 +41,7 @@ export function SortableFinalChapterCard({
       className={`share-final-item ${item.source} ${isDragging ? "dragging" : ""}`}
       style={style}
     >
-      <button
+      <Button
         ref={setActivatorNodeRef}
         className="drag-handle"
         disabled={busy}
@@ -47,9 +49,10 @@ export function SortableFinalChapterCard({
         title={t("common.dragToMove")}
         {...attributes}
         {...listeners}
+        variant="bare"
       >
         <span className="drag-grip" aria-hidden="true" />
-      </button>
+      </Button>
       <span className="item-order">{index + 1}</span>
       <span className={`source-badge ${item.source}`}>
         {t(
@@ -58,22 +61,24 @@ export function SortableFinalChapterCard({
             : "shareImport.source.shared",
         )}
       </span>
-      <input
+      <Input
         className="share-title-input"
+        aria-label={t("import.chapterTitle")}
         value={item.title}
         disabled={busy}
         onChange={(event) => onTitleChange(event.target.value)}
       />
       <span className="page-count-chip">{item.pageCount}p</span>
-      <button
+      <Button
         className="icon-danger-button"
         disabled={busy}
         onClick={onDelete}
         aria-label={t("shareImport.deleteItem", { title: item.title })}
         title={t("common.delete")}
+        variant="bare"
       >
         <TrashIcon size={15} />
-      </button>
+      </Button>
     </div>
   );
 }
@@ -108,7 +113,7 @@ export function CandidateChapterCard({
       className={`candidate-card ${isDragging ? "dragging" : ""}`}
       style={style}
     >
-      <button
+      <Button
         ref={setActivatorNodeRef}
         className="drag-handle"
         disabled={busy}
@@ -116,22 +121,24 @@ export function CandidateChapterCard({
         title={t("shareImport.dragToAdd")}
         {...attributes}
         {...listeners}
+        variant="bare"
       >
         <span className="drag-grip" aria-hidden="true" />
-      </button>
+      </Button>
       <div className="candidate-main">
         <strong>{item.title}</strong>
         <small>{t("common.pageCount", { count: item.pageCount })}</small>
       </div>
-      <button
+      <Button
         className="icon-add-button"
         disabled={busy}
         onClick={onAdd}
         aria-label={t("shareImport.addItem", { title: item.title })}
         title={t("common.add")}
+        variant="bare"
       >
         <PlusIcon size={16} />
-      </button>
+      </Button>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import type { ConditionalBatchEditorModelProps } from "../src/renderer/src/components/conditionalBatchEditorTypes";
 /** @vitest-environment jsdom */
 import React from "react";
 import {
@@ -8,10 +9,7 @@ import {
   screen,
 } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import {
-  useConditionalBatchEditorModel,
-  type ConditionalBatchEditorModelProps,
-} from "../src/renderer/src/components/useConditionalBatchEditorModel";
+import { useConditionalBatchEditorModel } from "../src/renderer/src/components/useConditionalBatchEditorModel";
 import { useConditionalBatchSchemeController } from "../src/renderer/src/components/useConditionalBatchSchemeController";
 import { useConditionalBatchSequenceEditor } from "../src/renderer/src/components/useConditionalBatchSequenceEditor";
 import { ConditionalBatchRulePanel } from "../src/renderer/src/components/ConditionalBatchRulePanel";

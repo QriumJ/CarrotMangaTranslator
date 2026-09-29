@@ -9,14 +9,16 @@ import type {
   ConditionalBatchSchemeV2,
   ConditionalBatchSequenceV2,
 } from "../../../shared/conditionalBatchRules";
+import styles from "./ConditionalBatchEditor.module.css";
 import {
   createConditionalBatchSequenceItemId,
   moveConditionalBatchSequenceItem,
 } from "./conditionalBatchSequenceModel";
-import { Button, CheckboxField, Select } from "./ConditionalBatchControls";
+import { Button } from "./ui/Button";
+import { CheckboxField } from "./ui/CheckboxField";
 import { TextareaField, TextField } from "./ui/Field";
 import { IconButton } from "./ui/IconButton";
-import styles from "./ConditionalBatchEditor.module.css";
+import { Select } from "./ui/Select";
 
 type SequenceSteps = ConditionalBatchSequenceV2["steps"];
 

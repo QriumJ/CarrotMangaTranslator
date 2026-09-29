@@ -1,5 +1,4 @@
 /** @vitest-environment jsdom */
-import React from "react";
 import {
   cleanup,
   fireEvent,
@@ -7,15 +6,16 @@ import {
   screen,
   within,
 } from "@testing-library/react";
+import React from "react";
 import { afterEach, expect, it, vi } from "vitest";
 import { ConditionalBatchConditionsCard } from "../src/renderer/src/components/ConditionalBatchConditionsCard";
-import { ConditionalBatchSetFieldsEditor } from "../src/renderer/src/components/ConditionalBatchSetFieldsEditor";
+import { createConditionForField } from "../src/renderer/src/components/conditionalBatchDraftDefaults";
 import { ConditionalBatchIdentityField } from "../src/renderer/src/components/ConditionalBatchIdentityField";
+import { ConditionalBatchSetFieldsEditor } from "../src/renderer/src/components/ConditionalBatchSetFieldsEditor";
 import {
   ConditionalBatchSpeakersContext,
   createConditionalBatchSpeakerCatalog,
 } from "../src/renderer/src/components/conditionalBatchSpeakers";
-import { createConditionForField } from "../src/renderer/src/components/conditionalBatchUi";
 import {
   applyConditionalBatchPreview,
   createConditionalBatchPreview,

@@ -11,6 +11,7 @@ import { HighlightedText } from "../HighlightedText";
 import { SelectionSurface } from "../ui/SelectionCard";
 import type { GatherTextFormatSelection } from "./useGatherTextFormatSelection";
 import { CheckboxField } from "../ui/CheckboxField";
+import { Button } from "../ui/Button";
 
 export function GatheredPageList({
   pages,
@@ -99,14 +100,15 @@ function GatheredBlock({
   );
   if (!selectionMode) {
     return onNavigate ? (
-      <button
+      <Button
         type="button"
         className="gather-text-block clickable"
         title={t("gatherText.navigateToPage")}
         onClick={onNavigate}
+        variant="bare"
       >
         {blockText}
-      </button>
+      </Button>
     ) : (
       <article className="gather-text-block">{blockText}</article>
     );
@@ -203,14 +205,15 @@ function NavigateToBlockButton({
   const { t } = useTranslation("components");
   if (!onNavigate) return null;
   return (
-    <button
+    <Button
       type="button"
       className="gather-text-block-navigate"
       title={t("gatherText.navigateToPage")}
       aria-label={t("gatherText.navigateToPage")}
       onClick={onNavigate}
+      variant="bare"
     >
       ↗
-    </button>
+    </Button>
   );
 }

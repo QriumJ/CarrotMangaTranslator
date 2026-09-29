@@ -82,6 +82,21 @@ export type TextFieldProps = React.InputHTMLAttributes<HTMLInputElement> & {
   density?: FieldDensity;
 };
 
+export type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
+
+/** Native input behavior without a label or layout wrapper. */
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  function Input({ className, ...props }, ref) {
+    return (
+      <input
+        ref={ref}
+        className={[styles.control, className].filter(Boolean).join(" ")}
+        {...props}
+      />
+    );
+  },
+);
+
 export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
   function TextField(
     { label, hint, className, density, type = "text", ...rest },
@@ -89,7 +104,7 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
   ) {
     return (
       <Field label={label} hint={hint} className={className} density={density}>
-        <input ref={ref} type={type} {...rest} />
+        <Input ref={ref} type={type} {...rest} />
       </Field>
     );
   },
@@ -98,8 +113,14 @@ export const TextField = React.forwardRef<HTMLInputElement, TextFieldProps>(
 export type TextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>;
 
 export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  function Textarea(props, ref) {
-    return <textarea ref={ref} {...props} />;
+  function Textarea({ className, ...props }, ref) {
+    return (
+      <textarea
+        ref={ref}
+        className={[styles.control, className].filter(Boolean).join(" ")}
+        {...props}
+      />
+    );
   },
 );
 

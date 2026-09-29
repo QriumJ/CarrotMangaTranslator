@@ -193,6 +193,52 @@ describe("ImportModal selection surfaces", () => {
     fireEvent.click(screen.getByRole("button", { name: "추가 후 번역" }));
     expect(onSubmit).toHaveBeenCalledWith(initialDraft);
   });
+
+  it("preserves edited titles and chapter choices while switching the target work", () => {
+    const onSubmit = vi.fn();
+    render(
+      <ImportModal
+        library={LIBRARY}
+        preview={PREVIEW}
+        busy={false}
+        onCancel={vi.fn()}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    fireEvent.change(screen.getByDisplayValue("새 작품"), {
+      target: { value: "편집한 새 작품" },
+    });
+    fireEvent.change(screen.getByDisplayValue("1화"), {
+      target: { value: "편집한 첫 화" },
+    });
+    fireEvent.click(screen.getByRole("checkbox", { name: "2화 · 1페이지" }));
+    fireEvent.click(screen.getByRole("radio", { name: /기존 작품에 추가/ }));
+    fireEvent.click(screen.getByRole("button", { name: "추가 후 번역" }));
+
+    expect(onSubmit).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        target: { mode: "existing", workId: "work-1" },
+        selections: [
+          { draftId: "draft-1", title: "편집한 첫 화", enabled: true },
+          { draftId: "draft-2", title: "2화", enabled: false },
+        ],
+      }),
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: "새 작품 만들기" }));
+    expect(screen.getByDisplayValue("편집한 새 작품")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "추가 후 번역" }));
+    expect(onSubmit).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        target: { mode: "new", title: "편집한 새 작품" },
+        selections: [
+          { draftId: "draft-1", title: "편집한 첫 화", enabled: true },
+          { draftId: "draft-2", title: "2화", enabled: false },
+        ],
+      }),
+    );
+  });
 });
 
 const LIBRARY: LibraryIndex = {

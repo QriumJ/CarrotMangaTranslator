@@ -6,6 +6,7 @@ const {
   writeFileSync,
 } = require("node:fs");
 const { dirname, extname, join, relative, resolve } = require("node:path");
+const ts = require("typescript");
 
 const projectRoot = resolve(__dirname, "..");
 const sourceRoot = join(projectRoot, "src");
@@ -97,10 +98,23 @@ function readFileWideLintDisable(source) {
 function countRawControls(source) {
   /** @type {RawControlCounts} */
   const controls = { button: 0, input: 0, select: 0, textarea: 0 };
-  for (const match of source.matchAll(/<(button|input|select|textarea)\b/g)) {
-    const name = /** @type {RawControlName} */ (match[1]);
-    controls[name] += 1;
+  const syntax = ts.createSourceFile(
+    "component.tsx",
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  );
+  /** @param {import("typescript").Node} node */
+  function visit(node) {
+    if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) {
+      const name = node.tagName.getText(syntax);
+      if (Object.hasOwn(controls, name))
+        controls[/** @type {RawControlName} */ (name)]++;
+    }
+    ts.forEachChild(node, visit);
   }
+  visit(syntax);
   return controls;
 }
 
@@ -118,8 +132,9 @@ function countCssPolicyLiterals(source) {
         /#[0-9a-f]{3,8}\b|\b(?:rgb|rgba|hsl|hsla)\s*\(/gi,
       ),
     ].length,
-    numericZIndexes: [...withoutComments.matchAll(/\bz-index\s*:\s*-?\d+\b/gi)]
-      .length,
+    numericZIndexes: [
+      ...withoutComments.matchAll(/(?<![\w-])z-index\s*:\s*-?\d+\b/gi),
+    ].length,
   };
 }
 

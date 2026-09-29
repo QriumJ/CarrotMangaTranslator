@@ -2,6 +2,8 @@ import React from "react";
 import { ControlTooltip } from "../ui/ControlTooltip";
 import { useTranslation } from "react-i18next";
 import type { EngineSettingsPanelProps } from "./EngineSettingsPanelTypes";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Field";
 
 type LocalModelFieldsProps = Pick<
   EngineSettingsPanelProps,
@@ -42,7 +44,7 @@ function LocalModelFileField({
     <div className="settings-field-stack">
       <span>{t("settings.gemma.local.modelFile")}</span>
       <div className="settings-file-row">
-        <input
+        <Input
           ref={localModelInputRef}
           value={localModelPath}
           disabled={controlsBusy}
@@ -57,13 +59,14 @@ function LocalModelFileField({
             }
           }}
         />
-        <button
+        <Button
           type="button"
           onClick={() => void pickLocalModelFile()}
           disabled={controlsBusy}
+          variant="bare"
         >
           {t("settings.gemma.local.chooseFile")}
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -87,7 +90,7 @@ function LocalMmprojFileField({
           content={t("settings.gemma.local.mmprojDescription")}
         >
           {(descriptionId) => (
-            <input
+            <Input
               aria-describedby={descriptionId}
               value={localMmprojPath}
               disabled={controlsBusy}
@@ -104,13 +107,14 @@ function LocalMmprojFileField({
             />
           )}
         </ControlTooltip>
-        <button
+        <Button
           type="button"
           onClick={() => void pickLocalMmprojFile()}
           disabled={controlsBusy}
+          variant="bare"
         >
           {t("settings.gemma.local.chooseFile")}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -117,7 +117,7 @@
 }
 
 .shortcut-binding-label {
-  color: #e6ddcf;
+  color: var(--shortcut-binding-label-color);
   font-size: var(--font-sm);
 }
 
@@ -173,7 +173,7 @@
   border: 1px solid color-mix(in srgb, var(--danger) 58%, var(--border-soft));
   border-radius: var(--r-md);
   background: color-mix(in srgb, var(--danger) 12%, var(--bg-sunken));
-  color: var(--danger-text, #ffb5b5);
+  color: var(--danger-text, var(--shortcut-binding-conflict-color));
   font-size: var(--font-sm);
   line-height: 1.45;
 }
@@ -247,7 +247,7 @@
 }
 
 .toast.success {
-  border-left-color: #4f9468;
+  border-left-color: var(--success);
 }
 
 .toast.error {
@@ -255,7 +255,7 @@
 }
 
 .toast.warn {
-  border-left-color: #d6a23f;
+  border-left-color: var(--toast-warn-border-left-color);
 }
 
 .toast.info {
@@ -268,7 +268,7 @@
 }
 
 .toast.success .toast-icon {
-  color: #6fc08a;
+  color: var(--toast-success-toast-icon-color);
 }
 
 .toast.error .toast-icon {
@@ -276,7 +276,7 @@
 }
 
 .toast.warn .toast-icon {
-  color: #d6a23f;
+  color: var(--toast-warn-toast-icon-color);
 }
 
 .toast.info .toast-icon {
@@ -356,9 +356,9 @@
   display: grid;
   gap: 12px;
   padding: 22px;
-  border: 1px solid #33404c;
+  border: 1px solid var(--inpainting-panel-border);
   border-radius: 12px;
-  background: #111820;
+  background: var(--inpainting-guide-content-background);
 }
 
 .inpainting-guide-content h2 {
@@ -368,7 +368,7 @@
 
 .inpainting-guide-content p {
   margin: 0;
-  color: #d8d0c3;
+  color: var(--inpainting-guide-content-p-color);
   line-height: 1.5;
 }
 
@@ -377,7 +377,7 @@
   gap: 10px;
   margin: 0;
   padding-left: 22px;
-  color: #f5eee3;
+  color: var(--inpainting-guide-content-ol-color);
 }
 
 .inpainting-guide-content li {
@@ -388,7 +388,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #d8d0c3;
+  color: var(--guide-hide-check-color);
   font-size: 13px;
   user-select: none;
 }
@@ -584,8 +584,8 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 10px;
-  border-color: #8d6841;
-  background: rgba(111, 75, 39, 0.22);
+  border-color: var(--share-warning-strip-border-color);
+  background: var(--share-warning-strip-background);
   overflow-wrap: anywhere;
 }
 
@@ -752,7 +752,7 @@
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--bg-raised);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  box-shadow: inset 0 1px 0 var(--share-final-item-box-shadow);
   transition:
     border-color 140ms ease,
     background 140ms ease,
@@ -794,7 +794,7 @@
   width: min(680px, 80vw);
   border-color: var(--focus);
   background: var(--bg-raised);
-  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.42);
+  box-shadow: 0 18px 46px var(--shadow-ink-42);
 }
 
 .item-order {
@@ -907,17 +907,17 @@
   gap: 8px;
   padding: 10px;
   border-radius: 10px;
-  border: 1px solid #303640;
-  background: #1a1d22;
+  border: 1px solid var(--share-merge-item-border);
+  background: var(--share-merge-item-background);
 }
 
 .share-merge-item.existing {
-  border-color: #3d4a58;
+  border-color: var(--share-merge-item-existing-border-color);
 }
 
 .share-merge-item.incoming {
-  border-color: #3e6a5e;
-  background: #172522;
+  border-color: var(--share-merge-item-incoming-border-color);
+  background: var(--share-merge-item-incoming-background);
 }
 
 .share-merge-item.candidate {

@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import type { TranslationBlock } from "../../../shared/textTypes";
 import { Button } from "./ui/Button";
 import { IconButton } from "./ui/IconButton";
+import { Textarea } from "./ui/Field";
 
 type PageBlockListRowProps = {
   issues?: string[];
@@ -252,7 +253,7 @@ function PageBlockTextFields({
       </label>
       <label className="page-block-translation-field">
         <span>{t("pageBlocks.translation")}</span>
-        <textarea
+        <Textarea
           data-page-block-translation="true"
           readOnly={disabled}
           value={block.translatedText}

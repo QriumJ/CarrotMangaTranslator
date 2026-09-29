@@ -2,6 +2,8 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import type { AppCommand } from "../lib/appCommandTypes";
 import { Modal } from "./ui/Modal";
+import { Button } from "./ui/Button";
+import { Input } from "./ui/Field";
 
 type CommandPaletteProps = {
   open: boolean;
@@ -107,7 +109,7 @@ const CommandPaletteInput = React.forwardRef<
 ) {
   const { t } = useTranslation("components");
   return (
-    <input
+    <Input
       ref={ref}
       className="command-palette-input"
       placeholder={t("commandPalette.searchPlaceholder")}
@@ -215,18 +217,19 @@ function CommandPaletteItem({
   setActiveIndex: React.Dispatch<React.SetStateAction<number>>;
 }): React.JSX.Element {
   return (
-    <button
+    <Button
       type="button"
       role="option"
       aria-selected={active}
       className={`command-palette-item ${active ? "active" : ""}`}
       onMouseEnter={() => setActiveIndex(index)}
       onClick={() => runIndex(index)}
+      variant="bare"
     >
       <span className="command-palette-label">{command.label}</span>
       {command.hint ? (
         <span className="command-palette-hint">{command.hint}</span>
       ) : null}
-    </button>
+    </Button>
   );
 }

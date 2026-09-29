@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import type { BlockStylePresetSummary } from "../../../shared/blockStylePresets";
 import { PresetRowActions } from "./PresetRowActions";
 import { MenuSurface } from "./ui/MenuSurface";
+import { Button } from "./ui/Button";
 
 type PresetControlToolbarProps = {
   activePreset: BlockStylePresetSummary | undefined;
@@ -90,27 +91,28 @@ export function PresetControlToolbar({
         ) : null}
       </div>
       {canCreate ? (
-        <button
+        <Button
           type="button"
           className="block-style-preset-toolbar-button"
           aria-label={t("stylePresets.createFromCurrent")}
           title={t("stylePresets.createFromCurrent")}
           disabled={disabled}
           onClick={onCreate}
-        >
-          <IconPlus size={16} aria-hidden="true" />
-        </button>
+          variant="bare"
+          children={<IconPlus size={16} aria-hidden="true" />}
+        />
       ) : null}
       {onManage ? (
-        <button
+        <Button
           type="button"
           className="block-style-preset-toolbar-button"
           aria-label={t("stylePresets.manage")}
           title={t("stylePresets.manage")}
           onClick={onManage}
+          variant="bare"
         >
           <IconSettings size={16} aria-hidden="true" />
-        </button>
+        </Button>
       ) : null}
     </div>
   );
@@ -130,7 +132,7 @@ function PresetMenuTrigger({
   onOpenChange: React.Dispatch<React.SetStateAction<boolean>>;
 }): React.JSX.Element {
   return (
-    <button
+    <Button
       ref={triggerRef}
       type="button"
       className="block-style-preset-trigger"
@@ -144,6 +146,7 @@ function PresetMenuTrigger({
           onOpenChange(true);
         }
       }}
+      variant="bare"
     >
       <span>{label}</span>
       <IconChevronDown
@@ -151,7 +154,7 @@ function PresetMenuTrigger({
         size={16}
         aria-hidden="true"
       />
-    </button>
+    </Button>
   );
 }
 
@@ -245,13 +248,14 @@ function PresetMenuRow({
       data-active={active}
       data-has-actions={canDelete || canOverwrite || canRename}
     >
-      <button
+      <Button
         type="button"
         className="block-style-preset-menu-item"
         aria-checked={active}
         role="menuitemradio"
         disabled={deleting}
         onClick={() => onApply(preset.id)}
+        variant="bare"
       >
         <span className="block-style-preset-menu-check">
           {active ? <IconCheck size={15} aria-hidden="true" /> : null}
@@ -264,7 +268,7 @@ function PresetMenuRow({
             aria-label={t("stylePresets.missingFontShort")}
           />
         ) : null}
-      </button>
+      </Button>
       <PresetRowActions
         canDelete={canDelete}
         canOverwrite={canOverwrite}

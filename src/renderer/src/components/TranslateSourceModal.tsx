@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import type { TranslateSourceMode } from "../lib/importFlowTypes";
 import { Modal } from "./ui/Modal";
 import { ModalActionBar, ModalActionButtons } from "./ui/ModalActionBar";
+import { Button } from "./ui/Button";
 
 type TranslateSourceModalProps = {
   busy: boolean;
@@ -100,11 +101,12 @@ function SourceChoice({
 }): React.JSX.Element {
   return (
     <ControlTooltip floating content={description}>
-      <button
+      <Button
         type="button"
         className="source-choice"
         disabled={disabled}
         onClick={onClick}
+        variant="bare"
       >
         <span className="source-choice-icon" aria-hidden="true">
           {icon}
@@ -112,7 +114,7 @@ function SourceChoice({
         <span className="source-choice-copy">
           <strong>{label}</strong>
         </span>
-      </button>
+      </Button>
     </ControlTooltip>
   );
 }

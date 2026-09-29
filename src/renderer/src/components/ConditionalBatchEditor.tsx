@@ -1,18 +1,18 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { ConfirmModal } from "./ConfirmModal";
+import styles from "./ConditionalBatchEditor.module.css";
+import {
+  type ConditionalBatchEditorModel,
+  type ConditionalBatchEditorModelProps,
+} from "./conditionalBatchEditorTypes";
 import { ConditionalBatchFooter } from "./ConditionalBatchFooter";
 import { ConditionalBatchPreviewPane } from "./ConditionalBatchPreviewPane";
 import { ConditionalBatchResultsCard } from "./ConditionalBatchResultsCard";
 import { ConditionalBatchRulePanel } from "./ConditionalBatchRulePanel";
-import { SegmentedControl } from "./ui/SegmentedControl";
+import { ConfirmModal } from "./ConfirmModal";
 import { Modal } from "./ui/Modal";
-import {
-  useConditionalBatchEditorModel,
-  type ConditionalBatchEditorModel,
-  type ConditionalBatchEditorModelProps,
-} from "./useConditionalBatchEditorModel";
-import styles from "./ConditionalBatchEditor.module.css";
+import { SegmentedControl } from "./ui/SegmentedControl";
+import { useConditionalBatchEditorModel } from "./useConditionalBatchEditorModel";
 
 export type ConditionalBatchEditorProps = ConditionalBatchEditorModelProps & {
   onEntered?: () => void;

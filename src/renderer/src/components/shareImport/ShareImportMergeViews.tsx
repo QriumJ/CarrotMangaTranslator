@@ -226,17 +226,18 @@ export function DeletedExistingChaptersWarning({
       <span className="share-warning-label">{t("shareImport.toDelete")}</span>
       <div className="share-deleted-chips">
         {deletedExistingChapters.map((chapter) => (
-          <button
+          <Button
             key={chapter.id}
             type="button"
             className="share-restore-chip"
             disabled={busy}
             onClick={() => onRestore(chapter.id)}
             title={t("shareImport.restoreItem", { title: chapter.title })}
+            variant="bare"
           >
             <span className="share-restore-title">{chapter.title}</span>
             <RestoreIcon size={14} />
-          </button>
+          </Button>
         ))}
       </div>
     </div>

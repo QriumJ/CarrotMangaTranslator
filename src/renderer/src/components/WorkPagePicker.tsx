@@ -15,6 +15,7 @@ import {
   useScrollToCurrentPage,
   type ObservePageThumbnail,
 } from "./pageThumbnails";
+import { Button } from "./ui/Button";
 
 export type ChapterPagesLookup = (chapterId: string) => MangaPage[] | undefined;
 
@@ -293,11 +294,12 @@ function ChapterRow({
           label={chapter.title}
           onChange={onToggleChapter}
         />
-        <button
+        <Button
           type="button"
           className="translate-chapter-toggle"
           aria-expanded={expanded}
           onClick={onToggleExpand}
+          variant="bare"
         >
           <span className="translate-chapter-caret" aria-hidden="true">
             {expanded ? "▾" : "▸"}
@@ -309,7 +311,7 @@ function ChapterRow({
             </span>
           ) : null}
           <span className="translate-chapter-summary">{chapterSummary}</span>
-        </button>
+        </Button>
       </div>
       {expanded ? (
         <div className="translate-chapter-body">

@@ -1,69 +1,64 @@
-/* eslint-disable max-lines -- persistence, migration-safe YAML exchange, and delayed autosave share one transactional state owner */
 import React from "react";
-import { parseDocument, stringify } from "yaml";
 import type { BlockStylePreset } from "../../../shared/blockStylePresets";
+import { formatConditionalBatchValidationIssue } from "../../../shared/conditionalBatchErrorPresentation";
 import {
-  CONDITIONAL_BATCH_SCHEMA_VERSION,
   CONDITIONAL_BATCH_STARTER_SCHEME_IDS,
-  ConditionalBatchSchemeDraftV2Schema,
-  createBlankBatchSchemeDraft,
-  createConditionalBatchClientId,
-  createEmptyConditionalBatchSnapshot,
   createConditionalBatchRecipeDraft,
-  parseConditionalBatchSnapshot,
+  createEmptyConditionalBatchSnapshot,
   type ConditionalBatchRecipeId,
   type ConditionalBatchSchemeDraftV2,
-  type ConditionalBatchSchemeV2,
   type ConditionalBatchSequenceV2,
-  type ConditionalBatchSnapshotV2,
 } from "../../../shared/conditionalBatchRules";
-import {
-  formatConditionalBatchValidationIssue,
-  formatConditionalBatchYamlSyntaxError,
-} from "../../../shared/conditionalBatchErrorPresentation";
 import { conditionalBatchGateway } from "../api/conditionalBatchGateway";
-
-export type ConditionalBatchApplyNotice = {
-  kind: "success" | "warning" | "info";
-  message: string;
-} | null;
-
-export type ConditionalBatchParsedDraft = ReturnType<
-  typeof ConditionalBatchSchemeDraftV2Schema.safeParse
->;
-
-export type ConditionalBatchStorageState = {
-  autosaveState: "idle" | "waiting" | "saving" | "saved" | "error";
-  storageBusy: boolean;
-  storageError: string | null;
-};
-
-type ControllerOptions = {
-  initialFind?: string;
-  initialReplace?: string;
-  blockStylePresets?: readonly BlockStylePreset[];
-};
-
-export type ConditionalBatchTemporaryScheme = {
-  id: string;
-  name: string;
-  dirty: boolean;
-};
-
-type TemporaryDraftSession = {
-  id: string;
-  draft: ConditionalBatchSchemeDraftV2;
-  baseline: string;
-};
-
-const FAVORITE_SCHEMES_STORAGE_KEY = "conditionalBatch.favoriteSchemeIds.v1";
-
-// Rule selection, explicit first-save, delayed autosave and YAML exchange share
-// one state owner so an IPC failure cannot partially replace the active draft.
-// eslint-disable-next-line max-lines-per-function
+import {
+  ConditionalBatchApplyNotice,
+  ControllerOptions,
+  TemporaryDraftSession,
+  createTemporarySchemeId,
+  duplicateScheme,
+  readErrorMessage,
+  removeTemporaryScheme,
+  resetToRecipe,
+  selectScheme,
+  stableDraftString,
+  switchToSavedScheme,
+} from "./conditionalBatchSchemeDrafts";
+import { useConditionalBatchSchemeFavorites } from "./useConditionalBatchSchemeFavorites";
+import { useConditionalBatchSchemePersistence } from "./useConditionalBatchSchemePersistence";
+import { useConditionalBatchYamlExchange } from "./useConditionalBatchYamlExchange";
 export function useConditionalBatchSchemeController(
   options: ControllerOptions = {},
 ) {
+  const session = useSchemeDraftSession(options);
+  const persistence = useConditionalBatchSchemePersistence({
+    draft: session.draft,
+    selectedSchemeId: session.selectedSchemeId,
+    onSaved: (savedId, stored) => {
+      session.setSelectedSchemeId(savedId);
+      if (!stored)
+        session.setTemporaryDrafts((current) =>
+          current.filter((entry) => entry.id !== session.selectedSchemeId),
+        );
+    },
+  });
+  const context = { ...session, ...persistence, options };
+  const yaml = useConditionalBatchYamlExchange({
+    draft: session.draft,
+    parsedDraft: persistence.parsedDraft,
+    stored: persistence.stored,
+    selectedSchemeId: session.selectedSchemeId,
+    runWithSavedDraft: persistence.runWithSavedDraft,
+    setStorageBusy: persistence.setStorageBusy,
+    setSnapshot: persistence.setSnapshot,
+    switchToSavedScheme: (selected) => switchToSavedScheme(context, selected),
+    changeDraft: (next) => changeDraft(next),
+  });
+  const changeDraft = useDraftChange(session, persistence, yaml);
+
+  const favorites = useConditionalBatchSchemeFavorites();
+  return createSchemeControllerView(context, yaml, favorites, changeDraft);
+}
+function useSchemeDraftSession(options: ControllerOptions) {
   const initialDraft = React.useMemo(
     () =>
       createConditionalBatchRecipeDraft(
@@ -84,680 +79,193 @@ export function useConditionalBatchSchemeController(
       baseline: stableDraftString(initialDraft),
     },
   ]);
-  const [snapshot, setSnapshot] =
-    React.useState<ConditionalBatchSnapshotV2 | null>(null);
   const [selectedSchemeId, setSelectedSchemeId] =
     React.useState(initialTemporaryId);
-  const [storageBusy, setStorageBusy] = React.useState(false);
-  const [storageError, setStorageError] = React.useState<string | null>(null);
-  const [autosaveState, setAutosaveState] =
-    React.useState<ConditionalBatchStorageState["autosaveState"]>("idle");
   const [applyNotice, setApplyNotice] =
     React.useState<ConditionalBatchApplyNotice>(null);
   const [recipePickerOpen, setRecipePickerOpen] = React.useState(
     !options.initialFind,
   );
   const [recipePickerCanClose, setRecipePickerCanClose] = React.useState(false);
-  const [yamlOpen, setYamlOpen] = React.useState(false);
-  const [yamlText, setYamlText] = React.useState("");
-  const [yamlError, setYamlError] = React.useState<string | null>(null);
-  const [favoriteSchemeIds, setFavoriteSchemeIds] = React.useState<string[]>(
-    readFavoriteSchemeIds,
-  );
-  const lastSavedDraftRef = React.useRef("");
-  const saveGenerationRef = React.useRef(0);
-  const autosaveTimerRef = React.useRef<number | null>(null);
-  const transitionPendingRef = React.useRef(false);
-
-  React.useEffect(() => {
-    let active = true;
-    setStorageBusy(true);
-    conditionalBatchGateway
-      .listConditionalBatchSchemes()
-      .then((loaded) => {
-        if (!active) return;
-        setSnapshot(loaded);
-        setStorageError(null);
-      })
-      .catch((error: unknown) => {
-        if (active) setStorageError(readErrorMessage(error));
-      })
-      .finally(() => {
-        if (active) setStorageBusy(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  const parsedDraft = React.useMemo(
-    () => ConditionalBatchSchemeDraftV2Schema.safeParse(draft),
-    [draft],
-  );
-  const stored = Boolean(
-    snapshot?.schemes.some((scheme) => scheme.id === selectedSchemeId),
-  );
-  const serializedDraft = parsedDraft.success
-    ? stableDraftString(parsedDraft.data)
-    : "";
-
-  React.useEffect(() => {
-    if (
-      !stored ||
-      !parsedDraft.success ||
-      serializedDraft === lastSavedDraftRef.current
-    ) {
-      return;
-    }
-    setAutosaveState("waiting");
-    const generation = ++saveGenerationRef.current;
-    const timer = window.setTimeout(() => {
-      autosaveTimerRef.current = null;
-      setAutosaveState("saving");
-      void conditionalBatchGateway
-        .saveConditionalBatchScheme({
-          id: selectedSchemeId,
-          scheme: parsedDraft.data,
-        })
-        .then((next) => {
-          if (generation !== saveGenerationRef.current) return;
-          setSnapshot(next);
-          lastSavedDraftRef.current = serializedDraft;
-          setAutosaveState("saved");
-          setStorageError(null);
-        })
-        .catch((error: unknown) => {
-          if (generation !== saveGenerationRef.current) return;
-          setAutosaveState("error");
-          setStorageError(readErrorMessage(error));
-        });
-    }, 600);
-    autosaveTimerRef.current = timer;
-    return () => {
-      window.clearTimeout(timer);
-      if (autosaveTimerRef.current === timer) autosaveTimerRef.current = null;
-    };
-  }, [parsedDraft, selectedSchemeId, serializedDraft, stored]);
-
-  const changeDraft = React.useCallback(
-    (next: ConditionalBatchSchemeDraftV2): void => {
-      ++saveGenerationRef.current;
-      setDraft(next);
-      setTemporaryDrafts((current) =>
-        current.map((session) =>
-          session.id === selectedSchemeId
-            ? { ...session, draft: next }
-            : session,
-        ),
-      );
-      setApplyNotice(null);
-      setYamlError(null);
-    },
-    [selectedSchemeId],
-  );
-
-  const saveScheme = async (): Promise<void> => {
-    if (!parsedDraft.success || storageBusy || transitionPendingRef.current)
-      return;
-    transitionPendingRef.current = true;
-    cancelAutosave();
-    setStorageBusy(true);
-    setStorageError(null);
-    setAutosaveState("saving");
-    const generation = ++saveGenerationRef.current;
-    try {
-      const existingId = stored ? selectedSchemeId : undefined;
-      const next = await conditionalBatchGateway.saveConditionalBatchScheme({
-        id: existingId,
-        scheme: parsedDraft.data,
-      });
-      if (generation !== saveGenerationRef.current) return;
-      setSnapshot(next);
-      const savedId = existingId ?? next.schemes[0]?.id;
-      if (savedId) {
-        setSelectedSchemeId(savedId);
-        if (!stored) {
-          setTemporaryDrafts((current) =>
-            current.filter((session) => session.id !== selectedSchemeId),
-          );
-        }
-      }
-      lastSavedDraftRef.current = serializedDraft;
-      setAutosaveState("saved");
-    } catch (error) {
-      if (generation !== saveGenerationRef.current) return;
-      setAutosaveState("error");
-      setStorageError(readErrorMessage(error));
-    } finally {
-      transitionPendingRef.current = false;
-      setStorageBusy(false);
-    }
-  };
-
-  const removeTemporaryScheme = (): void => {
-    ++saveGenerationRef.current;
-    const remaining = temporaryDrafts.filter(
-      (session) => session.id !== selectedSchemeId,
-    );
-    const fallbackTemporary = remaining.at(-1);
-    setTemporaryDrafts(remaining);
-    if (fallbackTemporary) {
-      setSelectedSchemeId(fallbackTemporary.id);
-      setDraft(structuredClone(fallbackTemporary.draft));
-      lastSavedDraftRef.current = "";
-      setRecipePickerOpen(false);
-      setRecipePickerCanClose(false);
-    } else {
-      const fallbackStored = snapshot?.schemes[0];
-      if (fallbackStored) {
-        switchToSavedScheme(fallbackStored);
-      } else {
-        const next = createBlankBatchSchemeDraft();
-        const id = createTemporarySchemeId();
-        setSelectedSchemeId(id);
-        setDraft(next);
-        setTemporaryDrafts([
-          { id, draft: next, baseline: stableDraftString(next) },
-        ]);
-        lastSavedDraftRef.current = "";
-        setRecipePickerOpen(true);
-        setRecipePickerCanClose(false);
-      }
-    }
-    setStorageError(null);
-    setApplyNotice(null);
-    setAutosaveState("idle");
-  };
-
-  const deleteScheme = async (): Promise<void> => {
-    if (storageBusy || transitionPendingRef.current) return;
-    if (!stored) {
-      removeTemporaryScheme();
-      return;
-    }
-    setStorageBusy(true);
-    transitionPendingRef.current = true;
-    cancelAutosave();
-    setStorageError(null);
-    try {
-      const next =
-        await conditionalBatchGateway.deleteConditionalBatchScheme(
-          selectedSchemeId,
-        );
-      setSnapshot(next);
-      const fallback = next.schemes[0];
-      if (fallback) {
-        switchToSavedScheme(fallback);
-      } else {
-        resetToRecipe("ellipsis");
-      }
-    } catch (error) {
-      setStorageError(readErrorMessage(error));
-    } finally {
-      transitionPendingRef.current = false;
-      setStorageBusy(false);
-    }
-  };
-
-  const cancelAutosave = (): void => {
-    if (autosaveTimerRef.current !== null) {
-      window.clearTimeout(autosaveTimerRef.current);
-      autosaveTimerRef.current = null;
-    }
-    ++saveGenerationRef.current;
-  };
-
-  const flushStoredDraft = async (): Promise<boolean> => {
-    cancelAutosave();
-    if (!stored) return true;
-    if (!parsedDraft.success) {
-      setStorageError(
-        formatConditionalBatchValidationIssue(parsedDraft.error.issues[0]) ??
-          "규칙을 확인하세요.",
-      );
-      return false;
-    }
-    if (
-      serializedDraft === lastSavedDraftRef.current &&
-      (autosaveState === "idle" || autosaveState === "saved")
-    )
-      return true;
-    const generation = ++saveGenerationRef.current;
-    setAutosaveState("saving");
-    try {
-      const next = await conditionalBatchGateway.saveConditionalBatchScheme({
-        id: selectedSchemeId,
-        scheme: parsedDraft.data,
-      });
-      if (generation !== saveGenerationRef.current) return false;
-      setSnapshot(next);
-      lastSavedDraftRef.current = serializedDraft;
-      setAutosaveState("saved");
-      setStorageError(null);
-      return true;
-    } catch (error) {
-      if (generation !== saveGenerationRef.current) return false;
-      setAutosaveState("error");
-      setStorageError(readErrorMessage(error));
-      return false;
-    }
-  };
-
-  const runWithSavedDraft = async (
-    action: () => void | Promise<void>,
-  ): Promise<boolean> => {
-    if (storageBusy || transitionPendingRef.current) return false;
-    transitionPendingRef.current = true;
-    setStorageBusy(true);
-    try {
-      const needsFlush =
-        stored &&
-        (!parsedDraft.success ||
-          serializedDraft !== lastSavedDraftRef.current ||
-          (autosaveState !== "idle" && autosaveState !== "saved"));
-      if (needsFlush && !(await flushStoredDraft())) return false;
-      const pending = action();
-      if (pending) await pending;
-      return true;
-    } catch (error) {
-      setStorageError(readErrorMessage(error));
-      return false;
-    } finally {
-      transitionPendingRef.current = false;
-      setStorageBusy(false);
-    }
-  };
-
-  const switchToSavedScheme = (selected: ConditionalBatchSchemeV2): void => {
-    setSelectedSchemeId(selected.id);
-    const nextDraft = copySavedSchemeAsDraft(selected);
-    setDraft(nextDraft);
-    lastSavedDraftRef.current = stableDraftString(
-      ConditionalBatchSchemeDraftV2Schema.parse(nextDraft),
-    );
-    setStorageError(null);
-    setApplyNotice(null);
-    setAutosaveState("idle");
-    setRecipePickerOpen(false);
-    setRecipePickerCanClose(false);
-  };
-
-  const selectScheme = (id: string): void => {
-    if (id === selectedSchemeId) return;
-    const temporary = temporaryDrafts.find((entry) => entry.id === id);
-    if (temporary) {
-      ++saveGenerationRef.current;
-      setSelectedSchemeId(id);
-      setDraft(structuredClone(temporary.draft));
-      lastSavedDraftRef.current = "";
-      setStorageError(null);
-      setApplyNotice(null);
-      setAutosaveState("idle");
-      setRecipePickerOpen(false);
-      setRecipePickerCanClose(false);
-      return;
-    }
-    const selected = snapshot?.schemes.find((entry) => entry.id === id);
-    if (!selected) return;
-    switchToSavedScheme(selected);
-  };
-
-  const resetToRecipe = (
-    recipeId: ConditionalBatchRecipeId,
-    preset?: BlockStylePreset,
-  ): void => {
-    const next = createConditionalBatchRecipeDraft(recipeId, {
-      find: options.initialFind,
-      replace: options.initialReplace,
-      stylePreset: preset
-        ? {
-            id: preset.id,
-            name: preset.name,
-            groupIds: preset.groupIds,
-            format: preset.format,
-          }
-        : undefined,
-    });
-    const id = createTemporarySchemeId();
-    setSelectedSchemeId(id);
-    setDraft(next);
-    setTemporaryDrafts((current) => [
-      ...current,
-      { id, draft: next, baseline: stableDraftString(next) },
-    ]);
-    lastSavedDraftRef.current = "";
-    setStorageError(null);
-    setApplyNotice(null);
-    setAutosaveState("idle");
-    setRecipePickerOpen(false);
-    setRecipePickerCanClose(false);
-  };
-
-  const createNewScheme = (): void => {
-    setRecipePickerOpen(true);
-    setRecipePickerCanClose(true);
-    setStorageError(null);
-    setApplyNotice(null);
-  };
-
-  const duplicateScheme = (): void => {
-    const duplicate = regenerateDraftIds(structuredClone(draft));
-    duplicate.name = createCopyName(draft.name);
-    const id = createTemporarySchemeId();
-    setDraft(duplicate);
-    setSelectedSchemeId(id);
-    setTemporaryDrafts((current) => [
-      ...current,
-      { id, draft: duplicate, baseline: stableDraftString(duplicate) },
-    ]);
-    lastSavedDraftRef.current = "";
-    setAutosaveState("idle");
-    setApplyNotice(null);
-  };
-
-  const openYamlEditor = async (): Promise<void> => {
-    setYamlOpen(true);
-    setYamlError(null);
-    if (!parsedDraft.success) {
-      setYamlText("");
-      setYamlError(
-        formatConditionalBatchValidationIssue(parsedDraft.error.issues[0]) ??
-          "규칙을 확인하세요.",
-      );
-      return;
-    }
-    setYamlText(
-      stringify(
-        {
-          schemaVersion: CONDITIONAL_BATCH_SCHEMA_VERSION,
-          schemes: [
-            {
-              id: stored ? selectedSchemeId : "draft:yaml",
-              ...parsedDraft.data,
-            },
-          ],
-          sequences: [],
-        },
-        { indent: 2, lineWidth: 100 },
-      ),
-    );
-  };
-
-  const reflectYamlInDraft = (): void => {
-    try {
-      const document = parseDocument(yamlText, {
-        customTags: [],
-        merge: false,
-        prettyErrors: true,
-        schema: "core",
-        strict: true,
-        uniqueKeys: true,
-      });
-      if (document.errors.length > 0) {
-        throw new Error(
-          formatConditionalBatchYamlSyntaxError(document.errors[0]),
-        );
-      }
-      const parsed = parseConditionalBatchSnapshot(
-        document.toJS({ maxAliasCount: 0 }),
-      ).snapshot;
-      const first = parsed.schemes[0];
-      if (!first) throw new Error("YAML에 규칙이 없습니다.");
-      changeDraft(copySavedSchemeAsDraft(first));
-      setYamlError(null);
-    } catch (error) {
-      setYamlError(readErrorMessage(error));
-    }
-  };
-
-  const exportYaml = async (all: boolean): Promise<void> => {
-    await runWithSavedDraft(async () => {
-      const value =
-        !all && !stored && parsedDraft.success
-          ? serializeDraftYaml(parsedDraft.data)
-          : await conditionalBatchGateway.exportConditionalBatchYaml(
-              all ? {} : { ids: [selectedSchemeId] },
-            );
-      setYamlText(value);
-      await conditionalBatchGateway.saveConditionalBatchYamlFile({
-        yaml: value,
-        defaultName: all ? "batch-edit-schemes.yaml" : `${draft.name}.yaml`,
-      });
-      setYamlError(null);
-    });
-  };
-
-  const openYamlFile = async (): Promise<void> => {
-    setStorageBusy(true);
-    setYamlError(null);
-    try {
-      const result =
-        await conditionalBatchGateway.openConditionalBatchYamlFile();
-      if (!result) return;
-      setYamlText(result.yaml);
-      setYamlOpen(true);
-    } catch (error) {
-      setYamlError(readErrorMessage(error));
-      setYamlOpen(true);
-    } finally {
-      setStorageBusy(false);
-    }
-  };
-
-  const importYaml = async (
-    conflictPolicy: "duplicate" | "overwrite" = "duplicate",
-  ): Promise<void> => {
-    setYamlError(null);
-    await runWithSavedDraft(async () => {
-      try {
-        const next = await conditionalBatchGateway.importConditionalBatchYaml({
-          yaml: yamlText,
-          conflictPolicy,
-        });
-        setSnapshot(next);
-        const selected = stored
-          ? next.schemes.find((entry) => entry.id === selectedSchemeId)
-          : undefined;
-        if (selected) switchToSavedScheme(selected);
-        setYamlOpen(false);
-      } catch (error) {
-        setYamlError(readErrorMessage(error));
-      }
-    });
-  };
-
-  const saveSequence = async (
-    sequence: ConditionalBatchSequenceV2,
-  ): Promise<boolean> => {
-    return runWithSavedDraft(async () => {
-      setSnapshot(
-        await conditionalBatchGateway.saveConditionalBatchSequence(sequence),
-      );
-      setStorageError(null);
-    });
-  };
-
-  const deleteSequence = async (id: string): Promise<void> => {
-    setStorageBusy(true);
-    try {
-      setSnapshot(
-        await conditionalBatchGateway.deleteConditionalBatchSequence(id),
-      );
-      setStorageError(null);
-    } catch (error) {
-      setStorageError(readErrorMessage(error));
-    } finally {
-      setStorageBusy(false);
-    }
-  };
-
-  const toggleSchemeFavorite = React.useCallback((id: string): void => {
-    setFavoriteSchemeIds((current) => {
-      const next = current.includes(id)
-        ? current.filter((entry) => entry !== id)
-        : [...current, id].slice(-100);
-      writeFavoriteSchemeIds(next);
-      return next;
-    });
-  }, []);
-
   return {
+    draft,
+    temporaryDrafts,
+    selectedSchemeId,
     applyNotice,
-    autosaveState,
-    blockStylePresets: options.blockStylePresets ?? [],
+    recipePickerOpen,
+    recipePickerCanClose,
+    setDraft,
+    setTemporaryDrafts,
+    setSelectedSchemeId,
+    setApplyNotice,
+    setRecipePickerOpen,
+    setRecipePickerCanClose,
+  };
+}
+type SchemeControllerContext = ReturnType<typeof useSchemeDraftSession> &
+  ReturnType<typeof useConditionalBatchSchemePersistence> & {
+    options: ControllerOptions;
+  };
+
+async function deleteScheme(context: SchemeControllerContext): Promise<void> {
+  const { stored, selectedSchemeId, setSnapshot, setStorageError } = context;
+  if (!context.canStartWrite()) return;
+  if (!stored) {
+    removeTemporaryScheme(context);
+    return;
+  }
+  context.beginDelete();
+  try {
+    const next =
+      await conditionalBatchGateway.deleteConditionalBatchScheme(
+        selectedSchemeId,
+      );
+    setSnapshot(next);
+    const fallback = next.schemes[0];
+    if (fallback) {
+      switchToSavedScheme(context, fallback);
+    } else {
+      resetToRecipe(context, "ellipsis");
+    }
+  } catch (error) {
+    setStorageError(readErrorMessage(error));
+  } finally {
+    context.finishDelete();
+  }
+}
+
+async function saveSequence(
+  context: SchemeControllerContext,
+  sequence: ConditionalBatchSequenceV2,
+): Promise<boolean> {
+  const { runWithSavedDraft, setSnapshot, setStorageError } = context;
+  return runWithSavedDraft(async () => {
+    setSnapshot(
+      await conditionalBatchGateway.saveConditionalBatchSequence(sequence),
+    );
+    setStorageError(null);
+  });
+}
+
+async function deleteSequence(
+  context: SchemeControllerContext,
+  id: string,
+): Promise<void> {
+  const { setStorageBusy, setSnapshot, setStorageError } = context;
+  setStorageBusy(true);
+  try {
+    setSnapshot(
+      await conditionalBatchGateway.deleteConditionalBatchSequence(id),
+    );
+    setStorageError(null);
+  } catch (error) {
+    setStorageError(readErrorMessage(error));
+  } finally {
+    setStorageBusy(false);
+  }
+}
+
+function createSchemeControllerView(
+  c: SchemeControllerContext,
+  y: ReturnType<typeof useConditionalBatchYamlExchange>,
+  favorites: ReturnType<typeof useConditionalBatchSchemeFavorites>,
+  changeDraft: (draft: ConditionalBatchSchemeDraftV2) => void,
+) {
+  return {
+    applyNotice: c.applyNotice,
+    autosaveState: c.autosaveState,
+    blockStylePresets: c.options.blockStylePresets ?? [],
     canDeleteScheme: !CONDITIONAL_BATCH_STARTER_SCHEME_IDS.includes(
-      selectedSchemeId as (typeof CONDITIONAL_BATCH_STARTER_SCHEME_IDS)[number],
+      c.selectedSchemeId as (typeof CONDITIONAL_BATCH_STARTER_SCHEME_IDS)[number],
     ),
     changeDraft,
     chooseRecipe: (
       recipe: ConditionalBatchRecipeId,
       preset?: BlockStylePreset,
-    ) => void runWithSavedDraft(() => resetToRecipe(recipe, preset)),
-    createNewScheme,
-    deleteScheme: () => void deleteScheme(),
-    deleteSequence: (id: string) => void deleteSequence(id),
-    draft,
-    duplicateScheme: () => void runWithSavedDraft(duplicateScheme),
-    exportYaml: (all: boolean) => void exportYaml(all),
-    favoriteSchemeIds,
-    importYaml: (policy?: "duplicate" | "overwrite") => void importYaml(policy),
-    openYamlEditor: () => void openYamlEditor(),
-    openYamlFile: () => void openYamlFile(),
-    parsedDraft,
-    runWithSavedDraft,
-    recipePickerOpen,
-    recipePickerCanClose,
-    reflectYamlInDraft,
-    savedSchemes: snapshot?.schemes ?? [],
-    saveScheme: () => void saveScheme(),
-    saveSequence,
-    selectedSchemeId,
+    ) => void c.runWithSavedDraft(() => resetToRecipe(c, recipe, preset)),
+    createNewScheme: () => {
+      c.setRecipePickerOpen(true);
+      c.setRecipePickerCanClose(true);
+      c.setStorageError(null);
+      c.setApplyNotice(null);
+    },
+    deleteScheme: () => void deleteScheme(c),
+    deleteSequence: (id: string) => void deleteSequence(c, id),
+    draft: c.draft,
+    duplicateScheme: () => void c.runWithSavedDraft(() => duplicateScheme(c)),
+    exportYaml: (all: boolean) => void y.exportYaml(all),
+    favoriteSchemeIds: favorites.favoriteSchemeIds,
+    importYaml: (policy?: "duplicate" | "overwrite") =>
+      void y.importYaml(policy),
+    openYamlEditor: () => void y.openYamlEditor(),
+    openYamlFile: () => void y.openYamlFile(),
+    parsedDraft: c.parsedDraft,
+    runWithSavedDraft: c.runWithSavedDraft,
+    recipePickerOpen: c.recipePickerOpen,
+    recipePickerCanClose: c.recipePickerCanClose,
+    reflectYamlInDraft: y.reflectYamlInDraft,
+    savedSchemes: c.snapshot?.schemes ?? [],
+    saveScheme: () => void c.saveScheme(),
+    saveSequence: (sequence: ConditionalBatchSequenceV2) =>
+      saveSequence(c, sequence),
+    selectedSchemeId: c.selectedSchemeId,
     selectScheme: (id: string) =>
-      void runWithSavedDraft(() => selectScheme(id)),
-    sequences: snapshot?.sequences ?? [],
-    snapshot: snapshot ?? createEmptyConditionalBatchSnapshot(),
-    setApplyNotice,
-    setRecipePickerOpen,
-    setYamlOpen,
-    setYamlText,
-    storageBusy,
-    storageError,
-    temporarySchemes: temporaryDrafts.map((session) => ({
+      void c.runWithSavedDraft(() => selectScheme(c, id)),
+    sequences: c.snapshot?.sequences ?? [],
+    snapshot: c.snapshot ?? createEmptyConditionalBatchSnapshot(),
+    setApplyNotice: c.setApplyNotice,
+    setRecipePickerOpen: c.setRecipePickerOpen,
+    setYamlOpen: y.setYamlOpen,
+    setYamlText: y.setYamlText,
+    storageBusy: c.storageBusy,
+    storageError: c.storageError,
+    temporarySchemes: c.temporaryDrafts.map((session) => ({
       id: session.id,
       name: session.draft.name,
       dirty: stableDraftString(session.draft) !== session.baseline,
     })),
-    toggleSchemeFavorite,
-    hasDirtyTemporaryDrafts: temporaryDrafts.some(
+    toggleSchemeFavorite: favorites.toggleSchemeFavorite,
+    hasDirtyTemporaryDrafts: c.temporaryDrafts.some(
       (session) => stableDraftString(session.draft) !== session.baseline,
     ),
-    validationMessage: parsedDraft.success
+    validationMessage: c.parsedDraft.success
       ? null
-      : formatConditionalBatchValidationIssue(parsedDraft.error.issues[0]),
-    yamlError,
-    yamlOpen,
-    yamlText,
+      : formatConditionalBatchValidationIssue(c.parsedDraft.error.issues[0]),
+    yamlError: y.yamlError,
+    yamlOpen: y.yamlOpen,
+    yamlText: y.yamlText,
   };
 }
 
-function readFavoriteSchemeIds(): string[] {
-  try {
-    const raw = window.localStorage.getItem(FAVORITE_SCHEMES_STORAGE_KEY);
-    if (raw === null) return [...CONDITIONAL_BATCH_STARTER_SCHEME_IDS];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed))
-      return [...CONDITIONAL_BATCH_STARTER_SCHEME_IDS];
-    return [
-      ...new Set(
-        parsed.filter(
-          (entry): entry is string =>
-            typeof entry === "string" &&
-            entry.length > 0 &&
-            entry.length <= 200,
+function useDraftChange(
+  session: ReturnType<typeof useSchemeDraftSession>,
+  persistence: ReturnType<typeof useConditionalBatchSchemePersistence>,
+  yaml: ReturnType<typeof useConditionalBatchYamlExchange>,
+) {
+  const { selectedSchemeId, setDraft, setTemporaryDrafts, setApplyNotice } =
+    session;
+  const { invalidateSave } = persistence;
+  const { setYamlError } = yaml;
+  const changeDraft = React.useCallback(
+    (next: ConditionalBatchSchemeDraftV2): void => {
+      invalidateSave();
+      setDraft(next);
+      setTemporaryDrafts((current) =>
+        current.map((entry) =>
+          entry.id === selectedSchemeId ? { ...entry, draft: next } : entry,
         ),
-      ),
-    ].slice(0, 100);
-  } catch (error) {
-    void error;
-    return [...CONDITIONAL_BATCH_STARTER_SCHEME_IDS];
-  }
-}
-
-function writeFavoriteSchemeIds(ids: readonly string[]): void {
-  try {
-    window.localStorage.setItem(
-      FAVORITE_SCHEMES_STORAGE_KEY,
-      JSON.stringify(ids),
-    );
-  } catch (error) {
-    void error;
-    // Hardened or ephemeral renderers may not expose storage. The current
-    // modal still keeps the user's choice in React state.
-  }
-}
-
-function serializeDraftYaml(draft: ConditionalBatchSchemeDraftV2): string {
-  return stringify(
-    {
-      schemaVersion: CONDITIONAL_BATCH_SCHEMA_VERSION,
-      schemes: [{ id: "draft:export", ...draft }],
-      sequences: [],
+      );
+      setApplyNotice(null);
+      setYamlError(null);
     },
-    { indent: 2, lineWidth: 100 },
+    [
+      selectedSchemeId,
+      setDraft,
+      setTemporaryDrafts,
+      setApplyNotice,
+      invalidateSave,
+      setYamlError,
+    ],
   );
-}
-
-function copySavedSchemeAsDraft(
-  scheme: ConditionalBatchSchemeV2,
-): ConditionalBatchSchemeDraftV2 {
-  return structuredClone({
-    name: scheme.name,
-    description: scheme.description,
-    match: scheme.match,
-    actions: scheme.actions,
-  });
-}
-
-function regenerateDraftIds(
-  draft: ConditionalBatchSchemeDraftV2,
-): ConditionalBatchSchemeDraftV2 {
-  return {
-    ...draft,
-    match: {
-      ...draft.match,
-      conditions: draft.match.conditions.map((condition) => ({
-        ...condition,
-        id: createConditionalBatchClientId("condition"),
-      })),
-      groups: draft.match.groups.map((group) => ({
-        ...group,
-        id: createConditionalBatchClientId("group"),
-        conditions: group.conditions.map((condition) => ({
-          ...condition,
-          id: createConditionalBatchClientId("condition"),
-        })),
-      })),
-    },
-    actions: draft.actions.map((action) => ({
-      ...action,
-      id: createConditionalBatchClientId("action"),
-    })),
-  };
-}
-
-function stableDraftString(draft: ConditionalBatchSchemeDraftV2): string {
-  return JSON.stringify(draft);
-}
-
-function createCopyName(name: string): string {
-  const suffix = " 복사본";
-  return name.slice(0, Math.max(1, 80 - suffix.length)) + suffix;
-}
-
-function readErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
-
-function createTemporarySchemeId(): string {
-  return `draft:${createConditionalBatchClientId("session")}`;
+  return changeDraft;
 }

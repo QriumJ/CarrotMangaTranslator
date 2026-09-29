@@ -40,6 +40,7 @@ import {
   type FontsContextValue,
 } from "../src/renderer/src/fonts/fontsContextValue";
 import { useWorkspacePointerHandlers } from "../src/renderer/src/hooks/useWorkspacePointerHandlers";
+import type { UpdateCurrentChapter } from "../src/renderer/src/hooks/useCurrentChapterUpdater";
 import type { InpaintingTool } from "../src/renderer/src/inpainting/inpaintingTypes";
 import type { RegionSelectionState } from "../src/renderer/src/lib/appHelpers";
 import { DEFAULT_BLOCK_FONT_CATALOG } from "../src/renderer/src/lib/fonts";
@@ -938,7 +939,7 @@ function WorkspacePointerHarness({
   regionTranslationReady,
   selectedPageEditLocked,
   stageSize,
-  stageTool,
+  stageTool: initialStageTool,
   withBubbleLayout,
 }: {
   additionalBlocks: TranslationBlock[];
@@ -956,6 +957,7 @@ function WorkspacePointerHarness({
 }): React.JSX.Element {
   const renderCountRef = useRef(0);
   renderCountRef.current += 1;
+  const [stageTool, setStageTool] = useState(initialStageTool);
   const stageRef = useRef<HTMLDivElement | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const workspacePanelRef = useRef<HTMLElement | null>(null);
@@ -980,9 +982,19 @@ function WorkspacePointerHarness({
   const [patternMaskStrokesByPage, setPatternMaskStrokesByPage] = useState<
     Record<string, InpaintingMaskStroke[]>
   >({});
+  const [chapter, setChapter] = useState(() =>
+    makeChapter(makePage({ additionalBlocks, blockPatch, withBubbleLayout })),
+  );
+  const currentChapterRef = useRef(chapter);
   const statusesRef = useRef<string[]>([]);
-  const updateCurrentChapter = useMemo(createUpdateCurrentChapterMock, []);
-  const onBubbleLayoutFinished = useMemo(() => vi.fn(), []);
+  const updateCurrentChapter = useMemo(
+    () => createUpdateCurrentChapterMock(currentChapterRef, setChapter),
+    [],
+  );
+  const onBubbleLayoutFinished = useMemo(
+    () => vi.fn(() => setStageTool("select")),
+    [],
+  );
   const onBlockCreated = useMemo(() => vi.fn(), []);
   const onMultiBlockSelection = useMemo(() => vi.fn(), []);
   const translateSelectedRegion = useMemo(
@@ -990,12 +1002,12 @@ function WorkspacePointerHarness({
     [],
   );
   const getBounds = useMemo(() => vi.fn(() => makeDomRect()), []);
-  const page = makePage({ additionalBlocks, blockPatch, withBubbleLayout });
+  const page = chapter.pages[0];
   const block = page.blocks[0];
   const handlers = useWorkspacePointerHandlers({
     appendRetouchPoint: () => null,
     applyRetouchOperation: async () => undefined,
-    currentChapter: makeChapter(page),
+    currentChapter: chapter,
     imageRef,
     inpaintingBrushRadius: 28,
     inpaintingPaintColor: "#ffffff",
@@ -1154,18 +1166,17 @@ function TestFontsProvider({
   );
 }
 
-function createUpdateCurrentChapterMock() {
-  return vi.fn(
-    (
-      pageId: string,
-      updater: (chapter: ChapterSnapshot) => ChapterSnapshot,
-      options?: { label?: string },
-    ) => {
-      void pageId;
-      void updater;
-      void options;
-    },
-  );
+function createUpdateCurrentChapterMock(
+  currentChapterRef: React.MutableRefObject<ChapterSnapshot>,
+  setChapter: React.Dispatch<React.SetStateAction<ChapterSnapshot>>,
+) {
+  return vi.fn<UpdateCurrentChapter>((_pageId, updater) => {
+    const current = currentChapterRef.current;
+    const next = updater(current);
+    if (next === current) return;
+    currentChapterRef.current = next;
+    setChapter(next);
+  });
 }
 
 function createTranslateSelectedRegionMock() {

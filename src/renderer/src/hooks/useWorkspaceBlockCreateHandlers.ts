@@ -14,6 +14,7 @@ import {
 import { resolveBlockVisualStyle } from "../../../shared/blockVisuals";
 import { estimateFontSizePx } from "../../../shared/geometry";
 import type { MangaPage } from "../../../shared/libraryTypes";
+import { MAX_BLOCKS_PER_PAGE } from "../../../shared/ipcSchemaPrimitives";
 import { isUsableRegionBbox } from "../../../shared/region";
 import type { BBox, TranslationBlock } from "../../../shared/textTypes";
 import { regionSelectionToBbox } from "../lib/appHelpers";
@@ -214,20 +215,33 @@ function useCreateBlockFromBbox({
         return;
       }
       const block = buildManualBlock(selectedPage, bbox, blockFormatDefaults);
+      let added = false;
+      let capacityReached = false;
       updateCurrentChapter(
         selectedPage.id,
-        (chapter) => ({
-          ...chapter,
-          pages: chapter.pages.map((page) =>
-            page.id !== selectedPage.id
-              ? page
-              : {
-                  ...page,
-                  updatedAt: new Date().toISOString(),
-                  blocks: [...page.blocks, block],
-                },
-          ),
-        }),
+        (chapter) => {
+          const target = chapter.pages.find(
+            (page) => page.id === selectedPage.id,
+          );
+          if (!target) return chapter;
+          if (target.blocks.length >= MAX_BLOCKS_PER_PAGE) {
+            capacityReached = true;
+            return chapter;
+          }
+          added = true;
+          return {
+            ...chapter,
+            pages: chapter.pages.map((page) =>
+              page === target
+                ? {
+                    ...page,
+                    updatedAt: new Date().toISOString(),
+                    blocks: [...page.blocks, block],
+                  }
+                : page,
+            ),
+          };
+        },
         {
           label: t("workspaceHistory.createBlock"),
           selectionAfter: {
@@ -237,6 +251,11 @@ function useCreateBlockFromBbox({
           },
         },
       );
+      if (capacityReached)
+        pushStatus(
+          t("blockEditing.capacityReached", { count: MAX_BLOCKS_PER_PAGE }),
+        );
+      if (!added) return;
       setSelectedBlockId(block.id);
       setSelectedBlockIds([block.id]);
       onBlockCreated?.(block.id);

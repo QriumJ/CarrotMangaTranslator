@@ -1,8 +1,8 @@
 import { IconArrowBackUp, IconWand } from "@tabler/icons-react";
 import React from "react";
-import type { ConditionalBatchApplyNotice } from "./useConditionalBatchSchemeController";
-import { Button } from "./ConditionalBatchControls";
 import styles from "./ConditionalBatchEditor.module.css";
+import { Button } from "./ui/Button";
+import type { ConditionalBatchApplyNotice } from "./conditionalBatchSchemeDrafts";
 
 export type ConditionalBatchFooterProps = {
   applyNotice: ConditionalBatchApplyNotice;

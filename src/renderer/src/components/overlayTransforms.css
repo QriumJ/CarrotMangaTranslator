@@ -27,7 +27,7 @@
 .warped-text-content {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: var(--z-base);
   overflow: visible;
   pointer-events: none;
 }
@@ -35,7 +35,7 @@
 .text-effect-layer {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: var(--z-base);
   overflow: visible;
   pointer-events: none;
 }
@@ -43,7 +43,7 @@
 .overlay-curve-text {
   position: absolute;
   inset: 0;
-  z-index: 1;
+  z-index: var(--z-base);
   display: block;
   overflow: visible;
   pointer-events: none;
@@ -65,13 +65,13 @@
   height: calc(100% + 2px);
   overflow: visible;
   pointer-events: none;
-  filter: drop-shadow(0 0 1px rgba(5, 10, 18, 0.92))
-    drop-shadow(0 0 5px rgba(70, 211, 196, 0.24));
+  filter: drop-shadow(0 0 1px var(--bubble-layout-guide-filter-start))
+    drop-shadow(0 0 5px var(--bubble-layout-guide-filter-end));
 }
 
 .bubble-layout-guide polygon {
   fill: transparent;
-  stroke: rgba(111, 238, 219, 0.98);
+  stroke: var(--bubble-layout-guide-polygon-stroke);
   stroke-width: 2px;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -81,7 +81,7 @@
 
 .bubble-layout-guide.manual polygon {
   fill: transparent;
-  stroke: rgba(255, 191, 92, 0.98);
+  stroke: var(--bubble-layout-guide-manual-polygon-stroke);
 }
 
 .overlay-block.transform-mode-perspective.selected,
@@ -91,7 +91,7 @@
 }
 
 .overlay-block.transform-mode-select.selected {
-  outline: 1px solid #58b9ff;
+  outline: 1px solid var(--canvas-transform-accent);
   outline-offset: 0;
 }
 
@@ -107,24 +107,24 @@
   height: 100%;
   overflow: visible;
   pointer-events: none;
-  filter: drop-shadow(0 0 1px rgba(4, 9, 15, 0.92));
+  filter: drop-shadow(0 0 1px var(--transform-guide-filter));
 }
 
 .transform-guide polygon,
 .transform-guide polyline {
   fill: none;
-  stroke: #58b9ff;
+  stroke: var(--canvas-transform-accent);
   stroke-width: 1.25px;
   vector-effect: non-scaling-stroke;
 }
 
 .curve-controls .curve-control-line {
-  stroke: rgba(255, 255, 255, 0.64);
+  stroke: var(--curve-controls-curve-control-line-stroke);
   stroke-dasharray: 3 3;
 }
 
 .curve-controls .curve-path-line {
-  stroke: #ffb647;
+  stroke: var(--canvas-curve-accent);
   stroke-width: 1.5px;
 }
 
@@ -162,7 +162,7 @@
   height: 0.5vmin;
   border: 0;
   border-radius: 50%;
-  background: #58b9ff;
+  background: var(--canvas-transform-accent);
   transform: translate(-50%, -50%);
 }
 
@@ -220,8 +220,8 @@
   top: -24px;
   width: 1px;
   height: 24px;
-  background: #58b9ff;
-  box-shadow: 0 0 1px #07111c;
+  background: var(--canvas-transform-accent);
+  box-shadow: 0 0 1px var(--rotation-stem-box-shadow);
 }
 
 .rotation-handle {
@@ -233,7 +233,7 @@
 }
 
 .rotation-handle::after {
-  background: #58b9ff;
+  background: var(--canvas-transform-accent);
 }
 
 .perspective-controls .transform-handle {
@@ -241,14 +241,14 @@
 }
 
 .perspective-controls .transform-handle::after {
-  background: #58b9ff;
+  background: var(--canvas-transform-accent);
 }
 
 .perspective-controls .perspective-top::after,
 .perspective-controls .perspective-right::after,
 .perspective-controls .perspective-bottom::after,
 .perspective-controls .perspective-left::after {
-  background: #dff3ff;
+  background: var(--canvas-transform-handle-light);
 }
 
 .curve-controls .transform-handle {
@@ -256,12 +256,12 @@
 }
 
 .curve-controls .transform-handle::after {
-  background: #ffb647;
+  background: var(--canvas-curve-accent);
 }
 
 .curve-controls .curve-control::after {
   border-radius: 2px;
-  background: #fff3d9;
+  background: var(--curve-controls-curve-control-after-background);
   transform: translate(-50%, -50%) rotate(45deg);
 }
 
@@ -279,20 +279,20 @@
 
 .warp-controls .warp-grid-line {
   fill: none;
-  stroke: rgba(88, 185, 255, 0.76);
+  stroke: var(--warp-controls-warp-grid-line-stroke);
   stroke-width: 1.1px;
   pointer-events: stroke;
   cursor: move;
 }
 
 .warp-controls .warp-grid-line:hover {
-  stroke: #b9e4ff;
+  stroke: var(--warp-controls-warp-grid-line-hover-stroke);
   stroke-width: 2px;
 }
 
 .warp-controls .warp-selection-rect {
-  fill: rgba(88, 185, 255, 0.14);
-  stroke: #8fd2ff;
+  fill: var(--warp-controls-warp-selection-rect-fill);
+  stroke: var(--warp-controls-warp-selection-rect-stroke);
   stroke-width: 1px;
   stroke-dasharray: 4 3;
   vector-effect: non-scaling-stroke;
@@ -304,17 +304,17 @@
 }
 
 .warp-controls .warp-point::after {
-  background: #dff3ff;
+  background: var(--canvas-transform-handle-light);
 }
 
 .warp-controls .warp-point.selected::after {
-  background: #ffbf58;
+  background: var(--warp-controls-warp-point-selected-after-background);
 }
 
 .stage-drag-hud.invalid {
-  border-color: rgba(255, 108, 108, 0.86);
-  background: rgba(85, 20, 24, 0.92);
-  color: #ffe9e9;
+  border-color: var(--stage-drag-hud-invalid-border-color);
+  background: var(--stage-drag-hud-invalid-background);
+  color: var(--stage-drag-hud-invalid-color);
 }
 
 .image-stage.stage-tool-perspective .overlay-block.selected,

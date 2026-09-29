@@ -8,6 +8,8 @@ import type {
 } from "../hooks/useCompletionSound";
 import { IconButton } from "./ui/IconButton";
 import { usePopupController } from "./ui/usePopupController";
+import { Button } from "./ui/Button";
+import { Input } from "./ui/Field";
 
 const SOUND_POPOVER_WIDTH_PX = 216;
 const SOUND_POPOVER_HEIGHT_PX = 177;
@@ -174,7 +176,7 @@ function CompletionSoundPopover({
           item={t("statusDock.soundSettings.all")}
           onToggle={() => update({ muted: !preferences.muted })}
         />
-        <input
+        <Input
           id={volumeId}
           type="range"
           min={0}
@@ -255,18 +257,19 @@ function SoundMuteRow({
     { item: label },
   );
   return (
-    <button
+    <Button
       type="button"
       className="status-sound-category-row"
       aria-label={actionLabel}
       aria-pressed={muted}
       onClick={onToggle}
+      variant="bare"
     >
       <span className="status-sound-category-icon" aria-hidden="true">
         <Icon size={15} />
       </span>
       <span>{label}</span>
-    </button>
+    </Button>
   );
 }
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import { Input } from "./ui/Field";
 
 type ColorFieldProps = {
   className?: string;
@@ -62,7 +63,7 @@ export function ColorField({
             aria-label={label}
           />
         </span>
-        <input
+        <Input
           className="color-hex-input"
           data-ui-framed-input=""
           type="text"

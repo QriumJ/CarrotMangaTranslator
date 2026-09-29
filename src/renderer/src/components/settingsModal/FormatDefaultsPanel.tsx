@@ -29,6 +29,7 @@ import {
   useFormatDefaultsEditor,
   type FormatDefaultsEditorModel,
 } from "./useFormatDefaultsEditor";
+import { Button } from "../ui/Button";
 
 export type FormatDefaultsPanelProps = {
   activePresetId?: string | null;
@@ -237,14 +238,15 @@ function PresetApplicationGroups({
         {ALL_BLOCK_FORMAT_GROUP_IDS.map((groupId) => {
           const included = preset.groupIds.includes(groupId);
           return (
-            <button
+            <Button
               key={groupId}
               type="button"
               aria-pressed={included}
               onClick={() => onToggleGroup(groupId)}
+              variant="bare"
             >
               {t(`formatBatch.groups.${groupId}`)}
-            </button>
+            </Button>
           );
         })}
       </div>

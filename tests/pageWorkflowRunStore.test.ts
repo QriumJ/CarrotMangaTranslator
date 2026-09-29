@@ -28,6 +28,32 @@ afterEach(async () => {
 });
 
 describe("durable page workflow plans", () => {
+  it("refuses a resume request that silently redirects work to a different page or chapter", async () => {
+    const root = await mkdtemp(join(tmpdir(), "page-workflow-binding-"));
+    roots.push(root);
+    const request = {
+      plan: createPageWorkflowPlan(["ocr"]),
+      selection: [{ chapterId: randomUUID(), pageIds: [randomUUID()] }],
+    };
+    const run = await preparePageWorkflowRun(root, request);
+    for (const selection of [
+      [{ chapterId: randomUUID(), pageIds: request.selection[0].pageIds }],
+      [{ chapterId: request.selection[0].chapterId, pageIds: [randomUUID()] }],
+    ]) {
+      await expect(
+        preparePageWorkflowRun(root, {
+          ...request,
+          selection,
+          resumeRunId: run.id,
+        }),
+      ).rejects.toThrow(/대상/);
+    }
+    expect(await readPageWorkflowRun(root, run.id)).toEqual(run);
+    expect(
+      await preparePageWorkflowRun(root, { ...request, resumeRunId: run.id }),
+    ).toEqual(run);
+  });
+
   it("freezes ordered rules and reloads the original run after stored rules change", async () => {
     const root = await mkdtemp(join(tmpdir(), "page-workflow-run-"));
     roots.push(root);

@@ -11,6 +11,7 @@ import {
   useFontManagerModel,
   type FontManagerModel,
 } from "./useFontManagerModel";
+import { Input } from "./ui/Field";
 
 export function FontManagerModal({
   onClose,
@@ -109,7 +110,7 @@ function FontManagerControls({
           onValueChange={model.setDefault}
         />
       </label>
-      <input
+      <Input
         className={styles.search}
         type="search"
         value={model.query}

@@ -7,6 +7,8 @@ import type {
   DiscoveryState,
 } from "./useApiProviderConnection";
 import { Select } from "../ui/Select";
+import { Button } from "../ui/Button";
+import { Input } from "../ui/Field";
 
 type ModelFieldProps = Pick<
   ApiProviderConnectionProps,
@@ -46,7 +48,7 @@ export function ApiProviderModelFields({
       />
       <label>
         {t("settings.api.model")}
-        <input
+        <Input
           value={apiModel}
           disabled={controlsBusy || connection.discovery.status === "loading"}
           onChange={(event) => {
@@ -106,7 +108,7 @@ function ModelDiscoveryFields({
           onValueChange={selectModel}
         />
       </label>
-      <button
+      <Button
         type="button"
         disabled={
           controlsBusy ||
@@ -114,13 +116,14 @@ function ModelDiscoveryFields({
           !connection.vertexReady
         }
         onClick={() => void connection.loadModels()}
+        variant="bare"
       >
         {t(
           connection.discovery.status === "loading"
             ? "settings.api.loadingModels"
             : "settings.api.loadModels",
         )}
-      </button>
+      </Button>
     </div>
   );
 }

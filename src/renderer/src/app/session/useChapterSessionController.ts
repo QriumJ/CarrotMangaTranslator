@@ -212,9 +212,9 @@ function useChapterRuntimeController({
     pushStatus: statusLog.pushStatus,
     saveNow: persistence.saveNow,
   });
-  const bridgeActions = useChapterBridgeActions(
-    statusLog,
-    uiState,
+  const bridgeActions = useAppSessionBridgeActions(
+    statusLog.pushStatus,
+    uiState.requestJobFlowCancellation,
     core.jobState.id,
   );
   const libraryActions = useLibraryActions({
@@ -224,6 +224,7 @@ function useChapterRuntimeController({
     currentChapterRef: core.currentChapterRef,
     dirty: persistence.dirty,
     hasPendingInpaintingMask,
+    patternMaskStrokesByPage,
     library: core.library,
     pushStatus: statusLog.pushStatus,
     clearPendingInpaintingMasks,
@@ -281,18 +282,6 @@ function useChapterRuntimeController({
     overlayModalsOpen: modalState.overlayModalsOpen,
     persistence,
   };
-}
-
-function useChapterBridgeActions(
-  statusLog: ChapterRuntimeArgs["statusLog"],
-  uiState: ChapterRuntimeArgs["uiState"],
-  jobId: string,
-): ReturnType<typeof useAppSessionBridgeActions> {
-  return useAppSessionBridgeActions(
-    statusLog.pushStatus,
-    uiState.requestJobFlowCancellation,
-    jobId,
-  );
 }
 
 function useNotifyingChapterPersistence(

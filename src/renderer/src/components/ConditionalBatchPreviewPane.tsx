@@ -1,11 +1,11 @@
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import type { AppWorkspaceProps } from "./appWorkspaceTypes";
 import { AppWorkspace } from "./AppWorkspace";
-import { Button } from "./ConditionalBatchControls";
-import { SegmentedControl } from "./ui/SegmentedControl";
+import type { AppWorkspaceProps } from "./appWorkspaceTypes";
 import styles from "./ConditionalBatchEditor.module.css";
+import { Button } from "./ui/Button";
+import { SegmentedControl } from "./ui/SegmentedControl";
 
 export type ConditionalBatchPreviewPaneProps = {
   currentResultIndex: number;

@@ -18,6 +18,8 @@ import {
   MAX_ZIP_TOTAL_UNCOMPRESSED_BYTES,
   readZipEntryData,
   readZipEntryDataFromFile,
+  openZipArchiveReader,
+  readZipEntries,
   type ZipEntryLike,
 } from "../src/main/libraryStore/zipSafety";
 
@@ -35,6 +37,36 @@ function zipEntry(partial: Partial<ZipEntryLike>): ZipEntryLike {
 }
 
 describe("zip safety", () => {
+  it("discards directory metadata without reducing the supported file budget", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "mgt-zip-directories-"));
+    try {
+      const archivePath = join(dir, "directories.zip");
+      const zip = new AdmZip();
+      for (let index = 0; index <= MAX_ZIP_ENTRY_COUNT; index++)
+        zip.addFile(`directory-${index}/`, Buffer.alloc(0));
+      zip.addFile("document.txt", Buffer.from("content"));
+      zip.writeZip(archivePath);
+      const reader = await openZipArchiveReader(archivePath, "ZIP");
+      try {
+        expect(reader.entries.map((entry) => entry.entryName)).toEqual([
+          "document.txt",
+        ]);
+        expect(await reader.readEntry("document.txt", 100, "document")).toEqual(
+          Buffer.from("content"),
+        );
+      } finally {
+        reader.close();
+      }
+      expect(
+        (await readZipEntries(archivePath, "ZIP")).map(
+          (entry) => entry.entryName,
+        ),
+      ).toEqual(["document.txt"]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it("uses one archive extension allowlist for ZIP/CBZ/RAR/CBR", () => {
     expect(SUPPORTED_ARCHIVE_EXTENSIONS).toEqual([
       ".zip",

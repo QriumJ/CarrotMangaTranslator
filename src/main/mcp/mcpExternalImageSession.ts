@@ -11,15 +11,20 @@ import { createMcpExternalImageReadTool } from "./mcpExternalImageReadTool";
 import { createMcpImageUploadSession } from "./mcpImageUploadSession";
 import { createMcpBatchTool } from "./mcpBatchTool";
 import type { McpTool } from "./mcpReadTools";
+import type { McpImageWorkerFactory } from "./mcpImageWorkerClient";
 
 export function createMcpExternalImageSession(
   app: InpaintingJobContext,
   editing: Parameters<typeof createMcpExternalImageAdapter>[1],
   enabled: boolean,
   allowImages: boolean,
+  createImageWorker?: McpImageWorkerFactory,
 ) {
   const lifetime = new AbortController();
-  const uploads = createMcpImageUploadSession(lifetime.signal);
+  const uploads = createMcpImageUploadSession(
+    lifetime.signal,
+    createImageWorker,
+  );
   const adapter = createMcpExternalImageAdapter(
     app,
     editing,

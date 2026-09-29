@@ -644,7 +644,7 @@
 .style-guide-budget-warning {
   max-width: 760px;
   margin: var(--sp-1) 0 0;
-  color: #f6bc7b;
+  color: var(--style-guide-budget-warning-color);
   overflow-wrap: anywhere;
 }
 
@@ -820,7 +820,7 @@
 .style-guide-row .style-guide-row-delete:hover:not(:disabled) {
   border-color: var(--danger-bd);
   background: var(--danger-soft);
-  color: #e7a3a3;
+  color: var(--action-danger-text);
   opacity: 1;
 }
 

@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 import { randomUUID } from "node:crypto";
 import { imageEditingFixture } from "./mcpImageEditing.fixture";
+import { createImageWorkerBoundary } from "./mcpImageWorker.fixture";
 import { mcpTestEncryption } from "./mcpEncryption.fixture";
 import {
   mcpRetentionOutputs,
@@ -40,6 +41,7 @@ export async function retentionFixture(
     const sessionSecure = new McpSecureStore(f.env.root, encryption);
     const operations = createMcpPageOperationSession({
       origin: "http://127.0.0.1:38554",
+      createImageWorker: createImageWorkerBoundary,
       app: f.app,
       editing,
       preferences,

@@ -11,6 +11,7 @@ import { resolveBlockLibraryThumbnailModel } from "./blockLibraryModel";
 import { PageArtwork } from "./PageArtwork";
 import { IconButton } from "./ui/IconButton";
 import styles from "./BlockLibraryModals.module.css";
+import { Button } from "./ui/Button";
 
 export function BlockLibraryCard({
   busy,
@@ -34,11 +35,12 @@ export function BlockLibraryCard({
   const { t } = useTranslation("components");
   return (
     <article className={styles.card}>
-      <button
+      <Button
         className={styles.cardMain}
         disabled={!canInsert || busy}
         type="button"
         onClick={onInsert}
+        variant="bare"
       >
         <BlockLibraryThumbnail
           entry={entry}
@@ -52,7 +54,7 @@ export function BlockLibraryCard({
             {t("blockLibrary.missingFont")}
           </span>
         ) : null}
-      </button>
+      </Button>
       <div className={styles.cardActions}>
         <IconButton
           size="sm"

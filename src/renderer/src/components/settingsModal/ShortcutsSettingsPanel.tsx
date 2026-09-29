@@ -20,6 +20,7 @@ import {
   SHORTCUT_CATEGORY_ORDER,
   type ShortcutActionDef,
 } from "../../lib/shortcuts/shortcutActionTypes";
+import { Button } from "../ui/Button";
 
 export type ShortcutsSettingsPanelProps = {
   overrides: KeybindingOverrides;
@@ -151,13 +152,14 @@ function ShortcutBindingRow({
   return (
     <div className="shortcut-binding-row">
       <span className="shortcut-binding-label">{action.label}</span>
-      <button
+      <Button
         type="button"
         className={`shortcut-binding-combo ${capturing ? "capturing" : ""}`}
         onClick={onCapture}
         aria-label={t("settings.shortcuts.changeAria", {
           label: action.label,
         })}
+        variant="bare"
       >
         {capturing ? (
           <span className="shortcut-binding-waiting">
@@ -183,22 +185,24 @@ function ShortcutBindingRow({
             {t("settings.shortcuts.unassigned")}
           </span>
         )}
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         className="shortcut-binding-action"
         onClick={onReset}
+        variant="bare"
       >
         {t("settings.shortcuts.reset")}
-      </button>
-      <button
+      </Button>
+      <Button
         type="button"
         className="shortcut-binding-action"
         onClick={onClear}
         disabled={combos.length === 0}
+        variant="bare"
       >
         {t("settings.shortcuts.clear")}
-      </button>
+      </Button>
     </div>
   );
 }

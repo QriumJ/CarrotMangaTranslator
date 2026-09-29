@@ -25,6 +25,7 @@ import { LibrarySortMenu } from "./LibrarySortMenu";
 import { IconButton } from "./ui/IconButton";
 import { EditIcon } from "./ui/icons";
 import { SidebarSectionCollapseButton } from "./SidebarSectionCollapseButton";
+import { Input } from "./ui/Field";
 
 type LibraryTreeProps = {
   collapsed: boolean;
@@ -232,7 +233,7 @@ function LibraryPanelHeader({
             aria-label={t("library.searchLabel")}
           >
             <SearchIcon />
-            <input
+            <Input
               className="library-search-input"
               type="text"
               value={searchQuery}

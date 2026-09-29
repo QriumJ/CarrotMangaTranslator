@@ -1,6 +1,5 @@
 /** @vitest-environment jsdom */
 
-import React from "react";
 import {
   cleanup,
   fireEvent,
@@ -8,23 +7,24 @@ import {
   screen,
   within,
 } from "@testing-library/react";
+import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { appI18n } from "../src/renderer/src/appI18n";
 import { ConditionalBatchSetFieldsEditor } from "../src/renderer/src/components/ConditionalBatchSetFieldsEditor";
 import { TextWrappingSelect } from "../src/renderer/src/components/TextWrappingSelect";
-import { summarizeAction } from "../src/renderer/src/components/conditionalBatchUi";
+import { summarizeAction } from "../src/renderer/src/components/conditionalBatchPresentation";
+import { measureStyledWrappedText } from "../src/renderer/src/lib/overlayTextWrapping";
+import {
+  applyConditionalBatchPreview,
+  createConditionalBatchPreview,
+} from "../src/shared/conditionalBatchEngine";
 import {
   ConditionalBatchSchemeDraftV2Schema,
   createBlankBatchSchemeDraft,
   type ConditionalBatchActionV2,
   type ConditionalBatchSetFieldsActionV2,
 } from "../src/shared/conditionalBatchRules";
-import {
-  applyConditionalBatchPreview,
-  createConditionalBatchPreview,
-} from "../src/shared/conditionalBatchEngine";
 import { TranslationBlockSchema } from "../src/shared/ipcSchemaPrimitives";
-import { measureStyledWrappedText } from "../src/renderer/src/lib/overlayTextWrapping";
 import {
   resolveBlockTextWordBreak,
   type TextWordBreak,

@@ -5,14 +5,15 @@ import type {
   ConditionalBatchSetFieldsActionV2,
   ConditionalBatchWritableField,
 } from "../../../shared/conditionalBatchRules";
-import { listConditionalBatchFields } from "./conditionalBatchUi";
+import styles from "./ConditionalBatchEditor.module.css";
 import {
   appendConditionalBatchSetFieldDependencies,
   createConditionalBatchSetFieldChange,
 } from "./conditionalBatchSetFieldsModel";
-import { Button, Select } from "./ConditionalBatchControls";
+import { listConditionalBatchFields } from "./conditionalBatchUi";
+import { Button } from "./ui/Button";
 import { Field } from "./ui/Field";
-import styles from "./ConditionalBatchEditor.module.css";
+import { Select } from "./ui/Select";
 
 export function ConditionalBatchSetFieldPicker({
   action,

@@ -12,6 +12,7 @@ import type {
 } from "../../../../shared/webImportTypes";
 import { CheckboxField } from "../ui/CheckboxField";
 import { SegmentedControl } from "../ui/SegmentedControl";
+import { Button } from "../ui/Button";
 
 export function WebImportResultNotice({
   result,
@@ -80,20 +81,22 @@ export function WebImportToolbar({
         onChange={onFilterChange}
       />
       <div className="web-import-select-actions">
-        <button
+        <Button
           type="button"
           onClick={onSelectAll}
           disabled={busy || visibleCount === 0}
+          variant="bare"
         >
           {t("webImport.selectAll")}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={onClearAll}
           disabled={busy || visibleCount === 0}
+          variant="bare"
         >
           {t("webImport.clearAll")}
-        </button>
+        </Button>
       </div>
     </div>
   );

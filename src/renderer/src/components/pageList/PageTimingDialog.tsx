@@ -13,6 +13,7 @@ import {
 } from "../../lib/pageTimingReport";
 import { ControlTooltip } from "../ui/ControlTooltip";
 import { Modal } from "../ui/Modal";
+import { Button } from "../ui/Button";
 
 export function PageTimingDialog({
   onClose,
@@ -86,13 +87,14 @@ function PageTimingTable({
                       content={t("pageList.timing.preparingHelp")}
                       placement="bottom"
                     >
-                      <button
+                      <Button
                         type="button"
                         className="page-timing-help"
                         aria-label={t("pageList.timing.preparingHelp")}
+                        variant="bare"
                       >
                         ⓘ
-                      </button>
+                      </Button>
                     </ControlTooltip>
                   ) : null}
                 </span>

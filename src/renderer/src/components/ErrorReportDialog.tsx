@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import type { ErrorReportContext } from "../../../shared/errorReportTypes";
 import styles from "./ErrorReportDialog.module.css";
 import { Button } from "./ui/Button";
-import { TextField } from "./ui/Field";
+import { TextField, Textarea } from "./ui/Field";
 import { Modal } from "./ui/Modal";
 import { ModalActionBar, ModalActionButtons } from "./ui/ModalActionBar";
 import {
@@ -135,7 +135,7 @@ function ErrorReportForm({
       />
       <label className={styles.field} htmlFor={descriptionId}>
         <span>{t("errorReport.descriptionLabel")}</span>
-        <textarea
+        <Textarea
           id={descriptionId}
           value={description}
           rows={4}
@@ -159,7 +159,7 @@ function ErrorReportForm({
       </fieldset>
       <label className={styles.field} htmlFor={previewId}>
         <span>{t("errorReport.preview")}</span>
-        <textarea
+        <Textarea
           id={previewId}
           className={styles.preview}
           value={reportBody}

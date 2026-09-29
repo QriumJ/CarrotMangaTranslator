@@ -15,7 +15,7 @@
 }
 
 .linked-workspace-inline-status.failed {
-  color: var(--danger-text, #ffb4ab);
+  color: var(--danger-text, var(--danger-text));
 }
 
 .linked-workspace-settings {
@@ -204,10 +204,10 @@
 .linked-workspace-status-badge.idle {
   border-color: color-mix(
     in srgb,
-    var(--success, #4f9f89) 52%,
+    var(--success, var(--linked-workspace-status-badge-idle-border-color)) 52%,
     var(--border-soft)
   );
-  color: var(--success-text, #91d8c4);
+  color: var(--success-text, var(--success-text));
 }
 
 .linked-workspace-status-badge.pending,
@@ -219,10 +219,10 @@
 .linked-workspace-status-badge.failed {
   border-color: color-mix(
     in srgb,
-    var(--danger-text, #ffb4ab) 50%,
+    var(--danger-text, var(--danger-text)) 50%,
     var(--border-soft)
   );
-  color: var(--danger-text, #ffb4ab);
+  color: var(--danger-text, var(--danger-text));
 }
 
 .linked-workspace-row-actions {
@@ -298,10 +298,10 @@
   margin: 0 10px 9px 46px;
   border-color: color-mix(
     in srgb,
-    var(--danger-text, #ffb4ab) 42%,
+    var(--danger-text, var(--danger-text)) 42%,
     var(--border-soft)
   );
-  color: var(--danger-text, #ffb4ab);
+  color: var(--danger-text, var(--danger-text));
 }
 
 .linked-workspace-empty {

@@ -1,29 +1,55 @@
-/* eslint-disable max-lines -- retouch, run, navigation, pointer, and bridge adapters share one session dependency contract */
 import type { BlockFormatDefaults } from "../../../../shared/blockFormat";
+
 import type { InpaintingMaskStroke } from "../../../../shared/inpaintingTypes";
+
 import { useCallback } from "react";
+
 import { useTranslation } from "react-i18next";
+
 import type { useConfirmDialog } from "../../hooks/useConfirmDialog";
+
 import type { useCurrentChapterUpdater } from "../../hooks/useCurrentChapterUpdater";
+
 import type { useLiveChapterSync } from "../../hooks/useLiveChapterSync";
+
 import { useInpaintingActions } from "../../hooks/useInpaintingActions";
+
 import { useInpaintingContextBridge } from "../../hooks/useInpaintingContextBridge";
+
 import { useInpaintingRetouch } from "../../hooks/useInpaintingRetouch";
+
 import type { useLibraryActions } from "../../hooks/useLibraryActions";
+
 import { usePageNavigationHandlers } from "../../hooks/usePageNavigationHandlers";
+
 import type { useStatusLog } from "../../hooks/useStatusLog";
+
 import type { useTranslationActions } from "../../hooks/useTranslationActions";
+
 import type { WorkspaceHistoryController } from "../../hooks/useWorkspaceHistory";
+
 import { captureWorkspaceMaskSnapshot } from "../../lib/workspaceHistory";
+
 import { useWorkspacePointerHandlers } from "../../hooks/useWorkspacePointerHandlers";
-import { adjustMaskStrokeRadii } from "../../hooks/workspaceInpaintingPointerState";
+
 import type { useChapterPersistence } from "../../hooks/useChapterPersistence";
+
 import type { useAppSessionBridgeActions } from "./useAppSessionBridgeActions";
+
 import type { AppSessionCoreState } from "./useAppSessionCoreState";
+
 import type { useAppSessionDerivedState } from "./useAppSessionDerivedState";
+
 import type { useAppSessionUiState } from "./useAppSessionUiState";
+
 import { isWorkspaceImageReadyForSelectedPage } from "./appSessionSelectors";
+
 import { useEventCallback } from "../../hooks/useEventCallback";
+
+import {
+  useAdjustSelectedPatternMask,
+  useClearSelectedPatternMask,
+} from "./useAppSessionPatternMaskActions";
 
 type AppSessionInpaintingControllerArgs = {
   aiUnavailable?: boolean;
@@ -370,75 +396,4 @@ function useInpaintingBridgeController(
     tool: uiState.inpaintingTool,
     undoRetouch: retouch.undoRetouch,
   });
-}
-
-function useAdjustSelectedPatternMask({
-  core,
-  derivedState,
-  uiState,
-  workspaceHistory,
-}: Pick<
-  AppSessionInpaintingControllerArgs,
-  "core" | "derivedState" | "uiState" | "workspaceHistory"
->): (deltaPx: number) => void {
-  const { t } = useTranslation("renderer");
-  return useCallback(
-    (deltaPx) => {
-      const selectedPage = derivedState.selectedPage;
-      const chapterId = core.currentChapter?.id;
-      const before = derivedState.patternMaskStrokes;
-      if (!selectedPage || !chapterId || before.length === 0) return;
-      const after = adjustMaskStrokeRadii(before, deltaPx);
-      if (
-        after.length === before.length &&
-        after.every(
-          (stroke, index) => stroke.radiusPx === before[index]?.radiusPx,
-        )
-      ) {
-        return;
-      }
-      const next = { ...uiState.patternMaskStrokesByPage };
-      if (after.length > 0) next[selectedPage.id] = after;
-      else delete next[selectedPage.id];
-      uiState.setPatternMaskStrokesByPage(next);
-      workspaceHistory.recordMaskEdit({
-        label: t("workspaceHistory.maskEdit"),
-        before: captureWorkspaceMaskSnapshot(
-          chapterId,
-          selectedPage.id,
-          before,
-        ),
-        after: captureWorkspaceMaskSnapshot(chapterId, selectedPage.id, after),
-      });
-    },
-    [core.currentChapter?.id, derivedState, t, uiState, workspaceHistory],
-  );
-}
-
-function useClearSelectedPatternMask({
-  core,
-  derivedState,
-  uiState,
-  workspaceHistory,
-}: Pick<
-  AppSessionInpaintingControllerArgs,
-  "core" | "derivedState" | "uiState" | "workspaceHistory"
->): () => void {
-  const { t } = useTranslation("renderer");
-  return useCallback(() => {
-    const selectedPage = derivedState.selectedPage;
-    const chapterId = core.currentChapter?.id;
-    const before = derivedState.patternMaskStrokes;
-    if (!selectedPage || !chapterId || before.length === 0) {
-      return;
-    }
-    const next = { ...uiState.patternMaskStrokesByPage };
-    delete next[selectedPage.id];
-    uiState.setPatternMaskStrokesByPage(next);
-    workspaceHistory.recordMaskEdit({
-      label: t("workspaceHistory.maskEdit"),
-      before: captureWorkspaceMaskSnapshot(chapterId, selectedPage.id, before),
-      after: captureWorkspaceMaskSnapshot(chapterId, selectedPage.id, []),
-    });
-  }, [core.currentChapter?.id, derivedState, t, uiState, workspaceHistory]);
 }

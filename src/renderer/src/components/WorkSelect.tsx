@@ -7,6 +7,7 @@ import type {
 import { Select } from "./ui/Select";
 import type { SelectOption } from "./ui/selectTypes";
 import styles from "./WorkSelect.module.css";
+import { Button } from "./ui/Button";
 
 type WorkSortMode = "library" | "title" | "recent";
 
@@ -84,15 +85,16 @@ function WorkSortToolbar({
       <span className={styles.sortLabel}>{t("workSelect.sort.label")}</span>
       <div className={styles.sortOptions}>
         {options.map((option) => (
-          <button
+          <Button
             key={option.value}
             type="button"
             className={styles.sortButton}
             aria-pressed={value === option.value}
             onClick={() => onChange(option.value)}
+            variant="bare"
           >
             {option.label}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

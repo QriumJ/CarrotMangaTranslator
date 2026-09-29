@@ -501,9 +501,9 @@ describe("production cleanup coverage floor gate", () => {
     expect(Object.keys(manifest.floors)).toEqual(scope.existing);
     expect(Object.keys(manifest.introducedFloors)).toEqual(scope.added);
     expect(manifest.deletedFiles).toEqual(scope.deleted);
-    expect(scope.existing).toHaveLength(781);
+    expect(scope.existing).toHaveLength(793);
     // Includes MCP and master additions; the renderer gatherText floor follows its shared owner.
-    expect(scope.added).toHaveLength(1260);
+    expect(scope.added).toHaveLength(1300);
     expect(scope.deleted).toHaveLength(11);
   });
 });
@@ -560,8 +560,8 @@ function createFixture(
       validatedNodeV8: [
         ...new Set(["22/12.4", "24/13.6", CURRENT_NODE_V8_FAMILY]),
       ],
-      vitestVersion: "4.1.9",
-      coverageV8Version: "4.1.9",
+      vitestVersion: "4.1.11",
+      coverageV8Version: "4.1.11",
     },
     floors: {
       [existingFile]: {

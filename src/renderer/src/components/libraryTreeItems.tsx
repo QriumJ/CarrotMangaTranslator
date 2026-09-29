@@ -6,6 +6,7 @@ import { CSS } from "@dnd-kit/utilities";
 import type { LibraryChapterSummary } from "../../../shared/libraryTypes";
 import { IconButton } from "./ui/IconButton";
 import { EditIcon } from "./ui/icons";
+import { Button } from "./ui/Button";
 
 type SortableChapterItemProps = {
   workId: string;
@@ -90,7 +91,7 @@ function ChapterDragHandle({
 }): React.JSX.Element {
   const { t } = useTranslation("components");
   return (
-    <button
+    <Button
       ref={setActivatorNodeRef}
       className="drag-handle compact"
       disabled={disabled}
@@ -98,9 +99,10 @@ function ChapterDragHandle({
       title={t(disabled ? "library.moveDisabled" : "common.dragToMove")}
       {...attributes}
       {...listeners}
+      variant="bare"
     >
       <span className="drag-grip" aria-hidden="true" />
-    </button>
+    </Button>
   );
 }
 
@@ -113,17 +115,18 @@ function ChapterSelectButton({
 }): React.JSX.Element {
   const { t } = useTranslation("components");
   return (
-    <button
+    <Button
       className="chapter-select"
       onClick={() => onOpenChapter(chapter.id)}
       title={chapter.title}
+      variant="bare"
     >
       <span>{chapter.title}</span>
       <small>
         {t("common.pageCount", { count: chapter.pageCount })} ·{" "}
         {resolveChapterStatusLabel(chapter.status, t)}
       </small>
-    </button>
+    </Button>
   );
 }
 

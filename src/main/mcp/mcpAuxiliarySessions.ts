@@ -161,7 +161,13 @@ function createImageSessions(
     soundEffects,
     sessions: [
       soundEffects,
-      createMcpExternalImageSession(app, ownedEditing, enabled, images),
+      createMcpExternalImageSession(
+        app,
+        ownedEditing,
+        enabled,
+        images,
+        options.createImageWorker,
+      ),
       createMcpImageEditSession(app, ownedEditing, enabled, images),
     ],
   };

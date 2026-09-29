@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 
 import React, { useEffect, useRef, useState } from "react";
-import { act, cleanup, render } from "@testing-library/react";
+import { act, cleanup, render, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { JobEvent, JobState } from "../src/shared/jobTypes";
 import type { ChapterSnapshot } from "../src/shared/libraryTypes";
 import { useJobEvents } from "../src/renderer/src/hooks/useJobEvents";
+import { useStatusLog } from "../src/renderer/src/hooks/useStatusLog";
 import {
   createAggregateJobEventGuard,
   shouldIgnoreAggregateJobEvent,
@@ -204,6 +205,94 @@ describe("job event render scheduling", () => {
 
     view.unmount();
     expect(unsubscribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancels a pending frame when the event subscriber unmounts", () => {
+    const frames = installAnimationFrameController();
+    const appendStatusLine = vi.fn();
+    const unsubscribe = vi.fn();
+    let emit: ((event: JobEvent) => void) | undefined;
+    const api = React.createRef<JobHarnessApi>();
+    const view = render(
+      <JobHarness
+        appendStatusLine={appendStatusLine}
+        onReady={(value) => {
+          api.current = value;
+        }}
+        subscribeJobEvents={(listener) => {
+          emit = listener;
+          return unsubscribe;
+        }}
+      />,
+    );
+    const renderCount = api.current?.getRenderCount();
+
+    act(() => emit?.(makeStateEvent("running")));
+    expect(frames.count()).toBe(1);
+
+    view.unmount();
+    expect(unsubscribe).toHaveBeenCalledOnce();
+    expect(window.cancelAnimationFrame).toHaveBeenCalledOnce();
+    expect(frames.count()).toBe(0);
+    act(() => frames.flush());
+
+    expect(appendStatusLine).not.toHaveBeenCalled();
+    expect(api.current?.getJobState().status).toBe("idle");
+    expect(api.current?.getRenderCount()).toBe(renderCount);
+  });
+
+  it("replaces a job's progress line while retaining another job's status", () => {
+    const frames = installAnimationFrameController();
+    let emit: ((event: JobEvent) => void) | undefined;
+    const currentChapterRef = { current: null };
+    const setJobState = vi.fn();
+    const subscribeJobEvents = (listener: (event: JobEvent) => void) => {
+      emit = listener;
+      return () => undefined;
+    };
+    const { result } = renderHook(() => {
+      const statusLog = useStatusLog();
+      useJobEvents({
+        appendStatusLine: statusLog.appendStatusLine,
+        currentChapterRef,
+        mergeLiveChapter: ignoreChapter,
+        setJobState,
+        subscribeJobEvents,
+      });
+      return statusLog;
+    });
+
+    act(() => {
+      emit?.({
+        ...makeStateEvent("running"),
+        phase: "booting",
+        progressText: "Preparing chapter A",
+      });
+      emit?.({
+        ...makeStateEvent("running"),
+        id: "job-2",
+        phase: "booting",
+        progressText: "Preparing chapter B",
+      });
+      frames.flush();
+    });
+    expect(result.current.statusLines).toEqual([
+      "Preparing chapter B",
+      "Preparing chapter A",
+    ]);
+
+    act(() => {
+      emit?.({
+        ...makeStateEvent("running"),
+        phase: "booting",
+        progressText: "Connecting model A",
+      });
+      frames.flush();
+    });
+    expect(result.current.statusLines).toEqual([
+      "Connecting model A",
+      "Preparing chapter B",
+    ]);
   });
 
   it("does not regress a terminal job from a queued nonterminal event", () => {

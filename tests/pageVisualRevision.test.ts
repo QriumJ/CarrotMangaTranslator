@@ -7,6 +7,22 @@ import {
 } from "../src/shared/pageRevision";
 
 describe("page visual revision", () => {
+  it("tracks visible fallback source text but ignores hidden source edits", () => {
+    const page = makePage();
+    requireBlock(page).translatedText = "";
+    requireBlock(page).rotationDeg = 0;
+    const edited = clonePage(page);
+    requireBlock(edited).sourceText = "Visible edited source";
+    expect(createPageVisualRevision(edited)).not.toBe(
+      createPageVisualRevision(page),
+    );
+    requireBlock(page).textDisplayMode = "translation-only";
+    requireBlock(edited).textDisplayMode = "translation-only";
+    expect(createPageVisualRevision(edited)).toBe(
+      createPageVisualRevision(page),
+    );
+  });
+
   it("ignores OCR and review metadata while the recovery revision changes", () => {
     const page = makePage();
     const metadataOnly = clonePage(page);

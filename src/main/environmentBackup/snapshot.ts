@@ -11,6 +11,7 @@ import {
   BACKUP_SOURCE_NAMES,
   backupManifestSchema,
   MAX_BACKUP_BYTES,
+  MAX_BACKUP_FILES,
   type BackupManifest,
 } from "./policy";
 import {
@@ -33,17 +34,24 @@ export async function copyCategories(
 ): Promise<void> {
   const files: string[] = [];
   for (const name of names) {
+    signal.throwIfAborted();
     let ancestor = source;
     for (const part of ["", ...name.split("/")]) {
       ancestor = join(ancestor, part);
       if ((await exists(ancestor)) && (await lstat(ancestor)).isSymbolicLink())
         throw new Error("Linked data folders cannot be backed up.");
     }
-    if (await exists(join(source, name)))
-      files.push(...(await regularFiles(join(source, name), name)));
+    if (!(await exists(join(source, name)))) continue;
+    const categoryFiles = await regularFiles(join(source, name), name, signal);
+    if (files.length + categoryFiles.length > MAX_BACKUP_FILES)
+      throw new Error("Backup contains too many files.");
+    for (const path of categoryFiles) files.push(path);
   }
   let bytes = 0;
-  for (const path of files) bytes += (await lstat(join(source, path))).size;
+  for (const path of files) {
+    signal.throwIfAborted();
+    bytes += (await lstat(join(source, path))).size;
+  }
   if (bytes > MAX_BACKUP_BYTES)
     throw new Error("Environment exceeds the supported backup size.");
   await assertFreeSpace(target, bytes * 2);

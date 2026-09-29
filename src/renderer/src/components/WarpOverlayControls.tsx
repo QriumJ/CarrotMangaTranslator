@@ -17,6 +17,7 @@ import {
   type WarpGridLine,
 } from "../lib/warpOverlayGeometry";
 import type { DragMode } from "../lib/workspaceInteractionTypes";
+import { Button } from "./ui/Button";
 
 type WarpOverlayProps = {
   block: TranslationBlock;
@@ -262,7 +263,7 @@ function WarpPointHandles({
   return (
     <>
       {displayPoints.map((point, index) => (
-        <button
+        <Button
           aria-label={t("transform.warp.pointAccessibleLabel", {
             column: (index % side) + 1,
             row: Math.floor(index / side) + 1,
@@ -275,6 +276,7 @@ function WarpPointHandles({
           onPointerDown={(event) => startDrag(event, index)}
           style={{ left: `${point.x * 100}%`, top: `${point.y * 100}%` }}
           type="button"
+          variant="bare"
         />
       ))}
     </>

@@ -226,10 +226,20 @@ export function resolveManagedCheckpointDirectory(
 
 export function stripInternalPageArtifacts<
   T extends MangaPage | LibraryPageRecord,
->(page: T): Omit<T, "translationCheckpoint" | "fontContinuity"> {
+>(
+  page: T,
+): Omit<
+  T,
+  | "translationCheckpoint"
+  | "fontContinuity"
+  | "pageWorkflow"
+  | "erasedWorkflowRegions"
+> {
   const {
     translationCheckpoint: _translationCheckpoint,
     fontContinuity: _fontContinuity,
+    pageWorkflow: _pageWorkflow,
+    erasedWorkflowRegions: _erasedWorkflowRegions,
     ...sharedPage
   } = page;
   return sharedPage;

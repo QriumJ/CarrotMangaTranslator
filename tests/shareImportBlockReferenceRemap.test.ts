@@ -5,8 +5,128 @@ import {
 } from "../src/main/libraryStore/shareImportPageRecord";
 import type { LibraryPageRecord } from "../src/shared/libraryTypes";
 import type { TranslationBlock } from "../src/shared/textTypes";
+import { inspectTranslationSavedQuality } from "../src/main/application/mcpTranslationQuality";
 
 describe("shared page block reference remap", () => {
+  it("keeps unresolved legacy sound-effect references pending beside remapped resolutions", () => {
+    const packagePage = makePage([makeBlock("source-a")]);
+    packagePage.soundEffectReview = {
+      contractVersion: 3,
+      producer: "hayai-regions-v1",
+      regions: ["known-region", "missing-region"].map((id) => ({
+        id,
+        bbox: { x: 100, y: 100, w: 200, h: 200 },
+        detectorConfidence: 1,
+      })),
+      regionOverrides: [],
+      manualRegions: [],
+      resolvedRegions: [
+        {
+          regionId: "known-region",
+          blockId: "source-a",
+          resolvedAt: packagePage.updatedAt,
+        },
+        {
+          regionId: "missing-region",
+          blockId: "removed-source-block",
+          resolvedAt: packagePage.updatedAt,
+        },
+      ],
+    };
+    const before = structuredClone(packagePage);
+    const imported = buildMaterializedSharedPage({
+      packagePage,
+      pageId: "destination",
+      imagePath: "destination.png",
+      width: 10,
+      height: 20,
+      now: packagePage.updatedAt,
+    });
+
+    expect(imported.soundEffectReview?.resolvedRegions).toEqual([
+      {
+        ...before.soundEffectReview?.resolvedRegions[0],
+        blockId: "destination-block-1",
+      },
+      before.soundEffectReview?.resolvedRegions[1],
+    ]);
+    expect(
+      inspectTranslationSavedQuality({ ...imported, dataUrl: "" })
+        .pendingSoundEffects,
+    ).toBe(1);
+    expect(packagePage).toEqual(before);
+  });
+
+  it("preserves resolved sound effects and remaps their block references", () => {
+    const packagePage = makePage([makeBlock("source-a")]);
+    packagePage.soundEffectReview = {
+      contractVersion: 3,
+      producer: "hayai-regions-v1",
+      regions: [
+        {
+          id: "region-1",
+          bbox: packagePage.blocks[0].bbox,
+          detectorConfidence: 1,
+        },
+      ],
+      regionOverrides: [],
+      manualRegions: [],
+      resolvedRegions: [
+        {
+          regionId: "region-1",
+          blockId: "source-a",
+          resolvedAt: packagePage.updatedAt,
+        },
+      ],
+    };
+    const before = structuredClone(packagePage);
+    const result = buildMaterializedSharedPage({
+      packagePage,
+      pageId: "destination",
+      imagePath: "destination.png",
+      width: 10,
+      height: 20,
+      now: packagePage.updatedAt,
+    });
+    expect(result.soundEffectReview?.resolvedRegions[0].blockId).toBe(
+      result.blocks[0].id,
+    );
+    expect(
+      inspectTranslationSavedQuality({ ...result, dataUrl: "" })
+        .pendingSoundEffects,
+    ).toBe(0);
+    expect(packagePage).toEqual(before);
+  });
+
+  it("strips foreign execution receipts while retaining visible edits in old packages", () => {
+    const packagePage = makePage([makeBlock("source-a")]);
+    packagePage.pageWorkflow = {
+      runId: "11111111-1111-4111-8111-111111111111",
+      planKey: "local-plan",
+      steps: {},
+      findings: [],
+    };
+    packagePage.erasedWorkflowRegions = {
+      "source-a": "old-identity-bound-key",
+    };
+    const before = structuredClone(packagePage);
+    const result = buildMaterializedSharedPage({
+      packagePage,
+      pageId: "destination",
+      imagePath: "destination.png",
+      width: 10,
+      height: 20,
+      now: packagePage.updatedAt,
+    });
+    expect(result.pageWorkflow).toBeUndefined();
+    expect(result.erasedWorkflowRegions).toBeUndefined();
+    expect(result.blocks[0]).toEqual({
+      ...packagePage.blocks[0],
+      id: "destination-block-1",
+    });
+    expect(packagePage).toEqual(before);
+  });
+
   it("remaps blocks and completion references to the destination page ids", () => {
     const packagePage = makePage([
       makeBlock("source-a"),
@@ -153,6 +273,7 @@ describe("shared page block reference remap", () => {
     });
 
     expect(result).toHaveProperty("translationCompletion", undefined);
+    expect(result).toHaveProperty("soundEffectReview", undefined);
   });
 
   it("drops local-only mask metadata retained by older share packages", () => {

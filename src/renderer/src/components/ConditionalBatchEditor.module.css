@@ -52,7 +52,7 @@
 
 .schemeBar {
   position: relative;
-  z-index: 30;
+  z-index: var(--conditional-batch-editor-scheme-bar-z-index);
   display: grid;
   grid-template-columns: minmax(0, 1fr) repeat(4, auto);
   gap: 5px;
@@ -74,7 +74,7 @@
 .schemeMenuPopover {
   --motion-enter-y: -5px;
   position: absolute;
-  z-index: 40;
+  z-index: var(--conditional-batch-editor-scheme-menu-popover-z-index);
   top: calc(100% + 5px);
   right: 0;
   display: grid;
@@ -399,7 +399,7 @@
 
 .patternMenu {
   position: absolute;
-  z-index: 20;
+  z-index: var(--conditional-batch-editor-pattern-menu-z-index);
   top: calc(100% + 5px);
   left: 0;
   display: grid;

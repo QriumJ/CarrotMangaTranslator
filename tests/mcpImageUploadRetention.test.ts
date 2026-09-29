@@ -2,9 +2,10 @@ import { createHash, randomUUID } from "node:crypto";
 import { PNG } from "pngjs";
 import { expect, it } from "vitest";
 import { McpImageUploadStore } from "../src/main/mcp/mcpImageUploadStore";
+import { createImageWorkerBoundary } from "./mcpImageWorker.fixture";
 
 it("retains only validation metadata rather than decoded image pixels in the upload cache", async () => {
-  const store = new McpImageUploadStore();
+  const store = new McpImageUploadStore(Date.now, createImageWorkerBoundary);
   const png = new PNG({ width: 3, height: 2 });
   const bytes = PNG.sync.write(png);
   const guard = () => {};

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ChapterSnapshot } from "../../../shared/libraryTypes";
 import type { ChapterSaveStatus } from "../hooks/chapterPersistenceTypes";
+import { Button } from "./ui/Button";
 
 export type ChapterTaskHeaderProps = {
   currentChapter: ChapterSnapshot | null;
@@ -92,9 +93,9 @@ function ChapterSaveStatusIndicator({
     >
       <span>{t(`chapterSave.${saveStatus}`)}</span>
       {saveStatus === "error" ? (
-        <button type="button" onClick={onRetrySave}>
+        <Button type="button" onClick={onRetrySave} variant="bare">
           {t("chapterSave.retry")}
-        </button>
+        </Button>
       ) : null}
     </div>
   );

@@ -89,10 +89,18 @@
   overflow: hidden;
   border-radius: calc(var(--r-lg) - 3px);
   background:
-    linear-gradient(45deg, rgb(255 255 255 / 3%) 25%, transparent 25%) 0 0 /
-      16px 16px,
-    linear-gradient(-45deg, rgb(255 255 255 / 3%) 25%, transparent 25%) 0 8px /
-      16px 16px,
+    linear-gradient(
+        45deg,
+        var(--block-library-modals-preview-background-start) 25%,
+        transparent 25%
+      )
+      0 0 / 16px 16px,
+    linear-gradient(
+        -45deg,
+        var(--block-library-modals-preview-background-end) 25%,
+        transparent 25%
+      )
+      0 8px / 16px 16px,
     var(--bg-canvas, var(--bg));
 }
 
@@ -126,7 +134,7 @@
   align-items: center;
   gap: var(--sp-1);
   margin: 0;
-  color: var(--warning, #e7aa46);
+  color: var(--warning, var(--block-library-modals-editor-font-warning-color));
   font-size: var(--font-xs);
 }
 
@@ -161,7 +169,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-1);
-  color: var(--warning, #e7aa46);
+  color: var(--warning, var(--block-library-modals-warning-color));
   font-size: var(--font-xs);
 }
 
@@ -188,7 +196,7 @@
 }
 
 .error {
-  color: var(--danger-text, #ff9e91);
+  color: var(--danger-text, var(--block-library-modals-error-color));
   border: 1px solid var(--danger-bd);
   background: color-mix(in srgb, var(--danger) 18%, transparent);
 }

@@ -23,6 +23,7 @@ import {
 } from "./PresetDefinitionPanel";
 import { PresetLibrary } from "./PresetLibrary";
 import { usePresetManagerModel } from "./usePresetManagerModel";
+import { Button } from "../../ui/Button";
 
 export type { PresetFontDetail };
 
@@ -108,37 +109,40 @@ function PresetManagerHeader({
   const { t } = useTranslation("components");
   return (
     <header className="style-preset-manager-screen-header">
-      <button
+      <Button
         type="button"
         className="style-preset-manager-back"
         onClick={onClose}
+        variant="bare"
       >
         <IconArrowLeft size={17} aria-hidden="true" />
         <span>{t("stylePresets.backToEditor")}</span>
-      </button>
+      </Button>
       <div className="style-preset-manager-screen-title">
         <h3>{t("stylePresets.manage")}</h3>
         <span>{count}</span>
       </div>
       <div className="style-preset-manager-create-actions">
-        <button
+        <Button
           type="button"
           className="style-preset-library-create secondary"
           disabled={groupCount >= MAX_BLOCK_STYLE_PRESET_GROUPS}
           onClick={onAddGroup}
+          variant="bare"
         >
           <IconFolderPlus size={16} aria-hidden="true" />
           <span>{t("stylePresets.addGroup")}</span>
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           className="style-preset-library-create"
           disabled={count >= MAX_BLOCK_STYLE_PRESETS}
           onClick={onAdd}
+          variant="bare"
         >
           <IconPlus size={16} aria-hidden="true" />
           <span>{t("common.add")}</span>
-        </button>
+        </Button>
       </div>
     </header>
   );
@@ -207,14 +211,15 @@ function LibraryAction({
   onClick: () => void;
 }): React.JSX.Element {
   return (
-    <button
+    <Button
       type="button"
       className={`style-preset-library-action ${danger ? "danger" : ""}`}
       disabled={disabled}
       onClick={onClick}
+      variant="bare"
     >
       {icon}
       <span>{label}</span>
-    </button>
+    </Button>
   );
 }

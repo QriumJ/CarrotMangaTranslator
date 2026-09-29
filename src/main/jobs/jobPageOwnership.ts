@@ -33,6 +33,32 @@ export async function acquireJobPage(
   pageId: string,
   readChapter: (chapterId: string) => Promise<ChapterSnapshot>,
 ): Promise<MangaPage> {
+  return acquirePageWith(jobs, jobId, chapterId, pageId, async (signal) => {
+    const chapter = await readChapter(chapterId);
+    signal.throwIfAborted();
+    const page = chapter.pages.find((candidate) => candidate.id === pageId);
+    if (!page) throw new Error("처리할 페이지가 삭제되었습니다.");
+    return page;
+  });
+}
+
+/** Workflow reads its complete target snapshot once after all handoffs. */
+export function acquireJobPageOwnership(
+  jobs: ActiveJobStore,
+  jobId: string,
+  chapterId: string,
+  pageId: string,
+): Promise<void> {
+  return acquirePageWith(jobs, jobId, chapterId, pageId, async () => {});
+}
+
+async function acquirePageWith<T>(
+  jobs: ActiveJobStore,
+  jobId: string,
+  chapterId: string,
+  pageId: string,
+  read: (signal: AbortSignal) => Promise<T>,
+): Promise<T> {
   const job = jobs.get(jobId);
   if (!job) throw new Error("작업이 이미 종료되었습니다.");
   const signal = job.abortController.signal;
@@ -49,17 +75,15 @@ export async function acquireJobPage(
       return await withLibraryMutation(async () => {
         signal.throwIfAborted();
         jobs.updateResources(jobId, [...(job.resources ?? []), resource]);
-        const chapter = await readChapter(chapterId);
+        const result = await read(signal);
         signal.throwIfAborted();
-        const page = chapter.pages.find((candidate) => candidate.id === pageId);
-        if (!page) throw new Error("처리할 페이지가 삭제되었습니다.");
         jobs.pageHandoffs.set({
           jobId,
           chapterId,
           pageId,
           phase: "processing",
         });
-        return page;
+        return result;
       });
     } catch (error) {
       if (!(error instanceof AppActivityBusyError)) throw error;

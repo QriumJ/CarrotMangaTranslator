@@ -10,6 +10,8 @@ import {
   WebImportToolbar,
 } from "./webImport/WebImportResults";
 import { useWebImportModalState } from "./webImport/useWebImportModalState";
+import { Button } from "./ui/Button";
+import { Input } from "./ui/Field";
 
 export function WebImportModal({
   onCancel,
@@ -109,7 +111,7 @@ function WebImportUrlForm({
         <span>{t("webImport.urlLabel")}</span>
         <span className="web-import-url-input-wrap">
           <IconLink size={18} aria-hidden="true" />
-          <input
+          <Input
             type="url"
             data-ui-framed-input=""
             value={state.url}
@@ -121,14 +123,15 @@ function WebImportUrlForm({
           />
         </span>
       </label>
-      <button
+      <Button
         type="submit"
         className="web-import-load-button primary"
         disabled={state.busy || !state.url.trim()}
+        variant="bare"
       >
         <IconDownload size={17} aria-hidden="true" />
         <span>{t("webImport.load")}</span>
-      </button>
+      </Button>
     </form>
   );
 }

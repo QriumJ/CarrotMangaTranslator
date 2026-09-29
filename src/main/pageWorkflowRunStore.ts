@@ -5,6 +5,7 @@ import { z } from "zod";
 import { PageWorkflowRequestSchema } from "../shared/ipcPageWorkflowContracts";
 import { ConditionalBatchSchemeDraftV2Schema } from "../shared/conditionalBatchRules";
 import { freezeWorkflowRules } from "../shared/pageWorkflowRules";
+import { assertPageWorkflowResumeSelection } from "../shared/pageWorkflowPolicy";
 import type { PageWorkflowRequest } from "../shared/pageWorkflowTypes";
 import { ConditionalBatchSchemeStore } from "./conditionalBatchSchemeStore";
 import { writeJsonFile } from "./libraryStore/storage";
@@ -43,6 +44,7 @@ export async function preparePageWorkflowRun(
 ) {
   if (request.resumeRunId) {
     const run = await readPageWorkflowRun(dataRoot, request.resumeRunId);
+    assertPageWorkflowResumeSelection(request.selection, run.request.selection);
     return run;
   }
   const snapshot = await new ConditionalBatchSchemeStore(dataRoot).list();

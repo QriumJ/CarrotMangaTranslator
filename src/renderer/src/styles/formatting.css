@@ -96,7 +96,10 @@
 
 .format-apply-scope-button[aria-pressed="true"] {
   border-color: var(--accent-bd);
-  background: var(--accent-bg, rgba(239, 68, 68, 0.12));
+  background: var(
+    --accent-bg,
+    var(--format-apply-scope-button-aria-pressed-true-background)
+  );
 }
 
 .format-apply-scope-button:disabled {
@@ -142,7 +145,7 @@
   padding: 4px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
-  background: #191b21;
+  background: var(--editor-overflow-menu-background);
   box-shadow: var(--shadow-lg);
   transform-origin: top right;
   animation: ui-surface-enter var(--motion-surface) var(--ease-enter) both;
@@ -180,7 +183,7 @@
 }
 
 .editor-overflow-menu button.danger {
-  color: #e7a3a3;
+  color: var(--action-danger-text);
 }
 
 .editor-overflow-check {
@@ -576,7 +579,7 @@
   width: auto;
   align-items: center;
   gap: 6px;
-  color: #cfc7bb;
+  color: var(--inline-toggle-color);
   font-size: var(--font-sm);
   white-space: nowrap;
 }
@@ -729,10 +732,10 @@
   min-width: 92px;
   min-height: 42px;
   padding: 7px 10px;
-  border: 1px solid #343b45;
+  border: 1px solid var(--block-type-preview-border);
   border-radius: 8px;
-  background: #15191f;
-  color: #d9e0ea;
+  background: var(--block-type-preview-background);
+  color: var(--block-type-preview-color);
   font-size: 13px;
   font-weight: 700;
 }
@@ -743,7 +746,7 @@
   flex: 0 0 auto;
   border: 2px solid;
   border-radius: 5px;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.16);
+  box-shadow: inset 0 0 0 1px var(--shadow-ink-16);
 }
 
 .color-field {
@@ -777,8 +780,8 @@
 }
 
 .color-picker-button:hover {
-  border-color: #536274;
-  background: #15191f;
+  border-color: var(--color-picker-button-hover-border-color);
+  background: var(--color-picker-button-hover-background);
 }
 
 .color-picker-button:has(input:disabled) {
@@ -799,8 +802,8 @@
   width: 17px;
   height: 17px;
   border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.36);
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.26);
+  border: 1px solid var(--color-swatch-border);
+  box-shadow: inset 0 0 0 1px var(--shadow-ink-26);
 }
 
 .color-hex-input {
@@ -842,14 +845,14 @@
   gap: 8px;
   padding: 10px;
   border-radius: 8px;
-  background: #15181d;
-  border: 1px solid #2d333b;
+  background: var(--bg-rail);
+  border: 1px solid var(--progress-card-border);
   min-width: 0;
   max-width: 100%;
 }
 
 .operation-progress-card {
-  background: color-mix(in srgb, var(--accent-soft) 32%, #15181d);
+  background: color-mix(in srgb, var(--accent-soft) 32%, var(--bg-rail));
 }
 
 .job-completed-card {
@@ -858,10 +861,19 @@
   min-width: 0;
   max-width: 100%;
   padding: 12px;
-  border: 1px solid color-mix(in srgb, #65c9a9 54%, #2d333b);
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--job-completed-card-border-start) 54%,
+      var(--job-completed-card-border-end)
+    );
   border-radius: 8px;
-  background: color-mix(in srgb, #2b6f60 24%, #15181d);
-  color: #e2f8f0;
+  background: color-mix(
+    in srgb,
+    var(--job-completed-card-background-start) 24%,
+    var(--bg-rail)
+  );
+  color: var(--job-completed-card-color);
 }
 
 .job-completed-heading {
@@ -873,7 +885,7 @@
 
 .job-completed-heading > svg {
   flex: 0 0 auto;
-  color: #7ed6ba;
+  color: var(--save-complete-text);
 }
 
 .job-completed-heading > div {
@@ -888,13 +900,13 @@
 }
 
 .job-completed-heading span {
-  color: #adddce;
+  color: var(--job-completed-heading-span-color);
   font-size: 12px;
 }
 
 .job-completed-card p {
   margin: 0;
-  color: #c4e8dd;
+  color: var(--job-completed-card-p-color);
   font-size: 12px;
   line-height: 1.45;
   white-space: pre-wrap;
@@ -943,9 +955,13 @@
 
 .chapter-save-status.error,
 .chapter-save-status.conflict {
-  border-color: color-mix(in srgb, #ef6f6c 50%, var(--border-soft));
-  background: color-mix(in srgb, #ef6f6c 11%, var(--bg-sunken));
-  color: #f3918f;
+  border-color: color-mix(
+    in srgb,
+    var(--job-error-accent) 50%,
+    var(--border-soft)
+  );
+  background: color-mix(in srgb, var(--job-error-accent) 11%, var(--bg-sunken));
+  color: var(--chapter-save-status-error-color);
 }
 
 .chapter-save-status button {
@@ -969,7 +985,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  color: #ddd5ca;
+  color: var(--progress-meta-color);
   font-size: 13px;
   min-width: 0;
 }
@@ -983,7 +999,7 @@
 
 .progress-meta strong {
   flex: 0 0 auto;
-  color: #f6efe4;
+  color: var(--value-emphasis-text);
   font-size: 12px;
 }
 
@@ -994,7 +1010,7 @@
 .progress-detail {
   display: block;
   max-width: 100%;
-  color: #b8b1a6;
+  color: var(--text-dim);
   font-size: 12px;
   line-height: 1.45;
   white-space: normal;
@@ -1028,31 +1044,31 @@
 .job-pill {
   border-radius: 999px;
   padding: 8px 10px;
-  background: #272b33;
-  color: #f5f0e8;
+  background: var(--job-pill-background);
+  color: var(--job-pill-color);
   font-size: 13px;
 }
 
 .job-pill.running,
 .job-pill.starting,
 .job-pill.cancelling {
-  background: #2b4d72;
+  background: var(--job-pill-running-background);
 }
 
 .job-pill.failed {
-  background: #773434;
+  background: var(--job-pill-failed-background);
 }
 
 .job-pill.partial {
-  background: #79561e;
+  background: var(--job-pill-partial-background);
 }
 
 .job-pill.completed {
-  background: #2f6f61;
+  background: var(--job-pill-completed-background);
 }
 
 .job-pill.cancelled {
-  background: #454a54;
+  background: var(--job-pill-cancelled-background);
 }
 
 .rich-inline-scope {

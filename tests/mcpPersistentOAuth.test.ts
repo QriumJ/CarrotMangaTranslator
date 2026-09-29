@@ -123,3 +123,23 @@ it("rejects corrupt and inconsistent persisted grants before replacing live perm
   assert.throws(() => f.provider.restore({ version: 999 }));
   assert.equal(f.provider.accepts(`Bearer ${f.tokens.access_token}`), true);
 });
+
+it("rejects a dangling refresh family before replacing the active connection", () => {
+  const f = fixture();
+  const snapshot = f.provider.snapshot();
+  assert.ok(snapshot.version === 2);
+  snapshot.families[0].grantId = "00000000-0000-4000-8000-000000000001";
+  assert.throws(
+    () => f.provider.restore(snapshot),
+    /Unknown saved OAuth refresh family/,
+  );
+  assert.equal(f.provider.accepts(`Bearer ${f.tokens.access_token}`), true);
+  const next = f.provider.token({
+    grant_type: "refresh_token",
+    client_id: f.client.client_id,
+    client_secret: f.client.client_secret,
+    refresh_token: f.tokens.refresh_token,
+    resource: `${origin}/mcp`,
+  });
+  assert.equal(f.provider.accepts(`Bearer ${next.access_token}`), true);
+});

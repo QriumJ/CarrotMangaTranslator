@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import type { InpaintingModel } from "../../../../shared/settingsTypes";
 import { INPAINTING_MODEL_OPTIONS } from "../settingsOptions";
 import { CheckboxField } from "../ui/CheckboxField";
+import { Button } from "../ui/Button";
 
 export type InpaintingModelSettingsProps = {
   allowUnsafeLowMemoryFlux: boolean;
@@ -54,7 +55,7 @@ function InpaintingModelButton({
   const { t } = useTranslation("components");
   return (
     <ControlTooltip floating content={t(option.descriptionKey)}>
-      <button
+      <Button
         type="button"
         className={`settings-preset-button ${inpaintingModel === option.id ? "active" : ""}`}
         disabled={controlsBusy}
@@ -73,9 +74,10 @@ function InpaintingModelButton({
           clearTestState();
           setInpaintingModel(option.id);
         }}
+        variant="bare"
       >
         {t(option.labelKey)}
-      </button>
+      </Button>
     </ControlTooltip>
   );
 }

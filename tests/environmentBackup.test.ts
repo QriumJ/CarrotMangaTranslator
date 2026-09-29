@@ -437,6 +437,51 @@ describe("environment backup", () => {
     expect(await readFile(join(outside, "original.txt"), "utf8")).toBe("KEEP");
   });
 
+  it("copies selected categories without a progress observer and preserves nested bytes", async () => {
+    const source = await temp();
+    const target = await temp();
+    await put(source, "fonts/nested/a.ttf", "first font bytes");
+    await put(source, "fonts/b.ttf", "second font bytes");
+
+    await copyCategories(source, target, ["fonts", "missing"], signal());
+
+    expect(await regularFiles(target)).toEqual([
+      "fonts/b.ttf",
+      "fonts/nested/a.ttf",
+    ]);
+    for (const path of await regularFiles(source)) {
+      expect(await readFile(join(target, path))).toEqual(
+        await readFile(join(source, path)),
+      );
+    }
+  });
+
+  it.each(["before-enumeration", "before-copy"] as const)(
+    "honors cancellation %s without publishing any copied file",
+    async (point) => {
+      const source = await temp();
+      const target = await temp();
+      await put(source, "fonts/original.ttf", "preserved source bytes");
+      const controller = new AbortController();
+      const reason = new Error(`cancel ${point}`);
+      if (point === "before-enumeration") controller.abort(reason);
+      const report = vi.fn((current: number) => {
+        expect(current).toBe(0);
+        controller.abort(reason);
+      });
+
+      await expect(
+        copyCategories(source, target, ["fonts"], controller.signal, report),
+      ).rejects.toBe(reason);
+
+      expect(report).toHaveBeenCalledTimes(point === "before-copy" ? 1 : 0);
+      expect(await regularFiles(target)).toEqual([]);
+      expect(await readFile(join(source, "fonts/original.ttf"), "utf8")).toBe(
+        "preserved source bytes",
+      );
+    },
+  );
+
   it("rejects a library junction before following its child paths", async () => {
     const root = await temp(),
       outside = await temp(),

@@ -5,6 +5,7 @@ import type {
 } from "../../../shared/libraryTypes";
 import type { RenameTarget } from "../lib/libraryRenameTypes";
 import type { ConfirmDialogState } from "./useConfirmDialog";
+import type { InpaintingMaskStroke } from "../../../shared/inpaintingTypes";
 
 type AskConfirm = (
   title: string,
@@ -20,6 +21,7 @@ export type UseLibraryActionsOptions = {
   currentChapterRef: MutableRefObject<ChapterSnapshot | null>;
   dirty: boolean;
   hasPendingInpaintingMask?: boolean;
+  patternMaskStrokesByPage?: Record<string, InpaintingMaskStroke[]>;
   library: LibraryIndex;
   onChapterOpened?: () => void;
   pushStatus: (line: string) => void;

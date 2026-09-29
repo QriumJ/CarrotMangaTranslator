@@ -20,6 +20,7 @@ import {
 import { CheckboxField } from "../../ui/CheckboxField";
 import { Select } from "../../ui/Select";
 import { toast } from "../../../lib/toastStore";
+import { Input } from "../../ui/Field";
 
 export type PresetFontDetail = { cssFamily: string; label: string };
 
@@ -38,7 +39,7 @@ export function PresetDefinitionPanel({
   return (
     <section className="style-preset-definition">
       <div className="style-preset-definition-heading">
-        <input
+        <Input
           className="style-preset-definition-name"
           aria-label={t("stylePresets.name")}
           maxLength={MAX_BLOCK_STYLE_PRESET_NAME_LENGTH}

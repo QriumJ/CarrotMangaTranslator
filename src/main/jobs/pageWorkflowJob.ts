@@ -12,7 +12,7 @@ import { workflowConfigurationKeys } from "../pageWorkflow/pageWorkflowConfigura
 import { createDefaultWholePagePipelineDependencies } from "../pipeline/wholePagePipelinePorts";
 import { isNonRetriableRuntimeError } from "../pipeline/failure";
 import {
-  acquireJobPage,
+  acquireJobPageOwnership,
   releaseJobPage,
   reserveJobChapter,
 } from "./jobPageOwnership";
@@ -136,7 +136,7 @@ async function runWorkflowJob({
         ...runtime,
         readChapter: openChapter,
         acquirePage: (chapterId, pageId) =>
-          acquireJobPage(context.jobs, run.id, chapterId, pageId, openChapter),
+          acquireJobPageOwnership(context.jobs, run.id, chapterId, pageId),
         releasePage: (chapterId, pageId) =>
           releaseJobPage(context.jobs, run.id, chapterId, pageId),
         isFatal: isNonRetriableRuntimeError,

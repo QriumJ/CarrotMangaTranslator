@@ -10,6 +10,7 @@ import { useLinkedWorkspaceSettingsOperations } from "../../hooks/useLinkedWorks
 import { useLinkedWorkspaceStatuses } from "../../hooks/useLinkedWorkspaceStatuses";
 import { LinkedWorkspaceChapterRow } from "./LinkedWorkspaceChapterRow";
 import { LinkedWorkspaceFolderRoles } from "../LinkedWorkspaceFolderRoles";
+import { Input } from "../ui/Field";
 
 export function LinkedWorkspaceSettingsPanel({
   library,
@@ -48,7 +49,7 @@ export function LinkedWorkspaceSettingsPanel({
           aria-label={t("settings.results.searchLabel")}
         >
           <IconSearch className="library-search-icon" aria-hidden="true" />
-          <input
+          <Input
             className="library-search-input"
             value={searchQuery}
             placeholder={t("settings.results.searchPlaceholder")}

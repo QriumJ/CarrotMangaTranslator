@@ -10,6 +10,30 @@ import {
   type PageWorkflowStage,
 } from "./pageWorkflowStages";
 
+/** Resuming uses frozen rules, but must never redirect the caller's targets. */
+export function assertPageWorkflowResumeSelection(
+  requested: PageWorkflowRequest["selection"],
+  saved: PageWorkflowRequest["selection"],
+): void {
+  const targets = new Map(
+    saved.map((item) => [item.chapterId, new Set(item.pageIds)]),
+  );
+  if (
+    requested.length !== saved.length ||
+    requested.some((item) => {
+      const pages = targets.get(item.chapterId);
+      return (
+        !pages ||
+        pages.size !== item.pageIds.length ||
+        item.pageIds.some((id) => !pages.has(id))
+      );
+    })
+  )
+    throw new Error(
+      "저장된 페이지 작업의 대상과 요청한 대상이 다릅니다. 현재 대상을 새 작업으로 실행하세요.",
+    );
+}
+
 export function workflowRegionKey(
   page: MangaPage,
   block: MangaPage["blocks"][number],

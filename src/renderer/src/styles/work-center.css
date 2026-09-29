@@ -10,16 +10,16 @@
   height: 42px;
   border: 1px solid var(--border-soft);
   border-radius: var(--r-md);
-  background: #14161b;
-  color: #aeb8c5;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  background: var(--canvas-chrome-bg);
+  color: var(--canvas-control-text);
+  box-shadow: 0 6px 18px var(--shadow-ink-40);
 }
 
 .status-dock-button:hover,
 .status-dock-button:focus-visible,
 .status-dock-button[aria-expanded="true"] {
-  background: #20242b;
-  color: #f4f6f8;
+  background: var(--control-bg);
+  color: var(--canvas-control-text-hover);
 }
 
 .status-dock-bell {
@@ -37,7 +37,7 @@
   right: 7px;
   width: 7px;
   height: 7px;
-  border: 1px solid #14161b;
+  border: 1px solid var(--canvas-chrome-bg);
   border-radius: 50%;
   opacity: 0;
 }
@@ -50,7 +50,7 @@
 }
 
 .status-dock-button.unread .status-dock-indicator {
-  background: #8da9ff;
+  background: var(--status-dock-button-unread-status-dock-indicator-background);
 }
 
 .status-dock-button.running .status-dock-indicator {
@@ -59,8 +59,9 @@
   left: 8px;
   width: 26px;
   height: 26px;
-  border: 3px solid rgba(126, 170, 255, 0.28);
-  border-top-color: #7eaaff;
+  border: 3px solid
+    var(--status-dock-button-running-status-dock-indicator-border);
+  border-top-color: var(--info-bd);
   background: transparent;
   animation: status-dock-spin 0.8s linear infinite;
 }
@@ -74,8 +75,8 @@
   height: 16px;
   border: 1px solid var(--border-soft);
   border-radius: 50%;
-  background: #14161b;
-  color: #c8d1dd;
+  background: var(--canvas-chrome-bg);
+  color: var(--status-dock-button-running-status-dock-bell-color);
 }
 
 .status-dock-button.running .status-dock-bell svg {
@@ -85,11 +86,13 @@
 }
 
 .status-dock-button.partial .status-dock-indicator {
-  background: #e8b34f;
+  background: var(
+    --status-dock-button-partial-status-dock-indicator-background
+  );
 }
 
 .status-dock-button.failed .status-dock-indicator {
-  background: #ef6f6c;
+  background: var(--job-error-accent);
 }
 
 .work-center-handoff-ghost {
@@ -199,7 +202,7 @@
   padding: var(--sp-4);
   border: 1px solid var(--border-strong);
   border-radius: var(--r-lg);
-  background: rgba(20, 22, 27, 0.98);
+  background: var(--status-popover-background);
   box-shadow: var(--shadow-overlay);
   backdrop-filter: blur(12px);
   overflow-y: auto;
@@ -490,8 +493,10 @@
 @media (prefers-reduced-motion: reduce) {
   .status-dock-button.running .status-dock-indicator {
     animation: none;
-    border-color: rgba(126, 170, 255, 0.42);
-    border-top-color: #7eaaff;
+    border-color: var(
+      --status-dock-button-running-status-dock-indicator-border-color
+    );
+    border-top-color: var(--info-bd);
   }
 }
 
@@ -530,12 +535,12 @@
   border-radius: var(--r-md);
   background: linear-gradient(
     180deg,
-    rgba(27, 30, 36, 0.99),
-    rgba(17, 19, 23, 0.99)
+    var(--status-sound-popover-background-start),
+    var(--status-sound-popover-background-end)
   );
   box-shadow:
-    0 12px 34px rgb(0 0 0 / 46%),
-    inset 0 1px 0 rgb(255 255 255 / 3%);
+    0 12px 34px var(--status-sound-popover-box-shadow-start),
+    inset 0 1px 0 var(--status-sound-popover-box-shadow-end);
   backdrop-filter: blur(12px);
   transform-origin: top center;
   animation: ui-surface-enter var(--motion-surface) var(--ease-enter) both;
@@ -557,7 +562,7 @@
   height: 8px;
   border-top: 1px solid var(--border-strong);
   border-left: 1px solid var(--border-strong);
-  background: rgba(25, 28, 33, 0.99);
+  background: var(--status-sound-popover-before-background);
   content: "";
   transform: rotate(45deg);
 }
@@ -612,7 +617,7 @@
   border: 1px solid var(--accent-bd);
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 42%);
+  box-shadow: 0 1px 3px var(--sound-control-thumb-shadow);
 }
 
 .status-sound-master-row input[type="range"]::-moz-range-track {
@@ -634,7 +639,7 @@
   border: 1px solid var(--accent-bd);
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 1px 3px rgb(0 0 0 / 42%);
+  box-shadow: 0 1px 3px var(--sound-control-thumb-shadow);
 }
 
 .status-sound-master-row input[type="range"]:focus-visible {
@@ -645,7 +650,7 @@
   input[type="range"]:focus-visible::-webkit-slider-thumb {
   box-shadow:
     0 0 0 3px var(--accent-soft),
-    0 1px 3px rgb(0 0 0 / 42%);
+    0 1px 3px var(--sound-control-thumb-shadow);
 }
 
 .status-sound-category-list {
@@ -664,7 +669,7 @@
   padding: 3px 7px 3px 5px;
   border: 0;
   border-radius: var(--r-sm);
-  background: rgb(255 255 255 / 2.5%);
+  background: var(--status-sound-category-row-background);
   color: var(--text);
   font: inherit;
   font-size: var(--font-md);
@@ -674,7 +679,7 @@
 
 .status-sound-category-row:hover {
   border-color: transparent;
-  background: rgb(255 255 255 / 6%);
+  background: var(--status-sound-category-row-hover-background);
 }
 
 .status-sound-category-row:focus-visible {
@@ -684,7 +689,7 @@
 
 .status-sound-category-row[aria-pressed="true"] {
   color: var(--text-muted);
-  background: rgb(255 255 255 / 1.5%);
+  background: var(--status-sound-category-row-aria-pressed-true-background);
 }
 
 .status-sound-category-icon {
@@ -694,12 +699,14 @@
   height: 22px;
   place-items: center;
   border-radius: 50%;
-  background: rgb(255 255 255 / 6%);
+  background: var(--status-sound-category-icon-background);
   color: var(--text);
 }
 
 .status-sound-category-row[aria-pressed="true"] .status-sound-category-icon {
-  background: rgb(255 255 255 / 5%);
+  background: var(
+    --status-sound-category-row-aria-pressed-true-status-sound-category-icon-background
+  );
   color: var(--text-muted);
 }
 

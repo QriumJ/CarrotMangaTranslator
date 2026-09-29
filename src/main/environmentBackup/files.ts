@@ -23,27 +23,41 @@ export async function exists(path: string): Promise<boolean> {
 export async function regularFiles(
   root: string,
   prefix = "",
+  signal?: AbortSignal,
 ): Promise<string[]> {
+  const result: string[] = [];
+  await appendRegularFiles(root, prefix, result, signal);
+  return result;
+}
+
+async function appendRegularFiles(
+  root: string,
+  prefix: string,
+  result: string[],
+  signal?: AbortSignal,
+): Promise<void> {
+  signal?.throwIfAborted();
   const info = await lstat(root);
   if (info.isSymbolicLink())
     throw new Error(
       "Linked folders and symbolic links cannot be included in a backup.",
     );
-  if (info.isFile()) return [backupRelativePath(prefix)];
+  if (info.isFile()) {
+    if (result.length >= MAX_BACKUP_FILES)
+      throw new Error("Backup contains too many files.");
+    result.push(backupRelativePath(prefix));
+    return;
+  }
   if (!info.isDirectory()) throw new Error("Backup contains a special file.");
-  const result: string[] = [];
   const entries = (await readdir(root)).sort();
   for (const name of entries) {
-    result.push(
-      ...(await regularFiles(
-        join(root, name),
-        prefix ? `${prefix}/${name}` : name,
-      )),
+    await appendRegularFiles(
+      join(root, name),
+      prefix ? `${prefix}/${name}` : name,
+      result,
+      signal,
     );
-    if (result.length > MAX_BACKUP_FILES)
-      throw new Error("Backup contains too many files.");
   }
-  return result;
 }
 export async function assertFreeSpace(
   directory: string,

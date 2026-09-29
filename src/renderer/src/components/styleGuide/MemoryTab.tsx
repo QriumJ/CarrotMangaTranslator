@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { ChapterStoryMemory } from "../../../../shared/workContextTypes";
+import { Textarea } from "../ui/Field";
 
 export function MemoryTab({
   memory,
@@ -50,7 +51,7 @@ export function MemoryTab({
               </h3>
               <label>
                 <span>{t("styleGuide.memory.visualSummary")}</span>
-                <textarea
+                <Textarea
                   rows={3}
                   maxLength={1200}
                   value={page.visualSummary ?? ""}

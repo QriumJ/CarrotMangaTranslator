@@ -13,6 +13,7 @@ import {
 import { useFonts } from "../../fonts/useFonts";
 import { resolveBlockFontFamily } from "../../lib/fonts";
 import { TextWithVerticalSpacing } from "../VerticalTextSpacing";
+import { Input } from "../ui/Field";
 
 export type BlockFormatPreviewValues = {
   fontFamily: string | undefined;
@@ -180,7 +181,7 @@ function BlockFormatPreviewHeader({
       </div>
       <label className="gather-direct-preview-input">
         <span>{exampleLabel}</span>
-        <input
+        <Input
           value={exampleText}
           maxLength={120}
           onChange={(event) => onExampleTextChange(event.target.value)}

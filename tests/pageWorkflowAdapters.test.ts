@@ -315,7 +315,7 @@ describe("independent Hayai workflow adapters", () => {
       let chapter = makeChapter(f.page);
       const port: PageWorkflowExecutionPort = {
         readChapter: async () => structuredClone(chapter),
-        acquirePage: async () => chapter.pages[0],
+        acquirePage: async () => {},
         releasePage: vi.fn(),
         prepareStage: async () => {},
         progress: vi.fn(),

@@ -16,6 +16,7 @@ import {
 } from "./ContextEntryList";
 import type { ContextEntryTableRowProps } from "./contextEntryTableModel";
 import { SPEECH_STYLE_IDS } from "./styleGuideUtils";
+import { Input } from "../ui/Field";
 
 export function CharacterContextEntryRow({
   entry: character,
@@ -49,8 +50,9 @@ export function CharacterContextEntryRow({
         placeholder={t("styleGuide.characters.sourceNames")}
         onValuesChange={(sourceNames) => onUpdate({ sourceNames })}
       />
-      <input
+      <Input
         value={character.targetName}
+        aria-label={t("styleGuide.characters.translatedName")}
         placeholder={t("styleGuide.characters.translatedName")}
         onChange={(event) => onUpdate({ targetName: event.target.value })}
       />
@@ -65,15 +67,17 @@ export function CharacterContextEntryRow({
           onUpdate({ speechStyle: nextValue as CharacterSpeechStyle })
         }
       />
-      <input
+      <Input
         value={character.customSpeechStyle ?? ""}
+        aria-label={t("styleGuide.characters.customSpeechStyle")}
         placeholder={t("styleGuide.characters.customSpeechStyle")}
         onChange={(event) =>
           onUpdate({ customSpeechStyle: event.target.value })
         }
       />
-      <input
+      <Input
         value={character.note ?? ""}
+        aria-label={t("styleGuide.note")}
         placeholder={t("styleGuide.note")}
         onChange={(event) => onUpdate({ note: event.target.value })}
       />
@@ -122,8 +126,9 @@ function CharacterPrimaryFields({
           onCheckedChange={onToggleSelected}
         />
       )}
-      <input
+      <Input
         value={character.displayName}
+        aria-label={t("styleGuide.characters.displayName")}
         placeholder={t("styleGuide.characters.displayName")}
         onChange={(event) => onUpdate({ displayName: event.target.value })}
       />

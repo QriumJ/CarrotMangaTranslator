@@ -3,8 +3,10 @@ import type { McpExternalImagePreview } from "../../shared/mcpExternalImages";
 import type { McpImageFileEvidence } from "../application/mcpImageEditPolicy";
 import { McpEditError } from "../application/mcpEditPolicy";
 import type { McpImageUploadStore } from "./mcpImageUploadStore";
+import type { McpImageProcessingPort } from "./mcpImageWorkerProtocol";
 
 export type ExternalImageAssets = {
+  processing: McpImageProcessingPort;
   image: Buffer;
   mask?: Buffer;
   protectedMask?: Buffer;
@@ -58,6 +60,7 @@ export function withExternalImageAssets<T>(
         );
       if (!result)
         result = {
+          processing: store.processing,
           image: asset.bytes,
           width: binding.width,
           height: binding.height,

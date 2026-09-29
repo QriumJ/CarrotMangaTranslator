@@ -98,6 +98,18 @@ it("aborts startup before on/off racing can leak a listener", async () => {
   assert.equal((await f.service.getStatus()).state, "off");
   assert.equal(f.events.includes("close"), false);
 });
+it("honors the disable barrier before a rapidly queued re-enable", async () => {
+  const { service, events } = fixture();
+  await service.setEnabled(true);
+  events.length = 0;
+  const off = service.setEnabled(false);
+  const on = service.setEnabled(true);
+  await Promise.all([off, on]);
+  assert.deepEqual(events, ["block", "block", "close", "open"]);
+  assert.equal((await service.getStatus()).state, "online");
+  await service.dispose();
+});
+
 it("restarts for permission changes but does not revoke approval and supports offline revocation", async () => {
   const f = fixture();
   await f.service.setEnabled(true);

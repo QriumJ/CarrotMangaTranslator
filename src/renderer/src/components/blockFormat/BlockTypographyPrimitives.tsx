@@ -7,6 +7,7 @@ import {
 import { FontSelect } from "../FontSelect";
 import { NumberField } from "../ui/NumberField";
 import { BlockFormatControlCaption } from "./BlockFormatPrimitives";
+import { Button } from "../ui/Button";
 
 export function BlockTypographyFontPicker({
   disabled = false,
@@ -116,17 +117,18 @@ export function BlockTypographyPillToggle({
         mixed={mixed}
         touched={touched}
       />
-      <button
+      <Button
         type="button"
         className="gather-direct-pill-toggle"
         data-touched={touched || undefined}
         aria-pressed={mixed ? "mixed" : pressed}
         disabled={disabled}
         onClick={onClick}
+        variant="bare"
       >
         <span aria-hidden="true" />
         {text}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -193,7 +195,7 @@ export function BlockTypographyToolButton({
   onClick: () => void;
 }): React.JSX.Element {
   return (
-    <button
+    <Button
       type="button"
       className="gather-direct-tool-button"
       aria-label={label}
@@ -202,8 +204,9 @@ export function BlockTypographyToolButton({
       data-touched={touched || undefined}
       disabled={disabled}
       onClick={onClick}
+      variant="bare"
     >
       {children}
-    </button>
+    </Button>
   );
 }

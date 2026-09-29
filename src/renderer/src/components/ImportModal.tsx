@@ -1,30 +1,45 @@
-/* eslint-disable max-lines -- import target, chapter selection, and linked-folder confirmation compose one modal */
 import React from "react";
+
 import { useTranslation } from "react-i18next";
+
 import type {
   ImportCreateSelection,
   ImportPreviewResult,
 } from "../../../shared/importTypes";
+
 import type { LibraryIndex } from "../../../shared/libraryTypes";
+
 import type { LinkedWorkspaceImportOptions } from "../../../shared/linkedWorkspaceTypes";
+
 import type { ImportModalSubmit } from "../lib/importFlowTypes";
+
 import {
   buildImportSubmitPayload,
   isImportSubmittable,
   type ImportTargetMode,
-  updateSelectionEnabled,
-  updateSelectionTitle,
 } from "./importModalHelpers";
+
 import { Button } from "./ui/Button";
-import { CheckboxField } from "./ui/CheckboxField";
+
 import { TextField } from "./ui/Field";
+
 import { Modal } from "./ui/Modal";
+
 import { ModalActionBar } from "./ui/ModalActionBar";
-import { SelectionCard, SelectionSurface } from "./ui/SelectionCard";
+
+import { SelectionCard } from "./ui/SelectionCard";
+
 import { WorkSelect } from "./WorkSelect";
+
 import { ImportLinkedWorkspaceSection } from "./ImportLinkedWorkspaceSection";
+
 import { InlineMessage } from "./ui/InlineMessage";
+
 import type { ImportModalFeedback } from "../lib/importFlowTypes";
+
+import { resolveImportModalInitialState } from "./importModalHelpers";
+
+import { ImportDraftSection } from "./ImportDraftSection";
 
 type ImportModalProps = {
   library: LibraryIndex;
@@ -217,81 +232,6 @@ function ImportExcludedPagesNotice({
   );
 }
 
-function resolveImportModalInitialState(
-  library: LibraryIndex,
-  currentWorkId: string | null,
-  preview: ImportPreviewResult,
-  initialDraft: ImportModalSubmit | null,
-) {
-  const currentWorkAvailable = Boolean(
-    currentWorkId && library.works.some((work) => work.id === currentWorkId),
-  );
-  return {
-    currentWorkId: currentWorkAvailable ? currentWorkId : null,
-    existingWorkId: resolveInitialExistingWorkId(
-      library,
-      currentWorkId,
-      currentWorkAvailable,
-      initialDraft,
-    ),
-    targetMode: resolveInitialTargetMode(currentWorkAvailable, initialDraft),
-    newWorkTitle: resolveInitialWorkTitle(preview, initialDraft),
-    selections: resolveInitialSelections(preview, initialDraft),
-    linkedWorkspace: initialDraft?.linkedWorkspace ?? {
-      enabled: true,
-      outputFormat: "source" as const,
-      jpegQuality: 95,
-      webpQuality: 90,
-    },
-  };
-}
-
-function resolveInitialExistingWorkId(
-  library: LibraryIndex,
-  currentWorkId: string | null,
-  currentWorkAvailable: boolean,
-  initialDraft: ImportModalSubmit | null,
-): string {
-  if (initialDraft?.target.mode === "existing") {
-    return initialDraft.target.workId;
-  }
-  if (currentWorkAvailable) return currentWorkId ?? "";
-  return library.works[0]?.id ?? "";
-}
-
-function resolveInitialTargetMode(
-  currentWorkAvailable: boolean,
-  initialDraft: ImportModalSubmit | null,
-): ImportTargetMode {
-  if (initialDraft) return initialDraft.target.mode;
-  return currentWorkAvailable ? "existing" : "new";
-}
-
-function resolveInitialWorkTitle(
-  preview: ImportPreviewResult,
-  initialDraft: ImportModalSubmit | null,
-): string {
-  return initialDraft?.target.mode === "new"
-    ? initialDraft.target.title
-    : preview.suggestedWorkTitle;
-}
-
-function resolveInitialSelections(
-  preview: ImportPreviewResult,
-  initialDraft: ImportModalSubmit | null,
-): ImportCreateSelection[] {
-  return preview.chapters.map(
-    (chapter) =>
-      initialDraft?.selections.find(
-        (selection) => selection.draftId === chapter.draftId,
-      ) ?? {
-        draftId: chapter.draftId,
-        title: chapter.title,
-        enabled: true,
-      },
-  );
-}
-
 function resolveImportModalTitle(
   t: ReturnType<typeof useTranslation>["t"],
   mode: ImportPreviewResult["mode"],
@@ -457,121 +397,5 @@ function ImportExistingWorkSelect({
         onValueChange={setExistingWorkId}
       />
     </label>
-  );
-}
-
-function ImportDraftSection({
-  busy,
-  preview,
-  selections,
-  setSelections,
-}: {
-  busy: boolean;
-  preview: ImportPreviewResult;
-  selections: ImportCreateSelection[];
-  setSelections: React.Dispatch<React.SetStateAction<ImportCreateSelection[]>>;
-}): React.JSX.Element {
-  const { t } = useTranslation("components");
-  return (
-    <section className="modal-section">
-      <h3>
-        {t(
-          preview.mode === "batch"
-            ? "import.chaptersToCreate"
-            : "import.chapterTitle",
-        )}
-      </h3>
-      <div className="draft-list">
-        {preview.chapters.map((chapter) => {
-          const selection = selections.find(
-            (item) => item.draftId === chapter.draftId,
-          );
-          return selection ? (
-            <ImportDraftItem
-              key={chapter.draftId}
-              busy={busy}
-              chapter={chapter}
-              previewMode={preview.mode}
-              selection={selection}
-              setSelections={setSelections}
-            />
-          ) : null;
-        })}
-      </div>
-    </section>
-  );
-}
-
-function ImportDraftItem({
-  busy,
-  chapter,
-  previewMode,
-  selection,
-  setSelections,
-}: {
-  busy: boolean;
-  chapter: ImportPreviewResult["chapters"][number];
-  previewMode: ImportPreviewResult["mode"];
-  selection: ImportCreateSelection;
-  setSelections: React.Dispatch<React.SetStateAction<ImportCreateSelection[]>>;
-}): React.JSX.Element {
-  const { t } = useTranslation("components");
-  return (
-    <SelectionSurface
-      className="draft-item selection-field-row"
-      variant="row"
-      selected={previewMode === "batch" ? selection.enabled : true}
-      disabled={busy}
-    >
-      {previewMode === "batch" ? (
-        <ImportDraftBatchToggle
-          busy={busy}
-          chapter={chapter}
-          selection={selection}
-          setSelections={setSelections}
-        />
-      ) : (
-        <span className="draft-meta">
-          {t("common.pageCount", { count: chapter.pages.length })}
-        </span>
-      )}
-      <input
-        value={selection.title}
-        disabled={busy || (previewMode === "batch" && !selection.enabled)}
-        onChange={(event) =>
-          updateSelectionTitle(
-            setSelections,
-            chapter.draftId,
-            event.target.value,
-          )
-        }
-      />
-    </SelectionSurface>
-  );
-}
-
-function ImportDraftBatchToggle({
-  busy,
-  chapter,
-  selection,
-  setSelections,
-}: {
-  busy: boolean;
-  chapter: ImportPreviewResult["chapters"][number];
-  selection: ImportCreateSelection;
-  setSelections: React.Dispatch<React.SetStateAction<ImportCreateSelection[]>>;
-}): React.JSX.Element {
-  const { t } = useTranslation("components");
-  return (
-    <CheckboxField
-      className="checkbox-row"
-      ariaLabel={`${selection.title} · ${t("common.pageCount", { count: chapter.pages.length })}`}
-      label={t("common.pageCount", { count: chapter.pages.length })}
-      checked={selection.enabled}
-      disabled={busy}
-      onCheckedChange={(checked) =>
-        updateSelectionEnabled(setSelections, chapter.draftId, checked)
-      }
-    />
   );
 }

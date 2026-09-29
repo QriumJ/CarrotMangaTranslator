@@ -93,35 +93,47 @@ function BlockOverflowMenuItems({
   const { t } = useTranslation("components");
   return (
     <>
-      <button
+      <Button
         aria-checked={Boolean(block.inpaintExcluded)}
         role="menuitemcheckbox"
         type="button"
         onClick={() => onUpdate({ inpaintExcluded: !block.inpaintExcluded })}
+        variant="bare"
       >
         <IconEraserOff size={17} stroke={2.1} aria-hidden="true" />
         <span>{t("editor.inpainting.exclude")}</span>
         <span className="editor-overflow-check" aria-hidden="true">
           {block.inpaintExcluded ? "✓" : ""}
         </span>
-      </button>
-      <button role="menuitem" type="button" onClick={onSaveToLibrary}>
+      </Button>
+      <Button
+        role="menuitem"
+        type="button"
+        onClick={onSaveToLibrary}
+        variant="bare"
+      >
         <IconLibraryPlus size={17} stroke={2.1} aria-hidden="true" />
         <span>{t("blockLibrary.saveAction")}</span>
-      </button>
-      <button role="menuitem" type="button" onClick={onDuplicate}>
+      </Button>
+      <Button
+        role="menuitem"
+        type="button"
+        onClick={onDuplicate}
+        variant="bare"
+      >
         <CopyIcon size={16} />
         <span>{t("common.duplicate")}</span>
-      </button>
-      <button
+      </Button>
+      <Button
         className="danger"
         role="menuitem"
         type="button"
         onClick={onDelete}
+        variant="bare"
       >
         <TrashIcon size={16} />
         <span>{t("common.delete")}</span>
-      </button>
+      </Button>
     </>
   );
 }

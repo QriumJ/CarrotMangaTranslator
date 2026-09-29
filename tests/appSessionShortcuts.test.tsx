@@ -8,6 +8,7 @@ import {
   resolveActiveModalActionId,
 } from "../src/renderer/src/app/session/useAppSessionShortcuts";
 import { useAppSessionUiState } from "../src/renderer/src/app/session/useAppSessionUiState";
+import { useAppSessionCommandController } from "../src/renderer/src/app/session/useAppSessionCommandController";
 import { SHORTCUT_ACTION_IDS } from "../src/shared/shortcutSettings";
 import type { ChapterSnapshot, MangaPage } from "../src/shared/libraryTypes";
 import type { TranslationBlock } from "../src/shared/textTypes";
@@ -29,7 +30,7 @@ describe("app-session shortcut handlers", () => {
         useAppSessionShortcuts({
           chapter,
           translation,
-          inpainting: makeInpaintingController(spies),
+          inpainting: useInpaintingControllerFixture(spies, uiState),
         });
       },
       { initialProps: { open: true } },
@@ -274,7 +275,7 @@ function useShortcutHarness(
     workspaceZoomController,
   );
   const translation = makeTranslationController(spies);
-  const inpainting = makeInpaintingController(spies);
+  const inpainting = useInpaintingControllerFixture(spies, uiState);
   return {
     handlers: createShortcutHandlers({ chapter, translation, inpainting }),
     uiState,
@@ -365,8 +366,30 @@ function makeTranslationController(spies: TestSpies) {
   } as never;
 }
 
-function makeInpaintingController(spies: TestSpies) {
+function useInpaintingControllerFixture(
+  spies: TestSpies,
+  uiState: ReturnType<typeof useAppSessionUiState>,
+) {
+  const commandRegistry = useAppSessionCommandController({
+    ...uiState,
+    redactionPreparation: { currentPageId: null, open: vi.fn() },
+    startRegionTranslation: vi.fn(),
+    cancelJob: spies.cancelJob,
+    currentChapter: makeChapter(),
+    jobActive: false,
+    openImportPreview: async () => {},
+    openLibraryFolder: vi.fn(),
+    openLogFolder: vi.fn(),
+    openErrorReport: vi.fn(),
+    openSettings: spies.openSettings,
+    openShareImportPreview: async () => {},
+    runAnalysis: spies.runAnalysis,
+    runCurrentPageInpainting: spies.runDrawnPattern,
+    setShareExportOpen: vi.fn(),
+    setTranslationSourceOpen: vi.fn(),
+  });
   return {
+    commandRegistry,
     inpaintingBridge: {
       contextValue: {
         onClearPatternMask: spies.clearPatternMask,

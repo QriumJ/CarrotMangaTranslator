@@ -7,7 +7,10 @@ import {
   type mcpImageUploadOutputs,
 } from "../../shared/mcpImageUploads";
 import type { McpImageFileEvidence } from "../application/mcpImageEditPolicy";
-import { decodeMcpUploadPng } from "./mcpImageUploadPng";
+import {
+  McpImageWorkerClient,
+  type McpImageWorkerFactory,
+} from "./mcpImageWorkerClient";
 import { readImageUploadFile } from "./mcpImageUploadFiles";
 import { McpUploadStore } from "./mcpUploadStore";
 
@@ -23,7 +26,14 @@ export class McpImageUploadStore extends McpUploadStore<
   Validation,
   Receipt
 > {
-  constructor(now: () => number = Date.now) {
+  readonly processing: McpImageWorkerClient;
+  constructor(
+    now: () => number = Date.now,
+    createWorker?: McpImageWorkerFactory,
+  ) {
+    const processing = new McpImageWorkerClient(createWorker, () =>
+      this.stop(),
+    );
     super(
       {
         parse: (value) => McpImageUploadBeginSchema.parse(value),
@@ -33,19 +43,8 @@ export class McpImageUploadStore extends McpUploadStore<
         maxBytes: MCP_UPLOAD_SESSION_BYTES,
         capacityMessage:
           "Upload session capacity reached (32 files / 128 MiB / 256 receipts). Discard unneeded uploads; no source file was changed.",
-        validate: async (input, path, guard) => {
-          const bytes = await readImageUploadFile(
-            path,
-            input.bytes,
-            input.sha256,
-          );
-          guard();
-          const { hasTransparency, selectedPixels } = decodeMcpUploadPng(
-            bytes,
-            input,
-          );
-          return { hasTransparency, selectedPixels };
-        },
+        validate: (input, path, guard) =>
+          processing.run("validate", { path, declared: input }, guard),
         project: ({ id, input, received, expiresAt, ready }) => ({
           uploadId: id,
           chapterId: input.chapterId,
@@ -67,6 +66,17 @@ export class McpImageUploadStore extends McpUploadStore<
       },
       now,
     );
+    this.processing = processing;
+  }
+  override stop(): void {
+    super.stop();
+    this.processing.stop();
+  }
+  override async close(): Promise<void> {
+    this.stop();
+    // Keep owned staging intact unless the worker has finished reading it.
+    await this.processing.close();
+    await super.close();
   }
   use<T>(
     owner: string,

@@ -17,6 +17,7 @@ import type {
   ResizeHandle,
 } from "../lib/workspaceInteractionTypes";
 import { WarpOverlayControls } from "./WarpOverlayControls";
+import { Button } from "./ui/Button";
 
 export type BlockTransformMode = "select" | "perspective" | "curve" | "warp";
 
@@ -227,7 +228,7 @@ function TransformHandle({
   point?: Point;
 }): React.JSX.Element {
   return (
-    <button
+    <Button
       aria-label={label}
       className={`transform-handle ${className}`}
       data-transform-handle={mode}
@@ -238,6 +239,7 @@ function TransformHandle({
           : undefined
       }
       type="button"
+      variant="bare"
     />
   );
 }

@@ -40,7 +40,7 @@ function entries<T extends z.ZodTypeAny>(value: T, maximum: number) {
     .array(z.object({ digest, expiresAt: timestamp, value }).strict())
     .max(maximum);
 }
-const snapshot = z
+const legacySnapshot = z
   .object({
     version: z.literal(1),
     issuer: z.string().url().max(2048),
@@ -53,8 +53,27 @@ const snapshot = z
     ),
   })
   .strict();
+const refreshFamily = z
+  .object({
+    grantId: z.string().uuid(),
+    key: digest.refine(
+      (value) =>
+        Buffer.from(value, "base64url").toString("base64url") === value,
+      "Invalid refresh family key encoding.",
+    ),
+    generation: timestamp.min(1),
+  })
+  .strict();
+const snapshot = z.discriminatedUnion("version", [
+  legacySnapshot,
+  legacySnapshot.extend({
+    version: z.literal(2),
+    families: z.array(refreshFamily).max(256),
+  }),
+]);
 export type McpOAuthSnapshot = z.infer<typeof snapshot>;
 export type McpOAuthGrant = McpOAuthSnapshot["grants"][number];
+export type McpOAuthRefreshFamily = z.infer<typeof refreshFamily>;
 
 /** Validate the complete reference graph before replacing any live state. */
 export function parseMcpOAuthSnapshot(
@@ -85,6 +104,12 @@ export function parseMcpOAuthSnapshot(
   for (const item of result.refresh)
     if (!grants.has(item.value.grantId))
       throw new Error("Unknown saved OAuth refresh grant.");
+  if (result.version === 2) {
+    uniqueKeys(result.families.map((item) => item.grantId));
+    for (const item of result.families)
+      if (!grants.has(item.grantId))
+        throw new Error("Unknown saved OAuth refresh family.");
+  }
   return result;
 }
 function uniqueKeys(keys: string[]): Set<string> {

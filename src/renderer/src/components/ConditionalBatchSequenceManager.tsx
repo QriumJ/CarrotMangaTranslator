@@ -1,15 +1,13 @@
 import { IconCopy, IconEdit, IconTrash } from "@tabler/icons-react";
 import React from "react";
 import type { ConditionalBatchSequenceV2 } from "../../../shared/conditionalBatchRules";
+import { ConditionalBatchCollapsibleTrigger } from "./ConditionalBatchControls";
+import styles from "./ConditionalBatchEditor.module.css";
 import type { ConditionalBatchRulePanelProps } from "./conditionalBatchRulePanelTypes";
-import {
-  Button,
-  ConditionalBatchCollapsibleTrigger,
-} from "./ConditionalBatchControls";
 import { ConditionalBatchSequenceForm } from "./ConditionalBatchSequenceForm";
+import { Button } from "./ui/Button";
 import { IconButton } from "./ui/IconButton";
 import { useConditionalBatchSequenceEditor } from "./useConditionalBatchSequenceEditor";
-import styles from "./ConditionalBatchEditor.module.css";
 
 type ConditionalBatchSequenceManagerProps = Pick<
   ConditionalBatchRulePanelProps,

@@ -5,6 +5,7 @@ import { Button } from "../ui/Button";
 import { CheckboxField } from "../ui/CheckboxField";
 import { SelectionSurface } from "../ui/SelectionCard";
 import type { NewSelection } from "./shareImportTypes";
+import { Input } from "../ui/Field";
 
 type ShareImportNewWorkSectionProps = {
   busy: boolean;
@@ -97,7 +98,7 @@ function ShareImportNewWorkItem({
           );
         }}
       />
-      <input
+      <Input
         value={selection.title}
         disabled={busy || !selection.enabled}
         onChange={(event) => {

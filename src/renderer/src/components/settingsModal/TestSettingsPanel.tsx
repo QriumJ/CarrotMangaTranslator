@@ -5,6 +5,7 @@ import { toast } from "../../lib/toastStore";
 import type { TestState } from "../settingsModalTypes";
 import { formatSettingsErrorMessage } from "../settingsModalHelpers";
 import { SettingsSection } from "./SettingsSection";
+import { Button } from "../ui/Button";
 
 type TestSettingsPanelProps = {
   canSubmit: boolean;
@@ -31,15 +32,16 @@ export function TestSettingsPanel({
       <UpdateSection />
       <SettingsSection title={t("settings.test.title")}>
         <div className="settings-inline-actions">
-          <button
+          <Button
             type="button"
             onClick={() => void runModelTest()}
             disabled={controlsBusy || !canSubmit || jobActive}
+            variant="bare"
           >
             {testState.status === "running"
               ? t("settings.test.running")
               : t("settings.test.run")}
-          </button>
+          </Button>
         </div>
         {testState.status !== "idle" ? (
           <div className={`settings-test-result ${testState.status}`}>
@@ -97,7 +99,7 @@ function UpdateSection(): React.JSX.Element {
           : t("settings.update.checkingVersion")}
       </p>
       <div className="settings-inline-actions">
-        <button
+        <Button
           type="button"
           onClick={() => {
             void settingsGateway.openReleasesPage().catch((error) => {
@@ -109,9 +111,10 @@ function UpdateSection(): React.JSX.Element {
               );
             });
           }}
+          variant="bare"
         >
           {t("settings.update.check")}
-        </button>
+        </Button>
       </div>
     </SettingsSection>
   );

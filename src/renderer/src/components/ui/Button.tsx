@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./Button.module.css";
 
-type ButtonVariant = "primary" | "secondary" | "danger" | "ghost";
+type ButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "bare";
 type ButtonSize = "sm" | "md";
 
 export type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -22,17 +22,31 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       iconRight,
       className,
       children,
-      type = "button",
+      type = variant === "bare" ? undefined : "button",
       ...rest
     },
     ref,
   ) {
+    if (variant === "bare") {
+      return (
+        <button
+          ref={ref}
+          type={type}
+          className={[styles.bare, className].filter(Boolean).join(" ")}
+          {...rest}
+        >
+          {iconLeft}
+          {children}
+          {iconRight}
+        </button>
+      );
+    }
     const classes = [
       styles.button,
       styles[variant],
       size === "sm" ? styles.sm : "",
       fullWidth ? styles.fullWidth : "",
-      className ?? "",
+      className,
     ]
       .filter(Boolean)
       .join(" ");

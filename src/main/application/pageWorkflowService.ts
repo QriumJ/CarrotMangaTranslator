@@ -22,7 +22,7 @@ export type PageWorkflowExecutionPort = {
     page: MangaPage,
   ) => Promise<void>;
   readChapter: (chapterId: string) => Promise<ChapterSnapshot>;
-  acquirePage: (chapterId: string, pageId: string) => Promise<MangaPage>;
+  acquirePage: (chapterId: string, pageId: string) => Promise<void>;
   releasePage: (chapterId: string, pageId: string) => void;
   save: (
     chapterId: string,
@@ -100,11 +100,15 @@ async function executeWorkflowChapter(
     )) {
       input.signal.throwIfAborted();
       const chapter = await port.readChapter(selection.chapterId);
+      const currentIds = new Set(chapter.pages.map((page) => page.id));
+      if (acquired.some((id) => !currentIds.has(id)))
+        throw new Error("작업 대상 페이지가 사라졌습니다.");
+      const acquiredIds = new Set(acquired);
       const pageIds = chapter.pages
         .map((page) => page.id)
         .filter(
           (id) =>
-            acquired.includes(id) && !hasFailedDependency(issues, id, stage),
+            acquiredIds.has(id) && !hasFailedDependency(issues, id, stage),
         );
       if (reportCompletedStage(input, port, chapter, pageIds, stage)) continue;
       issues.push(

@@ -10,6 +10,7 @@ import { Button } from "./ui/Button";
 import { RestoreIcon, TextareaHeightIcon } from "./ui/icons";
 import { RichTranslationEditor } from "./RichTranslationEditor";
 import styles from "./EditorPanelSections.module.css";
+import { Textarea } from "./ui/Field";
 
 type BlockPatchHandler = (patch: Partial<TranslationBlock>) => void;
 
@@ -222,7 +223,7 @@ function SourceTextField({
           {t("editor.markupToolbar.resetHeight")}
         </Button>
       </span>
-      <textarea
+      <Textarea
         ref={refCallback}
         aria-label="OCR"
         value={value}

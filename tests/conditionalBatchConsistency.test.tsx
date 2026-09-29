@@ -1,7 +1,19 @@
 /** @vitest-environment jsdom */
-import React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import React from "react";
 import { afterEach, describe, expect, it } from "vitest";
+import { ConditionalBatchActionCard } from "../src/renderer/src/components/ConditionalBatchActionCard";
+import { ConditionalBatchConditionsCard } from "../src/renderer/src/components/ConditionalBatchConditionsCard";
+import { createConditionForField } from "../src/renderer/src/components/conditionalBatchDraftDefaults";
+import {
+  formatConditionalBatchDisplayValue,
+  resolveConditionalBatchNumberPresentation,
+  summarizeCondition,
+} from "../src/renderer/src/components/conditionalBatchPresentation";
+import {
+  DEFAULT_BLOCK_FONT_CATALOG,
+  getBaseBlockFontOptions,
+} from "../src/renderer/src/lib/fonts";
 import { DEFAULT_BLOCK_FONT_ID } from "../src/shared/blockFontCatalog";
 import {
   normalizeFontWeightPatch,
@@ -13,9 +25,9 @@ import {
 } from "../src/shared/blockStylePresets";
 import {
   applyConditionalBatchPreview,
+  applyConditionalBatchSequencePreview,
   createConditionalBatchPreview,
   createConditionalBatchSequencePreview,
-  applyConditionalBatchSequencePreview,
 } from "../src/shared/conditionalBatchEngine";
 import {
   ConditionalBatchSchemeDraftV2Schema,
@@ -23,24 +35,12 @@ import {
   type ConditionalBatchActionV2,
   type ConditionalBatchSchemeDraftV2,
 } from "../src/shared/conditionalBatchRules";
+import { TranslationBlockSchema } from "../src/shared/ipcSchemaPrimitives";
 import {
   applyTextStyleToRuns,
   parseRichText,
   serializeRichTextRuns,
 } from "../src/shared/richTextMarkup";
-import { TranslationBlockSchema } from "../src/shared/ipcSchemaPrimitives";
-import { ConditionalBatchActionCard } from "../src/renderer/src/components/ConditionalBatchActionCard";
-import { ConditionalBatchConditionsCard } from "../src/renderer/src/components/ConditionalBatchConditionsCard";
-import {
-  createConditionForField,
-  formatConditionalBatchDisplayValue,
-  resolveConditionalBatchNumberPresentation,
-  summarizeCondition,
-} from "../src/renderer/src/components/conditionalBatchUi";
-import {
-  DEFAULT_BLOCK_FONT_CATALOG,
-  getBaseBlockFontOptions,
-} from "../src/renderer/src/lib/fonts";
 import { BatchFonts, batchChapter } from "./fixtures/conditionalBatch";
 import { chooseCustomSelectOption } from "./testUtils/customSelect";
 

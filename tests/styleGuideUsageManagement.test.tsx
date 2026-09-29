@@ -45,6 +45,9 @@ describe("style guide usage management", () => {
       />,
     );
     const legacy = screen.getByRole("combobox", { name: "Alpha 분류" });
+    for (const name of ["원문", "번역", "별칭", "메모"]) {
+      expect(screen.getAllByRole("textbox", { name })).toHaveLength(2);
+    }
     expect(legacy.textContent).toBe("효과음");
     fireEvent.click(legacy);
     fireEvent.click(screen.getByRole("option", { name: "용어" }));
@@ -144,9 +147,12 @@ describe("style guide usage management", () => {
     );
 
     const names = screen
-      .getAllByPlaceholderText("표시 이름")
+      .getAllByRole("textbox", { name: "표시 이름" })
       .map((input) => (input as HTMLInputElement).value);
     expect(names).toEqual(["유나", "민호"]);
+    for (const name of ["원문 이름", "번역 이름", "커스텀 말투", "메모"]) {
+      expect(screen.getAllByRole("textbox", { name })).toHaveLength(2);
+    }
 
     fireEvent.change(screen.getAllByPlaceholderText("표시 이름")[0], {
       target: { value: "유나 수정" },

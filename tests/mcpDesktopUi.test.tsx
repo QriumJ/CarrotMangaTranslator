@@ -449,7 +449,7 @@ it("keeps setup and diagnostics behind an accessible disclosure and runs the sel
   expect(help.getAttribute("aria-expanded")).toBe("false");
   fireEvent.click(help);
   expect(help.getAttribute("aria-expanded")).toBe("true");
-  fireEvent.click(screen.getByRole("button", { name: "Tailscale 설치 안내" }));
+  fireEvent.click(screen.getByRole("button", { name: "Tailscale 다운로드" }));
   await waitFor(() => expect(openMcpHelp).toHaveBeenCalledWith("tailscale"));
   await waitFor(() =>
     expect(
@@ -462,3 +462,53 @@ it("keeps setup and diagnostics behind an accessible disclosure and runs the sel
   fireEvent.click(help);
   expect(screen.queryByRole("button", { name: "연결 진단" })).toBeNull();
 });
+
+it.each(["off", "error"] as const)(
+  "opens the Tailscale steps after loading %s and keeps a saved URL from looking ready",
+  async (state) => {
+    const current = {
+      ...status(),
+      state,
+      setupUrl:
+        state === "error"
+          ? "https://login.tailscale.com/f/funnel?node=fixture"
+          : null,
+    };
+    const openMcpHelp = vi.fn(async () => ({ completed: true }));
+    window.mangaApi = createTestMangaGatewayStub({
+      getMcpStatus: async () => current,
+      openMcpHelp,
+    });
+    render(<McpSettingsPanel />);
+    const steps = await screen.findByRole("list", {
+      name: "Tailscale 연결 순서",
+    });
+    expect(steps.children).toHaveLength(4);
+    expect(
+      screen
+        .getByRole("button", { name: "연결 방법 및 도움말" })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
+    expect(screen.getByText(/Log in\(로그인\)/)).toBeTruthy();
+    expect(screen.getByText(/당근에서 MCP 켜기를 다시/)).toBeTruthy();
+    expect(
+      (screen.getByRole("button", { name: "연결 진단" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(screen.queryByRole("button", { name: "명령 복사" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Tailscale 다운로드" }));
+    await waitFor(() => expect(openMcpHelp).toHaveBeenCalledWith("tailscale"));
+    if (state === "error") {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Tailscale에서 연결 허용" }),
+      );
+      await waitFor(() => expect(openMcpHelp).toHaveBeenCalledWith("setup"));
+    }
+    fireEvent.click(
+      screen.getByRole("button", { name: "연결 방법 및 도움말" }),
+    );
+    expect(
+      screen.queryByRole("list", { name: "Tailscale 연결 순서" }),
+    ).toBeNull();
+  },
+);

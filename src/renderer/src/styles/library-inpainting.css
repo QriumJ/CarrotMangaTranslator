@@ -22,10 +22,10 @@
 }
 
 .preview-select {
-  border: 1px solid #3d4147;
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
-  background: #24282f;
-  color: #f5f0e8;
+  background: var(--preview-select-background);
+  color: var(--preview-select-color);
   padding: 9px 12px;
 }
 
@@ -338,25 +338,25 @@
   min-width: 40px;
   padding: 6px 8px;
   border-radius: 999px;
-  border: 1px solid #343941;
-  background: #1a1d22;
-  color: #ddd5ca;
+  border: 1px solid var(--page-status-badge-border);
+  background: var(--page-status-badge-background);
+  color: var(--page-status-badge-color);
   font-size: 12px;
   text-align: center;
 }
 
 .page-remove {
-  color: #f0c7c7;
-  border-color: #5f3939;
-  background: #2f2020;
+  color: var(--page-remove-color);
+  border-color: var(--page-remove-border-color);
+  background: var(--page-remove-background);
 }
 
 .status-log-scroll p {
   margin: 0;
   padding: 8px 10px;
   border-radius: 8px;
-  background: #16191e;
-  border: 1px solid #2b3138;
+  background: var(--status-muted-surface);
+  border: 1px solid var(--status-muted-border);
   font-size: 13px;
   overflow-wrap: anywhere;
 }
@@ -364,7 +364,7 @@
 .panel-empty,
 .muted-line {
   margin: 0;
-  color: #9f998f;
+  color: var(--panel-empty-color);
   font-size: 13px;
 }
 
@@ -376,12 +376,12 @@
 .markup-hint code {
   padding: 0 4px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--markup-hint-code-background);
   font-size: 11px;
 }
 
 .muted p {
-  color: #b8b1a6;
+  color: var(--text-dim);
 }
 
 .area-translate-button {
@@ -418,13 +418,13 @@
   padding: 12px;
   border-radius: var(--r-md);
   border: 1px solid var(--surface-border);
-  background: rgba(14, 17, 22, 0.72);
+  background: var(--area-translate-progress-card-background);
   box-shadow: var(--surface-highlight);
 }
 
 .area-translate-progress-card.failed {
-  border-color: rgba(196, 67, 67, 0.55);
-  background: rgba(48, 28, 30, 0.72);
+  border-color: var(--area-translate-progress-card-failed-border-color);
+  background: var(--area-translate-progress-card-failed-background);
 }
 
 .inpainting-exit-panel {
@@ -438,7 +438,7 @@
 
 .inpainting-exit-panel small {
   min-width: 0;
-  color: #b8b1a6;
+  color: var(--text-dim);
   overflow-wrap: anywhere;
 }
 
@@ -635,14 +635,14 @@
   display: grid;
   gap: var(--sp-3);
   padding: var(--sp-3);
-  border: 1px solid #33404c;
+  border: 1px solid var(--inpainting-panel-border);
   border-radius: var(--r-md);
-  background: #151a20;
+  background: var(--inpainting-run-card-background);
 }
 
 .inpainting-run-card.pattern {
-  border-color: rgba(245, 158, 11, 0.55);
-  background: rgba(70, 45, 15, 0.18);
+  border-color: var(--inpainting-run-card-pattern-border-color);
+  background: var(--inpainting-run-card-pattern-background);
 }
 
 .inpainting-run-meta {
@@ -664,9 +664,9 @@
   gap: var(--sp-2);
   width: 100%;
   min-height: var(--ctl-h);
-  border-color: #3a4654;
+  border-color: var(--peek-button-border-color);
   background: var(--bg-raised);
-  color: #dce7f4;
+  color: var(--peek-button-color);
   font-size: var(--font-sm);
   font-weight: 700;
   user-select: none;
@@ -705,23 +705,23 @@
 }
 
 .inpainting-action-grid button.pattern {
-  border-color: #f59e0b;
-  background: #6f4716;
-  color: #fff4d8;
+  border-color: var(--warn);
+  background: var(--pattern-action-surface);
+  color: var(--pattern-action-text);
 }
 
 .inpainting-action-grid button.pattern:hover:not(:disabled) {
-  border-color: #fbbf24;
-  background: #83551d;
+  border-color: var(--pattern-action-border-hover);
+  background: var(--pattern-action-surface-hover);
 }
 
 .inpainting-progress-card {
   display: grid;
   gap: 10px;
   padding: 12px;
-  border: 1px solid #33404c;
+  border: 1px solid var(--inpainting-panel-border);
   border-radius: 10px;
-  background: #14181e;
+  background: var(--inpainting-progress-card-background);
 }
 
 .inpainting-progress-card.completed {
@@ -730,12 +730,12 @@
 }
 
 .inpainting-progress-card.partial {
-  border-color: #a7772e;
-  background: #352a1c;
+  border-color: var(--inpainting-progress-card-partial-border-color);
+  background: var(--inpainting-progress-card-partial-background);
 }
 
 .inpainting-progress-card small {
-  color: #d2cabe;
+  color: var(--inpainting-progress-card-small-color);
   overflow-wrap: anywhere;
 }
 
@@ -745,11 +745,11 @@
 
 .drawn-mask-panel {
   gap: 8px;
-  border-color: rgba(245, 158, 11, 0.35);
+  border-color: var(--drawn-mask-panel-border-color);
 }
 
 .drawn-mask-panel .panel-header small {
-  color: #f9c86f;
+  color: var(--drawn-mask-panel-panel-header-small-color);
 }
 
 .mask-action-row {
@@ -778,15 +778,15 @@
 .drawn-mask-panel > button.pattern {
   width: 100%;
   min-height: var(--ctl-h);
-  border-color: #f59e0b;
-  background: #6f4716;
-  color: #fff4d8;
+  border-color: var(--warn);
+  background: var(--pattern-action-surface);
+  color: var(--pattern-action-text);
   font-weight: 700;
 }
 
 .drawn-mask-panel > button.pattern:hover:not(:disabled) {
-  border-color: #fbbf24;
-  background: #83551d;
+  border-color: var(--pattern-action-border-hover);
+  background: var(--pattern-action-surface-hover);
 }
 
 .review-export-panel .primary {
@@ -838,9 +838,9 @@
   width: 12px;
   height: 12px;
   flex: 0 0 auto;
-  border: 1px solid rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--brush-swatch-border);
   border-radius: 50%;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 1px var(--shadow-ink-45);
 }
 
 .retouch-control-strip {
@@ -943,10 +943,10 @@ label.retouch-color-control
   height: 38px;
   padding: 0;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid var(--retouch-color-picker-border);
   border-radius: var(--r-sm);
   background: transparent;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.32);
+  box-shadow: inset 0 0 0 1px var(--shadow-ink-32);
   cursor: pointer;
 }
 
@@ -1024,7 +1024,7 @@ label.retouch-color-control
 .brush-size-control strong {
   min-width: 34px;
   text-align: right;
-  color: #f6efe4;
+  color: var(--value-emphasis-text);
 }
 
 .brush-size-control.compact strong {
@@ -1077,9 +1077,9 @@ label.retouch-color-control
 }
 
 .type-stat.review {
-  border-color: rgba(79, 148, 104, 0.55);
-  background: rgba(79, 148, 104, 0.14);
-  color: #8fcfa6;
+  border-color: var(--type-stat-review-border-color);
+  background: var(--type-stat-review-background);
+  color: var(--type-stat-review-color);
 }
 
 .inpainting-actions {
@@ -1090,8 +1090,8 @@ label.retouch-color-control
 .inpainting-actions button {
   width: 100%;
   text-align: center;
-  background: #171b21;
-  border-color: #333b45;
+  background: var(--bg-raised);
+  border-color: var(--inpainting-actions-button-border-color);
 }
 
 .inpainting-actions button.active {

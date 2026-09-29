@@ -9,7 +9,7 @@ import { Button } from "../ui/Button";
 import { CheckboxField } from "../ui/CheckboxField";
 import { CollapsibleSection, Section } from "../ui/Section";
 import { useMcpSettings } from "./useMcpSettings";
-import { McpConnectionGuide } from "./McpConnectionGuide";
+import { McpConnectionGuide, McpTailscaleGuide } from "./McpConnectionGuide";
 import styles from "./McpSettingsPanel.module.css";
 
 type Props = {
@@ -28,9 +28,9 @@ export function McpSettingsView(props: Props): React.JSX.Element {
   return (
     <div className={styles.stack}>
       <McpServerSection {...props} />
+      <McpHelp {...props} />
       {status && <McpConnections {...props} status={status} />}
       {status && <McpPermissions {...props} status={status} />}
-      <McpHelp {...props} />
     </div>
   );
 }
@@ -103,7 +103,7 @@ function McpConnections({
       {connections.length === 0 && status.pending.length === 0 && (
         <p className={styles.note}>
           {status.state === "online"
-            ? "아직 연결된 앱이 없습니다. 아래 연결 방법에서 Codex 또는 ChatGPT를 선택하세요."
+            ? "아직 연결된 앱이 없습니다. 위 연결 방법에서 Codex 또는 ChatGPT를 선택하세요."
             : "연결된 앱이 없습니다. MCP를 켜고 사용할 AI 앱을 연결하세요."}
         </p>
       )}
@@ -205,26 +205,25 @@ function McpPermissions({
     </Section>
   );
 }
-function McpHelp({ status, busy, run, diagnose, diagnostics }: Props) {
-  const [expanded, setExpanded] = React.useState(false);
+function McpHelp({ status, error, busy, run, diagnose, diagnostics }: Props) {
+  const [expanded, setExpanded] = React.useState<boolean | null>(null);
   return (
     <CollapsibleSection
       title="연결 방법 및 도움말"
       density="compact"
       divided
-      expanded={expanded}
+      expanded={
+        expanded ?? (!!error || (status !== null && status.state !== "online"))
+      }
       onExpandedChange={setExpanded}
       bodyClassName={styles.body}
     >
-      <McpConnectionGuide url={status?.url} busy={busy} run={run} />
+      <McpTailscaleGuide busy={busy} run={run} />
       <div className={styles.actions}>
         <Button
-          disabled={busy}
-          onClick={() => void run(() => mcpGateway.openMcpHelp("tailscale"))}
+          disabled={status?.state !== "online" || busy}
+          onClick={() => void diagnose()}
         >
-          Tailscale 설치 안내
-        </Button>
-        <Button disabled={!status?.url || busy} onClick={() => void diagnose()}>
           연결 진단
         </Button>
       </div>
@@ -256,6 +255,11 @@ function McpHelp({ status, busy, run, diagnose, diagnostics }: Props) {
           ))}
         </div>
       )}
+      <McpConnectionGuide
+        url={status?.state === "online" ? status.url : null}
+        busy={busy}
+        run={run}
+      />
     </CollapsibleSection>
   );
 }

@@ -6,7 +6,7 @@ import { API_REASONING_OPTIONS } from "../settingsOptions";
 import type { EngineSettingsPanelProps } from "./EngineSettingsPanelTypes";
 import { ApiProviderConnectionFields } from "./ApiProviderConnectionFields";
 import { SettingsNumberField } from "./SettingsNumberField";
-import { Field } from "../ui/Field";
+import { Field, Textarea } from "../ui/Field";
 import { Select } from "../ui/Select";
 
 export type ApiSettingsFieldsProps = Pick<
@@ -199,7 +199,7 @@ function ApiJsonAdvancedFields({
           floating
           content={t("settings.api.advanced.help.extraBody")}
         >
-          <textarea
+          <Textarea
             className="settings-json-textarea"
             aria-label={t("settings.api.advanced.extraBody")}
             value={apiExtraBodyJson}
@@ -219,7 +219,7 @@ function ApiJsonAdvancedFields({
           floating
           content={t("settings.api.advanced.help.customHeaders")}
         >
-          <textarea
+          <Textarea
             className="settings-json-textarea"
             aria-label={t("settings.api.advanced.customHeaders")}
             value={apiCustomHeadersJson}

@@ -2,6 +2,7 @@ import React from "react";
 import { IconDeviceFloppy, IconPencil, IconTrash } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import type { BlockStylePresetSummary } from "../../../shared/blockStylePresets";
+import { Button } from "./ui/Button";
 
 export function PresetRowActions({
   canDelete,
@@ -29,31 +30,33 @@ export function PresetRowActions({
   return (
     <div className="block-style-preset-menu-actions">
       {canOverwrite ? (
-        <button
+        <Button
           type="button"
           role="menuitem"
           aria-label={`${preset.name} ${t("stylePresets.overwrite")}`}
           title={t("stylePresets.overwrite")}
           disabled={deleteBusy || overwriteBusy}
           onClick={() => onOverwrite(preset.id)}
+          variant="bare"
         >
           <IconDeviceFloppy size={15} aria-hidden="true" />
-        </button>
+        </Button>
       ) : null}
       {canRename ? (
-        <button
+        <Button
           type="button"
           role="menuitem"
           aria-label={`${preset.name} ${t("stylePresets.rename")}`}
           title={t("stylePresets.rename")}
           disabled={deleteBusy || overwriteBusy}
           onClick={() => onRename(preset)}
+          variant="bare"
         >
           <IconPencil size={15} aria-hidden="true" />
-        </button>
+        </Button>
       ) : null}
       {canDelete ? (
-        <button
+        <Button
           type="button"
           className="block-style-preset-menu-delete"
           role="menuitem"
@@ -61,9 +64,10 @@ export function PresetRowActions({
           title={t("common.delete")}
           disabled={deleteBusy}
           onClick={() => onDelete(preset.id)}
+          variant="bare"
         >
           <IconTrash size={15} aria-hidden="true" />
-        </button>
+        </Button>
       ) : null}
     </div>
   );

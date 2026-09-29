@@ -10,6 +10,7 @@ import {
 import { IconButton } from "./ui/IconButton";
 import { SortIcon } from "./ui/icons";
 import { usePopupController } from "./ui/usePopupController";
+import { Button } from "./ui/Button";
 
 type LibrarySortMenuProps = {
   value: LibrarySort;
@@ -213,7 +214,7 @@ function SortCriteriaList({
       {options.map((option, index) => {
         const selected = option.key === value.key;
         return (
-          <button
+          <Button
             key={option.key}
             type="button"
             role="menuitemradio"
@@ -227,12 +228,13 @@ function SortCriteriaList({
               .join(" ")}
             onPointerEnter={() => onHover(index)}
             onClick={() => onSelect(option.key)}
+            variant="bare"
           >
             <span className="library-sort-check" aria-hidden="true">
               {selected ? <CheckMark /> : null}
             </span>
             <span>{option.label}</span>
-          </button>
+          </Button>
         );
       })}
     </div>
@@ -254,16 +256,17 @@ function SortDirectionToggle({
       aria-label={t("library.sort.directionLabel")}
     >
       {(["asc", "desc"] as const).map((direction) => (
-        <button
+        <Button
           key={direction}
           type="button"
           className={`library-sort-dir ${value.direction === direction ? "selected" : ""}`}
           aria-pressed={value.direction === direction}
           onClick={() => onSelect(direction)}
+          variant="bare"
         >
           <DirectionArrow direction={direction} />
           <span>{t(`library.sort.direction.${direction}`)}</span>
-        </button>
+        </Button>
       ))}
     </div>
   );

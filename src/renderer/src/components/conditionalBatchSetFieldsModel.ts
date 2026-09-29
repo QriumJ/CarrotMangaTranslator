@@ -1,5 +1,5 @@
-import { getConditionalBatchFieldDefinition } from "../../../shared/conditionalBatchFieldRegistry";
 import { DEFAULT_BLOCK_FONT_ID } from "../../../shared/blockFontCatalog";
+import { getConditionalBatchFieldDefinition } from "../../../shared/conditionalBatchFieldRegistry";
 import {
   isRequiredConditionalBatchWritableField,
   type ConditionalBatchSetFieldChangeV2,

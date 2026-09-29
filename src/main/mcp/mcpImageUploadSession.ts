@@ -13,15 +13,37 @@ import {
 } from "./mcpImageEditEvidence";
 import { McpImageUploadStore } from "./mcpImageUploadStore";
 import { createMcpBatchTool } from "./mcpBatchTool";
+import type { McpImageWorkerFactory } from "./mcpImageWorkerClient";
 
-export function createMcpImageUploadSession(lifetime: AbortSignal) {
-  const store = new McpImageUploadStore();
-  const scopes = ["carrot.read", "carrot.edit", "carrot.process"];
+export function createMcpImageUploadSession(
+  lifetime: AbortSignal,
+  createWorker?: McpImageWorkerFactory,
+) {
+  const store = new McpImageUploadStore(Date.now, createWorker);
+  const stop = () => store.stop();
+  lifetime.addEventListener("abort", stop, { once: true });
+  if (lifetime.aborted) stop();
   const checked = (guard: () => void) => () => {
     lifetime.throwIfAborted();
     guard();
   };
-  const tools = [
+  return {
+    store,
+    tools: uploadTools(store, checked),
+    stop,
+    close: () => {
+      lifetime.removeEventListener("abort", stop);
+      return store.close();
+    },
+  };
+}
+
+function uploadTools(
+  store: McpImageUploadStore,
+  checked: (guard: () => void) => () => void,
+) {
+  const scopes = ["carrot.read", "carrot.edit", "carrot.process"];
+  return [
     createMcpBatchTool({
       name: "carrot_begin_image_upload",
       schema: McpImageUploadBeginSchema,
@@ -84,7 +106,6 @@ export function createMcpImageUploadSession(lifetime: AbortSignal) {
         ),
     }),
   ].map((tool) => ({ ...tool, destructive: false }));
-  return { store, tools, stop: () => store.stop(), close: () => store.close() };
 }
 
 async function reserveUpload(

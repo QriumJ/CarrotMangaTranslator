@@ -152,7 +152,7 @@
   overflow-y: auto;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
-  background: #171a20;
+  background: var(--block-style-preset-menu-background);
   box-shadow: var(--shadow-overlay);
   transform-origin: top center;
   animation: ui-surface-enter var(--motion-surface) var(--ease-enter) both;
@@ -236,7 +236,7 @@
 .block-style-preset-menu-delete:hover,
 .block-style-preset-menu-delete:focus-visible {
   background: var(--danger-soft);
-  color: #e7a3a3;
+  color: var(--action-danger-text);
 }
 
 .block-style-preset-menu-delete:disabled,
@@ -285,7 +285,7 @@
 }
 
 .block-style-preset-menu-warning {
-  color: #e6b774;
+  color: var(--review-warning-text);
 }
 
 .block-style-preset-menu-create {
@@ -356,22 +356,26 @@
 /* Keep the established status colours in their original debt-owning domain;
    block-reading-order.css only owns layout and disclosure motion. */
 .page-block-list-panel-header {
-  background: color-mix(in srgb, var(--surface-panel) 90%, #171a20);
+  background: color-mix(
+    in srgb,
+    var(--surface-panel) 90%,
+    var(--page-block-list-panel-header-background)
+  );
 }
 
 .page-block-badge.review {
-  border-color: rgba(230, 183, 116, 0.45);
-  color: #e6b774;
+  border-color: var(--page-block-badge-review-border-color);
+  color: var(--review-warning-text);
 }
 
 .page-block-badge.sound {
-  border-color: rgba(126, 170, 255, 0.45);
-  color: #a9c3ff;
+  border-color: var(--page-block-badge-sound-border-color);
+  color: var(--page-block-badge-sound-color);
 }
 
 .page-block-badge.excluded {
-  border-color: rgba(192, 132, 252, 0.4);
-  color: #d8b4fe;
+  border-color: var(--page-block-badge-excluded-border-color);
+  color: var(--page-block-badge-excluded-color);
 }
 
 .style-preset-manager {
@@ -516,7 +520,11 @@
 }
 
 .style-preset-application-groups {
-  background: color-mix(in srgb, var(--accent-soft) 16%, #191c22);
+  background: color-mix(
+    in srgb,
+    var(--accent-soft) 16%,
+    var(--style-preset-application-groups-background)
+  );
 }
 
 .style-preset-editing-context-copy {
@@ -659,7 +667,7 @@
   min-width: 0;
   min-height: 0;
   padding: 2px;
-  background: #1f232b;
+  background: var(--style-preset-manager-screen-background);
 }
 
 .style-preset-manager-screen-header {
@@ -792,7 +800,7 @@
 .style-preset-group-action.danger:hover:not(:disabled) {
   border-color: var(--danger-bd);
   background: var(--danger-soft);
-  color: #e7a3a3;
+  color: var(--action-danger-text);
 }
 
 .style-preset-group-action:disabled {
@@ -864,7 +872,7 @@
 }
 
 .style-preset-library-warning {
-  color: #e6b774;
+  color: var(--review-warning-text);
 }
 
 .style-preset-library-empty {
@@ -990,7 +998,7 @@
 .style-preset-library-action.danger:hover:not(:disabled) {
   border-color: var(--danger-bd);
   background: var(--danger-soft);
-  color: #e7a3a3;
+  color: var(--action-danger-text);
 }
 
 @media (max-width: 560px) {

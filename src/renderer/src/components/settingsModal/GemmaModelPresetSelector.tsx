@@ -6,6 +6,7 @@ import type { EngineSettingsPanelProps } from "./EngineSettingsPanelTypes";
 import { GemmaMemorySummary } from "./GemmaMemorySummary";
 import { confirmGemmaMemoryRisk } from "./gemmaMemoryRisk";
 import { GemmaVramWarning } from "./GemmaVramWarning";
+import { Button } from "../ui/Button";
 
 type ModelPresetFamily = "speed" | "legacy";
 
@@ -143,16 +144,17 @@ function ModelPresetFamilySelector({
         aria-label={t("settings.gemma.preset.family.ariaLabel")}
       >
         {MODEL_PRESET_FAMILY_IDS.map((family) => (
-          <button
+          <Button
             key={family}
             type="button"
             className={`settings-preset-button ${presetFamily === family ? "active" : ""}`}
             onClick={() => selectPresetFamily(family)}
             disabled={controlsBusy}
             aria-pressed={presetFamily === family}
+            variant="bare"
           >
             {t(`settings.gemma.preset.family.${family}`)}
-          </button>
+          </Button>
         ))}
       </div>
     </div>
@@ -180,17 +182,18 @@ function ModelPresetButton({
           : t(MODEL_PRESETS[presetId].descriptionKey)
       }
     >
-      <button
+      <Button
         type="button"
         className={`settings-preset-button ${selectedPreset === presetId ? "active" : ""}`}
         disabled={controlsBusy}
         aria-pressed={selectedPreset === presetId}
         onClick={() => selectPreset(presetId)}
+        variant="bare"
       >
         {presetId === "custom"
           ? t("settings.gemma.preset.custom")
           : t(MODEL_PRESETS[presetId].labelKey)}
-      </button>
+      </Button>
     </ControlTooltip>
   );
 }

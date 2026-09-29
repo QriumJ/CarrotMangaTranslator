@@ -1,5 +1,30 @@
 # UI 설계 규칙
 
+## 2026-09-29 컨트롤과 색상 정리
+
+일반 컨트롤 188곳은 공용 primitive를 직접 사용한다. `Button variant="bare"`는 버튼 하나와
+기존 자식 구조를 유지하고 기본 type 생략도 보존한다. `Input`/`Textarea`는 native ref, IME,
+선택, validation, controlled/uncontrolled 동작을 유지하며 레이블과 레이아웃은 기존 소유자가
+담당한다. 파일 단위 wrapper나 별도 barrel로 정책 검사를 우회하지 않는다.
+
+색상·z-index 420개 사용은 기존 값 그대로 `foundations.css`의 역할별 토큰을 사용한다.
+23개 stylesheet의 변경된 선언 391개를 토큰 전개 전후 비교했다. 캔버스의 마스크·윤곽·변형
+표시도 같은 색과 paint order를 유지한다. 사용자 지정 출력색과 artwork stylesheet는 기존
+출력 데이터 계약을 유지한다. 그림자 ink의 숫자 접미사는 기존 알파 백분율이며 elevation
+전체를 바꾸는 토큰이 아니다. component 역할 토큰은 팔레트를 가까운 색으로 대체하지 않는다.
+
+유지하는 raw native 입력은 다음 여섯 JSX 위치뿐이다. 주석 속 `<input>` 예제는 AST 기반
+검사에서 컨트롤로 세지 않는다. 각 입력의 OS 기능을 wrapper로 숨겨 숫자를 줄이지 않는다.
+
+| 파일                                             | 입력과 유지 이유                    | 검증                                                       |
+| ------------------------------------------------ | ----------------------------------- | ---------------------------------------------------------- |
+| `ColorField.tsx`                                 | OS color chooser와 별도 HEX draft   | `editorColorSwap`, 서식·gather 테스트                      |
+| `ConditionalBatchConditionValueEditor.tsx`       | 조건의 정확한 native 색상 값        | `conditionalBatchEditor`, 조건 값 테스트                   |
+| `gatherText/GatherTextDirectDetailControls.tsx`  | 혼합 선택 서식의 색상 chooser       | `gatherTextDirectFormatModal`, `gatherTextFormatSelection` |
+| `inpaintingPanel/RetouchInpaintingStep.tsx`      | 브러시 native 색상 선택             | retouch UI·geometry 테스트, 실제 화면 QA                   |
+| `settingsModal/FormatDefaultsDetailSections.tsx` | 기본 서식 색상 chooser              | `formatDefaultsPanel`, preset 복원 테스트                  |
+| `gatherText/GatherTextFileInputs.tsx`            | OS 파일 선택, 취소·같은 파일 재선택 | gather import·modal 테스트                                 |
+
 이 문서는 현재 다크 팔레트와 좌·중앙·우 레이아웃, 기능의 진입 위치를 유지하면서 UI를 일관되게 다듬기 위한 구현 기준이다. 실제 코드와 정적 게이트가 규칙의 권위이며, 예외는 사유·소유 범위·행동 테스트를 같이 남긴다.
 
 ## 표면 계층

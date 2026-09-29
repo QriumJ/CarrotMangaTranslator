@@ -53,10 +53,16 @@ export async function openZipArchiveReader(
   let closed = false;
   try {
     const openEntries: OpenZipEntry[] = [];
+    const budget = createZipEntryBudgetTracker(label);
     for await (const entry of zipFile.eachEntry()) {
-      openEntries.push(toOpenZipEntry(entry));
+      const candidate = toOpenZipEntry(entry);
+      if (candidate.isDirectory) {
+        normalizeShareEntryName(candidate.entryName, true);
+        continue;
+      }
+      addZipEntryToBudget(candidate, budget);
+      openEntries.push(candidate);
     }
-    assertZipEntryBudget(openEntries, label);
 
     const rawEntryMap = new Map<string, OpenZipEntry>();
     const entryMap = new Map<string, ZipEntryLike>();
@@ -110,10 +116,16 @@ export async function readZipEntries(
   });
   try {
     const entries: ZipEntryLike[] = [];
+    const budget = createZipEntryBudgetTracker(label);
     for await (const entry of zipFile.eachEntry()) {
-      entries.push(toZipEntryLike(entry));
+      const candidate = toZipEntryLike(entry);
+      if (candidate.isDirectory) {
+        normalizeShareEntryName(candidate.entryName, true);
+        continue;
+      }
+      addZipEntryToBudget(candidate, budget);
+      entries.push(candidate);
     }
-    assertZipEntryBudget(entries, label);
     return entries;
   } finally {
     zipFile.close();
@@ -230,10 +242,17 @@ export function assertZipEntryBudget(
     if (entry.isDirectory) {
       continue;
     }
-    const size = getRequiredZipEntrySize(entry, entry.entryName);
-    assertZipCompressionRatio(entry, size, entry.entryName);
-    budget.addEntry(size, entry.entryName);
+    addZipEntryToBudget(entry, budget);
   }
+}
+
+function addZipEntryToBudget(
+  entry: ZipEntryLike,
+  budget: ZipEntryBudgetTracker,
+): void {
+  const size = getRequiredZipEntrySize(entry, entry.entryName);
+  assertZipCompressionRatio(entry, size, entry.entryName);
+  budget.addEntry(size, entry.entryName);
 }
 
 export function assertZipEntrySize(

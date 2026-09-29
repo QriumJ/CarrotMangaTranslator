@@ -1,7 +1,7 @@
 import React from "react";
-import type { ConditionalBatchRulePanelProps } from "./conditionalBatchRulePanelTypes";
-import { Button } from "./ConditionalBatchControls";
 import styles from "./ConditionalBatchEditor.module.css";
+import type { ConditionalBatchRulePanelProps } from "./conditionalBatchRulePanelTypes";
+import { Button } from "./ui/Button";
 
 type ConditionalBatchRecipePickerProps = Pick<
   ConditionalBatchRulePanelProps,

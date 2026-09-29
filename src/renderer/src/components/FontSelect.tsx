@@ -12,6 +12,7 @@ import {
   type FontSelectModel,
   type FontSelectProps,
 } from "./fontSelectModel";
+import { Button } from "./ui/Button";
 
 const MIXED_FONT_VALUE = "__mixed_block_font__";
 
@@ -61,16 +62,17 @@ export function FontSelect(props: FontSelectProps): React.JSX.Element {
           }
           onValueChange={model.onCommit}
         />
-        <button
+        <Button
           type="button"
           className={styles.manage}
           aria-label={t("fontSelect.manageFonts")}
           title={t("fontSelect.manageFonts")}
           disabled={model.busy}
           onClick={openManager}
+          variant="bare"
         >
           <IconSettings size={16} aria-hidden="true" />
-        </button>
+        </Button>
       </div>
       {!props.onOpenManager && managerOpen ? (
         <FontManagerModal onClose={() => setManagerOpen(false)} />

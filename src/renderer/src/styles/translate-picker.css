@@ -41,10 +41,10 @@
   align-items: center;
   gap: var(--sp-3);
   padding: var(--sp-3) var(--sp-4);
-  border: 1px solid rgba(239, 111, 108, 0.48);
+  border: 1px solid var(--translation-overwrite-warning-border);
   border-radius: var(--r-md);
-  background: rgba(124, 48, 48, 0.16);
-  color: #f1aaa7;
+  background: var(--translation-overwrite-warning-background);
+  color: var(--translation-overwrite-warning-color);
 }
 
 .translation-options-modal-body .translation-overwrite-warning {
@@ -67,13 +67,13 @@
 }
 
 .translation-overwrite-warning strong {
-  color: #ffd0cd;
+  color: var(--translation-overwrite-warning-strong-color);
   font-size: var(--font-sm);
   line-height: 1.35;
 }
 
 .translation-overwrite-warning span {
-  color: #dca8a5;
+  color: var(--translation-overwrite-warning-span-color);
   font-size: var(--font-xs);
   line-height: 1.4;
 }

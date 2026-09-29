@@ -1,13 +1,11 @@
 import { IconFileExport, IconFileImport } from "@tabler/icons-react";
 import React from "react";
+import { ConditionalBatchCollapsibleTrigger } from "./ConditionalBatchControls";
+import styles from "./ConditionalBatchEditor.module.css";
 import type { ConditionalBatchRulePanelProps } from "./conditionalBatchRulePanelTypes";
-import {
-  Button,
-  ConditionalBatchCollapsibleTrigger,
-} from "./ConditionalBatchControls";
+import { Button } from "./ui/Button";
 import { Textarea } from "./ui/Field";
 import { InlineMessage } from "./ui/InlineMessage";
-import styles from "./ConditionalBatchEditor.module.css";
 
 type ConditionalBatchAdvancedToolsProps = Pick<
   ConditionalBatchRulePanelProps,

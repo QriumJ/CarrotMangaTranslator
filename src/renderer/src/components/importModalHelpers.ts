@@ -1,7 +1,11 @@
 import type { Dispatch, SetStateAction } from "react";
-import type { ImportCreateSelection } from "../../../shared/importTypes";
-import type { ImportModalSubmit } from "../lib/importFlowTypes";
+import type {
+  ImportCreateSelection,
+  ImportPreviewResult,
+} from "../../../shared/importTypes";
+import type { LibraryIndex } from "../../../shared/libraryTypes";
 import type { LinkedWorkspaceImportOptions } from "../../../shared/linkedWorkspaceTypes";
+import type { ImportModalSubmit } from "../lib/importFlowTypes";
 
 export type ImportTargetMode = "new" | "existing";
 
@@ -62,5 +66,80 @@ export function isImportSubmittable(
   }
   return selections.some(
     (selection) => selection.enabled && selection.title.trim(),
+  );
+}
+
+export function resolveImportModalInitialState(
+  library: LibraryIndex,
+  currentWorkId: string | null,
+  preview: ImportPreviewResult,
+  initialDraft: ImportModalSubmit | null,
+) {
+  const currentWorkAvailable = Boolean(
+    currentWorkId && library.works.some((work) => work.id === currentWorkId),
+  );
+  return {
+    currentWorkId: currentWorkAvailable ? currentWorkId : null,
+    existingWorkId: resolveInitialExistingWorkId(
+      library,
+      currentWorkId,
+      currentWorkAvailable,
+      initialDraft,
+    ),
+    targetMode: resolveInitialTargetMode(currentWorkAvailable, initialDraft),
+    newWorkTitle: resolveInitialWorkTitle(preview, initialDraft),
+    selections: resolveInitialSelections(preview, initialDraft),
+    linkedWorkspace: initialDraft?.linkedWorkspace ?? {
+      enabled: true,
+      outputFormat: "source" as const,
+      jpegQuality: 95,
+      webpQuality: 90,
+    },
+  };
+}
+
+function resolveInitialExistingWorkId(
+  library: LibraryIndex,
+  currentWorkId: string | null,
+  currentWorkAvailable: boolean,
+  initialDraft: ImportModalSubmit | null,
+): string {
+  if (initialDraft?.target.mode === "existing") {
+    return initialDraft.target.workId;
+  }
+  if (currentWorkAvailable) return currentWorkId ?? "";
+  return library.works[0]?.id ?? "";
+}
+
+function resolveInitialTargetMode(
+  currentWorkAvailable: boolean,
+  initialDraft: ImportModalSubmit | null,
+): ImportTargetMode {
+  if (initialDraft) return initialDraft.target.mode;
+  return currentWorkAvailable ? "existing" : "new";
+}
+
+function resolveInitialWorkTitle(
+  preview: ImportPreviewResult,
+  initialDraft: ImportModalSubmit | null,
+): string {
+  return initialDraft?.target.mode === "new"
+    ? initialDraft.target.title
+    : preview.suggestedWorkTitle;
+}
+
+function resolveInitialSelections(
+  preview: ImportPreviewResult,
+  initialDraft: ImportModalSubmit | null,
+): ImportCreateSelection[] {
+  return preview.chapters.map(
+    (chapter) =>
+      initialDraft?.selections.find(
+        (selection) => selection.draftId === chapter.draftId,
+      ) ?? {
+        draftId: chapter.draftId,
+        title: chapter.title,
+        enabled: true,
+      },
   );
 }

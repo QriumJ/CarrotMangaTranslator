@@ -130,7 +130,7 @@
 
 .star:hover:not(:disabled),
 .starActive {
-  color: #f4c95d;
+  color: var(--favorite);
 }
 
 .preview {

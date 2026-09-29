@@ -5,6 +5,7 @@ import type {
   BlockStylePreset,
   BlockStylePresetGroup,
 } from "../../../../shared/blockStylePresets";
+import { Button } from "../ui/Button";
 
 export function BlockStylePresetTabs({
   activePresetId,
@@ -88,7 +89,7 @@ function PresetGroupTabs({
   const containsActive = presets.some((preset) => preset.id === activePresetId);
   return (
     <>
-      <button
+      <Button
         type="button"
         className="style-preset-group-tab"
         data-expanded={expanded}
@@ -96,6 +97,7 @@ function PresetGroupTabs({
         aria-expanded={expanded}
         title={group.name}
         onClick={onToggle}
+        variant="bare"
       >
         <IconFolder size={15} aria-hidden="true" />
         <span>{group.name}</span>
@@ -105,7 +107,7 @@ function PresetGroupTabs({
           size={14}
           aria-hidden="true"
         />
-      </button>
+      </Button>
       {expanded ? (
         <span className="style-preset-group-children">
           {presets.length > 0 ? (
@@ -144,7 +146,7 @@ function PresetTab({
   onClick: () => void;
 }): React.JSX.Element {
   return (
-    <button
+    <Button
       type="button"
       className="style-preset-tab"
       data-grouped={grouped}
@@ -152,8 +154,9 @@ function PresetTab({
       aria-pressed={active}
       title={label}
       onClick={onClick}
+      variant="bare"
     >
       <span>{label}</span>
-    </button>
+    </Button>
   );
 }
