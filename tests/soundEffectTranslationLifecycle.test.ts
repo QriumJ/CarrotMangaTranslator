@@ -8,6 +8,7 @@ import {
 import type { SoundEffectTranslationJobState } from "../src/main/jobs/translationJobTypes";
 import type { StartSoundEffectTranslationRequest } from "../src/shared/analysisTypes";
 import type { JobEvent } from "../src/shared/jobTypes";
+import { resolveDefaultAppSettings } from "../src/main/appSettings";
 
 const runnerMocks = {
   handleError: vi.fn(),
@@ -29,6 +30,52 @@ beforeEach(() => {
 });
 
 describe("sound-effect translation job lifecycle", () => {
+  it.each([false, true])(
+    "allows independent API work and gives image resume only Codex ownership: %s",
+    async (resume) => {
+      const jobs = new ActiveJobStore();
+      jobs.start({
+        id: "other-api-job",
+        kind: "gemma-analysis",
+        resources: [{ kind: "model-runtime", scope: "*", access: "read" }],
+        abortController: new AbortController(),
+      });
+      const executionSettings = {
+        ...resolveDefaultAppSettings({}),
+        modelProvider: "openai-api" as const,
+      };
+      runnerMocks.run.mockImplementation(async ({ id }) => {
+        const descriptor = jobs.gate.activities.find(
+          (activity) => activity.id === id,
+        );
+        expect(descriptor?.resources).toEqual([
+          resume
+            ? { kind: "codex-auth", scope: "*", access: "read" }
+            : { kind: "model-runtime", scope: "*", access: "read" },
+        ]);
+        return {
+          status: "completed",
+          createdBlocksByPage: [],
+          translatedRegionCount: 0,
+          remainingRegionCount: 0,
+        };
+      });
+      await expect(
+        startSoundEffectTranslationJob(
+          { ...makeContext(jobs, []), executionSettings },
+          {
+            ...REQUEST,
+            ...(resume ? { resumeImageRunId: "saved-image-run" } : {}),
+          },
+          runtime,
+        ),
+      ).resolves.toMatchObject({ status: "completed" });
+      expect(runnerMocks.run).toHaveBeenCalledOnce();
+      expect(jobs.current?.id).toBe("other-api-job");
+      jobs.clearIfCurrent("other-api-job");
+    },
+  );
+
   it("rejects a batch while another app job owns the activity gate", async () => {
     const jobs = new ActiveJobStore();
     jobs.start({

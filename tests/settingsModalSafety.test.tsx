@@ -138,6 +138,12 @@ describe("settings draft safety", () => {
 
     fireEvent.click(within(settingsTabs).getByRole("tab", { name: "번역" }));
     expect(screen.getByRole("heading", { name: "번역 엔진" })).toBeTruthy();
+
+    fireEvent.click(within(settingsTabs).getByRole("tab", { name: "일반" }));
+    expect(
+      within(settingsTabs).getByRole("tab", { name: "일반" }),
+    ).toHaveProperty("ariaSelected", "true");
+    expect(screen.queryByRole("heading", { name: "번역 엔진" })).toBeNull();
   });
 
   it("disables Save until the draft changes and protects dirty close", () => {

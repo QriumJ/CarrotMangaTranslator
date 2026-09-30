@@ -11,6 +11,7 @@ import { toast } from "../../lib/toastStore";
 import { formatJobLabel } from "../../lib/jobProgress";
 import { useEventCallback } from "../../hooks/useEventCallback";
 import type { CompletionSoundCategory } from "../../hooks/useCompletionSound";
+import { isAggregateFlowTerminal } from "../../hooks/jobEventFlowGuard";
 
 type OpenErrorReport = (
   context: ErrorReportContext,
@@ -43,12 +44,16 @@ export function useAppSessionLifecycleEffects({
   selectedPageId,
   setRegionSelection,
   translationFlowActive,
-}: UseAppSessionLifecycleEffectsArgs): void {
+}: UseAppSessionLifecycleEffectsArgs): (job: JobState) => void {
   const { t } = useTranslation("renderer");
   const prevJobStatusRef = useRef<JobState["status"]>("idle");
   const prevFlowActiveRef = useRef(translationFlowActive);
   const reportedJobIdRef = useRef<string | null>(null);
   const previousPageIdRef = useRef(selectedPageId);
+  const notifyJobTerminal = useAudibleJobCompletion(
+    onAudibleCompletion,
+    translationFlowActive,
+  );
   const refreshLibraryState = useEventCallback(() => {
     void refreshLibrary();
   });
@@ -57,7 +62,7 @@ export function useAppSessionLifecycleEffects({
   const notifyJobStatusChange = useEventCallback(() => {
     handleJobStatusChange({
       jobState,
-      onAudibleCompletion,
+      onJobTerminal: notifyJobTerminal,
       onJobStart,
       openErrorReport,
       reportedJobIdRef,
@@ -110,6 +115,30 @@ export function useAppSessionLifecycleEffects({
     refreshLibraryState,
     translationFlowActive,
   ]);
+  return notifyJobTerminal;
+}
+
+function useAudibleJobCompletion(
+  onAudibleCompletion: UseAppSessionLifecycleEffectsArgs["onAudibleCompletion"],
+  translationFlowActive: boolean,
+): (job: JobState) => void {
+  const terminalJobIdsRef = useRef(new Set<string>());
+  const flowGenerationRef = useRef(0);
+  useEffect(() => {
+    if (translationFlowActive) flowGenerationRef.current += 1;
+  }, [translationFlowActive]);
+  return useEventCallback((job: JobState) => {
+    if (!isTerminalJobStatus(job.status)) return;
+    // Aggregate flows reuse synthetic IDs; each invocation owns one sound.
+    const key = isAggregateFlowTerminal(job)
+      ? `${job.id}:${flowGenerationRef.current}`
+      : job.id;
+    if (terminalJobIdsRef.current.has(key)) return;
+    terminalJobIdsRef.current.add(key);
+    if (job.status !== "completed") return;
+    const category = resolveCompletionSoundCategory(job);
+    if (category) onAudibleCompletion?.(category);
+  });
 }
 
 function useInitialLibraryRefresh(refreshLibrary: () => void): void {
@@ -123,7 +152,7 @@ function useInitialLibraryRefresh(refreshLibrary: () => void): void {
 
 type JobStatusChangeArgs = {
   jobState: JobState;
-  onAudibleCompletion?: (category: CompletionSoundCategory) => void;
+  onJobTerminal: (job: JobState) => void;
   onJobStart: () => void;
   openErrorReport: OpenErrorReport;
   reportedJobIdRef: { current: string | null };
@@ -133,7 +162,7 @@ type JobStatusChangeArgs = {
 
 function handleJobStatusChange({
   jobState,
-  onAudibleCompletion,
+  onJobTerminal,
   onJobStart,
   openErrorReport,
   reportedJobIdRef,
@@ -147,7 +176,7 @@ function handleJobStatusChange({
   }
   if (translationFlowActive && isTerminalJobStatus(next)) return;
   if (next === "completed") {
-    handleCompletedJob(jobState, onAudibleCompletion, t);
+    handleCompletedJob(jobState, onJobTerminal, t);
     return;
   }
   if (next === "partial") {
@@ -170,16 +199,13 @@ function handleJobStatusChange({
 
 function handleCompletedJob(
   jobState: JobState,
-  onAudibleCompletion:
-    | ((category: CompletionSoundCategory) => void)
-    | undefined,
+  onJobTerminal: (job: JobState) => void,
   t: TFunction<"renderer">,
 ): void {
   toast.success(
     formatJobLabel(jobState, t) || t("job.notifications.completed"),
   );
-  const soundCategory = resolveCompletionSoundCategory(jobState);
-  if (soundCategory) onAudibleCompletion?.(soundCategory);
+  onJobTerminal(jobState);
 }
 
 function resolveCompletionSoundCategory(

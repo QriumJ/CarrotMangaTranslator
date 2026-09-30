@@ -12069,6 +12069,28 @@
         "pct": 100
       }
     },
+    "src/renderer/src/components/settingsModal/SettingsTabs.tsx": {
+      "lines": {
+        "covered": 3,
+        "total": 3,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
     "src/renderer/src/components/settingsModal/SettingsValidationMessages.tsx": {
       "lines": {
         "total": 2,
@@ -15719,6 +15741,28 @@
         "covered": 54,
         "total": 58,
         "pct": 93.1
+      }
+    },
+    "src/renderer/src/lib/shortcuts/shortcutActionTypes.ts": {
+      "lines": {
+        "covered": 1,
+        "total": 2,
+        "pct": 50
+      },
+      "statements": {
+        "covered": 1,
+        "total": 2,
+        "pct": 50
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
       }
     },
     "src/renderer/src/lib/shortcuts/shortcutActions.ts": {
@@ -32487,6 +32531,28 @@
         "pct": 80.48
       }
     },
+    "src/main/pipeline/localInferenceRuntimePort.ts": {
+      "lines": {
+        "covered": 6,
+        "total": 23,
+        "pct": 26.08
+      },
+      "statements": {
+        "covered": 6,
+        "total": 23,
+        "pct": 26.08
+      },
+      "functions": {
+        "covered": 3,
+        "total": 19,
+        "pct": 15.78
+      },
+      "branches": {
+        "covered": 1,
+        "total": 6,
+        "pct": 16.66
+      }
+    },
     "src/main/pipeline/overlayFontSize.ts": {
       "lines": {
         "total": 4,
@@ -33585,6 +33651,28 @@
         "covered": 10,
         "total": 10,
         "pct": 100
+      }
+    },
+    "src/main/runtimeSupport/localInferenceSection.ts": {
+      "lines": {
+        "covered": 43,
+        "total": 44,
+        "pct": 97.72
+      },
+      "statements": {
+        "covered": 46,
+        "total": 48,
+        "pct": 95.83
+      },
+      "functions": {
+        "covered": 10,
+        "total": 10,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 18,
+        "total": 20,
+        "pct": 90
       }
     },
     "src/main/runtimeSupport/modelCleanupBarrier.ts": {
@@ -39131,6 +39219,50 @@
         "pct": 100
       }
     },
+    "src/renderer/src/components/settingsModal/McpChatgptGuide.tsx": {
+      "lines": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/components/settingsModal/McpClaudeGuide.tsx": {
+      "lines": {
+        "covered": 11,
+        "total": 11,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 11,
+        "total": 11,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 5,
+        "total": 6,
+        "pct": 83.33
+      }
+    },
     "src/renderer/src/components/settingsModal/McpConnectionGuide.tsx": {
       "lines": {
         "covered": 10,
@@ -39150,6 +39282,28 @@
       "branches": {
         "covered": 16,
         "total": 16,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/components/settingsModal/McpGuideImage.tsx": {
+      "lines": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 4,
+        "total": 4,
         "pct": 100
       }
     },
@@ -39392,6 +39546,28 @@
       "branches": {
         "total": 5,
         "covered": 5,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/components/settingsModal/settingsPages.ts": {
+      "lines": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 4,
+        "total": 4,
         "pct": 100
       }
     },

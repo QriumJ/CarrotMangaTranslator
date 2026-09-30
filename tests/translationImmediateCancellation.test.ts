@@ -3,6 +3,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ActiveJobStore } from "../src/main/jobs/activeJob";
+import { resolveDefaultAppSettings } from "../src/main/appSettings";
 import { registerJobControlIpc } from "../src/main/ipc/jobControlIpc";
 import {
   startAnalysisJob,
@@ -52,6 +53,55 @@ beforeEach(() => {
 });
 
 describe("translation immediate cancellation", () => {
+  it.each([false, true])(
+    "reserves the selected page and exclusive models only for local erasure: %s",
+    async (eraseOriginal) => {
+      const chapter = makeChapter();
+      const jobs = new ActiveJobStore();
+      const page = firstPage(chapter);
+      const runRegionTranslationJob = vi.fn(async ({ id }: { id: string }) => {
+        const resources = jobs.gate.activities.find(
+          (activity) => activity.id === id,
+        )?.resources;
+        expect(resources).toEqual(
+          expect.arrayContaining([
+            {
+              kind: "model-runtime",
+              scope: "*",
+              access: eraseOriginal ? "write" : "read",
+            },
+            {
+              kind: "page-content",
+              scope: `${chapter.id}/${page.id}`,
+              access: "write",
+            },
+          ]),
+        );
+        return { status: "completed" as const, chapter };
+      });
+      await expect(
+        translateRegionJob(
+          {
+            ...makeContext(jobs, []),
+            executionSettings: {
+              ...resolveDefaultAppSettings({}),
+              modelProvider: "openai-api",
+            },
+          },
+          {
+            chapterId: chapter.id,
+            pageId: page.id,
+            bbox: { x: 0, y: 0, w: 10, h: 10 },
+            eraseOriginal,
+          },
+          { runRegionTranslationJob, handleRegionJobError: vi.fn() },
+        ),
+      ).resolves.toMatchObject({ status: "completed" });
+      expect(runRegionTranslationJob).toHaveBeenCalledOnce();
+      expect(jobs.current).toBeNull();
+    },
+  );
+
   it("the modal's targeted cancel IPC releases a pending SFX image-redaction review", async () => {
     const chapter = makeChapter();
     const imagePath = join(createTempDir("sfx-review-cancel-"), "page.png");

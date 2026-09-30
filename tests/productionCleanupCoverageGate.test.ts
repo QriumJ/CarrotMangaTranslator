@@ -248,6 +248,30 @@ describe("production cleanup coverage floor gate", () => {
     ).toThrow(/owner is missing/u);
   });
 
+  it.each(["lines", "statements"] as const)(
+    "keeps the moved settings navigation %s floor on its runtime owner",
+    (metric) => {
+      const fixture = createFixture(
+        "src/renderer/src/components/settingsModal/settingsPages.ts",
+        "src/renderer/src/components/settingsModalTypes.ts",
+      );
+      fixture.coverage[fixture.existingFileAbsolute][metric] = coverageMetric(
+        0,
+        0,
+      );
+      fixture.writeCoverage();
+      expect(() => runGate(fixture, "win32")).not.toThrow();
+      fixture.coverage[fixture.addedFileAbsolute][metric] = coverageMetric(79);
+      fixture.writeCoverage();
+      expect(() => runGate(fixture, "win32")).toThrow(/below exact baseline/u);
+      fixture.coverage[fixture.addedFileAbsolute][metric] = coverageMetric(100);
+      fixture.coverage[fixture.existingFileAbsolute][metric] =
+        coverageMetric(79);
+      fixture.writeCoverage();
+      expect(() => runGate(fixture, "win32")).toThrow(/settingsModalTypes/u);
+    },
+  );
+
   it("validates records on another platform without comparing Windows floors", () => {
     const fixture = createFixture();
     fixture.coverage[fixture.existingFileAbsolute] = coverageRecord(70);
@@ -501,9 +525,9 @@ describe("production cleanup coverage floor gate", () => {
     expect(Object.keys(manifest.floors)).toEqual(scope.existing);
     expect(Object.keys(manifest.introducedFloors)).toEqual(scope.added);
     expect(manifest.deletedFiles).toEqual(scope.deleted);
-    expect(scope.existing).toHaveLength(793);
+    expect(scope.existing).toHaveLength(795);
     // Includes MCP and master additions; the renderer gatherText floor follows its shared owner.
-    expect(scope.added).toHaveLength(1300);
+    expect(scope.added).toHaveLength(1306);
     expect(scope.deleted).toHaveLength(11);
   });
 });

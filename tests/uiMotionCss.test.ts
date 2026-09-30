@@ -31,7 +31,11 @@ describe("renderer motion CSS", () => {
     );
     expect(foundationsCss).toContain("@keyframes ui-surface-enter");
     expect(foundationsCss).toContain("@keyframes ui-surface-enter-reduced");
-    expect(foundationsCss).toContain("clip-path: none");
+    const entrance = foundationsCss
+      .split("@keyframes ui-surface-enter {")[1]
+      .split("@keyframes ui-surface-enter-reduced")[0];
+    expect(entrance).toContain("translate: none");
+    expect(entrance).not.toMatch(/clip-path:|filter:|scale:/u);
     expect(foundationsCss).toContain(
       ".stage-toolbar {\n  --motion-enter-x: -6px",
     );
@@ -70,13 +74,14 @@ describe("renderer motion CSS", () => {
     expect(css).toContain("animation-name: ui-surface-enter-reduced");
   });
 
-  it("keeps press feedback subtle and removes it for reduced motion", () => {
+  it("reduces button press motion and keeps icon feedback stationary", () => {
     expect(buttonCss).toContain("transform: scale(0.985)");
-    expect(iconButtonCss).toContain("transform: scale(0.96)");
+    expect(iconButtonCss).toContain(
+      ".iconButton:active:not(:disabled) {\n  background: var(--control-bg-pressed)",
+    );
     expect(buttonCss).toContain("@media (prefers-reduced-motion: reduce)");
-    expect(iconButtonCss).toContain("@media (prefers-reduced-motion: reduce)");
     expect(buttonCss).toContain("transform: none");
-    expect(iconButtonCss).toContain("transform: none");
+    expect(iconButtonCss).not.toMatch(/\b(?:transform|translate|scale):/u);
   });
 
   it("animates detail disclosure and toasts without layout-size tweening", () => {

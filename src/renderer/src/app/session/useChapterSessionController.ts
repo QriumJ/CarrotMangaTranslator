@@ -381,7 +381,7 @@ function useChapterRuntimeEffects({
     setRightRailMode("page-blocks");
     setSelectedBlockIds([]);
   }, [setPeekOriginal, setRightRailMode, setSelectedBlockIds]);
-  useAppSessionLifecycleEffects({
+  const onJobTerminal = useAppSessionLifecycleEffects({
     currentChapter: core.currentChapter,
     jobState: core.jobState,
     onAudibleCompletion: completionSound.playCompletionSound,
@@ -392,7 +392,7 @@ function useChapterRuntimeEffects({
     resetChapterScopedUi: uiState.resetChapterScopedUi,
     selectedPageId: derivedState.selectedPage?.id ?? null,
     setRegionSelection: core.setRegionSelection,
-    translationFlowActive: uiState.jobFlowActive,
+    translationFlowActive: uiState.exclusiveFlowActive,
   });
 
   useJobEvents({
@@ -400,7 +400,8 @@ function useChapterRuntimeEffects({
     currentChapterRef: core.currentChapterRef,
     jobState: core.jobState,
     mergeLiveChapter,
+    onJobTerminal,
     setJobState: core.setJobState,
-    suppressTerminalEvents: uiState.jobFlowActive,
+    suppressTerminalEvents: uiState.exclusiveFlowActive,
   });
 }

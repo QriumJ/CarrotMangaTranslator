@@ -15,10 +15,16 @@ const EXTRACTED_BRANCH_OWNERS = new Map([
  * @returns {string}
  */
 function resolveCoverageMetricOwner(file, metric, total, introducedFloors) {
+  // SETTINGS_TABS became SETTINGS_PAGES; its old module now contains only types.
+  // Keep the old executable floors on the new navigation owner as well as its own.
   const owner =
-    metric === "branches" && total === 0
-      ? EXTRACTED_BRANCH_OWNERS.get(file)
-      : undefined;
+    total === 0 &&
+    file === "src/renderer/src/components/settingsModalTypes.ts" &&
+    (metric === "lines" || metric === "statements")
+      ? "src/renderer/src/components/settingsModal/settingsPages.ts"
+      : metric === "branches" && total === 0
+        ? EXTRACTED_BRANCH_OWNERS.get(file)
+        : undefined;
   if (!owner) return file;
   if (!Object.hasOwn(introducedFloors, owner))
     throw new Error(

@@ -78,13 +78,16 @@ describe("workspace chrome CSS", () => {
         shellCss,
         ".right-quick-controls-frame:not(.collapsed) > .right-quick-rail-toggle::before",
       ),
-    ).toContain("background: linear-gradient(");
+    ).toContain("background: var(--canvas-rail-divider)");
+    expect(foundationsCss).toContain(
+      "--canvas-rail-divider: rgba(151, 163, 179, 0.64)",
+    );
     expect(
       rule(
         foundationsCss,
         ".stage-toolbar-section + .stage-toolbar-section::before",
       ),
-    ).toContain("background: linear-gradient(");
+    ).toContain("background: rgba(151, 163, 179, 0.64)");
   });
 
   it("keeps the canvas in the first viewport with contextual rail tracks", () => {

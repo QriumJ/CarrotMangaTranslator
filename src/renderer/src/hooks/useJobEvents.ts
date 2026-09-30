@@ -35,6 +35,7 @@ type UseJobEventsOptions = {
   currentChapterRef: React.MutableRefObject<ChapterSnapshot | null>;
   jobState?: JobState;
   mergeLiveChapter: (chapter: ChapterSnapshot) => void;
+  onJobTerminal?: (job: JobState) => void;
   openChapter?: (chapterId: string) => Promise<ChapterSnapshot>;
   setJobState: React.Dispatch<React.SetStateAction<JobState>>;
   suppressTerminalEvents?: boolean;
@@ -57,6 +58,7 @@ type JobEventSubscriptionOptions = Required<
     | "suppressTerminalEvents"
   >
 > & {
+  onJobTerminal?: (job: JobState) => void;
   aggregateGuardRef: React.MutableRefObject<AggregateJobEventGuard>;
   jobStateRef: React.MutableRefObject<JobState | undefined>;
   t: TFunction<"renderer">;
@@ -85,6 +87,7 @@ export function useJobEvents({
   currentChapterRef,
   jobState,
   mergeLiveChapter,
+  onJobTerminal,
   openChapter = openChapterFromLibrary,
   setJobState,
   suppressTerminalEvents = false,
@@ -119,6 +122,7 @@ export function useJobEvents({
         currentChapterRef,
         jobStateRef,
         mergeLiveChapter,
+        onJobTerminal,
         openChapter,
         setJobState,
         subscribeJobEvents,
@@ -130,6 +134,7 @@ export function useJobEvents({
       appendStatusLine,
       currentChapterRef,
       mergeLiveChapter,
+      onJobTerminal,
       openChapter,
       setJobState,
       subscribeJobEvents,
@@ -146,6 +151,7 @@ function subscribeToJobEventUpdates({
   currentChapterRef,
   jobStateRef,
   mergeLiveChapter,
+  onJobTerminal,
   openChapter,
   setJobState,
   subscribeJobEvents,
@@ -170,6 +176,14 @@ function subscribeToJobEventUpdates({
     t,
   });
   const unsubscribe = subscribeJobEvents((event) => {
+    // Completion is per job, before the display reducer selects a foreground.
+    if (
+      isTerminalJobStatus(event.status) &&
+      !suppressTerminalEvents &&
+      !aggregateGuardRef.current.protectedJobIds.has(event.id)
+    ) {
+      onJobTerminal?.(event);
+    }
     if (
       shouldIgnoreAggregateJobEvent(
         jobStateRef.current,
