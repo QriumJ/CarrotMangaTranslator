@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import type { MangaPage } from "../src/shared/libraryTypes";
 import {
+  applyPageRangeSelection,
   buildChapterSelectionRequests,
   resolveChapterTriState,
   resolveSelectedPageIds,
-  toggleChapterSelection,
+  setChapterSelection,
   togglePageSelection,
   type PageSelection,
 } from "../src/renderer/src/lib/pageSelection";
@@ -67,14 +68,85 @@ describe("shared page selection", () => {
     ).toBe("some");
   });
 
-  it("toggles a chapter without mutating the input map", () => {
+  it("sets a chapter from the rendered checkbox value without mutating the input map", () => {
     const empty = new Map<string, PageSelection>();
-    const selected = toggleChapterSelection(empty, "chapter", selectAll);
+    const selected = setChapterSelection(empty, "chapter", selectAll, true);
     expect(empty.has("chapter")).toBe(false);
     expect(selected.get("chapter")).toEqual(selectAll);
     expect(
-      toggleChapterSelection(selected, "chapter", selectAll).has("chapter"),
+      setChapterSelection(selected, "chapter", selectAll, false).has("chapter"),
     ).toBe(false);
+    const explicitlyFull = new Map<string, PageSelection>([
+      [
+        "chapter",
+        { kind: "pages", pageIds: new Set(pages.map((page) => page.id)) },
+      ],
+    ]);
+    expect(
+      resolveChapterTriState(explicitlyFull.get("chapter"), 3, pages),
+    ).toBe("all");
+    expect(
+      setChapterSelection(explicitlyFull, "chapter", selectAll, false).has(
+        "chapter",
+      ),
+    ).toBe(false);
+  });
+
+  it("applies a checked anchor to forward and reverse ranges", () => {
+    const initial = new Map<string, PageSelection>([
+      ["chapter", { kind: "pages", pageIds: new Set(["p2"]) }],
+    ]);
+    const forward = applyPageRangeSelection(
+      initial,
+      "chapter",
+      "p2",
+      "p3",
+      pages,
+      {
+        selectAll,
+      },
+    );
+    expect(resolveSelectedPageIds(forward.get("chapter"), pages)).toEqual(
+      new Set(["p2", "p3"]),
+    );
+    const reverse = applyPageRangeSelection(
+      initial,
+      "chapter",
+      "p2",
+      "p1",
+      pages,
+      {
+        selectAll,
+      },
+    );
+    expect(resolveSelectedPageIds(reverse.get("chapter"), pages)).toEqual(
+      new Set(["p1", "p2"]),
+    );
+  });
+
+  it("removes an inclusive range from an unchecked anchor and ignores missing endpoints", () => {
+    const initial = new Map<string, PageSelection>([
+      ["chapter", { kind: "pages", pageIds: new Set(["p1", "p3"]) }],
+    ]);
+    const result = applyPageRangeSelection(
+      initial,
+      "chapter",
+      "p2",
+      "p3",
+      pages,
+      {
+        selectAll,
+      },
+    );
+    expect(result.get("chapter")).toEqual({
+      kind: "pages",
+      pageIds: new Set(["p1"]),
+    });
+    expect(
+      applyPageRangeSelection(initial, "chapter", "missing", "p3", pages, {
+        selectAll,
+      }),
+    ).toBe(initial);
   });
 
   it("toggles explicit pages, removes empty chapters, and preserves page order", () => {

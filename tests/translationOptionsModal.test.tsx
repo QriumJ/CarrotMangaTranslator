@@ -911,6 +911,31 @@ describe("TranslationOptionsModal", () => {
     ).toBe("mixed");
   });
 
+  it("clears an explicitly full chapter in one click and resets its Shift anchor", async () => {
+    await renderModal(undefined, undefined, makeCheckpointChapter());
+    const first = screen.getByRole("checkbox", { name: /p1\.png/ });
+    fireEvent.click(first);
+    const chapterCheckbox = screen.getByRole("checkbox", { name: "1화" });
+    expect((chapterCheckbox as HTMLInputElement).checked).toBe(true);
+
+    fireEvent.click(chapterCheckbox);
+    expect((chapterCheckbox as HTMLInputElement).checked).toBe(false);
+    fireEvent.click(screen.getByRole("checkbox", { name: /p4\.png/ }), {
+      shiftKey: true,
+    });
+    expect(first.getAttribute("aria-checked")).toBe("false");
+    expect(
+      screen
+        .getByRole("checkbox", { name: /p2\.png/ })
+        .getAttribute("aria-checked"),
+    ).toBe("false");
+    expect(
+      screen
+        .getByRole("checkbox", { name: /p4\.png/ })
+        .getAttribute("aria-checked"),
+    ).toBe("mixed");
+  });
+
   it("clears the Shift anchor when translation compatibility changes", async () => {
     await renderModal(undefined, undefined, makeCheckpointChapter());
 

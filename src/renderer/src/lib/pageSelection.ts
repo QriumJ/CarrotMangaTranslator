@@ -3,10 +3,9 @@ import type { MangaPage } from "../../../shared/libraryTypes";
 /**
  * Shared chapter/page selection core.
  *
- * Translation and export both let the user tick chapters and individual pages;
- * translation additionally offers a coarse "untranslated only" marker. These
- * primitives own the tri-state maths and the toggle rules so the two domains
- * cannot drift apart, and each domain keeps only its own request-building.
+ * Binary page jobs share the checked-page and range rules here. Translation
+ * keeps its restart/resume cycle in translationSelection and uses the same
+ * explicit chapter checkbox setter.
  */
 
 export type TriState = "none" | "some" | "all";
@@ -21,6 +20,9 @@ export type PageSelection =
   | { kind: "all" }
   | { kind: "pending" }
   | { kind: "pages"; pageIds: Set<string> };
+
+export type BinaryPageSelection = Exclude<PageSelection, { kind: "pending" }>;
+export type BinaryPageSelectionMap = Map<string, BinaryPageSelection>;
 
 export type PageSelectionMap<TSelection extends PageSelection> = Map<
   string,
@@ -71,21 +73,22 @@ function resolvePendingTriState(
 }
 
 /**
- * Toggle a whole chapter from its checkbox.
+ * Set a whole chapter from the checkbox's next checked value.
  *
- * Follows the standard tri-state contract: a partially selected chapter becomes
- * fully selected, and only a fully selected chapter clears.
+ * The rendered tri-state can be "all" even when the stored kind is `pages`,
+ * so the caller passes the checkbox value instead of inferring it from kind.
  */
-export function toggleChapterSelection<TSelection extends PageSelection>(
+export function setChapterSelection<TSelection extends PageSelection>(
   map: PageSelectionMap<TSelection>,
   chapterId: string,
   selectAll: TSelection,
+  checked: boolean,
 ): PageSelectionMap<TSelection> {
   const next = new Map(map);
-  if (next.get(chapterId)?.kind === "all") {
-    next.delete(chapterId);
-  } else {
+  if (checked) {
     next.set(chapterId, selectAll);
+  } else {
+    next.delete(chapterId);
   }
   return next;
 }
@@ -104,7 +107,7 @@ export function togglePageSelection<TSelection extends PageSelection>(
     collapseFullPageSetToAll = false,
     selectAll,
   }: {
-    /** Export collapses a fully ticked chapter back to `all`; translation keeps the explicit set. */
+    /** Binary jobs collapse a fully ticked chapter to `all`; translation keeps the explicit set. */
     collapseFullPageSetToAll?: boolean;
     selectAll: TSelection;
   },
@@ -116,6 +119,52 @@ export function togglePageSelection<TSelection extends PageSelection>(
     seed.add(pageId);
   }
 
+  return replacePageSelection(map, chapterId, seed, pages, {
+    collapseFullPageSetToAll,
+    selectAll,
+  });
+}
+
+/** Applies the anchor's checked state to an inclusive range in page order. */
+export function applyPageRangeSelection<TSelection extends PageSelection>(
+  map: PageSelectionMap<TSelection>,
+  chapterId: string,
+  anchorPageId: string,
+  targetPageId: string,
+  pages: MangaPage[],
+  options: {
+    collapseFullPageSetToAll?: boolean;
+    selectAll: TSelection;
+  },
+): PageSelectionMap<TSelection> {
+  const anchorIndex = pages.findIndex((page) => page.id === anchorPageId);
+  const targetIndex = pages.findIndex((page) => page.id === targetPageId);
+  if (anchorIndex < 0 || targetIndex < 0) return map;
+
+  const selected = resolveSelectedPageIds(map.get(chapterId), pages);
+  const include = selected.has(anchorPageId);
+  const first = Math.min(anchorIndex, targetIndex);
+  const last = Math.max(anchorIndex, targetIndex);
+  for (const page of pages.slice(first, last + 1)) {
+    if (include) selected.add(page.id);
+    else selected.delete(page.id);
+  }
+  return replacePageSelection(map, chapterId, selected, pages, options);
+}
+
+function replacePageSelection<TSelection extends PageSelection>(
+  map: PageSelectionMap<TSelection>,
+  chapterId: string,
+  seed: Set<string>,
+  pages: MangaPage[],
+  {
+    collapseFullPageSetToAll = false,
+    selectAll,
+  }: {
+    collapseFullPageSetToAll?: boolean;
+    selectAll: TSelection;
+  },
+): PageSelectionMap<TSelection> {
   const next = new Map(map);
   if (seed.size === 0) {
     next.delete(chapterId);

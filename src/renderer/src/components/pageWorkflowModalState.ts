@@ -12,9 +12,9 @@ import { pageWorkflowGateway } from "../api/pageWorkflowGateway";
 import { libraryGateway } from "../api/libraryGateway";
 import { conditionalBatchGateway } from "../api/conditionalBatchGateway";
 import {
-  selectedPageIds,
-  type ChapterSelectionMap,
-} from "../lib/translationSelection";
+  resolveSelectedPageIds,
+  type BinaryPageSelectionMap,
+} from "../lib/pageSelection";
 
 export function usePageWorkflowModalState(props: TranslationOptionsModalProps) {
   const work =
@@ -23,7 +23,7 @@ export function usePageWorkflowModalState(props: TranslationOptionsModalProps) {
   const [plan, setPlan] = useState(() =>
     initialPageWorkflowPlan(props.uiSettings),
   );
-  const [selection, setSelection] = useState<ChapterSelectionMap>(
+  const [selection, setSelection] = useState<BinaryPageSelectionMap>(
     () =>
       new Map(
         (props.initialScope === "work-all" && work
@@ -32,6 +32,11 @@ export function usePageWorkflowModalState(props: TranslationOptionsModalProps) {
         ).map((chapter) => [chapter.id, { kind: "all" as const }]),
       ),
   );
+  const [selectionResetKey, setSelectionResetKey] = useState(0);
+  const loadSelection = (next: BinaryPageSelectionMap): void => {
+    setSelection(next);
+    setSelectionResetKey((key) => key + 1);
+  };
   const [rules, setRules] = useState(createEmptyConditionalBatchSnapshot);
   const [resume, setResume] = useState<PageWorkflowRequest | null>(null);
   const state = useWorkflowPreflight(props, plan, selection, resume);
@@ -66,6 +71,8 @@ export function usePageWorkflowModalState(props: TranslationOptionsModalProps) {
     setPlan,
     selection,
     setSelection,
+    loadSelection,
+    selectionResetKey,
     rules,
     ...state,
     resume,
@@ -77,7 +84,7 @@ export function usePageWorkflowModalState(props: TranslationOptionsModalProps) {
 function useWorkflowPreflight(
   props: TranslationOptionsModalProps,
   plan: PageWorkflowRequest["plan"],
-  selection: ChapterSelectionMap,
+  selection: BinaryPageSelectionMap,
   resume: PageWorkflowRequest | null,
 ) {
   const [request, setRequest] = useState<PageWorkflowRequest | null>(null);
@@ -105,7 +112,7 @@ function useWorkflowPreflight(
           liveChapters.push(chapter);
           return {
             chapterId,
-            pageIds: [...selectedPageIds(selected, chapter.pages)],
+            pageIds: [...resolveSelectedPageIds(selected, chapter.pages)],
           };
         }),
       );

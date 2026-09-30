@@ -152,6 +152,7 @@ function pickerElement(
       renderSelectionSummary={() => null}
       onToggleChapter={vi.fn()}
       onTogglePage={onTogglePage}
+      onTogglePageRange={vi.fn()}
     />
   );
 }

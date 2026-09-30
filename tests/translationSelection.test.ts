@@ -8,7 +8,7 @@ import {
   createPendingChapterSelection,
   pageRunIntent,
   selectedPageIds,
-  toggleChapter,
+  setTranslationChapter,
   togglePage,
   type ChapterSelectionMap,
 } from "../src/renderer/src/lib/translationSelection";
@@ -69,10 +69,10 @@ describe("translation selection", () => {
   });
 
   it("toggles a whole chapter on and off", () => {
-    const on = toggleChapter(new Map(), "c1");
+    const on = setTranslationChapter(new Map(), "c1", true);
     expect(on.get("c1")).toEqual({ kind: "all" });
 
-    const off = toggleChapter(on, "c1");
+    const off = setTranslationChapter(on, "c1", false);
     expect(off.has("c1")).toBe(false);
   });
 
@@ -83,10 +83,10 @@ describe("translation selection", () => {
       ["c1", { kind: "pages", pageIds: new Set(["p2"]) }],
     ]);
 
-    const next = toggleChapter(partial, "c1");
+    const next = setTranslationChapter(partial, "c1", true);
 
     expect(next.get("c1")).toEqual({ kind: "all" });
-    expect(toggleChapter(next, "c1").has("c1")).toBe(false);
+    expect(setTranslationChapter(next, "c1", false).has("c1")).toBe(false);
   });
 
   it("seeds an explicit page set from a pending chapter, then flips one page", () => {

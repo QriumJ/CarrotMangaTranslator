@@ -3,7 +3,7 @@ import type {
   MangaPage,
   TranslationCompletionWorkflow,
 } from "../../../shared/libraryTypes";
-import type { TriState } from "./pageSelection";
+import { setChapterSelection, type TriState } from "./pageSelection";
 import { createPageRevision } from "../../../shared/pageRevision";
 import {
   DEFAULT_SOURCE_LANGUAGE,
@@ -110,14 +110,12 @@ export function chapterTriState(
   return count >= Math.max(pageCount, loadedPages.length) ? "all" : "some";
 }
 
-export function toggleChapter(
+export function setTranslationChapter(
   map: ChapterSelectionMap,
   chapterId: string,
+  checked: boolean,
 ): ChapterSelectionMap {
-  const next = new Map(map);
-  if (next.get(chapterId)?.kind === "all") next.delete(chapterId);
-  else next.set(chapterId, { kind: "all" });
-  return next;
+  return setChapterSelection(map, chapterId, { kind: "all" }, checked);
 }
 
 /** Partial pages cycle resume -> restart -> excluded -> resume. */

@@ -130,6 +130,7 @@ export function ExportOptionsModal({
     >
       <ExportOptionsContent
         chapter={chapter}
+        currentPageId={currentPageId}
         isStarting={start.isStarting}
         kind={kind}
         onNavigateToIssue={onNavigateToIssue}
@@ -151,6 +152,7 @@ export function ExportOptionsModal({
 
 function ExportOptionsContent({
   chapter,
+  currentPageId,
   isStarting,
   kind,
   onNavigateToIssue,
@@ -162,6 +164,7 @@ function ExportOptionsContent({
   work,
 }: {
   chapter: ChapterSnapshot;
+  currentPageId: string;
   isStarting: boolean;
   kind: ExportModalKind;
   onNavigateToIssue?: ExportOptionsModalProps["onNavigateToIssue"];
@@ -187,6 +190,7 @@ function ExportOptionsContent({
       <ExportPagePicker
         work={work}
         currentChapter={chapter}
+        currentPageId={currentPageId}
         selection={selection}
         onChange={setSelection}
       />

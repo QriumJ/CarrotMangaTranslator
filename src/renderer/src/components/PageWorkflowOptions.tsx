@@ -86,7 +86,7 @@ function useWorkflowResumeSelection(
         }
         state.setPlan(request.plan);
         state.setResume(request);
-        state.setSelection(
+        state.loadSelection(
           new Map(
             request.selection.map((s) => [
               s.chapterId,

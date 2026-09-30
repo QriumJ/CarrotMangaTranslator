@@ -3,12 +3,15 @@ import type { MangaPage } from "../src/shared/libraryTypes";
 import {
   buildExportSelection,
   createDefaultExportSelection,
-  exportChapterTriState,
-  selectedExportPageIds,
-  toggleExportChapter,
-  toggleExportPage,
+  type ExportChapterSelectionState,
   type ExportSelectionMap,
 } from "../src/renderer/src/lib/exportSelection";
+import {
+  resolveChapterTriState,
+  resolveSelectedPageIds,
+  setChapterSelection,
+  togglePageSelection,
+} from "../src/renderer/src/lib/pageSelection";
 
 function makePage(id: string): MangaPage {
   return {
@@ -47,38 +50,53 @@ describe("export selection", () => {
   });
 
   it("toggles chapters and pages without introducing a pending mode", () => {
-    const wholeChapter = toggleExportChapter(new Map(), "c1");
+    const wholeChapter = setChapterSelection(
+      new Map<string, ExportChapterSelectionState>(),
+      "c1",
+      { kind: "all" },
+      true,
+    );
     expect(wholeChapter.get("c1")).toEqual({ kind: "all" });
 
-    const withoutMiddle = toggleExportPage(wholeChapter, "c1", "p2", pages);
+    const withoutMiddle = togglePageSelection(wholeChapter, "c1", "p2", pages, {
+      collapseFullPageSetToAll: true,
+      selectAll: { kind: "all" },
+    });
     expect(withoutMiddle.get("c1")).toEqual({
       kind: "pages",
       pageIds: new Set(["p1", "p3"]),
     });
-    expect(selectedExportPageIds(withoutMiddle.get("c1"), pages)).toEqual(
+    expect(resolveSelectedPageIds(withoutMiddle.get("c1"), pages)).toEqual(
       new Set(["p1", "p3"]),
     );
-    expect(toggleExportChapter(withoutMiddle, "c1").get("c1")).toEqual({
+    expect(
+      setChapterSelection(withoutMiddle, "c1", { kind: "all" }, true).get("c1"),
+    ).toEqual({
       kind: "all",
     });
 
-    const allAgain = toggleExportPage(withoutMiddle, "c1", "p2", pages);
+    const allAgain = togglePageSelection(withoutMiddle, "c1", "p2", pages, {
+      collapseFullPageSetToAll: true,
+      selectAll: { kind: "all" },
+    });
     expect(allAgain.get("c1")).toEqual({ kind: "all" });
-    expect(toggleExportChapter(allAgain, "c1").has("c1")).toBe(false);
+    expect(
+      setChapterSelection(allAgain, "c1", { kind: "all" }, false).has("c1"),
+    ).toBe(false);
   });
 
   it("derives checkbox state from all, partial, and empty selections", () => {
-    expect(exportChapterTriState(undefined, pages.length, pages)).toBe("none");
-    expect(exportChapterTriState({ kind: "all" }, pages.length)).toBe("all");
+    expect(resolveChapterTriState(undefined, pages.length, pages)).toBe("none");
+    expect(resolveChapterTriState({ kind: "all" }, pages.length)).toBe("all");
     expect(
-      exportChapterTriState(
+      resolveChapterTriState(
         { kind: "pages", pageIds: new Set(["p1"]) },
         pages.length,
         pages,
       ),
     ).toBe("some");
     expect(
-      exportChapterTriState(
+      resolveChapterTriState(
         { kind: "pages", pageIds: new Set(pages.map((page) => page.id)) },
         pages.length,
         pages,

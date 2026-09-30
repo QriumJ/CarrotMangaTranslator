@@ -3,19 +3,22 @@ import { useTranslation } from "react-i18next";
 import { Button } from "./ui/Button";
 import styles from "./ChapterPagePicker.module.css";
 
+type ChapterPickerHeaderProps = {
+  workTitle: string;
+  onSelectAll: () => void;
+  onClear: () => void;
+} & (
+  | { pageWork: true; onSelectPending?: never }
+  | { pageWork?: false; onSelectPending: () => void }
+);
+
 export function ChapterPickerHeader({
   pageWork,
   workTitle,
   onSelectAll,
   onSelectPending,
   onClear,
-}: {
-  pageWork?: boolean;
-  workTitle: string;
-  onSelectAll: () => void;
-  onSelectPending: () => void;
-  onClear: () => void;
-}): React.JSX.Element {
+}: ChapterPickerHeaderProps): React.JSX.Element {
   const { t } = useTranslation("components");
   return (
     <div className={pageWork ? styles.pageWorkHeader : "translate-picker-head"}>

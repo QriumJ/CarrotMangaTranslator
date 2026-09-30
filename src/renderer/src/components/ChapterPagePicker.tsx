@@ -14,16 +14,16 @@ import {
   createPendingChapterSelection,
   pageRunIntent,
   selectedPageIds,
-  toggleChapter,
+  setTranslationChapter,
   togglePage,
   type ChapterSel,
   type ChapterSelectionMap,
   type TranslationResumeContext,
 } from "../lib/translationSelection";
 import { WorkPagePicker, type ChapterPagesLookup } from "./WorkPagePicker";
+import { usePageRangeAnchor } from "./usePageRangeAnchor";
 
 type ChapterPagePickerProps = {
-  pageWork?: boolean;
   work: LibraryWorkSummary;
   currentChapter: ChapterSnapshot;
   currentPageId?: string | null;
@@ -42,13 +42,12 @@ export function ChapterPagePicker(
 
   return (
     <WorkPagePicker
-      showTranslatedStatus={!props.pageWork}
+      showTranslatedStatus
       work={work}
       currentChapter={currentChapter}
       currentPageId={currentPageId}
       header={
         <ChapterPickerHeader
-          pageWork={props.pageWork}
           workTitle={work.title}
           onSelectAll={actions.selectAll}
           onSelectPending={actions.selectPending}
@@ -70,23 +69,17 @@ export function ChapterPagePicker(
         pageRunIntent(selection.get(chapter.id), page, resumeContext)
       }
       getPageSelectionTooltip={(chapter, page) =>
-        props.pageWork
-          ? page.name
-          : resolveResumeTooltip(
-              pageRunIntent(selection.get(chapter.id), page, resumeContext),
-              page,
-              t,
-            )
+        resolveResumeTooltip(
+          pageRunIntent(selection.get(chapter.id), page, resumeContext),
+          page,
+          t,
+        )
       }
       getChapterSummary={(chapter, pages) =>
-        props.pageWork
-          ? `${pages?.length ?? chapter.pageCount}p`
-          : resolveChapterSummary(chapter, pages, resumeContext, t)
+        resolveChapterSummary(chapter, pages, resumeContext, t)
       }
       renderSelectionSummary={(getPages) =>
-        props.pageWork
-          ? null
-          : summarizeSelection(work, selection, getPages, resumeContext, t)
+        summarizeSelection(work, selection, getPages, resumeContext, t)
       }
       onToggleChapter={actions.toggleChapter}
       onTogglePage={actions.togglePage}
@@ -102,55 +95,41 @@ function useChapterPagePickerActions({
   onChange,
   resumeContext,
 }: ChapterPagePickerProps) {
-  const rangeAnchorRef = React.useRef<{
-    chapterId: string;
-    pageId: string;
-  } | null>(null);
+  const {
+    reset: resetAnchor,
+    togglePage: toggleSingle,
+    toggleRange,
+  } = usePageRangeAnchor(
+    (chapterId, pageId, pages) =>
+      onChange(togglePage(selection, chapterId, pageId, pages, resumeContext)),
+    (chapterId, anchorPageId, targetPageId, pages) =>
+      onChange(
+        applyPageRangeFromAnchor(
+          selection,
+          chapterId,
+          anchorPageId,
+          targetPageId,
+          pages,
+          resumeContext,
+        ),
+      ),
+  );
   React.useEffect(() => {
-    rangeAnchorRef.current = null;
+    resetAnchor();
   }, [
+    resetAnchor,
+    work.id,
+    currentChapter.id,
     resumeContext.blockMode,
     resumeContext.completionWorkflow,
     resumeContext.sourceLanguage,
     resumeContext.targetLanguage,
   ]);
-  const resetAnchor = (): void => {
-    rangeAnchorRef.current = null;
-  };
   const replaceEveryChapter = (
     make: (chapter: LibraryChapterSummary) => ChapterSel | undefined,
   ): void => {
     resetAnchor();
     onChange(createWorkSelection(work, make));
-  };
-  const toggleSinglePage = (
-    chapterId: string,
-    pageId: string,
-    pages: MangaPage[],
-  ): void => {
-    rangeAnchorRef.current = { chapterId, pageId };
-    onChange(togglePage(selection, chapterId, pageId, pages, resumeContext));
-  };
-  const togglePageRange = (
-    chapterId: string,
-    pageId: string,
-    pages: MangaPage[],
-  ): void => {
-    const anchor = rangeAnchorRef.current;
-    if (!anchor || anchor.chapterId !== chapterId) {
-      toggleSinglePage(chapterId, pageId, pages);
-      return;
-    }
-    onChange(
-      applyPageRangeFromAnchor(
-        selection,
-        chapterId,
-        anchor.pageId,
-        pageId,
-        pages,
-        resumeContext,
-      ),
-    );
   };
   return {
     clear: () => {
@@ -166,10 +145,12 @@ function useChapterPagePickerActions({
             ? undefined
             : { kind: "pending" },
       ),
-    toggleChapter: (chapterId: string) =>
-      onChange(toggleChapter(selection, chapterId)),
-    togglePage: toggleSinglePage,
-    togglePageRange,
+    toggleChapter: (chapterId: string, checked: boolean) => {
+      resetAnchor();
+      onChange(setTranslationChapter(selection, chapterId, checked));
+    },
+    togglePage: toggleSingle,
+    togglePageRange: toggleRange,
   };
 }
 

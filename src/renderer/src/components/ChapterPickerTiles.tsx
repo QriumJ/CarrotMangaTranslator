@@ -134,7 +134,7 @@ export function TriCheckbox({
 }: {
   state: TriState;
   label: string;
-  onChange: () => void;
+  onChange: (checked: boolean) => void;
 }): React.JSX.Element {
   return (
     <CheckboxField

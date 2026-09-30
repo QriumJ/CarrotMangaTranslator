@@ -65,7 +65,7 @@ function makeChapter(
   };
 }
 
-function makeLibrary(): LibraryIndex {
+function makeLibrary(currentPageCount = 2): LibraryIndex {
   return {
     workOrder: [WORK_ID],
     works: [
@@ -83,7 +83,7 @@ function makeLibrary(): LibraryIndex {
             status: "completed",
             createdAt: TS,
             updatedAt: TS,
-            pageCount: 2,
+            pageCount: currentPageCount,
           },
           {
             id: SECOND_CHAPTER_ID,
@@ -104,15 +104,16 @@ async function renderModal(
   initialScope: React.ComponentProps<
     typeof AutoInpaintingOptionsModal
   >["initialScope"] = "select",
+  currentChapter = makeChapter(),
 ) {
   const onStart = vi.fn();
   const onClose = vi.fn();
   render(
     <AutoInpaintingOptionsModal
-      chapter={makeChapter()}
+      chapter={currentChapter}
       currentPageId="p2"
       initialScope={initialScope}
-      library={makeLibrary()}
+      library={makeLibrary(currentChapter.pages.length)}
       onStart={onStart}
       onClose={onClose}
     />,
@@ -209,6 +210,56 @@ describe("AutoInpaintingOptionsModal", () => {
     expect(
       screen.getByRole("button", { name: "자동 지우기 시작" }),
     ).toHaveProperty("disabled", true);
+  });
+
+  it("uses the shared Shift range and submits the resulting binary page set", async () => {
+    const { onStart } = await renderModal(
+      "select",
+      makeChapter(CHAPTER_ID, ["p1", "p2", "p3", "p4"].map(makePage)),
+    );
+    const page = (id: string) =>
+      screen.getByRole("checkbox", { name: new RegExp(`${id}\\.png`) });
+    expect(page("p2").closest("label")?.getAttribute("aria-current")).toBe(
+      "page",
+    );
+
+    fireEvent.click(page("p1"));
+    fireEvent.click(page("p4"), { shiftKey: true });
+    for (const id of ["p1", "p2", "p3", "p4"]) {
+      expect(page(id).getAttribute("aria-checked")).toBe("true");
+    }
+    fireEvent.click(page("p4"));
+    fireEvent.click(page("p2"), { shiftKey: true });
+    fireEvent.click(page("p3"), { ctrlKey: true });
+    fireEvent.click(screen.getByRole("button", { name: "자동 지우기 시작" }));
+    expect(onStart).toHaveBeenCalledWith(
+      [{ chapterId: CHAPTER_ID, mode: "page-set", pageIds: ["p1", "p3"] }],
+      expect.anything(),
+    );
+  });
+
+  it("does not extend a Shift range into another chapter", async () => {
+    openChapter.mockResolvedValue(
+      makeChapter(SECOND_CHAPTER_ID, [makePage("p3"), makePage("p4")]),
+    );
+    const { onStart } = await renderModal();
+    fireEvent.click(screen.getByRole("checkbox", { name: /p1\.png/ }));
+    fireEvent.click(screen.getByRole("button", { name: /2화/ }));
+    const fourth = await screen.findByRole("checkbox", { name: /p4\.png/ });
+    fireEvent.click(fourth, { shiftKey: true });
+    expect(
+      screen
+        .getByRole("checkbox", { name: /p3\.png/ })
+        .getAttribute("aria-checked"),
+    ).toBe("false");
+    fireEvent.click(screen.getByRole("button", { name: "자동 지우기 시작" }));
+    expect(onStart).toHaveBeenCalledWith(
+      [
+        { chapterId: CHAPTER_ID, mode: "all" },
+        { chapterId: SECOND_CHAPTER_ID, mode: "page-set", pageIds: ["p4"] },
+      ],
+      expect.anything(),
+    );
   });
 
   it("loads pages for another chapter only when expanded", async () => {

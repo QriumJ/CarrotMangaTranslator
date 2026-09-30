@@ -45,9 +45,9 @@ type WorkPagePickerProps = {
     pages: MangaPage[] | undefined,
   ) => string;
   renderSelectionSummary: (getPages: ChapterPagesLookup) => React.ReactNode;
-  onToggleChapter: (chapterId: string) => void;
+  onToggleChapter: (chapterId: string, checked: boolean) => void;
   onTogglePage: (chapterId: string, pageId: string, pages: MangaPage[]) => void;
-  onTogglePageRange?: (
+  onTogglePageRange: (
     chapterId: string,
     pageId: string,
     pages: MangaPage[],
@@ -203,7 +203,7 @@ function WorkPagePickerChapter({
   const togglePage = (pageId: string, range: boolean): void => {
     if (!pages) return;
     const handler = range ? picker.onTogglePageRange : picker.onTogglePage;
-    (handler ?? picker.onTogglePage)(chapter.id, pageId, pages);
+    handler(chapter.id, pageId, pages);
   };
   const isCurrent = chapter.id === picker.currentChapter.id;
   return (
@@ -225,7 +225,7 @@ function WorkPagePickerChapter({
       showTranslatedStatus={picker.showTranslatedStatus ?? true}
       observeThumbnail={observeThumbnail}
       onToggleExpand={() => onToggleExpand(chapter.id)}
-      onToggleChapter={() => picker.onToggleChapter(chapter.id)}
+      onToggleChapter={(checked) => picker.onToggleChapter(chapter.id, checked)}
       onTogglePage={(pageId) => togglePage(pageId, false)}
       onTogglePageRange={(pageId) => togglePage(pageId, true)}
     />
@@ -260,7 +260,7 @@ type ChapterRowProps = {
   showTranslatedStatus: boolean;
   observeThumbnail: ObservePageThumbnail;
   onToggleExpand: () => void;
-  onToggleChapter: () => void;
+  onToggleChapter: (checked: boolean) => void;
   onTogglePage: (pageId: string) => void;
   onTogglePageRange: (pageId: string) => void;
 };

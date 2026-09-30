@@ -93,7 +93,7 @@ function makeChapter(
   };
 }
 
-function makeLibrary(): LibraryIndex {
+function makeLibrary(currentPageCount = 2): LibraryIndex {
   return {
     workOrder: [WORK_ID],
     works: [
@@ -111,7 +111,7 @@ function makeLibrary(): LibraryIndex {
             status: "completed",
             createdAt: TS,
             updatedAt: TS,
-            pageCount: 2,
+            pageCount: currentPageCount,
           },
           {
             id: SECOND_CHAPTER_ID,
@@ -131,16 +131,17 @@ function makeLibrary(): LibraryIndex {
 async function renderModal(
   startResult: boolean,
   kind: "raster" | "psd" = "raster",
+  currentChapter = makeChapter(),
 ) {
   const onStart = vi.fn().mockResolvedValue(startResult);
   const onClose = vi.fn();
   render(
     <ExportOptionsModal
-      chapter={makeChapter()}
+      chapter={currentChapter}
       currentPageId="p2"
       jobActive={false}
       kind={kind}
-      library={makeLibrary()}
+      library={makeLibrary(currentChapter.pages.length)}
       onStart={onStart}
       onClose={onClose}
     />,
@@ -243,6 +244,123 @@ describe("ExportOptionsModal", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "전체 해제" }));
+    expect(screen.getByRole("button", { name: "결과물 출력" })).toHaveProperty(
+      "disabled",
+      true,
+    );
+  });
+
+  it.each(["raster", "psd"] as const)(
+    "uses a checked Shift anchor for %s output and keeps Ctrl as a single toggle",
+    async (kind) => {
+      const pages = ["p1", "p2", "p3", "p4"].map(makePage);
+      const { onStart } = await renderModal(
+        false,
+        kind,
+        makeChapter(CHAPTER_ID, pages),
+      );
+      const page = (id: string) =>
+        screen.getByRole("checkbox", { name: new RegExp(`${id}\\.png`) });
+
+      fireEvent.click(page("p1"), { ctrlKey: true });
+      expect(page("p1").getAttribute("aria-checked")).toBe("true");
+      expect(page("p3").getAttribute("aria-checked")).toBe("false");
+      fireEvent.click(page("p4"), { shiftKey: true });
+      for (const id of ["p1", "p2", "p3", "p4"]) {
+        expect(page(id).getAttribute("aria-checked")).toBe("true");
+      }
+
+      const start = screen.getByRole("button", {
+        name: kind === "psd" ? "PSD 출력" : "결과물 출력",
+      });
+      await waitFor(() => expect(start).toHaveProperty("disabled", false));
+      fireEvent.click(start);
+      await waitFor(() =>
+        expect(onStart).toHaveBeenCalledWith(
+          [{ chapterId: CHAPTER_ID, mode: "all" }],
+          [],
+          kind === "psd"
+            ? { collisionPolicy: "replace" }
+            : DEFAULT_RASTER_OPTIONS,
+        ),
+      );
+
+      fireEvent.click(page("p4"));
+      fireEvent.click(page("p2"), { shiftKey: true });
+      expect(page("p1").getAttribute("aria-checked")).toBe("true");
+      for (const id of ["p2", "p3", "p4"]) {
+        expect(page(id).getAttribute("aria-checked")).toBe("false");
+      }
+      await waitFor(() => expect(start).toHaveProperty("disabled", false));
+      fireEvent.click(start);
+      await waitFor(() =>
+        expect(onStart).toHaveBeenLastCalledWith(
+          [{ chapterId: CHAPTER_ID, mode: "page-set", pageIds: ["p1"] }],
+          [],
+          kind === "psd"
+            ? { collisionPolicy: "replace" }
+            : DEFAULT_RASTER_OPTIONS,
+        ),
+      );
+    },
+  );
+
+  it("resets the range anchor after a quick action and marks the current page", async () => {
+    const originalScroll = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "scrollIntoView",
+    );
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+    try {
+      await renderModal(
+        false,
+        "raster",
+        makeChapter(CHAPTER_ID, [
+          makePage("p1"),
+          makePage("p2"),
+          makePage("p3"),
+        ]),
+      );
+      const page = (id: string) =>
+        screen.getByRole("checkbox", { name: new RegExp(`${id}\\.png`) });
+      expect(page("p2").closest("label")?.getAttribute("aria-current")).toBe(
+        "page",
+      );
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+      fireEvent.click(page("p1"));
+      fireEvent.click(screen.getByRole("button", { name: "전체 해제" }));
+      fireEvent.click(page("p3"), { shiftKey: true });
+      expect(page("p1").getAttribute("aria-checked")).toBe("false");
+      expect(page("p2").getAttribute("aria-checked")).toBe("false");
+      expect(page("p3").getAttribute("aria-checked")).toBe("true");
+    } finally {
+      if (originalScroll) {
+        Object.defineProperty(
+          HTMLElement.prototype,
+          "scrollIntoView",
+          originalScroll,
+        );
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
+      }
+    }
+  });
+
+  it("clears an explicitly selected one-page chapter in one checkbox click", async () => {
+    await renderModal(
+      false,
+      "raster",
+      makeChapter(CHAPTER_ID, [makePage("p2")]),
+    );
+    const chapterCheckbox = screen.getByRole("checkbox", { name: "1화" });
+    expect((chapterCheckbox as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(chapterCheckbox);
+    expect((chapterCheckbox as HTMLInputElement).checked).toBe(false);
     expect(screen.getByRole("button", { name: "결과물 출력" })).toHaveProperty(
       "disabled",
       true,

@@ -11,7 +11,7 @@ import {
   type AutoInpaintingChapterSelection,
   type AutoInpaintingEntryScope,
 } from "../lib/autoInpaintingSelection";
-import { PageSelectionPicker } from "./ExportPagePicker";
+import { PageSelectionPicker } from "./BinaryChapterPagePicker";
 import { Button } from "./ui/Button";
 import {
   PagePickerModalCheckbox,
@@ -85,6 +85,7 @@ export function AutoInpaintingOptionsModal({
     >
       <AutoInpaintingScopeBody
         chapter={chapter}
+        currentPageId={currentPageId}
         initialScope={initialScope}
         selection={state.selection}
         work={state.work}
@@ -131,6 +132,7 @@ function useAutoInpaintingModalState({
 
 type AutoInpaintingScopeBodyProps = {
   chapter: ChapterSnapshot;
+  currentPageId: string;
   initialScope: AutoInpaintingEntryScope;
   selection: ReturnType<typeof createScopedAutoInpaintingSelection>;
   work: LibraryIndex["works"][number] | null;
@@ -141,6 +143,7 @@ type AutoInpaintingScopeBodyProps = {
 
 function AutoInpaintingScopeBody({
   chapter,
+  currentPageId,
   initialScope,
   selection,
   work,
@@ -152,6 +155,7 @@ function AutoInpaintingScopeBody({
       <PageSelectionPicker
         work={work}
         currentChapter={chapter}
+        currentPageId={currentPageId}
         selection={selection}
         onChange={onSelectionChange}
         copy={{

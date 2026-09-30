@@ -10,7 +10,8 @@ import { usePageWorkflowModalState } from "./pageWorkflowModalState";
 import { Modal } from "./ui/Modal";
 import { Button } from "./ui/Button";
 import { CheckboxField } from "./ui/CheckboxField";
-import { ChapterPagePicker } from "./ChapterPagePicker";
+import { BinaryChapterPagePicker } from "./BinaryChapterPagePicker";
+import { ChapterPickerHeader } from "./ChapterPickerHeader";
 import { handoffActiveModalToWorkCenter } from "../lib/modalWorkCenterHandoff";
 import styles from "./PageWorkflowModal.module.css";
 
@@ -141,6 +142,7 @@ type ViewProps = {
 };
 function WorkflowSelection({ props, state }: ViewProps) {
   const [expanded, setExpanded] = React.useState(false);
+  const work = state.work;
   return (
     <section className={styles.selection} data-expanded={expanded}>
       <div className={styles.sectionHeading}>
@@ -157,10 +159,10 @@ function WorkflowSelection({ props, state }: ViewProps) {
         </Button>
       </div>
       <div className={`${styles.selectionContent} page-picker-fill-modal`}>
-        {state.work && (
-          <ChapterPagePicker
-            pageWork
-            work={state.work}
+        {work && (
+          <BinaryChapterPagePicker
+            key={state.selectionResetKey}
+            work={work}
             currentChapter={props.chapter}
             currentPageId={props.currentPageId}
             selection={state.selection}
@@ -168,11 +170,18 @@ function WorkflowSelection({ props, state }: ViewProps) {
               state.setResume(null);
               state.setSelection(next);
             }}
-            resumeContext={{
-              blockMode: "keep",
-              sourceLanguage: props.sourceLanguage ?? "ja",
-              targetLanguage: props.targetLanguage ?? "ko",
-            }}
+            renderHeader={(actions) => (
+              <ChapterPickerHeader
+                pageWork
+                workTitle={work.title}
+                onSelectAll={actions.selectAll}
+                onClear={actions.clear}
+              />
+            )}
+            getChapterSummary={(chapter, pages) =>
+              `${pages?.length ?? chapter.pageCount}p`
+            }
+            renderSelectionSummary={() => null}
           />
         )}
       </div>

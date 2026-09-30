@@ -21,6 +21,7 @@ import type { LibraryIndex } from "../src/shared/libraryTypes";
 import type { UiSettings } from "../src/shared/settingsTypes";
 import { normalizePageWorkflowUi } from "../src/shared/pageWorkflowSettings";
 import { UiSettingsSchema } from "../src/shared/ipcUiSettingsSchema";
+import { createPageRevision } from "../src/shared/pageRevision";
 
 const chapter = makeChapter(makePage({ blockPatch: { translatedText: "" } }));
 const library: LibraryIndex = {
@@ -102,7 +103,137 @@ function show(
   return { onStart, onPersist, onLegacyStart };
 }
 
+function installChapterPages(ids: string[]): () => void {
+  const oldPages = chapter.pages;
+  const oldPageOrder = chapter.pageOrder;
+  const summary = library.works[0].chapters[0];
+  const oldPageCount = summary.pageCount;
+  chapter.pages = ids.map((id) => ({
+    ...makePage({ blockPatch: { translatedText: "" } }),
+    id,
+    name: `${id}.png`,
+    imagePath: `${id}.png`,
+  }));
+  chapter.pageOrder = ids;
+  summary.pageCount = ids.length;
+  return () => {
+    chapter.pages = oldPages;
+    chapter.pageOrder = oldPageOrder;
+    summary.pageCount = oldPageCount;
+  };
+}
+
 describe("Hayai page work modal", () => {
+  it("uses the shared reverse Shift range and Ctrl toggle for its final page IDs", async () => {
+    const restore = installChapterPages(["p1", "p2", "p3", "p4"]);
+    try {
+      const f = show();
+      const page = (id: string) =>
+        screen.getByRole("checkbox", { name: `${id}.png` });
+      fireEvent.click(screen.getByRole("button", { name: "전체 해제" }));
+      fireEvent.click(page("p4"));
+      fireEvent.click(page("p1"), { shiftKey: true });
+      for (const id of ["p1", "p2", "p3", "p4"]) {
+        expect(page(id).getAttribute("aria-checked")).toBe("true");
+      }
+      fireEvent.click(page("p2"), { ctrlKey: true });
+      await waitFor(() =>
+        expect(
+          (
+            screen.getByRole("button", {
+              name: "작업 시작",
+            }) as HTMLButtonElement
+          ).disabled,
+        ).toBe(false),
+      );
+      fireEvent.click(screen.getByRole("button", { name: "작업 시작" }));
+      expect(f.onStart).toHaveBeenCalledWith(
+        expect.objectContaining({
+          selection: [{ chapterId: chapter.id, pageIds: ["p1", "p3", "p4"] }],
+        }),
+      );
+    } finally {
+      restore();
+    }
+  });
+
+  it("keeps the first click as the Shift anchor after editing a saved run", async () => {
+    const restore = installChapterPages(["p1", "p2", "p3", "p4"]);
+    const runId = "11111111-1111-4111-8111-111111111111";
+    chapter.pages[0].pageWorkflow = {
+      runId,
+      planKey: "saved",
+      steps: {},
+      findings: [],
+    };
+    getRun.mockResolvedValue({
+      resumeRunId: runId,
+      plan: createPageWorkflowPlan(["detect"]),
+      selection: [{ chapterId: chapter.id, pageIds: ["p1"] }],
+    });
+    try {
+      show();
+      fireEvent.click(
+        screen.getByRole("combobox", { name: "이전 페이지 작업 이어하기" }),
+      );
+      fireEvent.click(
+        await screen.findByRole("option", { name: /이전 작업 1/ }),
+      );
+      await screen.findByText("저장된 실행 이어하기 · 설정 변경 시 새 실행");
+      const page = (id: string) =>
+        screen.getByRole("checkbox", { name: `${id}.png` });
+      fireEvent.click(page("p2"));
+      fireEvent.click(page("p4"), { shiftKey: true });
+      expect(page("p3").getAttribute("aria-checked")).toBe("true");
+    } finally {
+      restore();
+    }
+  });
+
+  it("keeps target pages binary even when a legacy translation can resume", async () => {
+    const page = chapter.pages[0];
+    page.translationCheckpoint = {
+      schemaVersion: 1,
+      pipelineContractVersion: "whole-page-prepared-v1",
+      artifactPath: ".translation-checkpoint-test/checkpoint.json",
+      sha256: "a".repeat(64),
+      byteSize: 100,
+      inputRevision: createPageRevision(page),
+      sourceLanguage: "ja",
+      targetLanguage: "ko",
+      blockMode: "keep",
+      savedAt: "2026-01-01T00:00:00.000Z",
+    };
+    try {
+      const f = show();
+      const tile = screen.getByRole("checkbox", {
+        name: new RegExp(page.name),
+      });
+      fireEvent.click(tile);
+      expect(tile.getAttribute("aria-checked")).toBe("false");
+      fireEvent.click(tile);
+      expect(tile.getAttribute("aria-checked")).toBe("true");
+      expect((tile as HTMLInputElement).indeterminate).toBe(false);
+      await waitFor(() =>
+        expect(
+          (
+            screen.getByRole("button", {
+              name: "작업 시작",
+            }) as HTMLButtonElement
+          ).disabled,
+        ).toBe(false),
+      );
+      fireEvent.click(screen.getByRole("button", { name: "작업 시작" }));
+      expect(f.onStart).toHaveBeenCalledWith(
+        expect.objectContaining({
+          selection: [{ chapterId: chapter.id, pageIds: [page.id] }],
+        }),
+      );
+    } finally {
+      delete page.translationCheckpoint;
+    }
+  });
+
   it("refuses a foreign imported run without replacing the current target selection", async () => {
     const runId = "11111111-1111-4111-8111-111111111111";
     chapter.pages[0].pageWorkflow = {
