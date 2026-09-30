@@ -247,9 +247,9 @@ it("keeps the initiating owner through the real read-only export tool and asynch
     const parts = await wrapped.invoke(request, f.auth());
     if (parts[0]?.type !== "text") throw new Error("Expected a job receipt");
     const id = JSON.parse(parts[0].text).jobId as string;
-    await vi.waitFor(() =>
-      expect(manager.status(id, f.owner).status).not.toBe("running"),
-    );
+    // Native retention writes can outlast waitFor's 1s default on CI disks.
+    // Await the owned job's actual completion, including cleanup and persistence.
+    await manager.waitForCompletion(id, f.owner, new AbortController().signal);
     expect(manager.status(id, f.owner)).toMatchObject({
       status: "completed",
       result: { retainedOutputId: expect.any(String) },
