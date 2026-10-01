@@ -1,4 +1,5 @@
 import type { AppSettings } from "../../shared/settingsTypes";
+import type { WorkInstructionSnapshot } from "../../shared/workContextInstructions";
 import type {
   PageWorkflowPlan,
   FrozenPageWorkflowRules,
@@ -10,6 +11,7 @@ import type { WholePagePipelineDependencies } from "../pipeline/wholePagePipelin
 import type { ImageDecodeFallback } from "../regionCrop";
 
 export type PageWorkflowRuntimeContext = {
+  instructions?: Record<string, WorkInstructionSnapshot>;
   previousStoryPages?: import("../../shared/workContextTypes").PageStoryMemory[];
   runId: string;
   plan: PageWorkflowPlan;

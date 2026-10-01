@@ -112,10 +112,6 @@ function useCharacterColumns(): readonly ContextEntryTableColumn[] {
       id: "speech-style",
       label: t("styleGuide.characters.speechStyle"),
     },
-    {
-      id: "custom-speech-style",
-      label: t("styleGuide.characters.customSpeechStyle"),
-    },
     { id: "note", label: t("styleGuide.note") },
     {
       id: "usage-count",

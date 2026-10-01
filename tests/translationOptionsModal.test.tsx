@@ -223,6 +223,23 @@ afterEach(() => {
 });
 
 describe("TranslationOptionsModal", () => {
+  it("starts only the added pages even when older pages are also untranslated", async () => {
+    const chapter = makeCheckpointChapter();
+    const { onStart } = await renderModal(
+      undefined,
+      { chapterId: chapter.id, pageIds: ["p10", "p12", "deleted-page"] },
+      chapter,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "선택 범위 번역" }));
+    expect(onStart.mock.calls[0][0].selection).toEqual([
+      {
+        chapterId: chapter.id,
+        mode: "page-set",
+        pageIds: ["p10", "p12"],
+        restartPageIds: ["p10", "p12"],
+      },
+    ]);
+  });
   it("keeps settings readable when the current work disappeared from the library", async () => {
     const { onStart } = await renderModal(
       undefined,

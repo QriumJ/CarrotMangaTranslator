@@ -24,6 +24,47 @@ beforeEach(() => {
 });
 
 describe("chapter display commands", () => {
+  it("registers the same add-pages command for a current chapter and blocks it while occupied", () => {
+    const openAddChapterPages = vi.fn();
+    const options = { ...makeCommandOptions(), openAddChapterPages };
+    const { result, rerender } = renderHook(
+      ({ busy }) => useAppCommands({ ...options, jobActive: busy }),
+      { initialProps: { busy: false } },
+    );
+    expect(result.current.byId["add-chapter-pages"].label).toBe("페이지 추가");
+    expect(result.current.byId["add-chapter-pages"].paletteVisible).toBe(true);
+    act(() => result.current.run("add-chapter-pages"));
+    expect(openAddChapterPages).toHaveBeenCalledOnce();
+    rerender({ busy: true });
+    act(() => result.current.run("add-chapter-pages"));
+    expect(result.current.byId["add-chapter-pages"].paletteVisible).toBe(false);
+    expect(openAddChapterPages).toHaveBeenCalledOnce();
+  });
+  it("routes page editing through the shared command and disables it during jobs", () => {
+    const openPageEditor = vi.fn();
+    const { result, rerender } = renderHook(
+      ({ busy }) =>
+        useAppCommands({
+          ...makeCommandOptions(),
+          openPageEditor,
+          jobActive: busy,
+        }),
+      { initialProps: { busy: false } },
+    );
+    expect(result.current.byId["edit-pages"].label).toBe("페이지 편집");
+    act(() => result.current.run("edit-pages"));
+    expect(openPageEditor).toHaveBeenCalledOnce();
+    rerender({ busy: true });
+    act(() => result.current.run("edit-pages"));
+    expect(result.current.byId["edit-pages"].paletteVisible).toBe(false);
+    expect(openPageEditor).toHaveBeenCalledOnce();
+    const absent = renderHook(() =>
+      useAppCommands({ ...makeCommandOptions(), currentChapter: null }),
+    );
+    act(() => absent.result.current.run("edit-pages"));
+    const unavailable = renderHook(() => useAppCommands(makeCommandOptions()));
+    act(() => unavailable.result.current.run("edit-pages"));
+  });
   it("keeps preparation and viewing commands available while model execution is occupied", () => {
     const options = {
       ...makeCommandOptions(),

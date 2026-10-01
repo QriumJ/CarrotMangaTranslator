@@ -503,7 +503,7 @@ function buildResearchInstructions(
     "action은 add | update | disable, entity는 glossary | character다.",
     "update/disable은 반드시 현재 항목의 entryId를 쓴다. add의 entryId는 null이다.",
     "glossary add/update에는 source, target, category가 필요하다. category는 character | alias | place | term | honorific | other 중 하나다.",
-    "character add/update에는 displayName, sourceNames, targetName이 필요하며 speechStyle은 neutral | polite | casual | rough | childish | elderly | formal | custom 중 하나다.",
+    'character add/update에는 displayName, sourceNames, targetName이 필요하다. speechStyle은 "custom"으로 두고, 근거가 있는 구체적인 말투를 customSpeechStyle에 자연어로 작성한다. 근거가 없으면 빈 문자열로 둔다. 사용자가 정한 말투는 유지한다.',
     pair.isDefaultJapaneseToKorean
       ? "target, displayName, targetName은 반드시 자연스러운 한국어 번역 또는 한국어 음역으로 쓴다. 영어 번역이나 로마자 표기를 대신 넣지 않는다."
       : `target, displayName, targetName은 반드시 자연스러운 ${pair.target.labelKo} (${pair.target.promptName}) 번역 또는 표기로 쓴다. 다른 언어의 번역이나 음역을 대신 넣지 않는다.`,

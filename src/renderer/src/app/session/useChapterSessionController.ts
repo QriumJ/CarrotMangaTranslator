@@ -333,6 +333,7 @@ function resolveRuntimeModalState({
       modalController.importShareModal.shareExportOpen,
       modalController.importShareModal.shareImportPreview,
       libraryActions.renameTarget,
+      libraryActions.pageEditor,
       modalController.settingsDialog.settingsOpen,
       modalController.confirmController.confirmDialog,
       uiState.redactionPreparationRequest,

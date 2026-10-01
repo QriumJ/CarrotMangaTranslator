@@ -5,6 +5,8 @@ export const APP_COMMAND_IDS = [
   "translate-all",
   "run-current-page-inpainting",
   "cancel-job",
+  "add-chapter-pages",
+  "edit-pages",
   "toggle-block-chrome",
   "toggle-text-blocks",
   "gather-text",

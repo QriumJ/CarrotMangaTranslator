@@ -6,10 +6,90 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ImportPreviewResult } from "../src/shared/importTypes";
 import type { LibraryIndex } from "../src/shared/libraryTypes";
 import { ImportModal } from "../src/renderer/src/components/ImportModal";
+import type { ChapterSnapshot } from "../src/shared/libraryTypes";
+import { chooseCustomSelectOption } from "./testUtils/customSelect";
 
 afterEach(cleanup);
 
 describe("ImportModal selection surfaces", () => {
+  it("adds to the chosen chapter and translates only the new pages on request", () => {
+    const chapter: ChapterSnapshot = {
+      id: "chapter-1",
+      workId: "work-1",
+      title: "14.1화",
+      sourceKind: "images",
+      status: "idle",
+      createdAt: "2026-01-01",
+      updatedAt: "2026-01-01",
+      pageOrder: ["page-1"],
+      pages: [
+        {
+          id: "page-1",
+          name: "1.png",
+          imagePath: "1.png",
+          dataUrl: "",
+          width: 10,
+          height: 10,
+          blocks: [],
+          analysisStatus: "idle",
+          createdAt: "2026-01-01",
+          updatedAt: "2026-01-01",
+        },
+      ],
+    };
+    const onSubmit = vi.fn();
+    render(
+      <ImportModal
+        library={{
+          ...LIBRARY,
+          works: [
+            {
+              ...LIBRARY.works[0],
+              chapterOrder: [chapter.id],
+              chapters: [{ ...chapter, pageCount: chapter.pages.length }],
+            },
+          ],
+        }}
+        addPagesChapter={chapter}
+        preview={PREVIEW}
+        busy={false}
+        initialDraft={null}
+        feedback={null}
+        onCancel={vi.fn()}
+        onEntered={vi.fn()}
+        onSubmit={onSubmit}
+      />,
+    );
+    expect(screen.queryByRole("textbox")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "페이지 추가" }));
+    expect(onSubmit).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        target: {
+          mode: "chapter",
+          workId: "work-1",
+          chapterId: "chapter-1",
+          position: { kind: "end" },
+        },
+        translateAddedPages: false,
+      }),
+    );
+    chooseCustomSelectOption("추가 위치", "페이지 앞");
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: "추가한 페이지만 번역" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "페이지 추가" }));
+    expect(onSubmit).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        target: {
+          mode: "chapter",
+          workId: "work-1",
+          chapterId: "chapter-1",
+          position: { kind: "before", pageId: "page-1" },
+        },
+        translateAddedPages: true,
+      }),
+    );
+  });
   it("keeps target cards and editable chapter rows visually selected", () => {
     render(
       <ImportModal

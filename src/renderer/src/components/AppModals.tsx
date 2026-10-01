@@ -1,9 +1,13 @@
+import { PageEditorModal } from "./PageEditorModal";
 import React from "react";
 import type {
   ImportPreviewResult,
   ImportPreviewSession,
 } from "../../../shared/importTypes";
-import type { LibraryIndex } from "../../../shared/libraryTypes";
+import type {
+  ChapterSnapshot,
+  LibraryIndex,
+} from "../../../shared/libraryTypes";
 import type { AppSettings } from "../../../shared/settingsTypes";
 import type {
   WorkShareExportRequest,
@@ -29,8 +33,12 @@ import type { ConfirmDialogState } from "../hooks/useConfirmDialog";
 import type { ImportModalFeedback } from "../lib/importFlowTypes";
 
 type AppModalsProps = {
+  pageEditor?: React.ComponentProps<typeof PageEditorModal> | null;
+  addPagesChapter?: ChapterSnapshot | null;
+  onClearAddPages?: () => void;
   library: LibraryIndex;
   currentWorkId: string | null;
+  currentChapterId?: string | null;
   translationSourceOpen: boolean;
   webImportOpen: boolean;
   importPreview: ImportPreviewResult | null;
@@ -82,6 +90,7 @@ type AppModalsProps = {
 export function AppModals(props: AppModalsProps): React.JSX.Element {
   return (
     <>
+      {props.pageEditor ? <PageEditorModal {...props.pageEditor} /> : null}
       <ImportFlowModals {...props} />
       <ShareFlowModals {...props} />
       <EditAndSettingsModals {...props} />
@@ -90,8 +99,33 @@ export function AppModals(props: AppModalsProps): React.JSX.Element {
   );
 }
 
+type ImportFlowModalProps = Pick<
+  AppModalsProps,
+  | "addPagesChapter"
+  | "onClearAddPages"
+  | "importBusy"
+  | "importDraft"
+  | "importFeedback"
+  | "importPreview"
+  | "library"
+  | "currentWorkId"
+  | "currentChapterId"
+  | "onCancelImport"
+  | "onCancelTranslationSource"
+  | "onCancelWebImport"
+  | "onWebImportBackgroundStateChange"
+  | "onPreparedWebImport"
+  | "onSelectTranslationSource"
+  | "onSubmitImport"
+  | "translationSourceOpen"
+  | "webImportOpen"
+>;
+
 function ImportFlowModals({
+  addPagesChapter,
+  onClearAddPages,
   currentWorkId,
+  currentChapterId,
   importBusy,
   importDraft,
   importFeedback,
@@ -106,36 +140,26 @@ function ImportFlowModals({
   onSubmitImport,
   translationSourceOpen,
   webImportOpen,
-}: Pick<
-  AppModalsProps,
-  | "importBusy"
-  | "importDraft"
-  | "importFeedback"
-  | "importPreview"
-  | "library"
-  | "currentWorkId"
-  | "onCancelImport"
-  | "onCancelTranslationSource"
-  | "onCancelWebImport"
-  | "onWebImportBackgroundStateChange"
-  | "onPreparedWebImport"
-  | "onSelectTranslationSource"
-  | "onSubmitImport"
-  | "translationSourceOpen"
-  | "webImportOpen"
->): React.JSX.Element {
+}: ImportFlowModalProps): React.JSX.Element {
   return (
     <>
       {translationSourceOpen ? (
         <TranslateSourceModal
           busy={importBusy}
-          onCancel={onCancelTranslationSource}
+          addingPages={Boolean(addPagesChapter)}
+          onCancel={() => {
+            onCancelTranslationSource();
+            onClearAddPages?.();
+          }}
           onSelect={onSelectTranslationSource}
         />
       ) : null}
       {webImportOpen ? (
         <WebImportModal
-          onCancel={onCancelWebImport}
+          onCancel={() => {
+            onCancelWebImport();
+            onClearAddPages?.();
+          }}
           onBackgroundStateChange={onWebImportBackgroundStateChange}
           onEntered={onCancelTranslationSource}
           onPrepared={onPreparedWebImport}
@@ -145,6 +169,8 @@ function ImportFlowModals({
         <ImportModal
           library={library}
           currentWorkId={currentWorkId}
+          currentChapterId={currentChapterId}
+          addPagesChapter={addPagesChapter}
           preview={importPreview}
           busy={importBusy}
           initialDraft={importDraft}

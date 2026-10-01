@@ -23,20 +23,24 @@ export function ImportDraftSection({
   preview,
   selections,
   setSelections,
+  pagesOnly = false,
 }: {
   busy: boolean;
   preview: ImportPreviewResult;
   selections: ImportCreateSelection[];
   setSelections: React.Dispatch<React.SetStateAction<ImportCreateSelection[]>>;
+  pagesOnly?: boolean;
 }): React.JSX.Element {
   const { t } = useTranslation("components");
   return (
     <section className="modal-section">
       <h3>
         {t(
-          preview.mode === "batch"
-            ? "import.chaptersToCreate"
-            : "import.chapterTitle",
+          pagesOnly
+            ? "import.pagesToAdd"
+            : preview.mode === "batch"
+              ? "import.chaptersToCreate"
+              : "import.chapterTitle",
         )}
       </h3>
       <div className="draft-list">
@@ -52,6 +56,7 @@ export function ImportDraftSection({
               previewMode={preview.mode}
               selection={selection}
               setSelections={setSelections}
+              pagesOnly={pagesOnly}
             />
           ) : null;
         })}
@@ -66,12 +71,14 @@ function ImportDraftItem({
   previewMode,
   selection,
   setSelections,
+  pagesOnly,
 }: {
   busy: boolean;
   chapter: ImportPreviewResult["chapters"][number];
   previewMode: ImportPreviewResult["mode"];
   selection: ImportCreateSelection;
   setSelections: React.Dispatch<React.SetStateAction<ImportCreateSelection[]>>;
+  pagesOnly: boolean;
 }): React.JSX.Element {
   const { t } = useTranslation("components");
   return (
@@ -93,17 +100,21 @@ function ImportDraftItem({
           {t("common.pageCount", { count: chapter.pages.length })}
         </span>
       )}
-      <Input
-        value={selection.title}
-        disabled={busy || (previewMode === "batch" && !selection.enabled)}
-        onChange={(event) =>
-          updateSelectionTitle(
-            setSelections,
-            chapter.draftId,
-            event.target.value,
-          )
-        }
-      />
+      {pagesOnly ? (
+        <span>{chapter.title}</span>
+      ) : (
+        <Input
+          value={selection.title}
+          disabled={busy || (previewMode === "batch" && !selection.enabled)}
+          onChange={(event) =>
+            updateSelectionTitle(
+              setSelections,
+              chapter.draftId,
+              event.target.value,
+            )
+          }
+        />
+      )}
     </SelectionSurface>
   );
 }

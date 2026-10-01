@@ -1,5 +1,6 @@
 import type { ChapterSnapshot } from "../../../shared/libraryTypes";
 import type { UseImportShareActionsOptions } from "./importShareActionTypes";
+import { libraryGateway } from "../api/libraryGateway";
 
 export async function finishImportedChapterNavigation({
   applyChapter,
@@ -8,6 +9,8 @@ export async function finishImportedChapterNavigation({
   navigationKey,
   openTranslateOptions,
   openWorkTranslation,
+  addedPageIds,
+  refreshChapter = false,
   pushStatus,
   resetWorkspaceHistory,
   saveNow,
@@ -19,6 +22,8 @@ export async function finishImportedChapterNavigation({
   navigationKey: string;
   openTranslateOptions: UseImportShareActionsOptions["openTranslateOptions"];
   openWorkTranslation: boolean;
+  addedPageIds?: string[];
+  refreshChapter?: boolean;
   pushStatus: UseImportShareActionsOptions["pushStatus"];
   resetWorkspaceHistory: UseImportShareActionsOptions["resetWorkspaceHistory"];
   saveNow: UseImportShareActionsOptions["saveNow"];
@@ -30,6 +35,7 @@ export async function finishImportedChapterNavigation({
   }
   try {
     await saveNow();
+    if (refreshChapter) chapter = await libraryGateway.openChapter(chapter.id);
   } catch (_error) {
     pushStatus(status);
     return;
@@ -40,5 +46,7 @@ export async function finishImportedChapterNavigation({
   }
   resetWorkspaceHistory();
   applyChapter(chapter, status);
-  if (openWorkTranslation) openTranslateOptions("work-all");
+  if (addedPageIds?.length)
+    openTranslateOptions({ chapterId: chapter.id, pageIds: addedPageIds });
+  else if (openWorkTranslation) openTranslateOptions("work-all");
 }

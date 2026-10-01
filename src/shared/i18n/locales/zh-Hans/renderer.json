@@ -604,7 +604,8 @@
       "archiveNoImages": "此 ZIP/CBZ/RAR/CBR 文件中未找到支持的图片。",
       "pdfNoPages": "此 PDF 中未找到可导入的页面。",
       "readFailed": "无法读取拖放的原稿。"
-    }
+    },
+    "pagesAdded": "已添加{{count}}页。"
   },
   "share": {
     "exportSuccess": "已保存“{{title}}”的共享文件：{{chapters}}章，{{pages}}页",

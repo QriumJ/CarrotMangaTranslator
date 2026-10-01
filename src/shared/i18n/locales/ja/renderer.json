@@ -604,7 +604,8 @@
       "archiveNoImages": "このZIP/CBZ/RAR/CBRファイルには対応画像が見つかりませんでした。",
       "pdfNoPages": "このPDFには読み込めるページが見つかりませんでした。",
       "readFailed": "ドロップした原稿を読み込めませんでした。"
-    }
+    },
+    "pagesAdded": "{{count}}ページを追加しました。"
   },
   "share": {
     "exportSuccess": "「{{title}}」の共有ファイルを保存しました。{{chapters}}話、{{pages}}ページ",

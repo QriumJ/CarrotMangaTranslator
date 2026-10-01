@@ -84,6 +84,15 @@ export function prunePromptWorkContextForBudget(
   options: WorkContextBudgetOptions,
 ): { workContext: PromptWorkContext; budget: WorkContextBudgetPlan } {
   const budget = planWorkContextBudget(workContext, options);
+  if (
+    budget.effective.outputHeadroomTokens < budget.minOutputHeadroomTokens &&
+    (workContext.styleGuide.rules.prompt?.trim() ||
+      selectPromptCharacters(workContext.styleGuide).some(hasVoice))
+  ) {
+    throw new Error(
+      "번역 프롬프트와 캐릭터 말투를 모두 담을 공간이 부족합니다. 컨텍스트 크기를 늘리거나 입력 내용을 줄여 주세요.",
+    );
+  }
   if (budget.omittedParts.length === 0) {
     return { workContext, budget };
   }
@@ -250,7 +259,9 @@ function hasWorkContextPart(
   if (part === "glossary") {
     return selectPromptGlossary(workContext.styleGuide).length > 0;
   }
-  return selectPromptCharacters(workContext.styleGuide).length > 0;
+  return selectPromptCharacters(workContext.styleGuide).some(
+    (character) => !hasVoice(character),
+  );
 }
 
 function omitWorkContextPart(
@@ -279,7 +290,7 @@ function omitWorkContextPart(
     ...workContext,
     styleGuide: {
       ...workContext.styleGuide,
-      characters: [],
+      characters: workContext.styleGuide.characters.filter(hasVoice),
     },
   };
 }
@@ -303,8 +314,17 @@ function selectPromptCharacters(guide: WorkStyleGuide): CharacterProfile[] {
               character.targetName ||
               character.sourceNames.length > 0),
         )
-        .slice(0, PROMPT_CHARACTER_LIMIT)
+        .filter(
+          (character, index) =>
+            index < PROMPT_CHARACTER_LIMIT || hasVoice(character),
+        )
     : [];
+}
+
+function hasVoice(character: CharacterProfile): boolean {
+  return character.speechStyle === "custom"
+    ? Boolean(character.customSpeechStyle?.trim())
+    : character.speechStyle !== "neutral";
 }
 
 function selectRecentStoryPages(
@@ -335,7 +355,7 @@ function formatCharacterForBudget(character: CharacterProfile): string {
     character.speechStyle === "custom"
       ? character.customSpeechStyle || "custom"
       : character.speechStyle || "neutral";
-  return `- ${sanitizePromptLine(character.displayName || character.targetName, 80)}: sourceNames=${sanitizePromptLine(sourceNames, 160)} targetName=${sanitizePromptLine(character.targetName, 80)} speechStyle=${sanitizePromptLine(style, 160)}`;
+  return `- ${sanitizePromptLine(character.displayName || character.targetName, 80)}: sourceNames=${sanitizePromptLine(sourceNames, 160)} targetName=${sanitizePromptLine(character.targetName, 80)} speechStyle=${JSON.stringify(String(style))}`;
 }
 
 function formatStoryPageForBudget(page: PageStoryMemory): string {
@@ -346,6 +366,11 @@ function formatStoryPageForBudget(page: PageStoryMemory): string {
 
 function formatRulesForBudget(guide: WorkStyleGuide): string {
   const rules = guide.rules || {};
+  if (typeof rules.prompt === "string") {
+    return rules.prompt.trim()
+      ? `Work translation instructions (take precedence over default wording and style guidance; preserve the required response format and block identities):\n- workInstructions=${JSON.stringify(rules.prompt)}`
+      : "";
+  }
   return `Rules: honorifics=${rules.honorifics || "adapt"}, sfxMode=${rules.sfxMode || "translate"}, defaultTone=${rules.defaultTone || "natural_korean"}.`;
 }
 

@@ -214,6 +214,7 @@ describe("AppSessionView render boundaries", () => {
       { importPreview: {} },
       { inpaintingGuideOpen: true },
       { renameTarget: {} },
+      { pageEditor: {} },
       { shareExportOpen: true },
       { shareImportPreview: {} },
       { translationSourceOpen: true },

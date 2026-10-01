@@ -28,7 +28,8 @@ export function createLinkedWorkspaceRuntime(options: {
     reviewedOutput: service.reviewedOutput,
     installSaveNotifier: () =>
       installLinkedWorkspaceSaveNotifier(
-        (chapterId, pageIds) => service.notifyPagesSaved(chapterId, pageIds),
+        (chapterId, pageIds, options) =>
+          service.notifyPagesSaved(chapterId, pageIds, options),
         options.reportError,
       ),
   };

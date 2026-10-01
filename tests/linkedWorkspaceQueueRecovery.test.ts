@@ -1,11 +1,19 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { makeChapter } from "./fixtures/linkedWorkspace";
 import {
   DEFAULT_RASTER_EXPORT_SETTINGS,
   type LinkedSyncQueueItemV1,
+  type LinkedWorkspaceRegistryV1,
 } from "../src/shared/linkedWorkspaceTypes";
 import {
   createPageRevision,
@@ -17,6 +25,7 @@ vi.mock("electron", () => ({
   shell: { openPath: async () => "" },
 }));
 import { LinkedWorkspaceSyncService } from "../src/main/linkedWorkspace/linkedWorkspaceSyncService";
+import { connectImportedChapters } from "../src/main/ipc/linkedWorkspaceImport";
 const roots: string[] = [];
 const services: LinkedWorkspaceSyncService[] = [];
 afterEach(async () => {
@@ -66,8 +75,9 @@ function runtime(dataRoot: string, chapter: ChapterSnapshot) {
   };
   return { reportError, renderPage, library, create };
 }
-async function fixture() {
-  vi.useFakeTimers();
+async function fixture(custom = false) {
+  if (custom) vi.useRealTimers();
+  else vi.useFakeTimers();
   const dataRoot = await mkdtemp(join(tmpdir(), "linked-queue-recovery-"));
   roots.push(dataRoot);
   const chapter = makeChapter();
@@ -81,9 +91,12 @@ async function fixture() {
   );
   const service = create();
   await service.initialize();
+  const customRoot = join(dataRoot, "custom");
+  if (custom) await mkdir(customRoot);
   const status = await service.connect({
     workId: chapter.workId,
     chapterId: chapter.id,
+    ...(custom ? { rootPath: customRoot } : {}),
     output: DEFAULT_RASTER_EXPORT_SETTINGS,
     enqueueExistingPages: false,
   });
@@ -124,6 +137,7 @@ async function fixture() {
     edit,
     restart,
     library,
+    create,
   };
 }
 async function drain(service: LinkedWorkspaceSyncService) {
@@ -238,3 +252,122 @@ it("disconnects deleted chapters on restart without deleting their existing outp
   );
   expect(queue.items).toEqual([]);
 });
+
+it.each(["update", "restart", "save", "disabled"] as const)(
+  "keeps the destination and existing files when inserting a same-stem page via %s",
+  async (mode) => {
+    vi.useRealTimers();
+    const { dataRoot, service, page, chapter, create } = await fixture(true);
+    const root = service.getStatus(chapter.id).rootPath;
+    if (!root) throw new Error("missing destination");
+    const ONE_PIXEL_PNG = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "base64",
+    );
+    let active = service;
+    const registryPath = join(dataRoot, "linked-workspaces.json");
+    const readRecord = async () => {
+      const registry: LinkedWorkspaceRegistryV1 = JSON.parse(
+        await readFile(registryPath, "utf8"),
+      );
+      return registry.records[0];
+    };
+    try {
+      await service.viewResults({ chapterId: chapter.id });
+      const before = await readRecord();
+      const oldSource = await readFile(
+        join(root, before.sourceRelativePaths?.[page.id] ?? ""),
+      );
+      const oldResult = await readFile(
+        join(root, before.resultRelativePaths?.[page.id] ?? ""),
+      );
+      if (mode === "disabled")
+        await service.update({ connectionId: before.id, enabled: false });
+      const added: MangaPage = {
+        ...structuredClone(page),
+        id: "44444444-4444-4444-8444-444444444444",
+        name: "001.jpg",
+        sourceFileName: "001.jpg",
+        sourceRelativePath: "001.jpg",
+        imagePath: join(dataRoot, "added.png"),
+      };
+      await writeFile(added.imagePath, ONE_PIXEL_PNG);
+      chapter.pages.unshift(added);
+      chapter.pageOrder.unshift(added.id);
+      if (mode === "restart") {
+        await active.dispose();
+        active = create();
+        await active.initialize();
+      } else if (mode === "save") {
+        await active.notifyPagesSaved(chapter.id, [added.id]);
+      } else {
+        expect(
+          await connectImportedChapters(
+            { linkedWorkspaceSync: active },
+            {
+              previewId: "added-pages",
+              target: {
+                mode: "chapter",
+                workId: chapter.workId,
+                chapterId: chapter.id,
+                position: { kind: "end" },
+              },
+              selections: [],
+            },
+            {
+              workId: chapter.workId,
+              chapterIds: [chapter.id],
+              addedPageIds: [added.id],
+            },
+          ),
+        ).toEqual({});
+      }
+      const updated = await readRecord();
+      expect(updated).toMatchObject({
+        rootPath: root,
+        destinationKind: "custom",
+        enabled: mode !== "disabled",
+        output: before.output,
+      });
+      expect(updated.sourceRelativePaths?.[page.id]).toBe(
+        before.sourceRelativePaths?.[page.id],
+      );
+      expect(updated.resultRelativePaths?.[page.id]).toBe(
+        before.resultRelativePaths?.[page.id],
+      );
+      expect(
+        await readFile(
+          join(root, updated.sourceRelativePaths?.[added.id] ?? ""),
+        ),
+      ).toEqual(ONE_PIXEL_PNG);
+      expect(
+        await readFile(
+          join(root, updated.sourceRelativePaths?.[page.id] ?? ""),
+        ),
+      ).toEqual(oldSource);
+      expect(
+        await readFile(
+          join(root, updated.resultRelativePaths?.[page.id] ?? ""),
+        ),
+      ).toEqual(oldResult);
+      if (mode === "disabled")
+        await active.update({ connectionId: before.id, enabled: true });
+      await expect(
+        active.viewResults({ chapterId: chapter.id }),
+      ).resolves.toMatchObject({ status: "opened" });
+      expect(await readdir(join(root, "result"))).toHaveLength(2);
+      await active.dispose();
+      active = create();
+      await active.initialize();
+      expect(active.getStatus(chapter.id)).toMatchObject({
+        rootPath: root,
+        destinationKind: "custom",
+      });
+      expect((await readRecord()).sourceRelativePaths).toEqual(
+        updated.sourceRelativePaths,
+      );
+    } finally {
+      await active.dispose();
+    }
+  },
+);

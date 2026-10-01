@@ -35,6 +35,7 @@ export const libraryGateway = createMangaDomainGateway("Library", [
   "renameWork",
   "reorderChapters",
   "reorderPages",
+  "editPageOrganization",
   "resetWorkContext",
   "restoreSoundEffectReview",
   "saveChapterStoryMemory",

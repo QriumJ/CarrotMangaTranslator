@@ -1,3 +1,4 @@
+import { editPageOrganization } from "../library/pageOrganizationFacade";
 import { shell } from "electron";
 import {
   DeleteChapterRequestSchema,
@@ -208,6 +209,19 @@ function registerLibraryDeleteIpc(context: IpcContext): void {
 }
 
 function registerLibraryReorderIpc(context: IpcContext): void {
+  trustedHandleContract(
+    context,
+    libraryIpcContracts.editPageOrganization,
+    async (_event, request) => {
+      assertLibraryStructureMutationAvailable(context);
+      return editPageOrganization(
+        request,
+        (chapter) =>
+          context.linkedWorkspaceSync?.validatePageOrganization(chapter) ??
+          Promise.resolve(),
+      );
+    },
+  );
   trustedHandleContract(
     context,
     libraryIpcContracts.reorderChapters,

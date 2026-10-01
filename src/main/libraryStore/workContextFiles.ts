@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { migrateWorkContextInstructions } from "../../shared/workContextInstructions";
 import type { z } from "zod";
 import {
   ChapterStoryMemorySchema,
@@ -39,6 +40,7 @@ function createDefaultWorkStyleGuide(workId: string): WorkStyleGuide {
     glossary: [],
     characters: [],
     rules: {
+      prompt: "",
       honorifics: "adapt",
       sfxMode: "translate",
       defaultTone: "natural_korean",
@@ -80,7 +82,7 @@ export async function readWorkStyleGuide(
   if (guide.workId !== workId) {
     throw new Error("작품 용어집의 보관함 위치가 올바르지 않습니다.");
   }
-  return guide;
+  return migrateWorkContextInstructions(guide);
 }
 
 export async function writeWorkStyleGuide(
@@ -91,7 +93,7 @@ export async function writeWorkStyleGuide(
   const checked = parseStoredContext(
     WorkStyleGuideSchema,
     {
-      ...guide,
+      ...migrateWorkContextInstructions(guide),
       updatedAt: await nextContextTimestamp(
         styleGuidePath(guide.workId),
         "style-guide.json",

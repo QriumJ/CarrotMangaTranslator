@@ -17,6 +17,63 @@ afterEach(() => {
 });
 
 describe("useImportShareActions", () => {
+  it.each([false, true])(
+    "refreshes an appended chapter and scopes optional translation to added pages: %s",
+    async (translateAddedPages) => {
+      const committed = { ...makeImportResult(), addedPageIds: ["added-page"] };
+      const latest = { ...makeChapter(), title: "저장 후 다시 읽은 화" };
+      const openChapter = vi.fn(async () => latest);
+      window.mangaApi = createTestMangaGatewayStub({
+        createImport: async () => committed,
+        openChapter,
+      });
+      const applyChapter = vi.fn();
+      const openTranslateOptions = vi.fn();
+      const { result } = renderHook(() =>
+        useImportShareActions({
+          ...makeBackgroundOptions(),
+          applyChapter,
+          openTranslateOptions,
+          askConfirm: vi.fn(async () => true),
+          dirty: false,
+          importPreview: makePreview("batch"),
+          pushStatus: vi.fn(),
+          refreshLibrary: vi.fn(async () => undefined),
+          resetWorkspaceHistory: vi.fn(),
+          saveNow: vi.fn(async () => undefined),
+          setImportBusy: vi.fn(),
+          setImportPreview: vi.fn(),
+          setShareExportBusy: vi.fn(),
+          setShareExportOpen: vi.fn(),
+          setShareImportBusy: vi.fn(),
+          setShareImportPreview: vi.fn(),
+          setTranslationSourceOpen: vi.fn(),
+          setWebImportOpen: vi.fn(),
+          shareImportPreview: null,
+        }),
+      );
+      await act(async () =>
+        result.current.submitImport({
+          target: {
+            mode: "chapter",
+            workId: latest.workId,
+            chapterId: latest.id,
+            position: { kind: "end" },
+          },
+          selections: [],
+          translateAddedPages,
+        }),
+      );
+      expect(openChapter).toHaveBeenCalledWith(latest.id);
+      expect(applyChapter).toHaveBeenCalledWith(latest, expect.any(String));
+      if (translateAddedPages)
+        expect(openTranslateOptions).toHaveBeenCalledWith({
+          chapterId: latest.id,
+          pageIds: ["added-page"],
+        });
+      else expect(openTranslateOptions).not.toHaveBeenCalled();
+    },
+  );
   it("opens a fresh import modal for a preview and clears its draft when discarded", () => {
     const payload = {
       target: { mode: "new" as const, title: "복원할 작품" },

@@ -22,6 +22,7 @@ import {
   normalizeImportPageName,
 } from "./importImages";
 import { materializePageRecord } from "./importPageMaterialize";
+import { importIntoChapter } from "./importIntoChapter";
 import type {
   NativeImportPageObservation,
   NativeImportPageObserver,
@@ -273,31 +274,44 @@ export async function createImportFromPreviewUnlocked(
   }
   throwIfAborted(signal);
   publication?.assertCanCommit();
+  if (request.target.mode === "chapter" && publication) {
+    throw new Error(
+      "Native import publication receipts only support new chapters.",
+    );
+  }
   return runLibraryTransaction(
     "import",
     async (transaction) => {
       throwIfAborted(signal);
       const result =
-        request.target.mode === "new"
-          ? await importIntoNewWork(
+        request.target.mode === "chapter"
+          ? await importIntoChapter(
               transaction,
-              request,
+              request.target,
               selectedDrafts,
               imageRuntime,
               signal,
-              publication?.observePage,
-              publication?.observeMetadata,
             )
-          : await importIntoExistingWork(
-              transaction,
-              request.target.workId,
-              request,
-              selectedDrafts,
-              imageRuntime,
-              signal,
-              publication?.observePage,
-              publication?.observeMetadata,
-            );
+          : request.target.mode === "new"
+            ? await importIntoNewWork(
+                transaction,
+                request,
+                selectedDrafts,
+                imageRuntime,
+                signal,
+                publication?.observePage,
+                publication?.observeMetadata,
+              )
+            : await importIntoExistingWork(
+                transaction,
+                request.target.workId,
+                request,
+                selectedDrafts,
+                imageRuntime,
+                signal,
+                publication?.observePage,
+                publication?.observeMetadata,
+              );
       // Native composition only: receipt staging joins the same locked publication.
       // No public import payload accepts callbacks, paths or serialized receipts.
       if (publication)

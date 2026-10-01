@@ -24,10 +24,12 @@ type UseAppSessionCommandControllerArgs = {
   setShareExportOpen: Dispatch<SetStateAction<boolean>>;
   setShortcutHelpOpen: Dispatch<SetStateAction<boolean>>;
   openTextView: () => void;
+  openPageEditor?: () => void;
   setShowBlockChrome: Dispatch<SetStateAction<boolean>>;
   setShowTextBlocks: Dispatch<SetStateAction<boolean>>;
   openTranslateOptions: () => void;
   setTranslationSourceOpen: Dispatch<SetStateAction<boolean>>;
+  setAddPagesChapter: Dispatch<SetStateAction<ChapterSnapshot | null>>;
 };
 
 export function useAppSessionCommandController({
@@ -49,10 +51,12 @@ export function useAppSessionCommandController({
   setShareExportOpen,
   setShortcutHelpOpen,
   openTextView,
+  openPageEditor,
   setShowBlockChrome,
   setShowTextBlocks,
   openTranslateOptions,
   setTranslationSourceOpen,
+  setAddPagesChapter,
 }: UseAppSessionCommandControllerArgs): AppCommandRegistry {
   return useAppCommands({
     redactionPreparation,
@@ -62,7 +66,10 @@ export function useAppSessionCommandController({
     jobActive,
     translationUnavailable:
       Boolean(aiUnavailable) || (translationBlocked ?? jobActive),
-    openImportPreview,
+    openImportPreview: (mode) => {
+      setAddPagesChapter(null);
+      return openImportPreview(mode);
+    },
     openLibraryFolder,
     openLogFolder,
     openErrorReport,
@@ -71,10 +78,18 @@ export function useAppSessionCommandController({
     openShareImportPreview,
     openShortcutHelp: () => setShortcutHelpOpen(true),
     openTextView,
+    openPageEditor,
     toggleBlockChrome: () => setShowBlockChrome((visible) => !visible),
     toggleTextBlocks: () => setShowTextBlocks((visible) => !visible),
     openTranslateOptions,
-    openTranslationSource: () => setTranslationSourceOpen(true),
+    openTranslationSource: () => {
+      setAddPagesChapter(null);
+      setTranslationSourceOpen(true);
+    },
+    openAddChapterPages: () => {
+      setAddPagesChapter(currentChapter);
+      setTranslationSourceOpen(true);
+    },
     runAnalysis,
     runCurrentPageInpainting,
   });

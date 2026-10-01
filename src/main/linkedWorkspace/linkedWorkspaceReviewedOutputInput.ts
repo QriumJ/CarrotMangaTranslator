@@ -200,6 +200,7 @@ function chapterBinding(
       revision: createPageRevision(page),
       visualRevision: createPageVisualRevision(page),
       name: page.name,
+      outputBaseName: page.outputBaseName,
       sourceFileName: page.sourceFileName,
       sourceRelativePath: page.sourceRelativePath,
       imagePath: page.imagePath,

@@ -175,6 +175,7 @@ function applyWorkContextPageOptions({
     pageOptions.glossaryOmissionTerms = omissionTerms;
   }
   const promptWorkContext = buildPromptWorkContextForPage({
+    instructions: workContext.instructions,
     baseStyleGuide: workContext.styleGuide,
     storyMemory: workContext.storyMemory,
     pageId: regionContext?.sourcePage.id ?? page.id,

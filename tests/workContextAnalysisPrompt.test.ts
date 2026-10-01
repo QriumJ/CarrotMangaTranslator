@@ -74,11 +74,13 @@ describe("AI work context analysis prompt", () => {
     expect(prompt.userPrompt).toContain(
       "다른 번역 언어로 작성됐을 수 있으므로",
     );
-    expect(prompt.userPrompt).toContain("자연스러운 번역 언어 문체를 뜻한다");
-    // 저장 호환을 위해 defaultTone enum 값은 그대로 유지된다.
     expect(prompt.userPrompt).toContain(
-      "rules.defaultTone = natural_korean | literal",
+      "Describe the character voice in natural language",
     );
+    expect(prompt.userPrompt).toContain(
+      "Do not propose changes to rules; return rules: {}.",
+    );
+    expect(prompt.userPrompt).not.toContain("rules.defaultTone =");
   });
 
   it("keeps distant glossary evidence and bounded samples for large works", () => {

@@ -1,3 +1,4 @@
+import { PageOutputNameSchema } from "./pageOrganization";
 import { ImportSourceIdentitySchema } from "./importSourceIdentity";
 import { PageWorkflowReceiptSchema } from "./pageWorkflowReceipt";
 import { z } from "zod";
@@ -169,6 +170,7 @@ const ImportSourceKindSchema = z.enum([
 ]);
 
 const PageRecordPathShape = {
+  outputBaseName: PageOutputNameSchema.optional(),
   name: z.string().min(1).max(260),
   imagePath: filePath,
   inpaintedImagePath: filePath.optional(),
@@ -308,6 +310,19 @@ export const CreateImportRequestSchema = z
     target: z.discriminatedUnion("mode", [
       z.object({ mode: z.literal("new"), title }).strict(),
       z.object({ mode: z.literal("existing"), workId: uuid }).strict(),
+      z
+        .object({
+          mode: z.literal("chapter"),
+          workId: uuid,
+          chapterId: uuid,
+          position: z.union([
+            z.object({ kind: z.literal("end") }).strict(),
+            z
+              .object({ kind: z.enum(["before", "after"]), pageId: uuid })
+              .strict(),
+          ]),
+        })
+        .strict(),
     ]),
     selections: z
       .array(

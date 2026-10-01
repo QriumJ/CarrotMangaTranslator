@@ -1,0 +1,368 @@
+/*
+ * Two panes inside one dialog: the tools that change many pages at once on
+ * the left, the page list they act on on the right. Each pane owns its scroll.
+ */
+.layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+  min-height: 0;
+  padding: var(--sp-5);
+  overflow: auto;
+  border-right: 1px solid var(--border-soft);
+  color: var(--text);
+  font-size: var(--font-md);
+}
+
+.sidebar fieldset {
+  display: contents;
+}
+
+.section {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--border-soft);
+}
+
+.sectionTitle {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: var(--font-sm);
+  font-weight: 600;
+}
+
+.buttonGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.stack {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.buttonGrid button,
+.stack button {
+  min-width: 0;
+  justify-content: flex-start;
+}
+
+.buttonGrid button > span,
+.stack button > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-2);
+}
+
+.checkRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2) var(--sp-5);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.listBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.selectionCount {
+  color: var(--text);
+  font-size: var(--font-md);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.selectionActions,
+.rangeGroup,
+.history {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.rangeGroup {
+  gap: var(--sp-2);
+}
+
+.rangeGroup input {
+  width: 150px;
+}
+
+.history {
+  margin-left: auto;
+}
+
+.alerts {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-5) 0;
+}
+
+.error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin: 0;
+  color: var(--danger-text);
+  font-size: var(--font-sm);
+  overflow-wrap: anywhere;
+}
+
+.viewport {
+  flex: 1 1 auto;
+  min-height: 140px;
+  overflow: auto;
+  padding: 0 var(--sp-3) var(--sp-3);
+}
+
+.table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: var(--layer-content);
+  padding: var(--sp-3) var(--sp-2);
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--bg-panel);
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  font-weight: 500;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.table td {
+  padding: var(--sp-2);
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: middle;
+}
+
+.table tbody tr {
+  cursor: default;
+  transition: background var(--motion-fast) var(--ease-standard);
+}
+
+.table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.table tbody tr[data-selected="true"],
+.table tbody tr[data-selected="true"]:hover {
+  background: var(--selected-surface);
+}
+
+.table tbody tr[data-dragging="true"] {
+  opacity: 0.45;
+}
+
+.table tr[data-drop="before"] td {
+  box-shadow: inset 0 2px 0 var(--accent-bd);
+}
+
+.table tr[data-drop="after"] td {
+  box-shadow: inset 0 -2px 0 var(--accent-bd);
+}
+
+.gripColumn {
+  width: 34px;
+}
+
+.checkColumn {
+  width: 34px;
+}
+
+.orderColumn {
+  width: 40px;
+}
+
+.imageColumn {
+  width: 52px;
+}
+
+.arrowColumn {
+  width: 28px;
+}
+
+.grip {
+  opacity: 0.55;
+}
+
+tr:hover .grip,
+.grip:focus-visible {
+  opacity: 1;
+}
+
+.order {
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.order[data-changed="true"] {
+  color: var(--accent-hi);
+  font-weight: 600;
+}
+
+.thumbnail {
+  display: flex;
+  width: 36px;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-sm);
+  background: var(--bg-sunken);
+}
+
+.thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.oldName {
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: var(--font-md);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.extension {
+  color: var(--text-muted);
+}
+
+.arrow {
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.arrow svg {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.arrow[data-changed="true"] {
+  color: var(--accent-hi);
+}
+
+/* The extension sits inside the field: one box, not an input plus a label. */
+.nameField {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+  font-size: var(--font-md);
+  min-height: var(--ctl-h);
+  padding: 0 var(--ctl-pad-x);
+  border: 1px solid var(--control-border);
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+}
+
+.nameField:hover {
+  border-color: var(--control-border-hover);
+}
+
+.nameField:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.nameField[data-changed="true"] {
+  border-color: var(--selected-edge);
+}
+
+.nameField[data-invalid="true"] {
+  border-color: var(--danger-bd);
+}
+
+.nameField input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+/* Beats the global input focus ring; the frame shows focus instead. */
+.nameField input:focus-visible {
+  outline: 0;
+}
+
+.nameField:has(input:disabled) {
+  opacity: 0.55;
+}
+
+.rowError {
+  display: block;
+  margin-top: var(--sp-1);
+  color: var(--danger-text);
+  font-size: var(--font-xs);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 860px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, auto) minmax(0, 1fr);
+  }
+
+  .sidebar {
+    max-height: 42vh;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-soft);
+  }
+
+  .imageColumn {
+    width: 44px;
+  }
+
+  .thumbnail {
+    width: 30px;
+    height: 42px;
+  }
+
+  .history {
+    margin-left: 0;
+  }
+}

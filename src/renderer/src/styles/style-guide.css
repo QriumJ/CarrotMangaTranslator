@@ -580,16 +580,10 @@
   margin-bottom: 0;
 }
 
-.style-guide-section.rules {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--sp-5);
-}
-
-.style-guide-section.rules label {
-  display: grid;
-  gap: var(--sp-2);
-  font-size: var(--font-sm);
-  color: var(--text-dim);
+.style-guide-instructions {
+  width: 100%;
+  min-height: 220px;
+  resize: vertical;
 }
 
 .style-guide-section h3 {
@@ -721,10 +715,10 @@
 }
 
 .style-guide-row.character {
-  min-width: 1120px;
+  min-width: 1015px;
   grid-template-columns:
     28px minmax(130px, 0.9fr) minmax(150px, 1.05fr)
-    minmax(130px, 0.9fr) 105px minmax(145px, 1fr)
+    minmax(130px, 0.9fr) minmax(180px, 1.4fr)
     minmax(150px, 1fr) 48px 46px 62px;
 }
 
@@ -940,10 +934,6 @@
 
   .style-guide-research-progress-stages {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .style-guide-section.rules {
-    grid-template-columns: 1fr;
   }
 
   .style-guide-list-toolbar {

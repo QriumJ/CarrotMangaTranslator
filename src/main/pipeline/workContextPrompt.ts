@@ -10,8 +10,13 @@ import {
   normalizeEvidence,
   normalizeEvidenceSegments,
 } from "./pageContextEvidence";
+import {
+  applyWorkInstructions,
+  type WorkInstructionSnapshot,
+} from "../../shared/workContextInstructions";
 
 export function buildPromptWorkContextForPage({
+  instructions,
   baseStyleGuide,
   storyMemory,
   pageIndex,
@@ -19,6 +24,7 @@ export function buildPromptWorkContextForPage({
   previousStoryPages = [],
   ocrHints,
 }: {
+  instructions?: WorkInstructionSnapshot;
   baseStyleGuide: WorkStyleGuide;
   storyMemory: ChapterStoryMemory;
   pageId: string;
@@ -35,7 +41,9 @@ export function buildPromptWorkContextForPage({
     .reverse();
   return {
     styleGuide: rankStyleGuideForPage(
-      baseStyleGuide,
+      instructions
+        ? applyWorkInstructions(baseStyleGuide, instructions)
+        : baseStyleGuide,
       { ...storyMemory, pages: contextPages },
       normalizeEvidenceSegments(collectOcrTextEvidence(ocrHints)),
     ),

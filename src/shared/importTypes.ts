@@ -80,6 +80,12 @@ export type ImportTarget =
   | {
       mode: "existing";
       workId: string;
+    }
+  | {
+      mode: "chapter";
+      workId: string;
+      chapterId: string;
+      position: { kind: "end" } | { kind: "before" | "after"; pageId: string };
     };
 
 export type ImportCreateSelection = {
@@ -103,6 +109,7 @@ export type CreateImportFromPreviewRequest = {
 
 export type CreateImportResult = {
   workId: string;
+  addedPageIds?: string[];
   chapterIds: string[];
   openedChapter?: ChapterSnapshot;
   linkedWorkspaceConnectedChapterIds?: string[];

@@ -42,7 +42,10 @@ export type ChapterSel =
     };
 
 export type ChapterSelectionMap = Map<string, ChapterSel>;
-export type TranslationOptionsInitialScope = "current-pending" | "work-all";
+export type TranslationOptionsInitialScope =
+  | "current-pending"
+  | "work-all"
+  | { chapterId: string; pageIds: string[] };
 const DEFAULT_RESUME_CONTEXT: TranslationResumeContext = {
   blockMode: "auto",
   sourceLanguage: DEFAULT_SOURCE_LANGUAGE,

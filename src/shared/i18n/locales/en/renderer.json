@@ -604,7 +604,8 @@
       "archiveNoImages": "No supported images were found in this ZIP/CBZ/RAR/CBR file.",
       "pdfNoPages": "No importable pages were found in this PDF.",
       "readFailed": "Could not read the dropped source."
-    }
+    },
+    "pagesAdded": "Added {{count}} pages."
   },
   "share": {
     "exportSuccess": "Saved the shared file for {{title}} · Chapters: {{chapters}} · Pages: {{pages}}",

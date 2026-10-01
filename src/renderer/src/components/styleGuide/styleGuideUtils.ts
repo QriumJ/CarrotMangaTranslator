@@ -1,11 +1,11 @@
 import type { TFunction } from "i18next";
 import type {
   CharacterProfile,
-  CharacterSpeechStyle,
   GlossaryEntry,
   GlossaryEntryCategory,
   WorkStyleGuide,
 } from "../../../../shared/workContextTypes";
+import { migrateWorkContextInstructions } from "../../../../shared/workContextInstructions";
 import type {
   WorkContextBudgetOmittedPart,
   WorkContextBudgetPlan,
@@ -18,17 +18,6 @@ export const CATEGORY_IDS: GlossaryEntryCategory[] = [
   "term",
   "honorific",
   "other",
-];
-
-export const SPEECH_STYLE_IDS: CharacterSpeechStyle[] = [
-  "neutral",
-  "polite",
-  "casual",
-  "rough",
-  "childish",
-  "elderly",
-  "formal",
-  "custom",
 ];
 
 export function formatTokenCount(
@@ -108,7 +97,7 @@ export function makeCharacterProfile(): CharacterProfile {
     sourceNames: [],
     targetName: "",
     aliases: [],
-    speechStyle: "neutral",
+    speechStyle: "custom",
     customSpeechStyle: "",
     note: "",
     enabled: true,
@@ -119,6 +108,7 @@ export function makeCharacterProfile(): CharacterProfile {
 }
 
 export function normalizeGuideForSave(guide: WorkStyleGuide): WorkStyleGuide {
+  guide = migrateWorkContextInstructions(guide);
   return {
     ...guide,
     glossary: guide.glossary.map(normalizeGlossaryEntry).filter(hasSource),

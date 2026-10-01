@@ -1,4 +1,8 @@
 /* eslint-disable max-lines, complexity, max-lines-per-function -- the bounded render scheduler keeps cancellation, serialized publication, retry, and recovery transitions together for auditability */
+import {
+  linkedPageResultSource,
+  validateLinkedPageOutputNames,
+} from "./linkedPageOutputNames";
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, readdir, rename, stat } from "node:fs/promises";
 import { basename, dirname, extname, join, resolve } from "node:path";
@@ -404,11 +408,14 @@ export class LinkedWorkspaceSyncService {
       record.chapterId,
       record.workId,
     );
+    const addedPages = await this.registerAddedSources(record, chapter);
     this.reconcileResultRelativePaths(record, chapter);
     this.invalidateRenders();
     this.reportActivity({ type: "pulse" });
     this.records.set(record.id, record);
     await this.store.replaceRecord(record);
+    if (record.enabled && addedPages.length)
+      await this.queueMirrorOnly({ ...chapter, pages: addedPages }, record);
     if (!record.enabled) {
       this.forceConnections.delete(record.id);
       this.forceRequestedAt.delete(record.id);
@@ -597,7 +604,11 @@ export class LinkedWorkspaceSyncService {
   async notifyPagesSaved(
     chapterId: string,
     pageIds: readonly string[],
-    options: { immediate?: boolean; priority?: number } = {},
+    options: {
+      immediate?: boolean;
+      priority?: number;
+      organizationChanged?: boolean;
+    } = {},
   ): Promise<void> {
     await this.queuePages(chapterId, pageIds, options);
   }
@@ -675,6 +686,7 @@ export class LinkedWorkspaceSyncService {
       priority?: number;
       currentPageId?: string;
       ensurePublishedOutput?: boolean;
+      organizationChanged?: boolean;
     } = {},
   ): Promise<void> {
     const record = this.findRecordByChapter(chapterId);
@@ -690,9 +702,16 @@ export class LinkedWorkspaceSyncService {
       return;
     const requested = new Set(pageIds);
     const now = Date.now();
-    let recordChanged = this.reconcileResultRelativePaths(record, chapter);
+    let recordChanged =
+      (await this.registerAddedSources(record, chapter)).length > 0;
+    recordChanged =
+      this.reconcileResultRelativePaths(record, chapter) || recordChanged;
     for (const page of chapter.pages) {
       if (!requested.has(page.id)) continue;
+      if (options.organizationChanged) {
+        delete record.publishedMirrorRevisions[page.id];
+        recordChanged = true;
+      }
       const visualRevision = createPageVisualRevision(page);
       const mirrorRevision = createPageRevision(page);
       const artifactState = options.ensurePublishedOutput
@@ -706,6 +725,7 @@ export class LinkedWorkspaceSyncService {
         ? Object.values(artifactState).every(Boolean)
         : true;
       if (
+        !options.organizationChanged &&
         record.publishedRevisions[page.id] === visualRevision &&
         record.publishedMirrorRevisions[page.id] === mirrorRevision &&
         artifactsCurrent
@@ -983,6 +1003,8 @@ export class LinkedWorkspaceSyncService {
       return null;
     }
 
+    if (page.outputBaseName)
+      await validateLinkedPageOutputNames(this.records.values(), chapter);
     const needsRender =
       item.mirrorOnly !== true &&
       record.publishedRevisions[page.id] !== item.visualRevision;
@@ -1105,6 +1127,7 @@ export class LinkedWorkspaceSyncService {
       record.publishedRevisions[page.id] = item.visualRevision;
       if (
         previousResult &&
+        !page.outputBaseName &&
         normalizeLinkedRelativePath(previousResult.path).toLowerCase() !==
           relativePathFromRoot(
             record.rootPath,
@@ -1574,7 +1597,10 @@ export class LinkedWorkspaceSyncService {
         );
         continue;
       }
-      let recordChanged = this.reconcileResultRelativePaths(record, chapter);
+      let recordChanged =
+        (await this.registerAddedSources(record, chapter)).length > 0;
+      recordChanged =
+        this.reconcileResultRelativePaths(record, chapter) || recordChanged;
       for (const page of chapter.pages) {
         const sourceState = await inspectConnectedSource(record, page.id);
         if (sourceState === "changed") {
@@ -1798,6 +1824,10 @@ export class LinkedWorkspaceSyncService {
     this.drainWaiters = remaining;
   }
 
+  async validatePageOrganization(chapter: ChapterSnapshot): Promise<void> {
+    await validateLinkedPageOutputNames(this.records.values(), chapter);
+  }
+
   private findRecordByChapter(
     chapterId: string,
   ): LinkedWorkspaceRecordV1 | null {
@@ -1825,7 +1855,7 @@ export class LinkedWorkspaceSyncService {
     }
     const preferred: Record<string, string> = {};
     for (const page of chapter.pages) {
-      const sourceRelativePath = record.pageRelativePaths[page.id];
+      const sourceRelativePath = linkedPageResultSource(record, page);
       if (!sourceRelativePath) continue;
       const result = resolveLinkedResultPath({
         rootPath: record.rootPath,
@@ -1840,6 +1870,8 @@ export class LinkedWorkspaceSyncService {
       if (
         previous &&
         previous.startsWith("result/") &&
+        (!chapter.pages.find((page) => page.id === pageId)?.outputBaseName ||
+          previous === path) &&
         extname(previous).toLowerCase() === extname(path).toLowerCase() &&
         !used.has(previous.toLowerCase())
       ) {
@@ -1847,7 +1879,13 @@ export class LinkedWorkspaceSyncService {
       }
     }
     for (const [pageId, path] of Object.entries(preferred)) {
-      paths[pageId] ??= makeUniqueRelativePath(path, used);
+      if (paths[pageId]) continue;
+      if (chapter.pages.find((page) => page.id === pageId)?.outputBaseName) {
+        if (used.has(path.toLowerCase()))
+          throw new Error(`출력 이름이 겹칩니다: ${path}`);
+        paths[pageId] = path;
+        used.add(path.toLowerCase());
+      } else paths[pageId] = makeUniqueRelativePath(path, used);
     }
     let changed =
       JSON.stringify(record.resultRelativePaths ?? {}) !==
@@ -1870,6 +1908,32 @@ export class LinkedWorkspaceSyncService {
     }
     record.resultRelativePaths = paths;
     return changed;
+  }
+
+  private async registerAddedSources(
+    record: LinkedWorkspaceRecordV1,
+    chapter: ChapterSnapshot,
+  ): Promise<MangaPage[]> {
+    const pages = chapter.pages.filter(
+      (page) => !record.pageRelativePaths[page.id],
+    );
+    if (!pages.length) return [];
+    const pageRelativePaths = { ...record.pageRelativePaths };
+    const used = new Set(
+      Object.values(pageRelativePaths).map((path) => path.toLowerCase()),
+    );
+    for (const [id, path] of Object.entries(
+      resolveOutputRelativePaths({ ...chapter, pages }),
+    ))
+      pageRelativePaths[id] = makeUniqueRelativePath(path, used);
+    const sources = await materializeRecoverySources({
+      chapter,
+      pageRelativePaths,
+      previousRecord: record,
+      rootPath: record.rootPath,
+    });
+    Object.assign(record, sources, { pageRelativePaths });
+    return pages;
   }
 
   private pageRelativePath(
@@ -2037,16 +2101,40 @@ async function materializeRecoverySources({
     LinkedWorkspaceRecordV1["originalFingerprints"]
   > = {};
   const usedSourceRelativePaths = new Set<string>();
+  const extensions = new Map<
+    string,
+    Awaited<ReturnType<typeof resolveRecoveryImageExtension>>
+  >();
+  for (const page of chapter.pages)
+    extensions.set(
+      page.id,
+      await resolveRecoveryImageExtension(page.imagePath),
+    );
+  // Reserve existing paths before allocating inserted pages, regardless of page order.
+  for (const page of chapter.pages) {
+    const previous = previousRecord?.sourceRelativePaths?.[page.id];
+    if (
+      previous?.startsWith("originals/") &&
+      extname(previous).toLowerCase() === extensions.get(page.id) &&
+      !usedSourceRelativePaths.has(previous.toLowerCase())
+    )
+      sourceRelativePaths[page.id] = makeUniqueRelativePath(
+        previous,
+        usedSourceRelativePaths,
+      );
+  }
   for (const page of chapter.pages) {
     const outputRelativePath = pageRelativePaths[page.id];
     if (!outputRelativePath) continue;
-    const sourceRelativePath = makeUniqueRelativePath(
-      `originals/${replaceRelativePathExtension(
-        outputRelativePath,
-        await resolveRecoveryImageExtension(page.imagePath),
-      )}`,
-      usedSourceRelativePaths,
-    );
+    const sourceRelativePath =
+      sourceRelativePaths[page.id] ??
+      makeUniqueRelativePath(
+        `originals/${replaceRelativePathExtension(
+          outputRelativePath,
+          extensions.get(page.id) ?? ".png",
+        )}`,
+        usedSourceRelativePaths,
+      );
     const targetPath = resolvePathInside(rootPath, sourceRelativePath);
     const cached = previousRecord?.originalFingerprints?.[page.id];
     const sourceFingerprint = await fingerprintFile(

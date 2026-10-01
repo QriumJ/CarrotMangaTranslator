@@ -134,7 +134,13 @@ function appendCharacterLines(lines, characters, targetIsKorean) {
         ? "Character/name memory. Keep names and speech style consistent when translating dialogue."
         : "Character/name memory. Stored display and target names may come from an earlier target language; use them as identity hints and render names and dialogue in the requested target language.",
     );
-    for (const character of characters.slice(0, 40)) {
+    for (const character of characters.filter(
+      (entry, index) =>
+        index < 40 ||
+        (entry.speechStyle === "custom"
+          ? Boolean(String(entry.customSpeechStyle ?? "").trim())
+          : Boolean(entry.speechStyle && entry.speechStyle !== "neutral")),
+    )) {
       lines.push(formatCharacterEntry(character));
     }
   }
@@ -169,6 +175,11 @@ function appendStoryLines(lines, pages, regionCropMode) {
  * @returns {string}
  */
 function formatRules(rules = {}, targetIsKorean) {
+  if (typeof rules.prompt === "string") {
+    return rules.prompt.trim()
+      ? `Work translation instructions (take precedence over default wording and style guidance; preserve the required response format and block identities):\n- workInstructions=${JSON.stringify(rules.prompt)}`
+      : "";
+  }
   const defaultTone =
     !targetIsKorean &&
     (!rules.defaultTone || rules.defaultTone === "natural_korean")
@@ -202,7 +213,7 @@ function formatCharacterEntry(character) {
     character.speechStyle === "custom"
       ? character.customSpeechStyle || "custom"
       : character.speechStyle || "neutral";
-  return `- ${sanitizePromptLine(character.displayName || character.targetName, 80)}: sourceNames=${sanitizePromptLine(sourceNames, 160)} targetName=${sanitizePromptLine(character.targetName, 80)} speechStyle=${sanitizePromptLine(style, 160)}`;
+  return `- ${sanitizePromptLine(character.displayName || character.targetName, 80)}: sourceNames=${sanitizePromptLine(sourceNames, 160)} targetName=${sanitizePromptLine(character.targetName, 80)} speechStyle=${JSON.stringify(String(style))}`;
 }
 
 module.exports = { buildWorkContextSection };

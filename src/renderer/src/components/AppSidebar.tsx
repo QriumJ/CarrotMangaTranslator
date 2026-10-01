@@ -36,6 +36,8 @@ type AppSidebarProps = {
   settingsBusy: boolean;
   settingsOpen: boolean;
   onOpenTranslationSource: () => void;
+  onAddChapterPages?: () => void;
+  onEditPages?: () => void;
   onOpenBatchImport: () => void;
   onOpenSettings: () => void;
   onOpenLibraryFolder: () => void;
@@ -123,6 +125,13 @@ function LibrarySidebarContent(props: AppSidebarProps): React.JSX.Element {
       />
 
       <PageList
+        onEditPages={props.onEditPages}
+        onAddPages={props.currentChapter ? props.onAddChapterPages : undefined}
+        addPagesLabel={resolveAppCommandLabel(
+          props.commandLabels,
+          "add-chapter-pages",
+          "",
+        )}
         collapsed={collapsedPanel === "pages"}
         otherPanelCollapsed={collapsedPanel === "library"}
         pages={props.currentChapter?.pages ?? []}

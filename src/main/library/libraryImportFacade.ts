@@ -73,9 +73,17 @@ export function createLibraryImportService(
           signal,
           (publish) =>
             withLibraryContentEdit(
-              request.target.mode === "existing"
-                ? [libraryStructureResource("work", request.target.workId)]
-                : [],
+              request.target.mode === "chapter"
+                ? [
+                    libraryStructureResource("work", request.target.workId),
+                    libraryStructureResource(
+                      "chapter",
+                      request.target.chapterId,
+                    ),
+                  ]
+                : request.target.mode === "existing"
+                  ? [libraryStructureResource("work", request.target.workId)]
+                  : [],
               () =>
                 runtime.runMutation(() => {
                   throwIfAborted(signal);

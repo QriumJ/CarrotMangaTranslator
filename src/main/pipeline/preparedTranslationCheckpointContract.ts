@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { WorkInstructionSnapshotSchema } from "../../shared/ipcWorkContextSchemas";
 import {
   BBoxSchema,
   MAX_BLOCKS_PER_PAGE,
@@ -192,6 +193,7 @@ export const PreparedTranslationCheckpointSchema = z
       TRANSLATION_CHECKPOINT_PIPELINE_CONTRACT,
     ),
     soundEffectReviewPreserved: z.literal(true).optional(),
+    instructions: WorkInstructionSnapshotSchema.optional(),
     pageId: z.string().min(1).max(200),
     inputRevision: z
       .string()

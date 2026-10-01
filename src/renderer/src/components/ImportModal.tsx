@@ -1,35 +1,26 @@
+import { ImportTargetSection } from "./ImportTargetSection";
+import { ImportExcludedPagesNotice } from "./ImportExcludedPagesNotice";
 import React from "react";
 
 import { useTranslation } from "react-i18next";
 
+import type { ImportPreviewResult } from "../../../shared/importTypes";
+
 import type {
-  ImportCreateSelection,
-  ImportPreviewResult,
-} from "../../../shared/importTypes";
-
-import type { LibraryIndex } from "../../../shared/libraryTypes";
-
-import type { LinkedWorkspaceImportOptions } from "../../../shared/linkedWorkspaceTypes";
+  ChapterSnapshot,
+  LibraryIndex,
+} from "../../../shared/libraryTypes";
 
 import type { ImportModalSubmit } from "../lib/importFlowTypes";
 
-import {
-  buildImportSubmitPayload,
-  isImportSubmittable,
-  type ImportTargetMode,
-} from "./importModalHelpers";
+import { useImportModalState } from "./useImportModalState";
+import { ImportChapterPagesFields } from "./ImportChapterPagesFields";
 
 import { Button } from "./ui/Button";
-
-import { TextField } from "./ui/Field";
 
 import { Modal } from "./ui/Modal";
 
 import { ModalActionBar } from "./ui/ModalActionBar";
-
-import { SelectionCard } from "./ui/SelectionCard";
-
-import { WorkSelect } from "./WorkSelect";
 
 import { ImportLinkedWorkspaceSection } from "./ImportLinkedWorkspaceSection";
 
@@ -37,13 +28,16 @@ import { InlineMessage } from "./ui/InlineMessage";
 
 import type { ImportModalFeedback } from "../lib/importFlowTypes";
 
-import { resolveImportModalInitialState } from "./importModalHelpers";
+import { SegmentedControl } from "./ui/SegmentedControl";
+import { CheckboxField } from "./ui/CheckboxField";
 
 import { ImportDraftSection } from "./ImportDraftSection";
 
 type ImportModalProps = {
   library: LibraryIndex;
   currentWorkId?: string | null;
+  currentChapterId?: string | null;
+  addPagesChapter?: ChapterSnapshot | null;
   preview: ImportPreviewResult;
   busy: boolean;
   initialDraft?: ImportModalSubmit | null;
@@ -56,6 +50,8 @@ type ImportModalProps = {
 export function ImportModal({
   library,
   currentWorkId = null,
+  currentChapterId = null,
+  addPagesChapter = null,
   preview,
   busy,
   initialDraft = null,
@@ -65,39 +61,16 @@ export function ImportModal({
   onSubmit,
 }: ImportModalProps): React.JSX.Element {
   const { t } = useTranslation("components");
-  const initial = resolveImportModalInitialState(
+  const state = useImportModalState({
     library,
     currentWorkId,
+    currentChapterId,
+    addPagesChapter,
     preview,
     initialDraft,
-  );
-  const [targetMode, setTargetMode] = React.useState<"new" | "existing">(
-    initial.targetMode,
-  );
-  const [newWorkTitle, setNewWorkTitle] = React.useState(initial.newWorkTitle);
-  const [existingWorkId, setExistingWorkId] = React.useState(
-    initial.existingWorkId,
-  );
-  const [selections, setSelections] = React.useState<ImportCreateSelection[]>(
-    initial.selections,
-  );
-  const [linkedWorkspace, setLinkedWorkspace] =
-    React.useState<LinkedWorkspaceImportOptions>(initial.linkedWorkspace);
+  });
 
   const modalTitle = resolveImportModalTitle(t, preview.mode);
-  const submittable = isImportSubmittable(
-    targetMode,
-    newWorkTitle,
-    existingWorkId,
-    selections,
-  );
-  const submitPayload = buildImportSubmitPayload(
-    targetMode,
-    newWorkTitle,
-    existingWorkId,
-    selections,
-    linkedWorkspace,
-  );
 
   return (
     <Modal
@@ -109,27 +82,32 @@ export function ImportModal({
         <ImportModalFooter
           busy={busy}
           onCancel={onCancel}
-          onSubmit={() => onSubmit(submitPayload)}
+          onSubmit={() => onSubmit(state.submitPayload)}
           previewMode={preview.mode}
-          submittable={submittable}
+          submittable={state.submittable}
+          pagesOnly={state.mode === "pages"}
         />
       }
     >
+      <SegmentedControl
+        ariaLabel={t("import.addToLibrary")}
+        value={state.mode}
+        onChange={state.setMode}
+        disabled={busy}
+        options={[
+          { id: "chapters", label: t("import.addChapter") },
+          {
+            id: "pages",
+            label: t("import.addPages"),
+            disabled: !library.works.some((work) => work.chapters.length > 0),
+          },
+        ]}
+      />
       <ImportModalContent
         busy={busy}
-        currentWorkId={initial.currentWorkId}
-        existingWorkId={existingWorkId}
         library={library}
-        linkedWorkspace={linkedWorkspace}
-        newWorkTitle={newWorkTitle}
         preview={preview}
-        selections={selections}
-        setExistingWorkId={setExistingWorkId}
-        setLinkedWorkspace={setLinkedWorkspace}
-        setNewWorkTitle={setNewWorkTitle}
-        setSelections={setSelections}
-        setTargetMode={setTargetMode}
-        targetMode={targetMode}
+        state={state}
         feedback={feedback}
       />
     </Modal>
@@ -138,97 +116,62 @@ export function ImportModal({
 
 function ImportModalContent({
   busy,
-  currentWorkId,
-  existingWorkId,
   library,
-  linkedWorkspace,
-  newWorkTitle,
   preview,
-  selections,
-  setExistingWorkId,
-  setLinkedWorkspace,
-  setNewWorkTitle,
-  setSelections,
-  setTargetMode,
-  targetMode,
+  state,
   feedback,
 }: {
   busy: boolean;
-  currentWorkId: string | null;
-  existingWorkId: string;
   library: LibraryIndex;
-  linkedWorkspace: LinkedWorkspaceImportOptions;
-  newWorkTitle: string;
   preview: ImportPreviewResult;
-  selections: ImportCreateSelection[];
-  setExistingWorkId: React.Dispatch<React.SetStateAction<string>>;
-  setLinkedWorkspace: React.Dispatch<
-    React.SetStateAction<LinkedWorkspaceImportOptions>
-  >;
-  setNewWorkTitle: React.Dispatch<React.SetStateAction<string>>;
-  setSelections: React.Dispatch<React.SetStateAction<ImportCreateSelection[]>>;
-  setTargetMode: React.Dispatch<React.SetStateAction<"new" | "existing">>;
-  targetMode: "new" | "existing";
+  state: ReturnType<typeof useImportModalState>;
   feedback: ImportModalFeedback | null;
 }): React.JSX.Element {
+  const { t } = useTranslation("components");
+  const pagesOnly = state.mode === "pages";
   return (
     <>
       {feedback ? (
         <InlineMessage variant={feedback.variant} title={feedback.message} />
       ) : null}
       <ImportExcludedPagesNotice preview={preview} />
-      <ImportTargetSection
-        busy={busy}
-        existingWorkId={existingWorkId}
-        currentWorkId={currentWorkId}
-        library={library}
-        newWorkTitle={newWorkTitle}
-        setExistingWorkId={setExistingWorkId}
-        setNewWorkTitle={setNewWorkTitle}
-        setTargetMode={setTargetMode}
-        targetMode={targetMode}
-      />
+      {pagesOnly ? (
+        <ImportChapterPagesFields library={library} state={state} busy={busy} />
+      ) : (
+        <ImportTargetSection
+          busy={busy}
+          existingWorkId={state.existingWorkId}
+          currentWorkId={state.currentWorkId}
+          library={library}
+          newWorkTitle={state.newWorkTitle}
+          setExistingWorkId={state.setExistingWorkId}
+          setNewWorkTitle={state.setNewWorkTitle}
+          setTargetMode={state.setTargetMode}
+          targetMode={state.targetMode}
+        />
+      )}
       <ImportDraftSection
         busy={busy}
         preview={preview}
-        selections={selections}
-        setSelections={setSelections}
+        selections={state.selections}
+        setSelections={state.setSelections}
+        pagesOnly={pagesOnly}
       />
-      <ImportLinkedWorkspaceSection
-        busy={busy}
-        options={linkedWorkspace}
-        onChange={setLinkedWorkspace}
-      />
+      {pagesOnly ? (
+        <CheckboxField
+          checked={state.translateAddedPages}
+          disabled={busy}
+          onCheckedChange={state.setTranslateAddedPages}
+          label={t("import.translateAddedPages")}
+        />
+      ) : (
+        <ImportLinkedWorkspaceSection
+          busy={busy}
+          options={state.linkedWorkspace}
+          onChange={state.setLinkedWorkspace}
+        />
+      )}
     </>
-  );
-}
-
-function ImportExcludedPagesNotice({
-  preview,
-}: {
-  preview: ImportPreviewResult;
-}): React.JSX.Element | null {
-  const { t } = useTranslation("components");
-  const excludedPages = preview.excludedPages ?? [];
-  if (excludedPages.length === 0) return null;
-
-  const visible = excludedPages
-    .slice(0, 3)
-    .map(({ chapterTitle, pageName }) => `${chapterTitle} / ${pageName}`)
-    .join(", ");
-  const remaining = excludedPages.length - 3;
-  return (
-    <InlineMessage
-      variant="warning"
-      title={t("import.excludedImagesTitle", { count: excludedPages.length })}
-      detail={t("import.excludedImagesDetail", {
-        files: visible,
-        more:
-          remaining > 0
-            ? t("import.excludedImagesMore", { count: remaining })
-            : "",
-      })}
-    />
   );
 }
 
@@ -245,12 +188,14 @@ function ImportModalFooter({
   onSubmit,
   previewMode,
   submittable,
+  pagesOnly,
 }: {
   busy: boolean;
   onCancel: () => void;
   onSubmit: () => void;
   previewMode: ImportPreviewResult["mode"];
   submittable: boolean;
+  pagesOnly: boolean;
 }): React.JSX.Element {
   const { t } = useTranslation("components");
   return (
@@ -266,136 +211,15 @@ function ImportModalFooter({
             onClick={onSubmit}
           >
             {t(
-              previewMode === "batch"
-                ? "import.createAndTranslate"
-                : "import.addToLibrary",
+              pagesOnly
+                ? "import.addPages"
+                : previewMode === "batch"
+                  ? "import.createAndTranslate"
+                  : "import.addToLibrary",
             )}
           </Button>
         </>
       }
     />
-  );
-}
-
-function ImportTargetSection({
-  busy,
-  currentWorkId,
-  existingWorkId,
-  library,
-  newWorkTitle,
-  setExistingWorkId,
-  setNewWorkTitle,
-  setTargetMode,
-  targetMode,
-}: {
-  busy: boolean;
-  currentWorkId: string | null;
-  existingWorkId: string;
-  library: LibraryIndex;
-  newWorkTitle: string;
-  setExistingWorkId: React.Dispatch<React.SetStateAction<string>>;
-  setNewWorkTitle: React.Dispatch<React.SetStateAction<string>>;
-  setTargetMode: React.Dispatch<React.SetStateAction<ImportTargetMode>>;
-  targetMode: ImportTargetMode;
-}): React.JSX.Element {
-  const { t } = useTranslation("components");
-  return (
-    <section className="modal-section share-target-section">
-      <div className="share-target-grid">
-        <ImportTargetModeCard
-          active={targetMode === "new"}
-          disabled={busy}
-          label={t("import.createNewWork")}
-          mode="new"
-          onChange={setTargetMode}
-        />
-        <ImportTargetModeCard
-          active={targetMode === "existing"}
-          disabled={busy || library.works.length === 0}
-          label={
-            currentWorkId
-              ? t("import.addToCurrentWork")
-              : t("import.addToExistingWork")
-          }
-          mode="existing"
-          onChange={setTargetMode}
-        />
-      </div>
-      {targetMode === "new" ? (
-        <TextField
-          label={t("common.workTitle")}
-          value={newWorkTitle}
-          disabled={busy}
-          onChange={(event) => setNewWorkTitle(event.target.value)}
-        />
-      ) : (
-        <>
-          {currentWorkId && existingWorkId === currentWorkId ? (
-            <p className="import-current-target-note" role="status">
-              {t("import.currentWorkDefault")}
-            </p>
-          ) : null}
-          <ImportExistingWorkSelect
-            busy={busy}
-            existingWorkId={existingWorkId}
-            library={library}
-            setExistingWorkId={setExistingWorkId}
-          />
-        </>
-      )}
-    </section>
-  );
-}
-
-function ImportTargetModeCard({
-  active,
-  disabled,
-  label,
-  mode,
-  onChange,
-}: {
-  active: boolean;
-  disabled: boolean;
-  label: string;
-  mode: ImportTargetMode;
-  onChange: React.Dispatch<React.SetStateAction<ImportTargetMode>>;
-}): React.JSX.Element {
-  return (
-    <SelectionCard
-      className="share-target-card"
-      inputType="radio"
-      name="target-mode"
-      checked={active}
-      disabled={disabled}
-      onChange={() => onChange(mode)}
-    >
-      <span>{label}</span>
-    </SelectionCard>
-  );
-}
-
-function ImportExistingWorkSelect({
-  busy,
-  existingWorkId,
-  library,
-  setExistingWorkId,
-}: {
-  busy: boolean;
-  existingWorkId: string;
-  library: LibraryIndex;
-  setExistingWorkId: React.Dispatch<React.SetStateAction<string>>;
-}): React.JSX.Element {
-  const { t } = useTranslation("components");
-  return (
-    <label>
-      {t("import.selectWork")}
-      <WorkSelect
-        ariaLabel={t("import.selectWork")}
-        library={library}
-        value={existingWorkId}
-        disabled={busy || library.works.length === 0}
-        onValueChange={setExistingWorkId}
-      />
-    </label>
   );
 }

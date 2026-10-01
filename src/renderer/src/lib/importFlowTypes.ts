@@ -12,6 +12,7 @@ export type ImportModalFeedback = {
 };
 
 export type ImportModalSubmit = {
+  translateAddedPages?: boolean;
   target: ImportTarget;
   selections: ImportCreateSelection[];
   linkedWorkspace?: LinkedWorkspaceImportOptions;

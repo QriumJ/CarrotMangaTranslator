@@ -99,6 +99,9 @@ export function restoreTranslationCheckpointForRun({
   workContext?: PipelineOptions["workContext"];
 }): PreparedPageBuildResult {
   timing.setStage(page.id, "translation", checkpoint.translationDurationMs);
+  if (workContext && checkpoint.instructions) {
+    workContext = { ...workContext, instructions: checkpoint.instructions };
+  }
   const pageOptions = buildRequestPageOptions({
     attempt: 1,
     baseOptions: run.baseOptions,

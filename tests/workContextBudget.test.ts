@@ -37,8 +37,9 @@ describe("work context token budget", () => {
     expect(budget.effective.outputHeadroomTokens).toBeGreaterThanOrEqual(2048);
   });
 
-  it("then drops glossary and characters if the budget is still too tight", () => {
+  it("drops unvoiced character memory if the budget is still too tight", () => {
     const context = makePromptWorkContext({ hugeStory: true });
+    context.styleGuide.characters[0].speechStyle = "neutral";
     const { budget, workContext } = prunePromptWorkContextForBudget(context, {
       ctx: 6400,
       maxTokens: 12000,
@@ -52,6 +53,14 @@ describe("work context token budget", () => {
     expect(workContext.storyMemory.pages).toEqual([]);
     expect(workContext.styleGuide.glossary).toEqual([]);
     expect(workContext.styleGuide.characters).toEqual([]);
+  });
+
+  it("refuses a request rather than dropping authored instructions and voices", () => {
+    const context = makePromptWorkContext({ hugeStory: true });
+    context.styleGuide.rules.prompt = "문장 끝 마침표 생략";
+    expect(() =>
+      prunePromptWorkContextForBudget(context, { ctx: 6400, maxTokens: 12000 }),
+    ).toThrow(/번역 프롬프트와 캐릭터 말투/);
   });
 
   it("builds the same budget preview shape used by the style guide modal", () => {

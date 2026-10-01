@@ -387,6 +387,7 @@ function useInpaintingControllerFixture(
     runCurrentPageInpainting: spies.runDrawnPattern,
     setShareExportOpen: vi.fn(),
     setTranslationSourceOpen: vi.fn(),
+    setAddPagesChapter: vi.fn(),
   });
   return {
     commandRegistry,

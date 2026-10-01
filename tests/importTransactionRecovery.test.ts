@@ -1,5 +1,16 @@
 import { existsSync } from "node:fs";
-import { mkdtemp, mkdir, readdir, rm, writeFile } from "node:fs/promises";
+import {
+  mkdtemp,
+  mkdir,
+  readdir,
+  rm,
+  writeFile,
+  readFile,
+} from "node:fs/promises";
+import type {
+  ImportTarget,
+  CreateImportResult,
+} from "../src/shared/importTypes";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -20,6 +31,152 @@ afterEach(async () => {
 });
 
 describe("general import transaction recovery", () => {
+  it.each(["end", "before", "after"] as const)(
+    "adds distinct pages at %s while preserving existing page data and memory",
+    async (kind) => {
+      const fixture = await createImportFixture();
+      const { service, library } = await loadLibrary(fixture.root);
+      const first = await service.createImport(makeRequest(fixture.imagePath));
+      const chapter = requireChapter(first);
+      const original = chapter.pages[0];
+      const originalBytes = await readFile(original.imagePath);
+      const memory = await library.getChapterStoryMemory(chapter.id);
+      await library.saveChapterStoryMemory({
+        ...memory,
+        pages: [
+          {
+            pageId: original.id,
+            pageName: original.name,
+            pageIndex: 0,
+            sourceDigest: "원문",
+            translatedDigest: "번역",
+            summary: "저장된 기억",
+            updatedAt: memory.updatedAt,
+          },
+        ],
+      });
+      const request = makeRequest(fixture.imagePath, {
+        mode: "chapter",
+        workId: first.workId,
+        chapterId: chapter.id,
+        position: kind === "end" ? { kind } : { kind, pageId: original.id },
+      });
+      request.preview.chapters[0].pages.push({
+        ...request.preview.chapters[0].pages[0],
+      });
+      const added = await service.createImport(request);
+      const latest = await library.openChapter(chapter.id);
+      expect(added.chapterIds).toEqual([chapter.id]);
+      expect(added.addedPageIds).toHaveLength(2);
+      expect(new Set(latest.pages.map((page) => page.id)).size).toBe(3);
+      expect(new Set(latest.pages.map((page) => page.imagePath)).size).toBe(3);
+      expect(latest.pages.map((page) => page.id)).toEqual(
+        kind === "before"
+          ? [...(added.addedPageIds ?? []), original.id]
+          : [original.id, ...(added.addedPageIds ?? [])],
+      );
+      expect(latest.pages.find((page) => page.id === original.id)).toEqual(
+        original,
+      );
+      expect(await readFile(original.imagePath)).toEqual(originalBytes);
+      expect(
+        (await library.getChapterStoryMemory(chapter.id)).pages[0],
+      ).toMatchObject({
+        pageId: original.id,
+        summary: "저장된 기억",
+        pageIndex: kind === "before" ? 2 : 0,
+      });
+      expect((await library.listLibrary()).works[0].chapterOrder).toEqual([
+        chapter.id,
+      ]);
+    },
+  );
+
+  it("rolls back newly materialized files when a later image fails", async () => {
+    const fixture = await createImportFixture();
+    const { service, library } = await loadLibrary(fixture.root);
+    const first = await service.createImport(makeRequest(fixture.imagePath));
+    const chapter = requireChapter(first);
+    const directory = join(
+      fixture.root,
+      "works",
+      first.workId,
+      "chapters",
+      chapter.id,
+      "pages",
+    );
+    const beforeFiles = await readdir(directory);
+    const request = makeRequest(fixture.imagePath, {
+      mode: "chapter",
+      workId: first.workId,
+      chapterId: chapter.id,
+      position: { kind: "end" },
+    });
+    request.preview.chapters[0].pages.push({
+      ...request.preview.chapters[0].pages[0],
+      sourcePath: join(fixture.root, "missing.png"),
+    });
+    await expect(service.createImport(request)).rejects.toThrow();
+    expect(await library.openChapter(chapter.id)).toEqual(chapter);
+    expect(await readdir(directory)).toEqual(beforeFiles);
+  });
+
+  it("recovers an interrupted append without changing the original chapter", async () => {
+    const fixture = await createImportFixture();
+    const { service, library, transaction, recovery } = await loadLibrary(
+      fixture.root,
+    );
+    const first = await service.createImport(makeRequest(fixture.imagePath));
+    const chapter = requireChapter(first);
+    const restore = crashOnceAt(transaction, "after-replace-step");
+    try {
+      await expect(
+        service.createImport(
+          makeRequest(fixture.imagePath, {
+            mode: "chapter",
+            workId: first.workId,
+            chapterId: chapter.id,
+            position: { kind: "end" },
+          }),
+        ),
+      ).rejects.toBeInstanceOf(transaction.SimulatedLibraryTransactionCrash);
+    } finally {
+      restore();
+    }
+    await recovery.recoverLibraryTransactions();
+    expect(await library.openChapter(chapter.id)).toEqual(chapter);
+    expect((await library.listLibrary()).works[0].chapterOrder).toEqual([
+      chapter.id,
+    ]);
+  });
+
+  it("rejects a foreign chapter or missing anchor without adding files", async () => {
+    const fixture = await createImportFixture();
+    const { service, library } = await loadLibrary(fixture.root);
+    const first = await service.createImport(makeRequest(fixture.imagePath));
+    const second = await service.createImport(makeRequest(fixture.imagePath));
+    const chapter = requireChapter(first);
+    const targets: ImportTarget[] = [
+      {
+        mode: "chapter",
+        workId: second.workId,
+        chapterId: chapter.id,
+        position: { kind: "end" },
+      },
+      {
+        mode: "chapter",
+        workId: first.workId,
+        chapterId: chapter.id,
+        position: { kind: "before", pageId: "missing" },
+      },
+    ];
+    for (const target of targets)
+      await expect(
+        service.createImport(makeRequest(fixture.imagePath, target)),
+      ).rejects.toThrow();
+    expect(await library.openChapter(chapter.id)).toEqual(chapter);
+  });
+
   it.each(["after-publish-step", "after-replace-step"] as const)(
     "removes every trace of a new work after a pre-commit crash at %s",
     async (point) => {
@@ -160,9 +317,7 @@ function crashOnceAt(
 
 function makeRequest(
   imagePath: string,
-  target:
-    | { mode: "new"; title: string }
-    | { mode: "existing"; workId: string } = {
+  target: ImportTarget = {
     mode: "new",
     title: "Transactional Work",
   },
@@ -255,4 +410,9 @@ async function visibleWorkDirectories(root: string): Promise<string[]> {
   return (await readdir(worksRoot)).filter(
     (entry) => entry !== ".transactions",
   );
+}
+
+function requireChapter(result: CreateImportResult) {
+  if (!result.openedChapter) throw new Error("Expected imported chapter");
+  return result.openedChapter;
 }

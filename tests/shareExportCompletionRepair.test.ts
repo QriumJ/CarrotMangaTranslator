@@ -130,6 +130,8 @@ describe("share export completion repair", () => {
     const firstBlock = page.blocks[0];
     if (!firstBlock) throw new Error("fixture block missing");
     page.fontContinuity = makeFontContinuity(page.id, firstBlock.id);
+    page.name = "표지.png";
+    page.outputBaseName = "표지";
     await writeJson(localChapterPath(rootDir), chapter);
     const sharePath = join(rootDir, "internal-state.mgtshare");
     const library = await loadLibrary(rootDir);
@@ -143,6 +145,7 @@ describe("share export completion repair", () => {
     const exportedPage = readPackageChapter(sharePath).pages[0];
     expect(exportedPage?.translationCheckpoint).toBeUndefined();
     expect(exportedPage?.fontContinuity).toBeUndefined();
+    expect(exportedPage?.outputBaseName).toBe("표지");
 
     const imported = buildMaterializedSharedPage({
       packagePage: page,
@@ -154,6 +157,7 @@ describe("share export completion repair", () => {
     });
     expect(imported.translationCheckpoint).toBeUndefined();
     expect(imported.fontContinuity).toBeUndefined();
+    expect(imported.outputBaseName).toBe("표지");
   });
 
   it("rejects duplicate local block ids without leaving a target archive", async () => {

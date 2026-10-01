@@ -26,6 +26,7 @@ export function buildLinkedMirrorChapter(
       return {
         id: page.id,
         name: page.name,
+        outputBaseName: page.outputBaseName,
         width: page.width,
         height: page.height,
         blocks: page.blocks,

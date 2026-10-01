@@ -157,7 +157,7 @@ function mergeRules(
   now: string,
 ): WorkStyleGuide {
   const rules = suggestions.rules;
-  if (!rules) {
+  if (!rules || guide.rules.prompt !== undefined) {
     return guide;
   }
   const nextRules = { ...guide.rules, ...rules };

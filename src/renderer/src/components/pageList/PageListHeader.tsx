@@ -4,20 +4,15 @@ import type { MangaPage } from "../../../../shared/libraryTypes";
 import type { PageListFilter, PageStatusMode } from "./pageListStatus";
 import { PageListFilterMenu } from "./PageListFilterMenu";
 import { SidebarSectionCollapseButton } from "../SidebarSectionCollapseButton";
-import { IconStopwatch } from "@tabler/icons-react";
+import { IconPlus, IconStopwatch } from "@tabler/icons-react";
 import { IconButton } from "../ui/IconButton";
+import { EditIcon } from "../ui/icons";
 
-export function PageListHeader({
-  collapsed,
-  otherPanelCollapsed,
-  filter,
-  onFilterChange,
-  onOpenTiming,
-  onToggleOtherPanel,
-  pages,
-  statusMode,
-  visibleCount,
-}: {
+type PageListHeaderProps = {
+  onAddPages?: () => void;
+  onEditPages?: () => void;
+  addPagesLabel?: string;
+  addPagesDisabled?: boolean;
   collapsed: boolean;
   otherPanelCollapsed: boolean;
   filter: PageListFilter;
@@ -27,13 +22,46 @@ export function PageListHeader({
   pages: MangaPage[];
   statusMode: PageStatusMode;
   visibleCount: number;
-}): React.JSX.Element {
+};
+
+export function PageListHeader({
+  onAddPages,
+  onEditPages,
+  addPagesLabel,
+  addPagesDisabled,
+  collapsed,
+  otherPanelCollapsed,
+  filter,
+  onFilterChange,
+  onOpenTiming,
+  onToggleOtherPanel,
+  pages,
+  statusMode,
+  visibleCount,
+}: PageListHeaderProps): React.JSX.Element {
   const { t } = useTranslation("components");
   return (
     <div className="page-list-header">
       <div className="panel-header page-list-title-row">
         <h2>{t("common.pages")}</h2>
         <div className="page-list-header-actions">
+          {onAddPages ? (
+            <IconButton
+              size="sm"
+              label={addPagesLabel || t("import.addPages")}
+              title={addPagesLabel || t("import.addPages")}
+              disabled={addPagesDisabled}
+              onClick={onAddPages}
+            >
+              <IconPlus size={16} aria-hidden="true" />
+            </IconButton>
+          ) : null}
+          {onEditPages && pages.length ? (
+            <EditPagesButton
+              disabled={addPagesDisabled}
+              onClick={onEditPages}
+            />
+          ) : null}
           {pages.length ? (
             <span className="page-list-visible-count">
               {t("pageList.visibleCount", {
@@ -70,5 +98,27 @@ export function PageListHeader({
         </div>
       </div>
     </div>
+  );
+}
+
+/** Same pencil as the library's rename buttons: this edits page names and order. */
+function EditPagesButton({
+  disabled,
+  onClick,
+}: {
+  disabled?: boolean;
+  onClick: () => void;
+}): React.JSX.Element {
+  const { t } = useTranslation("components");
+  return (
+    <IconButton
+      size="sm"
+      label={t("pageEditor.title")}
+      title={t("pageEditor.title")}
+      disabled={disabled}
+      onClick={onClick}
+    >
+      <EditIcon size={16} />
+    </IconButton>
   );
 }

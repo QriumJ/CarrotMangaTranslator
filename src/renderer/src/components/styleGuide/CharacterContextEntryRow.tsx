@@ -1,11 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import type {
-  CharacterProfile,
-  CharacterSpeechStyle,
-} from "../../../../shared/workContextTypes";
+import type { CharacterProfile } from "../../../../shared/workContextTypes";
 import { CheckboxField } from "../ui/CheckboxField";
-import { Select } from "../ui/Select";
 import { getCharacterName } from "./characterContextEntryModel";
 import {
   ContextEntryDelimitedInput,
@@ -15,8 +11,11 @@ import {
   ContextEntryUsageCount,
 } from "./ContextEntryList";
 import type { ContextEntryTableRowProps } from "./contextEntryTableModel";
-import { SPEECH_STYLE_IDS } from "./styleGuideUtils";
-import { Input } from "../ui/Field";
+import {
+  characterVoiceText,
+  MAX_CHARACTER_VOICE_LENGTH,
+} from "../../../../shared/workContextInstructions";
+import { Input, Textarea } from "../ui/Field";
 
 export function CharacterContextEntryRow({
   entry: character,
@@ -56,23 +55,17 @@ export function CharacterContextEntryRow({
         placeholder={t("styleGuide.characters.translatedName")}
         onChange={(event) => onUpdate({ targetName: event.target.value })}
       />
-      <Select
-        value={character.speechStyle}
-        ariaLabel={t("styleGuide.usage.speechStyleItem", { name })}
-        options={SPEECH_STYLE_IDS.map((id) => ({
-          value: id,
-          label: t(`styleGuide.characters.speechStyles.${id}`),
-        }))}
-        onValueChange={(nextValue) =>
-          onUpdate({ speechStyle: nextValue as CharacterSpeechStyle })
-        }
-      />
-      <Input
-        value={character.customSpeechStyle ?? ""}
-        aria-label={t("styleGuide.characters.customSpeechStyle")}
-        placeholder={t("styleGuide.characters.customSpeechStyle")}
+      <Textarea
+        value={characterVoiceText(character)}
+        aria-label={t("styleGuide.usage.speechStyleItem", { name })}
+        placeholder={t("styleGuide.characters.speechStyle")}
+        maxLength={MAX_CHARACTER_VOICE_LENGTH}
+        rows={2}
         onChange={(event) =>
-          onUpdate({ customSpeechStyle: event.target.value })
+          onUpdate({
+            speechStyle: "custom",
+            customSpeechStyle: event.target.value,
+          })
         }
       />
       <Input

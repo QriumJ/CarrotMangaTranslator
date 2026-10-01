@@ -28,6 +28,82 @@ afterEach(async () => {
 });
 
 describe("durable page workflow plans", () => {
+  it("captures instructions once for an older run, and skips context reads for non-translation stages", async () => {
+    const root = await mkdtemp(
+      join(tmpdir(), "page-workflow-legacy-instructions-"),
+    );
+    roots.push(root);
+    const request = {
+      plan: createPageWorkflowPlan(["translate"]),
+      selection: [{ chapterId: randomUUID(), pageIds: [randomUUID()] }],
+    };
+    const original = {
+      workId: randomUUID(),
+      prompt: "Keep punctuation.",
+      characters: [],
+    };
+    const legacy = await preparePageWorkflowRun(root, request);
+    const resumed = await preparePageWorkflowRun(
+      root,
+      { ...request, resumeRunId: legacy.id },
+      async () => original,
+    );
+    expect((await readPageWorkflowRun(root, legacy.id)).instructions).toEqual({
+      [request.selection[0].chapterId]: original,
+    });
+    const resumedAgain = await preparePageWorkflowRun(
+      root,
+      { ...request, resumeRunId: legacy.id },
+      async () => {
+        throw new Error("must reuse the saved prompt");
+      },
+    );
+    expect(resumedAgain.instructions).toEqual(resumed.instructions);
+    const ocr = await preparePageWorkflowRun(
+      root,
+      { ...request, plan: createPageWorkflowPlan(["ocr"]) },
+      async () => {
+        throw new Error("OCR does not read translation instructions");
+      },
+    );
+    expect(ocr.instructions).toEqual({});
+  });
+
+  it("reuses the original work prompt after defaults change and snapshots a fresh run separately", async () => {
+    const root = await mkdtemp(join(tmpdir(), "page-workflow-instructions-"));
+    roots.push(root);
+    const request = {
+      plan: createPageWorkflowPlan(["translate"]),
+      selection: [{ chapterId: randomUUID(), pageIds: [randomUUID()] }],
+    };
+    const original = {
+      workId: randomUUID(),
+      prompt: "마침표 생략",
+      characters: [],
+    };
+    const run = await preparePageWorkflowRun(
+      root,
+      request,
+      async () => original,
+    );
+    const changed = { ...original, prompt: "마침표 유지" };
+    const resumed = await preparePageWorkflowRun(
+      root,
+      { ...request, resumeRunId: run.id },
+      async () => changed,
+    );
+    expect(resumed.instructions?.[request.selection[0].chapterId]).toEqual(
+      original,
+    );
+    const fresh = await preparePageWorkflowRun(
+      root,
+      request,
+      async () => changed,
+    );
+    expect(fresh.instructions?.[request.selection[0].chapterId]).toEqual(
+      changed,
+    );
+  });
   it("refuses a resume request that silently redirects work to a different page or chapter", async () => {
     const root = await mkdtemp(join(tmpdir(), "page-workflow-binding-"));
     roots.push(root);

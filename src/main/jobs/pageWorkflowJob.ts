@@ -8,7 +8,12 @@ import {
   preflightPageWorkflow,
 } from "../../shared/pageWorkflowPolicy";
 import { executePageWorkflow } from "../application/pageWorkflowService";
-import { getRunPaths, openChapter } from "../library";
+import {
+  getRunPaths,
+  openChapter,
+  resolveWorkContextForChapter,
+} from "../library";
+import { captureWorkInstructions } from "../../shared/workContextInstructions";
 import { preparePageWorkflowRun } from "../pageWorkflowRunStore";
 import { createPageWorkflowRuntime } from "../pageWorkflow/pageWorkflowRuntime";
 import { workflowConfigurationKeys } from "../pageWorkflow/pageWorkflowConfiguration";
@@ -35,7 +40,14 @@ export async function startPageWorkflowJob(
 ): Promise<PageWorkflowResult> {
   if (settings.ocr.pipeline !== "hayai")
     throw new Error("페이지 작업은 HayaiOCR에서만 실행할 수 있습니다.");
-  const run = await preparePageWorkflowRun(context.appPaths.dataRoot, request);
+  const run = await preparePageWorkflowRun(
+    context.appPaths.dataRoot,
+    request,
+    async (chapterId) =>
+      captureWorkInstructions(
+        (await resolveWorkContextForChapter(chapterId)).styleGuide,
+      ),
+  );
   const chapters = await Promise.all(
     run.request.selection.map((s) => openChapter(s.chapterId)),
   );
@@ -117,6 +129,7 @@ async function runWorkflowJob({
     runId: run.id,
     ...run.request,
     rules: run.rules,
+    instructions: run.instructions,
     settings,
     paths: context.appPaths,
     signal: abortController.signal,

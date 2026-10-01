@@ -71,6 +71,7 @@ export function useSubmitImportAction(
             saveNow,
             getNavigationKey,
           },
+          payload.translateAddedPages ?? false,
           importPreview.mode,
           result,
           navigationKey,
@@ -150,6 +151,7 @@ async function finishCommittedImport(
     | "saveNow"
     | "getNavigationKey"
   >,
+  translateAddedPages: boolean,
   mode: ImportPreviewSession["mode"],
   result: CreateImportResult,
   navigationKey: string,
@@ -169,11 +171,15 @@ async function finishCommittedImport(
     getNavigationKey: actions.getNavigationKey,
     navigationKey,
     openTranslateOptions: actions.openTranslateOptions,
-    openWorkTranslation: mode === "batch",
+    openWorkTranslation: !result.addedPageIds && mode === "batch",
+    addedPageIds: translateAddedPages ? result.addedPageIds : undefined,
+    refreshChapter: Boolean(result.addedPageIds),
     pushStatus: actions.pushStatus,
     resetWorkspaceHistory: actions.resetWorkspaceHistory,
     saveNow: actions.saveNow,
-    status: t("import.added", { count: result.chapterIds.length }),
+    status: result.addedPageIds
+      ? t("import.pagesAdded", { count: result.addedPageIds.length })
+      : t("import.added", { count: result.chapterIds.length }),
   });
   if (result.linkedWorkspaceWarning) {
     actions.pushStatus(result.linkedWorkspaceWarning);

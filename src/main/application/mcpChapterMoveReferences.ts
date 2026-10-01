@@ -1,4 +1,5 @@
 import { hashStableValue } from "../../shared/blockFingerprint";
+import { migrateWorkContextInstructions } from "../../shared/workContextInstructions";
 import { restoreContextBlockReferences } from "../../shared/mcpContextMigrationState";
 import type { McpChapterMoveIntent } from "../../shared/mcpChapterMove";
 import type { LibraryChapter } from "../../shared/libraryTypes";
@@ -34,8 +35,10 @@ export function planChapterMoveReferences(
       destination: indexCatalog(destination.glossary),
     },
     character: {
-      source: indexCatalog(source.characters),
-      destination: indexCatalog(destination.characters),
+      source: indexCatalog(migrateWorkContextInstructions(source).characters),
+      destination: indexCatalog(
+        migrateWorkContextInstructions(destination).characters,
+      ),
     },
   };
   const resolve = (kind: Kind, sourceId: string) => {

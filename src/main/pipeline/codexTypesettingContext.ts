@@ -5,6 +5,7 @@ import { upsertPageStoryMemory } from "./storyMemoryBuilder";
 import type { MangaPage } from "../../shared/libraryTypes";
 import type { CodexPageReading } from "../../shared/codexTypesettingTypes";
 import { prunePromptWorkContextForBudget } from "../../shared/workContextBudget";
+import { workInstructionsText } from "../../shared/workContextInstructions";
 import { buildPromptWorkContextForPage } from "./workContextPrompt";
 import {
   persistPageContextAfterSuccess,
@@ -167,6 +168,7 @@ function translationContext(
   pageIndex: number,
 ) {
   const context = buildPromptWorkContextForPage({
+    instructions: contextState.instructions,
     baseStyleGuide: contextState.styleGuide,
     storyMemory: contextState.storyMemory,
     previousStoryPages: contextState.previousStoryPages,
@@ -184,5 +186,13 @@ function translationContext(
     ctx: 32768,
     maxTokens: 8192,
   });
-  return JSON.stringify(budgeted.workContext);
+  return JSON.stringify({
+    ...budgeted.workContext,
+    styleGuide: {
+      ...budgeted.workContext.styleGuide,
+      rules: {
+        prompt: workInstructionsText(budgeted.workContext.styleGuide.rules),
+      },
+    },
+  });
 }

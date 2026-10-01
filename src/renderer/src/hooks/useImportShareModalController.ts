@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { ImportPreviewSession } from "../../../shared/importTypes";
+import type { ChapterSnapshot } from "../../../shared/libraryTypes";
 import type {
   WorkShareExportRequest,
   WorkShareImportPreview,
@@ -18,6 +19,8 @@ export function useImportShareModalController() {
 }
 
 function useImportModalState() {
+  const [addPagesChapter, setAddPagesChapter] =
+    useState<ChapterSnapshot | null>(null);
   const [translationSourceOpen, setTranslationSourceOpen] = useState(false);
   const [webImportOpen, setWebImportOpen] = useState(false);
   const [webImportBackgrounded, setWebImportBackgrounded] = useState(false);
@@ -36,6 +39,7 @@ function useImportModalState() {
       setImportFeedback(null);
       setImportModalOpen(true);
     } else {
+      setAddPagesChapter(null);
       setImportModalOpen(false);
       setImportDraft(null);
       setImportFeedback(null);
@@ -43,6 +47,8 @@ function useImportModalState() {
   }, [importPreview]);
 
   return {
+    addPagesChapter,
+    setAddPagesChapter,
     translationSourceOpen,
     setTranslationSourceOpen,
     webImportOpen,

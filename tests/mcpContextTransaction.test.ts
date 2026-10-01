@@ -168,9 +168,13 @@ it("atomically edits glossary, characters, rules and page memory without touchin
     });
     expect(saved.styleGuide.characters[0]).toMatchObject({
       displayName: "Hero",
-      speechStyle: "polite",
+      speechStyle: "custom",
+      customSpeechStyle: "정중한 존댓말을 사용한다.",
     });
     expect(saved.styleGuide.rules.honorifics).toBe("preserve");
+    expect(saved.styleGuide.rules.prompt).toContain(
+      "원문의 호칭과 경칭을 유지한다.",
+    );
     expect(saved.storyMemory.pages[0]).toMatchObject({
       pageId: "page",
       summary: "User-confirmed event",
@@ -178,6 +182,48 @@ it("atomically edits glossary, characters, rules and page memory without touchin
     });
     expect(mcpContextRevision(saved)).toBe(result.revision);
     expect(await f.snapshot()).toEqual(before);
+  } finally {
+    await f.close();
+  }
+});
+
+it("edits the free-text prompt without legacy patches silently replacing it", async () => {
+  const f = await setup();
+  try {
+    const prompt = "Keep names as written.\nUse short sentences.";
+    const proposal = await f.service.preview(
+      "owner",
+      {
+        ...(await f.request()),
+        changes: [{ changeId: "prompt", entity: "rules", values: { prompt } }],
+      },
+      authorize,
+    );
+    await f.apply(proposal.proposalId, ["prompt"]);
+    expect(
+      (await f.library.readWorkContextForEdit("chapter")).styleGuide.rules
+        .prompt,
+    ).toBe(prompt);
+    await expect(
+      f.service.preview(
+        "owner",
+        {
+          ...(await f.request()),
+          changes: [
+            {
+              changeId: "old-rule",
+              entity: "rules",
+              values: { honorifics: "drop" },
+            },
+          ],
+        },
+        authorize,
+      ),
+    ).rejects.toThrow("Edit rules.prompt directly");
+    expect(
+      (await f.library.readWorkContextForEdit("chapter")).styleGuide.rules
+        .prompt,
+    ).toBe(prompt);
   } finally {
     await f.close();
   }

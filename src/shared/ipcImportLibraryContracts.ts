@@ -1,3 +1,7 @@
+import {
+  EditPageOrganizationRequestSchema,
+  type EditPageOrganizationRequest,
+} from "./pageOrganization";
 import { z } from "zod";
 import type {
   CreateImportRequest,
@@ -131,6 +135,7 @@ const droppedImportPreviewResponseSchema = z.discriminatedUnion("status", [
 const createImportResultSchema = z
   .object({
     workId: stringArg,
+    addedPageIds: stringListArg.optional(),
     chapterIds: stringListArg,
     openedChapter: ChapterSnapshotSchema.optional(),
     linkedWorkspaceConnectedChapterIds: stringListArg.optional(),
@@ -343,6 +348,15 @@ export const libraryIpcContracts = {
     channel: "library:reorder-chapters",
     args: z.tuple([stringArg, stringListArg]),
     result: LibraryIndexSchema,
+  }),
+  editPageOrganization: defineIpcContract<
+    [EditPageOrganizationRequest],
+    ChapterSnapshot
+  >({
+    apiKey: "editPageOrganization",
+    channel: "library:edit-page-organization",
+    args: z.tuple([EditPageOrganizationRequestSchema]),
+    result: ChapterSnapshotSchema,
   }),
   reorderPages: defineIpcContract<[string, string[]], ChapterSnapshot>({
     apiKey: "reorderPages",

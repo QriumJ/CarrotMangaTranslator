@@ -124,15 +124,8 @@ export function buildWorkContextAnalysisPrompt({
       "",
       "분류 enum:",
       "glossary.category = character | alias | place | term | sfx | honorific | other",
-      "characters.speechStyle = neutral | polite | casual | rough | childish | elderly | formal | custom",
-      "rules.honorifics = preserve | adapt | drop",
-      "rules.sfxMode = preserve | translate | note",
-      "rules.defaultTone = natural_korean | literal",
-      ...(!isDefault
-        ? [
-            "- natural_korean은 저장 호환용 이름이며, 이 언어쌍에서는 자연스러운 번역 언어 문체를 뜻한다.",
-          ]
-        : []),
+      'characters.speechStyle = "custom". Describe the character voice in natural language in customSpeechStyle; use an empty string when there is no evidence.',
+      "The work translation prompt is user-authored. Do not propose changes to rules; return rules: {}.",
       "",
       "작성 기준:",
       `- glossary와 characters는 ${formatExtractionScope(selection.coverage.scope)}에서 추출하라.`,
@@ -147,8 +140,8 @@ export function buildWorkContextAnalysisPrompt({
         ? "- 원문 이름에 様/君/さん/ちゃん/先生/王/神이 붙거나, 한국어가 ~님/선생님/왕/여신으로 번역된 개별 인물·신격은 characters 후보로 우선 등록하라."
         : "- 원문 이름에 존칭·경칭이 붙거나 번역에서 존칭으로 옮겨진 개별 인물·신격은 characters 후보로 우선 등록하라.",
       isDefault
-        ? "- 캐릭터는 같은 인물의 원문 이름/별명/한국어 이름/말투를 묶고, 말투를 모르겠으면 neutral로 두어라."
-        : "- 캐릭터는 같은 인물의 원문 이름/별명/번역 이름/말투를 묶고, 말투를 모르겠으면 neutral로 두어라.",
+        ? "- 캐릭터는 같은 인물의 원문 이름/별명/한국어 이름/말투를 묶고, 말투를 모르겠으면 customSpeechStyle을 빈 문자열로 두어라."
+        : "- 캐릭터는 같은 인물의 원문 이름/별명/번역 이름/말투를 묶고, 말투를 모르겠으면 customSpeechStyle을 빈 문자열로 두어라.",
       "- note에는 번역에 도움이 되는 역할, 관계, 말투, 의미 설명만 짧게 적어라.",
       "- note, target, aliases, displayName, targetName 안에 Page 11, 11쪽, pageId, chapterId, AI confidence, confidence 1.00, 확신도, 출처, 근거 페이지 같은 분석 메타데이터를 절대 쓰지 마라.",
       "- 신뢰도 숫자는 어떤 필드에도 쓰지 마라. 확실하지 않은 항목은 confidence를 낮추는 대신 아예 제외하라.",
@@ -384,16 +377,12 @@ function makeOutputSchemaText(pair: ResolvedLanguagePair): string {
           sourceNames: [isDefault ? "原文名" : "원문 이름"],
           targetName: isDefault ? "한국어 이름" : `${targetLabel} 이름`,
           aliases: ["별명"],
-          speechStyle: "casual",
-          customSpeechStyle: "custom일 때만 구체적으로",
+          speechStyle: "custom",
+          customSpeechStyle: "친구에게는 편안한 반말을 쓴다.",
           note: "관계/역할/말투 메모",
         },
       ],
-      rules: {
-        honorifics: "adapt",
-        sfxMode: "translate",
-        defaultTone: "natural_korean",
-      },
+      rules: {},
       pageSummaries: [
         {
           chapterId: "제공된 chapterId",

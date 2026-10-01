@@ -47,6 +47,9 @@ export type CharacterProfile = {
 };
 
 export type WorkTranslationRules = {
+  /** Authoritative free-text instructions. Absent only in legacy documents. */
+  prompt?: string;
+  /** Legacy compatibility fields; ignored when prompt is present. */
   honorifics: "preserve" | "adapt" | "drop";
   sfxMode: "preserve" | "translate" | "note";
   defaultTone: "natural_korean" | "literal";

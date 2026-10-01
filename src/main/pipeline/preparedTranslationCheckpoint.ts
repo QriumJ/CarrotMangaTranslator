@@ -1,4 +1,5 @@
 import type { TranslationOptions } from "../appSettings";
+import { captureWorkInstructions } from "../../shared/workContextInstructions";
 import type { MangaPage } from "../../shared/libraryTypes";
 import { createPageRevision } from "../../shared/pageRevision";
 import type { PageRevision } from "../../shared/pageRevisionTypes";
@@ -94,6 +95,10 @@ export function buildPreparedTranslationCheckpoint({
     schemaVersion: TRANSLATION_CHECKPOINT_SCHEMA_VERSION,
     pipelineContractVersion: TRANSLATION_CHECKPOINT_PIPELINE_CONTRACT,
     soundEffectReviewPreserved: true,
+    instructions:
+      prepared.kind === "translated" && prepared.pageOptions.workContext
+        ? captureWorkInstructions(prepared.pageOptions.workContext.styleGuide)
+        : undefined,
     pageId,
     inputRevision,
     sourceLanguage,

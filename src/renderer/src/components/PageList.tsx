@@ -30,6 +30,9 @@ import windowStyles from "./pageList/PageListWindow.module.css";
 import { Button } from "./ui/Button";
 
 type PageListProps = {
+  onAddPages?: () => void;
+  onEditPages?: () => void;
+  addPagesLabel?: string;
   collapsed: boolean;
   otherPanelCollapsed: boolean;
   pages: MangaPage[];
@@ -47,6 +50,9 @@ type PageListProps = {
 };
 
 function PageListView({
+  onAddPages,
+  onEditPages,
+  addPagesLabel,
   collapsed,
   otherPanelCollapsed,
   pages,
@@ -78,6 +84,10 @@ function PageListView({
       id="sidebar-page-panel"
     >
       <PageListHeader
+        onEditPages={onEditPages}
+        onAddPages={onAddPages}
+        addPagesLabel={addPagesLabel}
+        addPagesDisabled={jobActive}
         collapsed={collapsed}
         otherPanelCollapsed={otherPanelCollapsed}
         filter={state.filter}

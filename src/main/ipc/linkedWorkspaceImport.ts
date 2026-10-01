@@ -5,7 +5,7 @@ import type {
 import type { IpcContext } from "./context";
 
 export async function connectImportedChapters(
-  context: IpcContext,
+  context: Pick<IpcContext, "linkedWorkspaceSync">,
   command: CreateImportRequest,
   result: CreateImportResult,
 ): Promise<
@@ -14,6 +14,8 @@ export async function connectImportedChapters(
     "linkedWorkspaceConnectedChapterIds" | "linkedWorkspaceWarning"
   >
 > {
+  if (command.target.mode === "chapter")
+    return refreshImportedChapter(context, command.target.chapterId);
   const options = command.linkedWorkspace;
   if (!options?.enabled) return {};
   const service = context.linkedWorkspaceSync;
@@ -47,6 +49,24 @@ export async function connectImportedChapters(
       ...(connected.length > 0
         ? { linkedWorkspaceConnectedChapterIds: connected }
         : {}),
+      linkedWorkspaceWarning:
+        error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+async function refreshImportedChapter(
+  context: Pick<IpcContext, "linkedWorkspaceSync">,
+  chapterId: string,
+) {
+  const service = context.linkedWorkspaceSync;
+  if (!service) return {};
+  try {
+    const connectionId = service.getStatus(chapterId).connectionId;
+    if (connectionId) await service.update({ connectionId });
+    return {};
+  } catch (error) {
+    return {
       linkedWorkspaceWarning:
         error instanceof Error ? error.message : String(error),
     };

@@ -14,12 +14,14 @@ import { ModalActionBar, ModalActionButtons } from "./ui/ModalActionBar";
 import { Button } from "./ui/Button";
 
 type TranslateSourceModalProps = {
+  addingPages?: boolean;
   busy: boolean;
   onCancel: () => void;
   onSelect: (mode: TranslateSourceMode) => void;
 };
 
 export function TranslateSourceModal({
+  addingPages = false,
   busy,
   onCancel,
   onSelect,
@@ -28,7 +30,7 @@ export function TranslateSourceModal({
   return (
     <Modal
       size="sm"
-      title={t("translateSource.title")}
+      title={t(addingPages ? "import.addPages" : "translateSource.title")}
       onClose={onCancel}
       closeDisabled={busy}
       footer={

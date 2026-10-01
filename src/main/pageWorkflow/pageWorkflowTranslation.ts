@@ -18,6 +18,7 @@ export async function translateWorkflowPage(
   // Remove empty targets before typography, erasure, layout, and review.
   const input = { ...page, blocks };
   const workContext = await readContext(chapter.id);
+  const instructions = context.instructions?.[chapter.id];
   const result = await runWholePagePipeline(
     {
       jobId: context.runId,
@@ -51,6 +52,7 @@ export async function translateWorkflowPage(
       cumulativeContextDetail: context.plan.cumulativeDetail,
       workContext: {
         ...workContext,
+        instructions,
         chapterId: chapter.id,
         recentPageCount: 6,
         previousStoryPages: context.previousStoryPages,

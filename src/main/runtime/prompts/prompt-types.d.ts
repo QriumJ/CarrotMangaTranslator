@@ -78,6 +78,7 @@ export type PromptCharacterEntry = {
 };
 
 export type PromptRules = {
+  prompt?: string;
   honorifics?: unknown;
   sfxMode?: unknown;
   defaultTone?: unknown;

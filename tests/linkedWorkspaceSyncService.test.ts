@@ -1,3 +1,4 @@
+import { registerPageOrganizationLinkedCases } from "./pageOrganizationLinked.cases";
 import { makeChapter } from "./fixtures/linkedWorkspace";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -1240,4 +1241,11 @@ it("waits for cancelled output rendering before deleting and cannot recreate its
   await expect(readdir(root)).rejects.toMatchObject({ code: "ENOENT" });
   expect(service.getStatus(CHAPTER_ID).state).toBe("unlinked");
   await service.dispose();
+});
+
+registerPageOrganizationLinkedCases({
+  boundary,
+  makeConnectedService,
+  requirePage,
+  requireChapter,
 });

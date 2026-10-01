@@ -30,6 +30,8 @@ type UseAppCommandsOptions = {
   openLogFolder: () => void;
   openErrorReport: () => void;
   openTranslationSource: () => void;
+  openAddChapterPages?: () => void;
+  openPageEditor?: () => void;
   openShareExport: () => void;
   openShortcutHelp: () => void;
   openTextView: () => void;
@@ -41,79 +43,61 @@ export function useAppCommands(
   options: UseAppCommandsOptions,
 ): AppCommandRegistry {
   const { t, componentText } = useCommandTranslations();
-  const {
-    startRegionTranslation,
-    cancelJob,
-    currentChapter,
-    jobActive,
-    translationUnavailable,
-    openErrorReport,
-    openImportPreview,
-    openLibraryFolder,
-    openLogFolder,
-    openSettings,
-    openShareExport,
-    openShareImportPreview,
-    openShortcutHelp,
-    openTextView,
-    openTranslateOptions,
-    openTranslationSource,
-    runAnalysis,
-    runCurrentPageInpainting,
-    toggleBlockChrome,
-    toggleTextBlocks,
-  } = options;
   return useMemo(
     () =>
       buildAppCommandRegistry({
-        redactionPreparation: options.redactionPreparation,
-        componentText,
-        startRegionTranslation,
-        cancelJob,
-        currentChapter,
-        jobActive,
-        translationUnavailable,
-        openErrorReport,
-        openImportPreview,
-        openLibraryFolder,
-        openLogFolder,
-        openSettings,
-        openShareExport,
-        openShareImportPreview,
-        openShortcutHelp,
-        openTextView,
-        openTranslateOptions,
-        openTranslationSource,
-        runAnalysis,
-        runCurrentPageInpainting,
-        toggleBlockChrome,
-        toggleTextBlocks,
         t,
+        componentText,
+        redactionPreparation: options.redactionPreparation,
+        startRegionTranslation: options.startRegionTranslation,
+        cancelJob: options.cancelJob,
+        currentChapter: options.currentChapter,
+        jobActive: options.jobActive,
+        translationUnavailable: options.translationUnavailable,
+        openErrorReport: options.openErrorReport,
+        openImportPreview: options.openImportPreview,
+        openLibraryFolder: options.openLibraryFolder,
+        openLogFolder: options.openLogFolder,
+        openSettings: options.openSettings,
+        openShareExport: options.openShareExport,
+        openShareImportPreview: options.openShareImportPreview,
+        openShortcutHelp: options.openShortcutHelp,
+        openTextView: options.openTextView,
+        openTranslateOptions: options.openTranslateOptions,
+        openTranslationSource: options.openTranslationSource,
+        openAddChapterPages: options.openAddChapterPages,
+        openPageEditor: options.openPageEditor,
+        runAnalysis: options.runAnalysis,
+        runCurrentPageInpainting: options.runCurrentPageInpainting,
+        toggleBlockChrome: options.toggleBlockChrome,
+        toggleTextBlocks: options.toggleTextBlocks,
       }),
     [
-      options.redactionPreparation,
-      componentText,
-      startRegionTranslation,
-      cancelJob,
-      currentChapter,
-      jobActive,
-      translationUnavailable,
-      openErrorReport,
-      openImportPreview,
-      openLibraryFolder,
-      openLogFolder,
-      openSettings,
-      openShareExport,
-      openShareImportPreview,
-      openShortcutHelp,
-      openTextView,
-      openTranslateOptions,
-      openTranslationSource,
-      runAnalysis,
-      runCurrentPageInpainting,
-      toggleBlockChrome,
-      toggleTextBlocks,
       t,
+      componentText,
+      options.redactionPreparation,
+      options.startRegionTranslation,
+      options.cancelJob,
+      options.currentChapter,
+      options.jobActive,
+      options.translationUnavailable,
+      options.openErrorReport,
+      options.openImportPreview,
+      options.openLibraryFolder,
+      options.openLogFolder,
+      options.openSettings,
+      options.openShareExport,
+      options.openShareImportPreview,
+      options.openShortcutHelp,
+      options.openTextView,
+      options.openTranslateOptions,
+      options.openTranslationSource,
+      options.openAddChapterPages,
+      options.openPageEditor,
+      options.runAnalysis,
+      options.runCurrentPageInpainting,
+      options.toggleBlockChrome,
+      options.toggleTextBlocks,
     ],
   );
 }
@@ -233,12 +217,18 @@ function buildJobCommands({
 }
 
 type ChapterCommandId =
+  | "add-chapter-pages"
+  | "edit-pages"
   | "toggle-block-chrome"
   | "toggle-text-blocks"
   | "gather-text";
 
 function buildChapterCommands({
   currentChapter,
+  jobActive,
+  componentText,
+  openAddChapterPages,
+  openPageEditor,
   openTextView,
   toggleBlockChrome,
   toggleTextBlocks,
@@ -246,6 +236,25 @@ function buildChapterCommands({
 }: LocalizedCommandOptions): Pick<AppCommandMap, ChapterCommandId> {
   const paletteVisible = Boolean(currentChapter);
   return {
+    "add-chapter-pages": {
+      id: "add-chapter-pages",
+      label: componentText("import.addPages"),
+      paletteVisible: Boolean(
+        currentChapter && !jobActive && openAddChapterPages,
+      ),
+      run: () => {
+        if (currentChapter && !jobActive) openAddChapterPages?.();
+      },
+    },
+
+    "edit-pages": {
+      id: "edit-pages",
+      label: componentText("pageEditor.title"),
+      paletteVisible: Boolean(currentChapter && !jobActive && openPageEditor),
+      run: () => {
+        if (currentChapter && !jobActive) openPageEditor?.();
+      },
+    },
     "toggle-block-chrome": {
       id: "toggle-block-chrome",
       label: t("commands.toggleBlockChrome.label"),

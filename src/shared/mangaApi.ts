@@ -1,4 +1,5 @@
 /* eslint-disable max-lines -- the preload-facing API type intentionally enumerates the complete renderer contract */
+import type { EditPageOrganizationRequest } from "./pageOrganization";
 import type {
   McpEditorState,
   McpPageChangedEvent,
@@ -389,6 +390,9 @@ export type MangaApi = McpApi & {
     workId: string,
     chapterIds: string[],
   ) => Promise<LibraryIndex>;
+  editPageOrganization: (
+    request: EditPageOrganizationRequest,
+  ) => Promise<ChapterSnapshot>;
   reorderPages: (
     chapterId: string,
     pageIds: string[],

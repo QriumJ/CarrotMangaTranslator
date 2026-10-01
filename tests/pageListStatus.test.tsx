@@ -9,6 +9,44 @@ import { PageList } from "../src/renderer/src/components/PageList";
 afterEach(cleanup);
 
 describe("page list workflow status", () => {
+  it("offers page addition in an empty collapsed chapter and disables it during a structure operation", () => {
+    const onAddPages = vi.fn();
+    const onEditPages = vi.fn();
+    const props = {
+      collapsed: true,
+      otherPanelCollapsed: true,
+      selectedPageId: null,
+      jobActive: false,
+      onSelect: vi.fn(),
+      onRetranslate: vi.fn(),
+      onRemove: vi.fn(),
+      onReorder: vi.fn(),
+      onToggleOtherPanel: vi.fn(),
+      onAddPages,
+      onEditPages,
+    };
+    const view = render(<PageList {...props} pages={[]} />);
+    fireEvent.click(screen.getByRole("button", { name: "페이지 추가" }));
+    expect(onAddPages).toHaveBeenCalledOnce();
+    expect(screen.queryByRole("button", { name: "페이지 편집" })).toBeNull();
+    view.rerender(<PageList {...props} pages={PAGES} />);
+    fireEvent.click(screen.getByRole("button", { name: "페이지 편집" }));
+    expect(onEditPages).toHaveBeenCalledOnce();
+    view.rerender(
+      <PageList
+        {...props}
+        pages={PAGES}
+        collapsed={false}
+        addPagesLabel="화에 페이지 추가"
+        jobActive
+      />,
+    );
+    const button = screen.getByRole("button", { name: "화에 페이지 추가" });
+    expect(button).toHaveProperty("disabled", true);
+    fireEvent.click(button);
+    expect(onAddPages).toHaveBeenCalledOnce();
+  });
+
   it("keeps an unreserved page removable while chapter reordering and model execution stay locked", () => {
     const onRemove = vi.fn();
     render(

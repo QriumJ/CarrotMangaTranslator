@@ -84,6 +84,7 @@ export type PipelineRegionContext = {
 };
 
 export type PipelineWorkContext = {
+  instructions?: import("../../shared/workContextInstructions").WorkInstructionSnapshot;
   workId: string;
   /** Display/prompt context only; automatic font matching must not infer style from it. */
   workTitle?: string;

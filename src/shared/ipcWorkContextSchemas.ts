@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { RESEARCH_ENGINES } from "./internetResearchTypes";
 import {
+  MAX_WORK_INSTRUCTIONS_LENGTH,
+  MAX_CHARACTER_VOICE_LENGTH,
+} from "./workContextInstructions";
+import {
   MAX_CHARACTER_PROFILES,
   MAX_GATHERED_TEXT_LENGTH,
   MAX_GLOSSARY_ENTRIES,
@@ -66,7 +70,7 @@ export const CharacterProfileSchema = z
     targetName: z.string().max(200),
     aliases: z.array(z.string().max(200)).max(50).optional(),
     speechStyle: CharacterSpeechStyleSchema,
-    customSpeechStyle: z.string().max(1000).optional(),
+    customSpeechStyle: z.string().max(MAX_CHARACTER_VOICE_LENGTH).optional(),
     note: z.string().max(2000).optional(),
     origin: z.enum(["ai", "manual"]).optional(),
     enabled: z.boolean(),
@@ -83,6 +87,7 @@ export const WorkStyleGuideSchema = z
     characters: z.array(CharacterProfileSchema).max(MAX_CHARACTER_PROFILES),
     rules: z
       .object({
+        prompt: z.string().max(MAX_WORK_INSTRUCTIONS_LENGTH).optional(),
         honorifics: z.enum(["preserve", "adapt", "drop"]),
         sfxMode: z.enum(["preserve", "translate", "note"]),
         defaultTone: DefaultToneSchema,
@@ -90,6 +95,14 @@ export const WorkStyleGuideSchema = z
       .strict(),
     createdAt: z.string().max(80),
     updatedAt: z.string().max(80),
+  })
+  .strict();
+
+export const WorkInstructionSnapshotSchema = z
+  .object({
+    workId: storeId,
+    prompt: z.string().max(MAX_WORK_INSTRUCTIONS_LENGTH),
+    characters: z.array(CharacterProfileSchema).max(MAX_CHARACTER_PROFILES),
   })
   .strict();
 

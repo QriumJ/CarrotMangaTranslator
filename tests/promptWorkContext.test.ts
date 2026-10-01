@@ -13,7 +13,111 @@ const promptRuntime =
     ) => string;
   };
 
+const fixedRuntime =
+  require("../src/main/runtime/semantic-ocr/fixed-block-translation.cjs") as {
+    buildFixedBlockTranslationPrompt: (
+      plan: Record<string, unknown>,
+      options: Record<string, unknown>,
+    ) => string;
+  };
+const soundRuntime =
+  require("../src/main/runtime/semantic-ocr/sound-effect-translation.cjs") as {
+    buildSoundEffectTranslationPrompt: (
+      options: Record<string, unknown>,
+    ) => string;
+  };
+
 describe("prompt work context", () => {
+  it.each(["ko", "en"])(
+    "preserves authored language names and multiline text in every translation prompt for %s",
+    (targetLanguage) => {
+      const guide = makeStyleGuide();
+      guide.rules.prompt =
+        'Preserve Korean nicknames.\nUse "Japanese" literally in this title.\n\n♡ 유지';
+      guide.characters[0].speechStyle = "custom";
+      guide.characters[0].customSpeechStyle =
+        "Use Korean honorifics.\nJapanese words remain Japanese.";
+      const options = {
+        sourceLanguage: "ja",
+        targetLanguage,
+        collectPageContext: false,
+        workContext: { styleGuide: guide, storyMemory: makeStoryMemory() },
+      };
+      const prompts = [
+        promptRuntime.getOverlayPrompt(options),
+        promptRuntime.getOverlayPrompt({ ...options, regionCropMode: true }),
+        fixedRuntime.buildFixedBlockTranslationPrompt(
+          {
+            version: 6,
+            blocks: [
+              {
+                blockId: "B001",
+                jp: "ありがとう",
+                direction: "vertical",
+                bbox: { x1: 10, y1: 20, x2: 80, y2: 180 },
+              },
+            ],
+          },
+          options,
+        ),
+        soundRuntime.buildSoundEffectTranslationPrompt({
+          ...options,
+          soundEffectTranslationRegions: [
+            {
+              regionId: "sfx-1",
+              recognizedText: "ドン",
+              bbox: { x: 0, y: 0, w: 100, h: 100 },
+            },
+          ],
+        }),
+      ];
+      for (const prompt of prompts) {
+        expect(prompt).toContain(JSON.stringify(guide.rules.prompt));
+        expect(prompt).toContain(
+          JSON.stringify(guide.characters[0].customSpeechStyle),
+        );
+      }
+    },
+  );
+  it.each([false, true])(
+    "includes full work instructions and voices with cumulative mode %s",
+    (collectPageContext) => {
+      const guide = makeStyleGuide();
+      const voice =
+        "상대가 왕이면 문장 끝에 전하를 붙인다.\n".repeat(25) +
+        "말투의 마지막 규칙";
+      guide.rules.prompt = "문장 끝 마침표는 생략한다.\n♡와 ♪는 유지한다.";
+      guide.characters = Array.from({ length: 45 }, (_, index) => ({
+        ...guide.characters[0],
+        id: `voice-${index}`,
+        enabled: true,
+        displayName: `등장인물${index}`,
+        speechStyle: "custom",
+        customSpeechStyle: voice,
+      }));
+      const context = buildPromptWorkContextForPage({
+        baseStyleGuide: guide,
+        storyMemory: makeStoryMemory(),
+        pageId: "page-4",
+        pageIndex: 4,
+      });
+      const prompt = promptRuntime.getOverlayPrompt({
+        workContext: context,
+        collectPageContext,
+      });
+      expect(prompt).toContain(JSON.stringify(guide.rules.prompt));
+      expect(prompt).toContain(JSON.stringify(voice));
+      expect(prompt).toContain("등장인물44");
+      expect(prompt).not.toContain("Rules: honorifics=");
+      guide.rules.prompt = "";
+      const emptyPrompt = promptRuntime.getOverlayPrompt({
+        workContext: { ...context, styleGuide: guide },
+        collectPageContext,
+      });
+      expect(emptyPrompt).not.toContain("Rules: honorifics=");
+      expect(emptyPrompt).not.toContain("Work translation instructions");
+    },
+  );
   it("injects enabled glossary and recent story memory without changing output schema", () => {
     const context = buildPromptWorkContextForPage({
       baseStyleGuide: makeStyleGuide(),

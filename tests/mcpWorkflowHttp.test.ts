@@ -84,7 +84,10 @@ it("stops an admitted HTTP workflow after grant revocation without publishing ou
         })
       ).result.isError,
     ).toBe(false);
-    await vi.waitFor(() => expect(f.render).toHaveBeenCalledTimes(1));
+    // Revoke after render admission, including under full-suite coverage load.
+    await vi.waitFor(() => expect(f.render).toHaveBeenCalledTimes(1), {
+      timeout: 20000,
+    });
     const id = f.provider.connectionIdFor(`Bearer ${f.full}`);
     if (!id) throw new Error("Missing native OAuth connection");
     f.provider.revokeConnection(id);

@@ -59,6 +59,8 @@ export type MangaPage = {
   typesettingMethod?: "codex";
   id: string;
   name: string;
+  /** Explicit filename stem chosen in the page editor; no order prefix. */
+  outputBaseName?: string;
   imagePath: string;
   inpaintedImagePath?: string;
   /** Original file name retained for linked-workspace mirroring. */

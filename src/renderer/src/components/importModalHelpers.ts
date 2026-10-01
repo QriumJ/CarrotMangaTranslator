@@ -115,7 +115,8 @@ function resolveInitialTargetMode(
   currentWorkAvailable: boolean,
   initialDraft: ImportModalSubmit | null,
 ): ImportTargetMode {
-  if (initialDraft) return initialDraft.target.mode;
+  if (initialDraft && initialDraft.target.mode !== "chapter")
+    return initialDraft.target.mode;
   return currentWorkAvailable ? "existing" : "new";
 }
 

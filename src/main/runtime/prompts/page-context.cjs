@@ -19,7 +19,7 @@ function buildPageContextSection(options = {}) {
     ...buildGlossaryDetailPolicy(options.cumulativeContextDetail),
     "Each glossary item uses source, target, category, aliases, and note. category is one of character, alias, place, term, honorific, other.",
     "characters contains only people whose name or identity wording is supported on this page. Never guess a name from appearance alone and never repeat a supplied character name or alias.",
-    "Each character item uses displayName, sourceNames, targetName, aliases, speechStyle, customSpeechStyle, and note. speechStyle is one of neutral, polite, casual, rough, childish, elderly, formal, custom.",
+    'Each character item uses displayName, sourceNames, targetName, aliases, speechStyle, customSpeechStyle, and note. Set speechStyle to "custom" and describe the evidenced voice in natural language in customSpeechStyle (empty when unknown). Preserve existing user-authored character voices.',
     "Use empty arrays when there are no grounded glossary or character candidates.",
     ...(options.ocrGeometryOnlyMode
       ? [

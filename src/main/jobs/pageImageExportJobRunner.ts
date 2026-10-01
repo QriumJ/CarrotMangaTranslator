@@ -1,4 +1,5 @@
 /* eslint-disable max-lines -- progress, raster/PSD writing, collision checks, and cancellation form one export transaction */
+import { explicitPageOutputBase } from "../../shared/pageOutputNaming";
 import type {
   PageImageExportCancelledResult,
   PageImageExportCompletedResult,
@@ -60,8 +61,9 @@ async function assertNoCancelCollisions({
   policy: "replace" | "skip" | "cancel";
   tasks: PageImageExportTask[];
 }): Promise<void> {
-  if (policy !== "cancel" || !dependencies.runtime.fileExists) return;
-  for (const { outputPath } of tasks) {
+  if (!dependencies.runtime.fileExists) return;
+  for (const { outputPath, page } of tasks) {
+    if (policy !== "cancel" && !page.outputBaseName) continue;
     if (await dependencies.runtime.fileExists(outputPath)) {
       throw new Error("같은 이름의 결과 파일이 있어 출력을 취소했습니다.");
     }
@@ -340,6 +342,7 @@ async function preparePageImageExportTasks({
             preserveSourceNames,
           }),
           usedPaths,
+          Boolean(pageEntry.page.outputBaseName),
         ),
         page: pageEntry.page,
       });
@@ -348,7 +351,13 @@ async function preparePageImageExportTasks({
   return tasks;
 }
 
-function reserveManualOutputPath(preferred: string, used: Set<string>): string {
+function reserveManualOutputPath(
+  preferred: string,
+  used: Set<string>,
+  exact = false,
+): string {
+  if (exact && used.has(preferred.toLowerCase()))
+    throw new Error(`출력 이름이 겹칩니다: ${preferred}`);
   const extension = extname(preferred);
   const stem = basename(preferred, extension);
   let candidate = preferred;
@@ -545,7 +554,14 @@ async function writePageImageExportPage({
   collisionPolicy: "replace" | "skip" | "cancel";
 }): Promise<void> {
   throwIfAborted(abortController, getCompletedPages(), totalPages);
-  if (await shouldSkipOutput(outputPath, collisionPolicy, dependencies)) return;
+  if (
+    await shouldSkipOutput(
+      outputPath,
+      page.outputBaseName ? "cancel" : collisionPolicy,
+      dependencies,
+    )
+  )
+    return;
   await dependencies.runtime.createDirectory(dirname(outputPath), true);
   throwIfAborted(abortController, getCompletedPages(), totalPages);
   if (outputFormat === "psd") {
@@ -615,6 +631,8 @@ function resolveManualPageOutputPath({
       : outputFormat === "jpeg"
         ? ".jpg"
         : `.${outputFormat}`;
+  const explicit = explicitPageOutputBase(page);
+  if (explicit !== undefined) return join(outputDir, `${explicit}${extension}`);
   if (!preserveSourceNames) {
     return join(
       outputDir,

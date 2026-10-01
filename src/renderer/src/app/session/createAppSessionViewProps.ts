@@ -152,6 +152,7 @@ function createModalsProps({
     }),
     confirmDialog: confirmController.confirmDialog,
     currentWorkId: core.currentChapter?.workId ?? null,
+    currentChapterId: core.currentChapter?.id ?? null,
     importBusy: importShareModal.importBusy || libraryDrop.busy,
     importPreview: importShareModal.importModalOpen
       ? importShareModal.importPreview
@@ -180,6 +181,7 @@ function createModalsProps({
       void importShareActions.submitShareExport(request),
     onSubmitShareImport: (payload) =>
       void importShareActions.submitShareImport(payload),
+    pageEditor: libraryActions.pageEditor,
     renameBusy: libraryActions.renameBusy,
     renameTarget: libraryActions.renameTarget,
     settings: settingsDialog.settings,
@@ -193,6 +195,8 @@ function createModalsProps({
     shareImportDraft: importShareModal.shareImportDraft,
     shareImportPreview: importShareModal.shareImportPreview,
     translationSourceOpen: importShareModal.translationSourceOpen,
+    addPagesChapter: importShareModal.addPagesChapter,
+    onClearAddPages: () => importShareModal.setAddPagesChapter(null),
     webImportOpen: importShareModal.webImportOpen,
   };
 }
@@ -274,6 +278,8 @@ function createSidebarProps({
     onOpenShareExport: commandRegistry.byId["open-share-export"].run,
     onOpenShareImport: commandRegistry.byId["open-share-import"].run,
     onOpenTranslationSource: commandRegistry.byId["open-translate-source"].run,
+    onEditPages: commandRegistry.byId["edit-pages"].run,
+    onAddChapterPages: commandRegistry.byId["add-chapter-pages"].run,
     onRemovePage: (pageId) => void libraryActions.removePage(pageId),
     onRenameChapter: (chapterId) =>
       void libraryActions.renameChapter(chapterId),

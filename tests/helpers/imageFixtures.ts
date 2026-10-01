@@ -1,3 +1,4 @@
+import { PNG } from "pngjs";
 import { deflateSync } from "node:zlib";
 
 const PNG_SIGNATURE = Buffer.from([
@@ -44,4 +45,21 @@ function crc32(bytes: Uint8Array): number {
     }
   }
   return (crc ^ 0xffffffff) >>> 0;
+}
+
+export function makeRasterPng(
+  width: number,
+  height: number,
+  fill: [number, number, number, number],
+  pixel?: [number, number, number, number, number, number],
+): Buffer {
+  const image = new PNG({ width, height });
+  for (let index = 0; index < width * height; index += 1) {
+    image.data.set(fill, index * 4);
+  }
+  if (pixel) {
+    const [x, y, r, g, b, a] = pixel;
+    image.data.set([r, g, b, a], (y * width + x) * 4);
+  }
+  return PNG.sync.write(image);
 }

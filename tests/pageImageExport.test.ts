@@ -1,3 +1,4 @@
+import { registerPageOrganizationExportCases } from "./pageOrganizationExport.cases";
 import { BrowserWindow } from "electron";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
@@ -11,7 +12,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { PNG } from "pngjs";
+import { makeRasterPng } from "./helpers/imageFixtures";
 import { AppActivityGate } from "../src/main/appActivityGate";
 import { AppOperationRegistry } from "../src/main/appOperationRegistry";
 import { ActiveJobStore } from "../src/main/jobs/activeJob";
@@ -1167,23 +1168,6 @@ function fakePng(width: number, height: number): Buffer {
   return png;
 }
 
-function makeRasterPng(
-  width: number,
-  height: number,
-  fill: [number, number, number, number],
-  pixel?: [number, number, number, number, number, number],
-): Buffer {
-  const image = new PNG({ width, height });
-  for (let index = 0; index < width * height; index += 1) {
-    image.data.set(fill, index * 4);
-  }
-  if (pixel) {
-    const [x, y, r, g, b, a] = pixel;
-    image.data.set([r, g, b, a], (y * width + x) * 4);
-  }
-  return PNG.sync.write(image);
-}
-
 function makePage(
   id: string,
   name: string,
@@ -1285,3 +1269,14 @@ function runPageImageExportJob(
     .run(options.id, () => runOwnedPageImageExportJob(options))
     .finally(() => jobs.clearIfCurrent(options.id));
 }
+
+registerPageOrganizationExportCases({
+  makeTempDir,
+  makeChapter,
+  makePage,
+  makeDependencies,
+  makeLibrary,
+  makeRasterPng,
+  makeContext,
+  runPageImageExportJob,
+});

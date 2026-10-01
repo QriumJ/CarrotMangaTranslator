@@ -280,6 +280,22 @@ function createInitialSelection(
   initialScope: TranslationOptionsInitialScope,
   resumeContext: TranslationResumeContext,
 ): ChapterSelectionMap {
+  if (typeof initialScope === "object") {
+    const available = new Set(chapter.pages.map((page) => page.id));
+    const pageIds = new Set(
+      initialScope.chapterId === chapter.id
+        ? initialScope.pageIds.filter((id) => available.has(id))
+        : [],
+    );
+    return pageIds.size
+      ? new Map([
+          [
+            chapter.id,
+            { kind: "pages", pageIds, restartPageIds: new Set(pageIds) },
+          ],
+        ])
+      : new Map();
+  }
   if (initialScope === "work-all" && work) {
     return new Map(
       work.chapters.map((item) => [item.id, { kind: "all" }] as const),

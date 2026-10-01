@@ -371,3 +371,16 @@ MCP 변경과 master의 페이지 워크플로·환경 백업·출력 삭제를 
 | `src/shared/pageRevision.ts`                             | runtime consumers |        83 |
 
 커버리지 inventory는 기존 776개·추가 1,244개·삭제 11개로 실제 통합 diff와 일치한다. 양쪽에서 같은 파일의 수치가 달라진 경우 정확한 covered/total 비율이 높은 기준을 유지했고, renderer `gatherText.ts`의 삭제는 기존에 기록된 shared 이동으로 처리했다. 이동한 shared 파일의 네 metric 기준 모두 master의 이전 renderer 기준보다 높다. provenance의 node26 artifact와 SHA-256은 master의 단독 갱신을 보존하며, 통합 자체를 새 커버리지 측정으로 간주하지 않는다.
+
+## 페이지 이름·순서 편집
+
+페이지 편집은 기존 `libraryGateway`·library mutation lock·활동 자원·organization transaction을
+직접 사용한다. 신규 facade/메타데이터 revision/UI modal을 위한 정확한 fan-in 상한은
+`appActivityTypes` 39, `blockFingerprint` 150, `library/lock` 54, `libraryFiles` 50,
+`ModalActionBar` 27, `libraryGateway` 32다. 출력 이름 검증의 직접 의존은
+`linkedWorkspaceSyncService` 19, `pageImageExportJobRunner` 16이다. 일반 예산과 기존
+coverage floor는 유지한다. 계약과 검증은 `docs/page-organization-editor.md`를 따른다.
+
+페이지 이름 변경의 공백·대소문자·숫자 정리 도움말은 공용 `ControlTooltip`을 직접 사용한다.
+스크롤 영역 밖 portal과 마우스/키보드 동작을 재사용하며, 해당 primitive의 소비 상한만
+37에서 실제 소비 수 38로 조정했다.

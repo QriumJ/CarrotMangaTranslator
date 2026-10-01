@@ -277,7 +277,12 @@ export const mcpOutputSchemas: Record<string, z.ZodType> = {
       revision: text,
       section: z.enum(["overview", "glossary", "characters", "memory"]),
       rules: z
-        .object({ honorifics: text, sfxMode: text, defaultTone: text })
+        .object({
+          honorifics: text,
+          sfxMode: text,
+          defaultTone: text,
+          prompt: text.optional(),
+        })
         .strict(),
       counts: z
         .object({ glossary: count, characters: count, memory: count })

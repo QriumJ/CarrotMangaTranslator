@@ -57,6 +57,16 @@ export type LibraryRenameActions = {
 };
 
 export type LibraryReorderActions = {
+  openPageEditor: () => void;
+  pageEditor: {
+    chapter: ChapterSnapshot;
+    workTitle: string;
+    onClose: () => void;
+    onReload: () => Promise<ChapterSnapshot>;
+    onSave: (
+      request: import("../../../shared/pageOrganization").EditPageOrganizationRequest,
+    ) => Promise<void>;
+  } | null;
   reorderChapterInLibrary: (
     workId: string,
     sourceChapterId: string,

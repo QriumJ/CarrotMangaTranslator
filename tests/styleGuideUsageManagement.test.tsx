@@ -16,6 +16,7 @@ import {
   openCustomSelect,
 } from "./testUtils/customSelect";
 import { CharactersTab } from "../src/renderer/src/components/styleGuide/CharactersTab";
+import { RulesTab } from "../src/renderer/src/components/styleGuide/RulesTab";
 import { GlossaryTab } from "../src/renderer/src/components/styleGuide/GlossaryTab";
 import { StyleGuideTabContent } from "../src/renderer/src/components/styleGuide/StyleGuideChrome";
 import {
@@ -33,6 +34,60 @@ afterEach(() => {
 });
 
 describe("style guide usage management", () => {
+  it("edits work rules as one prompt and clears them without restoring legacy dropdown values", () => {
+    const guide = makeGuide();
+    const onGuideChange = vi.fn();
+    const view = render(
+      <RulesTab guide={guide} onGuideChange={onGuideChange} />,
+    );
+    expect(screen.queryAllByRole("combobox")).toHaveLength(0);
+    expect(screen.getAllByRole("textbox")).toHaveLength(1);
+    const prompt = screen.getByRole("textbox", { name: "번역 프롬프트" });
+    fireEvent.change(prompt, {
+      target: { value: "마침표는 생략한다.\n♡는 유지한다." },
+    });
+    const next = onGuideChange.mock.calls[0][0];
+    expect(next.rules.prompt).toBe("마침표는 생략한다.\n♡는 유지한다.");
+    view.rerender(<RulesTab guide={next} onGuideChange={onGuideChange} />);
+    fireEvent.change(prompt, { target: { value: "" } });
+    view.rerender(
+      <RulesTab
+        guide={onGuideChange.mock.calls[1][0]}
+        onGuideChange={onGuideChange}
+      />,
+    );
+    expect(prompt).toHaveProperty("value", "");
+  });
+
+  it("edits a character voice directly and marks the entered text as manual", () => {
+    const onGuideChange = vi.fn();
+    render(
+      <CharactersTab
+        guide={makeGuide()}
+        onGuideChange={onGuideChange}
+        usage={makeUsage()}
+      />,
+    );
+    expect(screen.queryByRole("combobox", { name: /말투/ })).toBeNull();
+    const voice = screen.getByRole("textbox", { name: "유나 말투" });
+    expect(voice).toHaveProperty("value", "편안한 반말을 사용한다.");
+    fireEvent.change(voice, {
+      target: {
+        value:
+          "친구에게는 반말, 선생님에게는 존댓말.\n말끝을 길게 끌지 않는다.",
+      },
+    });
+    expect(
+      onGuideChange.mock.calls[0][0].characters.find(
+        (item: { displayName: string }) => item.displayName === "유나",
+      ),
+    ).toMatchObject({
+      speechStyle: "custom",
+      origin: "manual",
+      customSpeechStyle:
+        "친구에게는 반말, 선생님에게는 존댓말.\n말끝을 길게 끌지 않는다.",
+    });
+  });
   it("labels legacy SFX categories without offering them for new glossary entries", () => {
     const guide = makeGuide();
     guide.glossary[0].category = "sfx";
@@ -150,7 +205,7 @@ describe("style guide usage management", () => {
       .getAllByRole("textbox", { name: "표시 이름" })
       .map((input) => (input as HTMLInputElement).value);
     expect(names).toEqual(["유나", "민호"]);
-    for (const name of ["원문 이름", "번역 이름", "커스텀 말투", "메모"]) {
+    for (const name of ["원문 이름", "번역 이름", "메모"]) {
       expect(screen.getAllByRole("textbox", { name })).toHaveLength(2);
     }
 

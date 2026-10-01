@@ -9,6 +9,21 @@ import buttonStyles from "../src/renderer/src/components/ui/Button.module.css";
 afterEach(cleanup);
 
 describe("TranslateSourceModal", () => {
+  it("uses the existing source picker for page addition", () => {
+    const onSelect = vi.fn();
+    render(
+      <TranslateSourceModal
+        addingPages
+        busy={false}
+        onCancel={vi.fn()}
+        onSelect={onSelect}
+      />,
+    );
+    expect(screen.getByRole("heading", { name: "페이지 추가" })).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "이미지 열기" }));
+    expect(onSelect).toHaveBeenCalledWith("images");
+  });
+
   it("keeps source choices neutral and omits the redundant ordering note", () => {
     const onSelect = vi.fn();
     const { container } = render(

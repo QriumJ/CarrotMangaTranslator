@@ -119,6 +119,7 @@ type LinkedMirrorPage = Pick<
   MangaPage,
   | "id"
   | "name"
+  | "outputBaseName"
   | "width"
   | "height"
   | "blocks"

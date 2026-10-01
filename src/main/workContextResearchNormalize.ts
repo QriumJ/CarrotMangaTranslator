@@ -462,6 +462,10 @@ function normalizeCharacterUpsert(
     createdAt: previous.createdAt,
     updatedAt: timestamp,
   };
+  if (existing?.origin === "manual") {
+    after.speechStyle = existing.speechStyle;
+    after.customSpeechStyle = existing.customSpeechStyle;
+  }
   return makeOperation(
     input,
     "character",

@@ -82,7 +82,10 @@ it("releases the session on request failure, cancellation, revocation and contex
           const guide = await f.library.getWorkStyleGuide("work");
           await f.library.saveWorkStyleGuide({
             ...guide,
-            rules: { ...guide.rules, defaultTone: "literal" },
+            rules: {
+              ...guide.rules,
+              prompt: "Keep the original sentence structure.",
+            },
           });
         }
         return JSON.stringify({ blockId: "a", translatedText: "text" });

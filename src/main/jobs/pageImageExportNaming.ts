@@ -1,3 +1,4 @@
+import { explicitPageOutputBase } from "../../shared/pageOutputNaming";
 import { basename, extname } from "node:path";
 import { resolveSourceImageFormat } from "../../shared/sourceImageFormat";
 
@@ -32,6 +33,7 @@ export function buildPageImageExportRelativePath({
   pageIndex,
   pageName,
   sourceFileName,
+  outputBaseName,
   outputFormat = "source",
 }: {
   chapterIndex: number;
@@ -39,6 +41,7 @@ export function buildPageImageExportRelativePath({
   pageIndex: number;
   pageName: string;
   sourceFileName?: string;
+  outputBaseName?: string;
   outputFormat?: "source" | "png" | "jpeg" | "webp" | "psd";
 }): string {
   const extension =
@@ -47,10 +50,11 @@ export function buildPageImageExportRelativePath({
       : outputFormat === "jpeg"
         ? "jpg"
         : outputFormat;
+  const stem =
+    explicitPageOutputBase({ outputBaseName }) ??
+    `${formatPageImageExportOrder(pageIndex)}-${sanitizeOutputBaseName(pageName)}`;
   return `${formatPageImageExportOrder(chapterIndex)}-${sanitizeOutputPathSegment(
     chapterTitle,
     "chapter",
-  )}\\${formatPageImageExportOrder(pageIndex)}-${sanitizeOutputBaseName(
-    pageName,
-  )}.${extension}`;
+  )}\\${stem}.${extension}`;
 }

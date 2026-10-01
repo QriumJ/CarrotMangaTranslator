@@ -4,6 +4,11 @@ import {
   GlossaryEntrySchema,
 } from "./ipcWorkContextSchemas";
 import { hashStableValue } from "./blockFingerprint";
+import {
+  MAX_CHARACTER_VOICE_LENGTH,
+  MAX_WORK_INSTRUCTIONS_LENGTH,
+  migrateWorkContextInstructions,
+} from "./workContextInstructions";
 import type { ChapterStoryMemory, WorkStyleGuide } from "./workContextTypes";
 
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
@@ -29,13 +34,14 @@ const characterFields = z
     speechStyle: z
       .enum(CharacterProfileSchema.shape.speechStyle.options)
       .optional(),
-    customSpeechStyle: z.string().max(1000).optional(),
+    customSpeechStyle: z.string().max(MAX_CHARACTER_VOICE_LENGTH).optional(),
     note: z.string().max(2000).optional(),
     enabled: z.boolean().optional(),
   })
   .strict();
 const rulesFields = z
   .object({
+    prompt: z.string().max(MAX_WORK_INSTRUCTIONS_LENGTH).optional(),
     honorifics: z.enum(["preserve", "adapt", "drop"]).optional(),
     sfxMode: z.enum(["preserve", "translate", "note"]).optional(),
     defaultTone: z.enum(["natural_korean", "literal"]).optional(),
@@ -234,7 +240,7 @@ export function mcpContextRevision(context: {
     createdAt: _created,
     updatedAt: _updated,
     ...guide
-  } = context.styleGuide;
+  } = migrateWorkContextInstructions(context.styleGuide);
   const { updatedAt: _memoryUpdated, ...memory } = context.storyMemory;
   return hashStableValue({
     workId: context.workId,

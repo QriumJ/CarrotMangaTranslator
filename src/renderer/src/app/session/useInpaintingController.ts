@@ -93,10 +93,12 @@ function useSessionCommands(
     setShareExportOpen: chapter.importShareModal.setShareExportOpen,
     setShortcutHelpOpen: chapter.uiState.setShortcutHelpOpen,
     openTextView: () => chapter.uiState.openTextView(),
+    openPageEditor: chapter.libraryActions.openPageEditor,
     setShowBlockChrome: chapter.uiState.setShowBlockChrome,
     setShowTextBlocks: chapter.uiState.setShowTextBlocks,
     openTranslateOptions: chapter.uiState.openTranslateOptions,
     setTranslationSourceOpen: chapter.importShareModal.setTranslationSourceOpen,
+    setAddPagesChapter: chapter.importShareModal.setAddPagesChapter,
   });
 }
 

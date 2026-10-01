@@ -3,7 +3,9 @@ import type { ChapterSnapshot } from "../../shared/libraryTypes";
 import type {
   ChapterStoryMemory,
   WorkStyleGuide,
+  WorkTranslationRules,
 } from "../../shared/workContextTypes";
+import { workInstructionsText } from "../../shared/workContextInstructions";
 import {
   ChapterStoryMemorySchema,
   CharacterProfileSchema,
@@ -128,11 +130,35 @@ function applyChange(
     return applyMemory(snapshot, change, options.now);
   if (change.entity === "rules") {
     const before = snapshot.styleGuide.rules;
-    const after = { ...before, ...change.values };
+    const after = patchedRules(before, change.values);
     snapshot.styleGuide.rules = after;
     return describeChange(change, "rules", before, after);
   }
   return applyEntry(snapshot, change, options);
+}
+
+function patchedRules(
+  before: WorkTranslationRules,
+  values: Partial<WorkTranslationRules>,
+): WorkTranslationRules {
+  const after = { ...before, ...values };
+  if (
+    values.prompt !== undefined ||
+    !(["honorifics", "sfxMode", "defaultTone"] as const).some(
+      (key) => values[key] !== undefined && values[key] !== before[key],
+    )
+  )
+    return after;
+  const legacyPrompt = workInstructionsText({ ...before, prompt: undefined });
+  if (before.prompt && before.prompt !== legacyPrompt)
+    throw new McpEditError(
+      "invalid_edit",
+      "This work uses a custom translation prompt. Edit rules.prompt directly.",
+    );
+  return {
+    ...after,
+    prompt: workInstructionsText({ ...after, prompt: undefined }),
+  };
 }
 
 function applyEntry(

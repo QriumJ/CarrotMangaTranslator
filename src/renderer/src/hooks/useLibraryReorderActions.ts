@@ -1,3 +1,4 @@
+import { usePageOrganizationAction } from "./usePageOrganizationAction";
 import type {
   ApplyChapterAction,
   LibraryReorderActions,
@@ -14,7 +15,9 @@ type LibraryReorderActionsOptions = UseLibraryActionsOptions & {
 export function useLibraryReorderActions(
   options: LibraryReorderActionsOptions,
 ): LibraryReorderActions {
+  const editor = usePageOrganizationAction(options);
   return {
+    ...editor,
     reorderChapterInLibrary: useReorderChaptersAction(options),
     reorderPageInChapter: useReorderPagesAction(options),
   };

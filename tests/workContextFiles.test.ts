@@ -319,7 +319,11 @@ describe("work context files", () => {
     const resetGuide = await library.getWorkStyleGuide("work-1");
     expect(resetGuide.glossary).toEqual([]);
     expect(resetGuide.characters).toEqual([]);
-    expect(resetGuide.rules).toEqual(customRules);
+    expect(resetGuide.rules).toEqual({
+      ...customRules,
+      prompt:
+        "원문의 호칭과 경칭을 유지한다.\n효과음은 의미를 설명하는 형태로 옮긴다.\n원문의 표현과 의미를 살려 직역에 가깝게 번역한다.",
+    });
     for (const chapterId of ["chapter-a", "chapter-b"]) {
       const memory = await library.getChapterStoryMemory(chapterId);
       expect(memory.pages).toEqual([]);

@@ -16,6 +16,7 @@ export function isAppModalSubtreeActive(props: {
   importPreview: unknown;
   inpaintingGuideOpen: boolean;
   renameTarget: unknown;
+  pageEditor?: unknown;
   settingsOpen: boolean;
   shareExportOpen: boolean;
   shareImportPreview: unknown;
@@ -34,6 +35,7 @@ export function isAppModalSubtreeActive(props: {
       props.importPreview ||
       props.shareImportPreview ||
       props.renameTarget ||
+      props.pageEditor ||
       props.confirmDialog,
     )
   );
