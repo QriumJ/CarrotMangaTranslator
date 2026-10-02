@@ -17,7 +17,8 @@ it("translates only requested saved source strings using task-local languages an
     const result = await f.get(job.jobId);
     expect(result.items).toHaveLength(2);
     expect(f.request).toHaveBeenCalledTimes(2);
-    expect(f.dispose).toHaveBeenCalledTimes(2);
+    expect(f.start).toHaveBeenCalledTimes(1);
+    expect(f.dispose).toHaveBeenCalledTimes(1);
     for (const [call] of f.request.mock.calls) {
       expect(call.options).toMatchObject({
         sourceLanguage: "en",
@@ -113,7 +114,7 @@ it("never retries invalid model replies or publishes partial successful targets"
     );
     expect(job.status).toBe("failed");
     expect(f.request).toHaveBeenCalledTimes(2);
-    expect(f.dispose).toHaveBeenCalledTimes(2);
+    expect(f.dispose).toHaveBeenCalledTimes(1);
     expect(job.result?.selectionAnalysis).toBeUndefined();
     await expect(f.get(job.jobId)).rejects.toThrow();
     expect(await readFile(f.chapterPath)).toEqual(before);

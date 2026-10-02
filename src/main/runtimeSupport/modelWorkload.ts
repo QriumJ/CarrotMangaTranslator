@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
-type Kind = "translation" | "inpainting";
+type Kind = "translation" | "inpainting" | "page-renderer";
 type Lease<T> = { value: T; release: () => Promise<void> };
 type Entry = { value: unknown; release: () => Promise<void> };
 const current = new AsyncLocalStorage<ModelWorkload>();
@@ -93,9 +93,14 @@ export async function withModelWorkload<T>(
   kind: Kind,
   signal: AbortSignal,
   run: () => Promise<T>,
+  options: { reuseExisting?: boolean } = {},
 ): Promise<T> {
-  if (current.getStore())
-    throw new Error("Nested model workloads are not supported.");
+  const existing = current.getStore();
+  if (existing && options.reuseExisting && existing.kind === kind) {
+    signal.throwIfAborted();
+    return run();
+  }
+  if (existing) throw new Error("Nested model workloads are not supported.");
   const workload = new ModelWorkload(kind, signal);
   const failures: unknown[] = [];
   let result: T | undefined;

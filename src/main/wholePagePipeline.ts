@@ -62,6 +62,7 @@ import {
 import { createCodexProgressReporter } from "./pipeline/codexTypesettingProgress";
 import {
   refreshWholePageInput,
+  acquireKeepBlockInputs,
   completeHandedOffNoTextPage,
 } from "./pipeline/wholePageInputHandoff";
 
@@ -161,6 +162,7 @@ async function runWholePagePipelineWithDependencies(
   dependencies: WholePagePipelineDependencies,
   injectedDependencies: boolean,
 ): Promise<WholePagePipelineResult> {
+  options = await acquireKeepBlockInputs(options);
   const aiFontSizeMatching = resolveAiFontSizeMatching(options);
   const {
     onCleanupReady,
@@ -568,22 +570,20 @@ async function prepareWholePageRun(
   const modelPages = pages.filter((page) => !reusableCheckpoints.has(page.id));
   const ocrHintsByPageId = options.preparedOcrHints
     ? new Map(options.preparedOcrHints)
-    : options.acquirePage && blockMode === "keep"
-      ? new Map<string, OcrBboxResult>()
-      : await measureSharedProcessingStage(timing, "ocr", () =>
-          preparePageOcrHints({
-            jobId,
-            pages: modelPages,
-            run,
-            runPaths,
-            signal,
-            skipOcrPrepass,
-            blockMode,
-            decodeImage,
-            regionContext,
-            diagnostics: dependencies.diagnostics,
-          }),
-        );
+    : await measureSharedProcessingStage(timing, "ocr", () =>
+        preparePageOcrHints({
+          jobId,
+          pages: modelPages,
+          run,
+          runPaths,
+          signal,
+          skipOcrPrepass,
+          blockMode,
+          decodeImage,
+          regionContext,
+          diagnostics: dependencies.diagnostics,
+        }),
+      );
   throwIfAborted(signal);
   return { ocrHintsByPageId, reusableCheckpoints, run };
 }
@@ -768,11 +768,6 @@ async function handOffTranslationInput(
   checkpoints: Parameters<typeof refreshWholePageInput>[1],
   modelPageIds: Set<string>,
 ): Promise<MangaPage | undefined> {
-  if (
-    options.acquirePage &&
-    (options.blockMode === "keep" || !options.ocrHintsByPageId.has(original.id))
-  )
-    await options.beforePageOcr?.();
   const page = await refreshWholePageInput(original, checkpoints, options);
   options.pages[inputIndex] = page;
   if (options.acquirePage && !checkpoints.has(page.id)) {

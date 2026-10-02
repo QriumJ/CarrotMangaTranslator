@@ -173,6 +173,49 @@ it("cancels rule measurement and releases its renderer directory", async () => {
   expect(windows[0].destroy).toHaveBeenCalledOnce();
 });
 
+it("prepares actual layout without screenshot capture and keeps the session reusable", async () => {
+  const session = await makeSession();
+  if (!session.preparePage) throw new Error("Missing layout preparation");
+  const { preparePage, renderPage } = session;
+  await preparePage(makePage());
+  await preparePage({ ...makePage(), id: "second" });
+  expect(windows).toHaveLength(1);
+  expect(seen.has("render-readiness")).toBe(true);
+  expect(windows[0].webContents.debugger.sendCommand).not.toHaveBeenCalled();
+  expect(existsSync(windows[0].loadedPath)).toBe(false);
+  await renderPage(makePage());
+  expect(seen.has("Page.captureScreenshot")).toBe(true);
+  session.close();
+  expect(windows[0].destroy).toHaveBeenCalledOnce();
+});
+
+it("shares a native batch renderer while preserving page cancellation and final cleanup", async () => {
+  const { withModelWorkload } =
+    await import("../src/main/runtimeSupport/modelWorkload");
+  const { acquirePageExportRenderSession } =
+    await import("../src/main/pageExportWorkload");
+  const create = vi.fn(makeSession);
+  const options = { dataRoot: rootDir, decodeFallback: async () => null };
+  await withModelWorkload(
+    "page-renderer",
+    new AbortController().signal,
+    async () => {
+      for (let index = 0; index < 3; index++) {
+        const lease = await acquirePageExportRenderSession(
+          options,
+          undefined,
+          create,
+        );
+        await lease.value.renderPage({ ...makePage(), id: String(index) });
+        await lease.release();
+        expect(windows[0].destroy).not.toHaveBeenCalled();
+      }
+    },
+  );
+  expect(create).toHaveBeenCalledOnce();
+  expect(windows[0].destroy).toHaveBeenCalledOnce();
+});
+
 it.each([
   "image-probe",
   "image-decode",

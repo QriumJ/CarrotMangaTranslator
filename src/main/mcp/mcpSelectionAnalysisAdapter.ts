@@ -18,6 +18,7 @@ import {
 } from "./mcpSelectionEvidence";
 import { analyzeMcpSelectionOcr } from "./mcpSelectionOcr";
 import { analyzeMcpSelectionTranslation } from "./mcpSelectionTranslation";
+import { withModelWorkload } from "../runtimeSupport/modelWorkload";
 
 type Runtime = {
   ocr?: Parameters<typeof analyzeMcpSelectionOcr>[4];
@@ -64,9 +65,15 @@ export function createMcpSelectionAnalysisAdapter(
               );
               context.assertAuthorized();
             }
-            return withExecutionSettings(settings, () =>
-              analyses.run(owner, input, context),
-            );
+            const analyze = () =>
+              withExecutionSettings(settings, () =>
+                analyses.run(owner, input, context),
+              );
+            return "expectedEngine" in input
+              ? withModelWorkload("translation", context.signal, analyze, {
+                  reuseExisting: true,
+                })
+              : analyze();
           },
           {
             resources:

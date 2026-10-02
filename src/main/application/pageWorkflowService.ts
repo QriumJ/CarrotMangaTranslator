@@ -17,6 +17,7 @@ import {
 } from "../../shared/pageWorkflowStages";
 
 export type PageWorkflowExecutionPort = {
+  group?: <T>(stage: PageWorkflowStage, run: () => Promise<T>) => Promise<T>;
   restoreCompletedStage?: (
     stage: PageWorkflowStage,
     page: MangaPage,
@@ -111,8 +112,10 @@ async function executeWorkflowChapter(
             acquiredIds.has(id) && !hasFailedDependency(issues, id, stage),
         );
       if (reportCompletedStage(input, port, chapter, pageIds, stage)) continue;
+      const execute = () =>
+        executeWorkflowStage(input, port, chapter, pageIds, stage);
       issues.push(
-        ...(await executeWorkflowStage(input, port, chapter, pageIds, stage)),
+        ...(await (port.group ? port.group(stage, execute) : execute())),
       );
     }
     return issues;

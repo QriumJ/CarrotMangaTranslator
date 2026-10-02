@@ -19,7 +19,8 @@ from pathlib import Path
 import time
 
 def load_runtime(args):
-    assert args.device == 'cpu'
+    assert args.device in ('cpu', 'gpu')
+    Path(str(os.getpid()) + '.device').write_text(args.device)
     Path(str(os.getpid()) + '.loaded').write_text('once')
     print('model diagnostic on stdout')
     return (None, None, None, None)
@@ -93,6 +94,23 @@ class HayaiCpuPoolTests(unittest.TestCase):
         with pool_module.HayaiPool(self.request) as run:
             run(batch)
         self.assertEqual(list(self.root.glob('*.loaded')), [])
+
+    def test_gpu_uses_one_model_across_line_glyph_and_recovery_batches(self):
+        self.request['ocrDevice'] = 'gpu'
+        pool = pool_module.HayaiPool(self.request)
+        outputs = []
+        with pool as run:
+            for name in ('line', 'glyph', 'recovery-line', 'recovery-glyph'):
+                batch, items = self.batch(name, [{'items': [2, 1]}, {'items': [3]}])
+                run(batch)
+                outputs.extend(json.loads(Path(item['output']).read_text()) for item in items)
+            children = list(pool.children)
+            self.assertEqual(len(children), 1)
+            self.assertEqual(len(list(self.root.glob('*.loaded'))), 1)
+            self.assertEqual({item['pid'] for item in outputs}, {children[0].pid})
+            self.assertEqual([item['items'] for item in outputs], [[2, 1], [3]] * 4)
+            self.assertEqual((self.root / f'{children[0].pid}.device').read_text(), 'gpu')
+        self.assertTrue(all(child.poll() == 0 for child in children))
 
     def test_worker_failure_reaps_every_child_and_does_not_report_success(self):
         batch, _ = self.batch('failure', [{'items': [], 'fail': True},

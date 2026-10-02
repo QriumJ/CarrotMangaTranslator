@@ -65,6 +65,7 @@ const STRICT_SAFE_PNG_CAPTURE_OPTIONS = {
 // Public operations belong to the created session even when passed as callbacks
 // or destructured by consumers (for example the PSD text-layer renderer).
 export type PageExportRenderSession = {
+  preparePage?: (this: void, page: MangaPage) => Promise<void>;
   applyWorkflowRules?: (
     request: PageWorkflowRuleRenderRequest,
   ) => Promise<PageWorkflowRuleRenderResult>;
@@ -157,6 +158,10 @@ class ManagedPageExportRenderSession implements PageExportRenderSession {
     return this.render(page, false, captureOptions);
   };
 
+  readonly preparePage = async (page: MangaPage): Promise<void> => {
+    await this.render(page, false, STRICT_SAFE_PNG_CAPTURE_OPTIONS, false);
+  };
+
   readonly renderTransparentPage = (
     page: MangaPage,
     captureOptions: PageExportCaptureOptions = STRICT_SAFE_PNG_CAPTURE_OPTIONS,
@@ -211,6 +216,7 @@ class ManagedPageExportRenderSession implements PageExportRenderSession {
     page: MangaPage,
     transparentBackground: boolean,
     captureOptions: PageExportCaptureOptions,
+    capture = true,
   ): Promise<Buffer> {
     if (this.closed) throw new Error("Page export session is closed.");
     if (this.active)
@@ -226,6 +232,7 @@ class ManagedPageExportRenderSession implements PageExportRenderSession {
         this.cancellation.signal,
         transparentBackground,
         captureOptions,
+        capture,
       );
     } catch (error) {
       this.lastRenderFailure = { error };
@@ -344,6 +351,7 @@ async function renderPageInSession(
   signal: AbortSignal,
   transparentBackground = false,
   captureOptions: PageExportCaptureOptions = STRICT_SAFE_PNG_CAPTURE_OPTIONS,
+  capture = true,
 ): Promise<Buffer> {
   const resolutionMode = captureOptions.resolutionMode ?? "strict-safe";
   const sourceLimits = resolvePageExportSourceLimits(resolutionMode);
@@ -368,8 +376,7 @@ async function renderPageInSession(
     resolutionMode,
     transparentBackground,
   });
-  // A session serializes renders, so its private directory needs only one
-  // fixed, maximally short file name.
+  // Serialized renders share one short, private file name.
   const htmlPath = join(renderDir, "page.html");
   const htmlUrl = pathToFileURL(htmlPath).toString();
   const viewport = resolveExportViewportSize(plannedOutputSize);
@@ -395,11 +402,10 @@ async function renderPageInSession(
     assertPageExportRasterBudget(renderedOutputSize, page.name, outputLimits);
     if (!pageExportRasterSizesEqual(renderedOutputSize, plannedOutputSize)) {
       throw new Error(
-        tMain("export.errors.imageDimensionsChanged", {
-          name: page.name,
-        }),
+        tMain("export.errors.imageDimensionsChanged", { name: page.name }),
       );
     }
+    if (!capture) return Buffer.alloc(0);
     await ensureExportDebugger(windowState.win, signal);
     return await captureExportPageImage(
       windowState.win,

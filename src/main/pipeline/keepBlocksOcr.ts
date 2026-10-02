@@ -240,6 +240,7 @@ async function writeKeepBlockCrops({
         imagePath: cropPath,
         imageWidth: rect.w,
         imageHeight: rect.h,
+        ocrInputKind: "known-block-crop",
         outputDir: join(cropDir, `block-${blockIndex + 1}-ocr`),
         label: `keep-block-${crops.length + 1}`,
         ocrPageIndex: crops.length + 1,

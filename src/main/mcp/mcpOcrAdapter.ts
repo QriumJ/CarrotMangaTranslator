@@ -6,6 +6,7 @@ import { getAppSettings } from "../settingsStore";
 import { buildBaseOptions } from "../pipeline/options";
 import type { McpOperationContext } from "../application/mcpOperationService";
 import { mcpOcrReadingBlocks } from "../application/mcpOcrReadingPolicy";
+import { collectMcpWorkflowOcrBatch } from "./mcpWorkflowOcrBatch";
 
 export async function recognizeMcpPage(
   app: InpaintingJobContext,
@@ -30,17 +31,25 @@ export async function recognizeMcpPage(
   operation.assertAuthorized();
   const runtime = loadTranslationRuntimePort();
   try {
-    const results = await prepareOcrHintsForPages({
-      runtime,
-      baseOptions,
-      pages: [page],
-      runPaths,
-      jobId: operation.id,
-      signal: operation.signal,
-      emit,
-    });
+    const collect = (pages: MangaPage[]) =>
+      prepareOcrHintsForPages({
+        runtime,
+        baseOptions,
+        pages,
+        runPaths,
+        jobId: operation.id,
+        signal: operation.signal,
+        emit,
+      });
+    const result =
+      (await collectMcpWorkflowOcrBatch(
+        app,
+        chapterId,
+        page,
+        operation,
+        collect,
+      )) ?? (await collect([page])).get(page.id);
     operation.assertAuthorized();
-    const result = results.get(page.id);
     if (!result) throw new Error("OCR returned no page result.");
     return {
       blocks: mcpOcrReadingBlocks(page, result.hints),

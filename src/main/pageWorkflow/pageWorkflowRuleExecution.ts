@@ -5,7 +5,7 @@ import {
   type ConditionalBatchRecipeId,
 } from "../../shared/conditionalBatchRules";
 import { resolveWorkContextForChapter } from "../library";
-import { createPageExportRenderSession } from "../pageExport";
+import { acquirePageExportRenderSession } from "../pageExportWorkload";
 import type { PageWorkflowRuntimeContext } from "./pageWorkflowRuntimeTypes";
 
 const REVIEW_RULES: ConditionalBatchRecipeId[] = [
@@ -22,6 +22,17 @@ export async function applyWorkflowRuleStage(
   chapter: ChapterSnapshot,
   page: MangaPage,
   stage: PageWorkflowRuleStage | "review",
+  ports: {
+    createSession?: Parameters<typeof acquirePageExportRenderSession>[2];
+    readContext?: (
+      chapterId: string,
+    ) => Promise<
+      Pick<
+        Awaited<ReturnType<typeof resolveWorkContextForChapter>>,
+        "styleGuide"
+      >
+    >;
+  } = {},
 ): Promise<MangaPage> {
   if (!page.blocks.length) return page;
   const schemes =
@@ -33,19 +44,28 @@ export async function applyWorkflowRuleStage(
         ).map((id) => createConditionalBatchRecipeDraft(id))
       : (context.rules[stage] ?? []);
   if (!schemes.length) return page;
-  const session = await createPageExportRenderSession({
-    dataRoot: context.paths.dataRoot,
-    decodeFallback: context.decodeImage,
-    lowPriority: true,
-  });
+  const lease = await acquirePageExportRenderSession(
+    {
+      dataRoot: context.paths.dataRoot,
+      decodeFallback: context.decodeImage,
+      lowPriority: true,
+    },
+    context.signal,
+    ports.createSession,
+  );
+  const session = lease.value;
   const cancel = () => session.cancel?.();
   context.signal.addEventListener("abort", cancel, { once: true });
   try {
     context.signal.throwIfAborted();
-    await session.renderPage(page);
+    if (!session.preparePage)
+      throw new Error("일괄 편집 렌더러의 계측 준비를 사용할 수 없습니다.");
+    await session.preparePage(page);
     if (!session.applyWorkflowRules)
       throw new Error("일괄 편집 계측기를 사용할 수 없습니다.");
-    const work = await resolveWorkContextForChapter(chapter.id);
+    const work = await (ports.readContext ?? resolveWorkContextForChapter)(
+      chapter.id,
+    );
     const result = await session.applyWorkflowRules({
       chapter: {
         ...chapter,
@@ -72,6 +92,6 @@ export async function applyWorkflowRuleStage(
     };
   } finally {
     context.signal.removeEventListener("abort", cancel);
-    session.close();
+    await lease.release();
   }
 }

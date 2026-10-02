@@ -77,6 +77,16 @@ export async function selectionAppFixture(enableEditing = false) {
     }),
   );
   const release = vi.fn(async () => true);
+  const collectBatch = vi.fn(
+    async (options: Parameters<typeof collect>[0][]) => {
+      const results = [];
+      for (const option of options) {
+        option.abortSignal?.throwIfAborted();
+        results.push(await collect(option));
+      }
+      return results;
+    },
+  );
   const dispose = vi.fn(async () => {});
   const request = vi.fn<NonNullable<Runtime["translation"]>["request"]>(
     async ({ userPrompt }) => {
@@ -99,7 +109,7 @@ export async function selectionAppFixture(enableEditing = false) {
     }),
   );
   const runtime: Runtime = {
-    ocr: { collect, release },
+    ocr: { collect, collectBatch, release },
     translation: {
       start,
       request,
@@ -225,6 +235,7 @@ export async function selectionAppFixture(enableEditing = false) {
     run,
     get,
     collect,
+    collectBatch,
     release,
     start,
     request,

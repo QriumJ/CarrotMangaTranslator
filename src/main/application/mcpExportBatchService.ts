@@ -32,6 +32,7 @@ type Archive = Pick<
     | "application/zip";
 };
 type Ports = {
+  group?: <T>(signal: AbortSignal, run: () => Promise<T>) => Promise<T>;
   openChapter: (id: string) => Promise<ChapterSnapshot>;
   readSourceName?: McpExportSourceNameReader;
   preflight: (
@@ -135,6 +136,17 @@ export class McpExportBatchService {
   }
 
   async run(
+    target: McpExportPagesTarget,
+    context: McpOperationContext,
+    retainedAccess: () => void,
+  ) {
+    const execute = () => this.runPages(target, context, retainedAccess);
+    return this.ports.group
+      ? this.ports.group(context.signal, execute)
+      : execute();
+  }
+
+  private async runPages(
     target: McpExportPagesTarget,
     context: McpOperationContext,
     retainedAccess: () => void,

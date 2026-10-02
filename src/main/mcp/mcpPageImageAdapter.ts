@@ -12,6 +12,7 @@ import {
 import { readImageRedactionState } from "../imageRedactionStore";
 import { loadPageImage } from "../inpainting/imageIO";
 import { createPageExportRenderSession } from "../pageExport";
+import { acquirePageExportRenderSession } from "../pageExportWorkload";
 import { getAppPaths } from "../appPaths";
 import { probePageExportSourceImage } from "../pageExportRasterSafety";
 import { McpEditError } from "../application/mcpEditPolicy";
@@ -74,11 +75,16 @@ export async function renderMcpPageImage(
   await assertDerivedImageAccess();
   const prepared = await prepareOutputPage(page, options);
   signal?.throwIfAborted();
-  const session = await openRenderer({
-    dataRoot: getAppPaths().dataRoot,
-    decodeFallback: async () => null,
-    lowPriority: true,
-  });
+  const lease = await acquirePageExportRenderSession(
+    {
+      dataRoot: getAppPaths().dataRoot,
+      decodeFallback: async () => null,
+      lowPriority: true,
+    },
+    signal,
+    openRenderer,
+  );
+  const session = lease.value;
   const lifetime = new AbortController();
   const stop = (reason: unknown) => {
     if (lifetime.signal.aborted) return;
@@ -111,7 +117,7 @@ export async function renderMcpPageImage(
   } finally {
     clearTimeout(timeout);
     signal?.removeEventListener("abort", cancel);
-    session.close();
+    await lease.release();
   }
 }
 

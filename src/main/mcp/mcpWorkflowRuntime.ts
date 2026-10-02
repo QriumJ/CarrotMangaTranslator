@@ -1,4 +1,5 @@
 import { withModelWorkload } from "../runtimeSupport/modelWorkload";
+import { withMcpWorkflowOcrBatch } from "./mcpWorkflowOcrBatch";
 import type { McpWorkflowRuntime } from "../application/mcpWorkflowRunner";
 import type { AppSettings } from "../../shared/settingsTypes";
 import type { McpWorkflowPrepare } from "../../shared/mcpWorkflow";
@@ -90,7 +91,7 @@ export function createMcpWorkflowRuntime(options: Options) {
           ),
         );
       return {
-        group: createWorkflowModelGroup(options.app.jobs),
+        group: createWorkflowModelGroup(options.app.jobs, record, guard),
         verify: (current: McpWorkflowRecord, changedPage?: number) =>
           verifyWorkflowPages(current, guard, changedPage, readContext),
         cost: (current: McpWorkflowRecord, step: McpWorkflowStep) =>
@@ -130,8 +131,16 @@ async function countWorkflowTranslations(
 }
 function createWorkflowModelGroup(
   jobs: InpaintingJobContext["jobs"],
+  record: McpWorkflowRecord,
+  guard: () => void,
 ): NonNullable<McpWorkflowRuntime["group"]> {
   return (stage, controller, execute) => {
+    if (stage === "ocr")
+      return jobs.runModelGroup(controller, () =>
+        withMcpWorkflowOcrBatch(record, guard, execute),
+      );
+    if (stage === "export-png")
+      return withModelWorkload("page-renderer", controller.signal, execute);
     if (stage !== "translate" && stage !== "erase") return execute();
     return jobs.runModelGroup(controller, () =>
       withModelWorkload(

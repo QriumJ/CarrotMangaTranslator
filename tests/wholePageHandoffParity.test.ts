@@ -39,6 +39,60 @@ function withoutVolatileFields(value: unknown): unknown {
 }
 
 describe("whole page input handoff parity", () => {
+  it("acquires every kept page once before starting a single translation session", async () => {
+    const original = ["a", "b", "c"].map((id) =>
+      makeInpaintingPage(id, `${id}.png`),
+    );
+    const edited = original.map((page) => ({
+      ...page,
+      name: `edited-${page.name}`,
+    }));
+    const order: string[] = [];
+    const dispose = vi.fn(async () => {
+      order.push("dispose");
+    });
+    const start = vi.fn(async () => {
+      order.push("start");
+      return {
+        handle: {
+          baseUrl: "http://localhost",
+          child: null,
+          startedByScript: false,
+        },
+        dispose,
+      };
+    });
+    const pipeline = await loadPipeline({ startEndpointSession: start });
+    const acquire = vi.fn(async (id: string) => {
+      order.push(`acquire:${id}`);
+      const page = edited.find((entry) => entry.id === id);
+      if (!page) throw new Error("Missing fixture");
+      return page;
+    });
+    const saved: MangaPage[] = [];
+    await pipeline.runWholePagePipeline({
+      ...basePipelineOptions(original, []),
+      blockMode: "keep",
+      skipOcrPrepass: true,
+      acquirePage: acquire,
+      onPageComplete: async (page) => {
+        saved.push(page);
+        return true;
+      },
+    });
+    expect(acquire).toHaveBeenCalledTimes(3);
+    expect(order.slice(0, 4)).toEqual([
+      "acquire:a",
+      "acquire:b",
+      "acquire:c",
+      "start",
+    ]);
+    expect(start).toHaveBeenCalledOnce();
+    expect(dispose).toHaveBeenCalledOnce();
+    expect(saved.map((page) => page.name)).toEqual(
+      edited.map((page) => page.name),
+    );
+  });
   it("hands off and saves an OCR-empty page before releasing its ownership", async () => {
     const page = makePage("no-text", "empty.png");
     const requestTranslation = vi.fn();

@@ -13,9 +13,9 @@ import {
 } from "../application/mcpBlockOcrService";
 import { requireBatchPage } from "../application/mcpPageBatchPolicy";
 import { bboxToPixels, bboxOverlapRatio } from "../../shared/geometry";
-import { recognizeMcpBlock } from "./mcpBlockOcrAdapter";
+import { recognizeMcpBlocks } from "./mcpBlockOcrAdapter";
 
-type Runtime = Parameters<typeof recognizeMcpBlock>[5];
+type Runtime = Parameters<typeof recognizeMcpBlocks>[4];
 type Selected = ReturnType<typeof selectPages>[number];
 export async function analyzeMcpSelectionOcr(
   app: InpaintingJobContext,
@@ -26,16 +26,44 @@ export async function analyzeMcpSelectionOcr(
 ) {
   const items: McpSelectionAnalysisItem[] = [];
   const total = input.pages.reduce((n, page) => n + page.targets.length, 0);
-  for (const page of selectPages(saved, input)) {
+  const pages = selectPages(saved, input);
+  const crops = pages.flatMap(({ page, targets }) =>
+    targets
+      .filter(
+        ({ entry }) =>
+          entry.kind !== "block" ||
+          !page.blocks.find((block) => block.id === entry.blockId)
+            ?.generatedLettering,
+      )
+      .map(({ entry, selected }) => ({
+        page,
+        cropRect: selected.cropRect,
+        overrides: {
+          ...(input.sourceLanguage
+            ? { sourceLanguage: input.sourceLanguage }
+            : {}),
+          ocrInputKind:
+            entry.kind === "block"
+              ? ("known-block-crop" as const)
+              : ("page" as const),
+        },
+      })),
+  );
+  const evidence = await recognizeMcpBlocks(
+    app,
+    input.chapterId,
+    crops,
+    context,
+    runtime,
+  );
+  let evidenceIndex = 0;
+  for (const page of pages) {
     for (const target of page.targets) {
       items.push(
-        await observeTarget(
-          app,
-          input,
+        observeTarget(
           page,
           target,
-          context,
-          runtime,
+          () => evidence[evidenceIndex++],
           items.length,
         ),
       );
@@ -62,16 +90,12 @@ function selectPages(saved: McpContextSnapshot, input: McpSelectionOcr) {
     return { target, page, targets };
   });
 }
-async function observeTarget(
-  app: InpaintingJobContext,
-  input: McpSelectionOcr,
+function observeTarget(
   pageTarget: Selected,
   selectedTarget: Selected["targets"][number],
-  context: McpOperationContext,
-  runtime: Runtime,
+  readEvidence: () => Awaited<ReturnType<typeof recognizeMcpBlocks>>[number],
   index: number,
-): Promise<McpSelectionAnalysisItem> {
-  context.assertAuthorized();
+): McpSelectionAnalysisItem {
   const { target, page } = pageTarget;
   const { entry, selected } = selectedTarget;
   const block =
@@ -91,18 +115,7 @@ async function observeTarget(
     overlaps: [],
   };
   if (item.excludedReason) return item;
-  const evidence = await recognizeMcpBlock(
-    app,
-    input.chapterId,
-    page,
-    selected.cropRect,
-    context,
-    runtime,
-    {
-      ...(input.sourceLanguage ? { sourceLanguage: input.sourceLanguage } : {}),
-      ocrInputKind: entry.kind === "block" ? "known-block-crop" : "page",
-    },
-  );
+  const evidence = readEvidence();
   const { engine, ...observation } = evidence;
   item.engine = engine;
   item.ocr = buildMcpOcrObservation(selected, observation);

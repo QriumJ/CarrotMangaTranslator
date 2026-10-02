@@ -97,8 +97,7 @@ def execute(request):
     chapter = Path(request['output']).resolve()
     chapter.mkdir(parents=True, exist_ok=False)
     make_chapter(request, chapter)
-    transport = (module('hayai-pool').HayaiPool(request) if request['ocrDevice'] == 'cpu'
-                 else contextlib.nullcontext(hayai))
+    transport = module('hayai-pool').HayaiPool(request)
     with transport as recognize:
         module('prepare-line-probe').build(chapter, chapter / 'line-probe')
         recognize(chapter / 'line-probe/batch.json', request)

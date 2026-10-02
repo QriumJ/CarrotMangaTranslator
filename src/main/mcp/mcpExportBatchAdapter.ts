@@ -8,6 +8,7 @@ import type { McpArtifactStore } from "./mcpArtifactStore";
 import { runMcpAppJob } from "./mcpAppJob";
 import { createMcpExportBatchTools } from "./mcpExportBatchTools";
 import { readMcpExportSourceName } from "./mcpSourceExport";
+import { withModelWorkload } from "../runtimeSupport/modelWorkload";
 import {
   createMcpExportSourceResolver,
   type McpExportSourceBorrow,
@@ -41,6 +42,7 @@ export function createMcpExportBatchAdapter(options: {
       { resources: [], page: { ...target, readChapter: openChapter } },
     );
   const service = new McpExportBatchService({
+    group: (signal, run) => withModelWorkload("page-renderer", signal, run),
     openChapter,
     readSourceName: readMcpExportSourceName,
     exportPage,

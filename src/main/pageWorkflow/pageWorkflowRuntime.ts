@@ -11,6 +11,7 @@ import { applyWorkflowRuleStage } from "./pageWorkflowRuleExecution";
 import type { PageWorkflowRuntimeContext } from "./pageWorkflowRuntimeTypes";
 import type { PageWorkflowContextCommit } from "../application/pageWorkflowContextCommit";
 import { savePageWorkflowResult } from "../library";
+import { withModelWorkload } from "../runtimeSupport/modelWorkload";
 
 export function createPageWorkflowRuntime(context: PageWorkflowRuntimeContext) {
   const sessions = createWorkflowSessions(context.dependencies.runtime);
@@ -33,6 +34,12 @@ export function createPageWorkflowRuntime(context: PageWorkflowRuntimeContext) {
     },
   };
   return {
+    group: <T>(stage: PageWorkflowStage, run: () => Promise<T>) =>
+      stage === "erase"
+        ? withModelWorkload("inpainting", context.signal, run)
+        : stage.endsWith("-rules") || stage === "review"
+          ? withModelWorkload("page-renderer", context.signal, run)
+          : run(),
     finishStage: sessions.close,
     restoreCompletedStage: async (
       stage: PageWorkflowStage,

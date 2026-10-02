@@ -35,7 +35,31 @@ type InputOptions = Pick<
   ocrHintsByPageId: Map<string, OcrBboxResult>;
   timing: PageProcessingTimingCollector;
   warningCollector: WarningCollector;
+  beforePageOcr?: () => Promise<void>;
 };
+
+/** Hold each latest editor handoff through OCR, translation and final saving. */
+export async function acquireKeepBlockInputs(
+  options: PipelineOptions,
+): Promise<PipelineOptions> {
+  if (options.blockMode !== "keep" || !options.acquirePage) return options;
+  const pages: MangaPage[] = [];
+  for (const page of options.pages) {
+    options.signal.throwIfAborted();
+    pages.push(await options.acquirePage(page.id));
+  }
+  const inputs = new Map(pages.map((page) => [page.id, page]));
+  return {
+    ...options,
+    pages,
+    acquirePage: async (id) => {
+      options.signal.throwIfAborted();
+      const page = inputs.get(id);
+      if (!page) throw new Error("작업이 소유하지 않은 페이지입니다.");
+      return page;
+    },
+  };
+}
 
 export async function refreshWholePageInput(
   original: MangaPage,
@@ -53,10 +77,8 @@ export async function refreshWholePageInput(
     options.dependencies.diagnostics.warn,
   );
   if (!reusable.has(page.id)) checkpoints.delete(page.id);
-  if (
-    !checkpoints.has(page.id) &&
-    (options.blockMode === "keep" || !options.ocrHintsByPageId.has(page.id))
-  ) {
+  if (!checkpoints.has(page.id) && !options.ocrHintsByPageId.has(page.id)) {
+    if (!options.skipOcrPrepass) await options.beforePageOcr?.();
     const hints = await preparePageOcrHints({
       jobId: options.run.progressContext.jobId,
       pages: [page],

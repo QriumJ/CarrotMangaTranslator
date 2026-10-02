@@ -20,13 +20,19 @@ import type { OcrBboxResult } from "../pipeline/types";
 
 type Runtime = {
   collect: TranslationRuntimePort["collectOcrHints"];
+  collectBatch?: TranslationRuntimePort["collectOcrHintsBatch"];
   release: (reason: string) => Promise<unknown>;
 };
-async function loadProductionRuntime(): Promise<Runtime> {
+async function loadProductionRuntime(
+  assertAuthorized: () => void,
+): Promise<Runtime> {
   const { loadTranslationRuntimePort, disposeTranslationRuntimeResources } =
     await import("../translationRuntime.js");
+  assertAuthorized();
+  const runtime = loadTranslationRuntimePort();
   return {
-    collect: (options) => loadTranslationRuntimePort().collectOcrHints(options),
+    collect: runtime.collectOcrHints,
+    collectBatch: runtime.collectOcrHintsBatch,
     release: disposeTranslationRuntimeResources,
   };
 }
@@ -45,9 +51,36 @@ export async function recognizeMcpBlock(
     ocrInputKind?: "page" | "known-block-crop";
   } = {},
 ) {
+  const results = await recognizeMcpBlocks(
+    app,
+    chapterId,
+    [{ page, cropRect, overrides }],
+    operation,
+    runtime,
+  );
+  return results[0];
+}
+
+type CropInput = {
+  page: MangaPage;
+  cropRect: PixelRect;
+  overrides?: {
+    sourceLanguage?: string;
+    ocrInputKind?: "page" | "known-block-crop";
+  };
+};
+
+export async function recognizeMcpBlocks(
+  app: InpaintingJobContext,
+  chapterId: string,
+  inputs: CropInput[],
+  operation: McpOperationContext,
+  runtime?: Runtime,
+) {
   operation.assertAuthorized();
+  if (!inputs.length) return [];
   if (runtime === undefined) {
-    runtime = await loadProductionRuntime();
+    runtime = await loadProductionRuntime(operation.assertAuthorized);
     operation.assertAuthorized();
   }
   const settings = await getAppSettings(app.appPaths);
@@ -56,13 +89,12 @@ export async function recognizeMcpBlock(
   await mkdir(runPaths.runDir, { recursive: true });
   const directory = await mkdtemp(join(runPaths.runDir, "block-ocr-"));
   const failures: unknown[] = [];
-  let evidence: Awaited<ReturnType<typeof readCrop>> | undefined;
+  let evidence: Awaited<ReturnType<typeof collectCrops>> | undefined;
   try {
-    evidence = await readCrop(app, page, cropRect, operation, {
+    evidence = await collectCrops(app, inputs, operation, {
       directory,
       options: {
         ...buildBaseOptions(operation.id, directory, settings, app.appPaths),
-        ...overrides,
       },
       runtime,
     });
@@ -95,10 +127,9 @@ export async function recognizeMcpBlock(
   return evidence;
 }
 
-async function readCrop(
+async function collectCrops(
   app: InpaintingJobContext,
-  page: MangaPage,
-  cropRect: PixelRect,
+  inputs: CropInput[],
   operation: McpOperationContext,
   input: {
     directory: string;
@@ -106,7 +137,72 @@ async function readCrop(
     runtime: Runtime;
   },
 ) {
-  const { image, sourceHash } = await readSourceSnapshot(app, page, operation);
+  const { crops, sources } = await prepareCrops(app, inputs, operation, input);
+  const options = crops.map((crop) => crop.options);
+  let results: OcrBboxResult[];
+  if (options.length === 1) results = [await input.runtime.collect(options[0])];
+  else if (input.runtime.collectBatch)
+    results = await input.runtime.collectBatch(options);
+  else throw new Error("Selected OCR requires a native batch transport.");
+  operation.assertAuthorized();
+  if (results.length !== crops.length)
+    throw new Error("OCR batch returned an incomplete result.");
+  for (const [path, hash] of sources) {
+    const after = await readFile(path, { signal: operation.signal });
+    if (createHash("sha256").update(after).digest("hex") !== hash)
+      throw new McpEditError(
+        "revision_conflict",
+        "Original image changed during OCR. Read it again.",
+      );
+  }
+  return crops.map((crop, index) => crop.finish(results[index]));
+}
+
+async function prepareCrops(
+  app: InpaintingJobContext,
+  inputs: CropInput[],
+  operation: McpOperationContext,
+  input: { directory: string; options: Parameters<Runtime["collect"]>[0] },
+) {
+  const crops: Awaited<ReturnType<typeof readCrop>>[] = [];
+  const sources = new Map<string, string>();
+  let lastPage: MangaPage | undefined;
+  let snapshot: Awaited<ReturnType<typeof readSourceSnapshot>> | undefined;
+  for (const [index, target] of inputs.entries()) {
+    operation.assertAuthorized();
+    if (!snapshot || lastPage !== target.page) {
+      snapshot = await readSourceSnapshot(app, target.page, operation);
+      lastPage = target.page;
+      sources.set(target.page.imagePath, snapshot.sourceHash);
+    }
+    const directory = join(input.directory, String(index));
+    await mkdir(directory);
+    crops.push(
+      await readCrop(
+        target.page,
+        target.cropRect,
+        operation,
+        {
+          directory,
+          options: { ...input.options, ...target.overrides },
+        },
+        snapshot.image,
+      ),
+    );
+  }
+  return { crops, sources };
+}
+
+async function readCrop(
+  page: MangaPage,
+  cropRect: PixelRect,
+  operation: McpOperationContext,
+  input: {
+    directory: string;
+    options: Parameters<Runtime["collect"]>[0];
+  },
+  image: Awaited<ReturnType<typeof readSourceSnapshot>>["image"],
+) {
   const crop = image.crop({
     x: cropRect.x,
     y: cropRect.y,
@@ -142,19 +238,15 @@ async function readCrop(
     onProgress: () =>
       operation.progress({ phase: "ocr_running", completed: 0, total: 1 }),
   };
-  const result = await input.runtime.collect(options);
-  operation.assertAuthorized();
-  const after = await readFile(page.imagePath, { signal: operation.signal });
-  if (createHash("sha256").update(after).digest("hex") !== sourceHash)
-    throw new McpEditError(
-      "revision_conflict",
-      "Original image changed during OCR. Read it again.",
-    );
+  const sourceCropSha256 = createHash("sha256").update(bytes).digest("hex");
   return {
-    ...cropEvidence(page, cropRect, result, options.sourceLanguage),
-    sourceCropSha256: createHash("sha256").update(bytes).digest("hex"),
-    sourceLanguage: options.sourceLanguage ?? "auto",
-    engine: options.ocrPipeline ?? "paddleocr",
+    options,
+    finish: (result: OcrBboxResult) => ({
+      ...cropEvidence(page, cropRect, result, options.sourceLanguage),
+      sourceCropSha256,
+      sourceLanguage: options.sourceLanguage ?? "auto",
+      engine: options.ocrPipeline ?? "paddleocr",
+    }),
   };
 }
 

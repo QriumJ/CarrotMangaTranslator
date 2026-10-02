@@ -1,5 +1,15 @@
 # 코드 경계와 품질 규칙
 
+## 2026-10-03 반복 초기화 제거
+
+모델·숨은 렌더러 재사용은 native 작업/단계의 명시적 workload 안으로 한정한다.
+OCR 배치는 기존 페이지 예약·입력 인계와 원본/revision 검사를 사용하며, 저장과
+receipt는 페이지별 권위를 유지한다. 직접 소비 증가에 따른 library 81,
+McpEditError 246만 실측 예외로 기록하고 전역 예산을 유지한다.
+새 두 모듈의 최초 Windows 커버리지 출처·SHA와 실제 GPU/renderer parity는
+[반복 초기화 수정 기록](runtime-efficiency-fixes.md)에 남겼다.
+기존 coverage floor·학습 자산·사용자 데이터는 변경하지 않는다.
+
 ## 2026-09-29 감사 후 공용 계약 재사용
 
 일반 UI 컨트롤 188곳은 기존 `Button`의 bare 변형과 `Field`의 native `Input`/`Textarea`,

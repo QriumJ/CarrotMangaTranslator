@@ -4,6 +4,83 @@ import { PNG } from "pngjs";
 import { expect, it, vi } from "vitest";
 import { selectionAppFixture } from "./mcpSelectionApp.fixture";
 
+it("keeps the configured source language when the selection omits an override", async () => {
+  const f = await selectionAppFixture();
+  try {
+    f.settings.translation = {
+      targetLanguage: f.settings.translation?.targetLanguage ?? "ko",
+      sourceLanguage: "en",
+    };
+    const input = await f.ocrInput();
+    delete input.sourceLanguage;
+    const { job } = await f.run("carrot_run_selection_ocr", input);
+    expect(job.status).toBe("completed");
+    expect(
+      f.collect.mock.calls.every(
+        ([options]) => options.sourceLanguage === "en",
+      ),
+    ).toBe(true);
+    expect(
+      (await f.get(job.jobId)).items.every(
+        (item) => item.ocr?.sourceLanguage === "en",
+      ),
+    ).toBe(true);
+  } finally {
+    await f.close();
+  }
+});
+
+it.each(["missing-transport", "incomplete-result"])(
+  "rejects %s without publishing partial OCR",
+  async (mode) => {
+    const f = await selectionAppFixture();
+    try {
+      if (!f.runtime.ocr) throw new Error("Missing OCR fixture");
+      if (mode === "missing-transport") delete f.runtime.ocr.collectBatch;
+      else f.collectBatch.mockResolvedValueOnce([]);
+      const { job } = await f.run(
+        "carrot_run_selection_ocr",
+        await f.ocrInput(),
+      );
+      expect(job.status).toBe("failed");
+      expect(job.result?.selectionAnalysis).toBeUndefined();
+      expect(f.release).toHaveBeenCalledOnce();
+      expect(f.app.jobs.all).toEqual([]);
+    } finally {
+      await f.close();
+    }
+  },
+);
+
+it("does not prepare a runtime or temporary crops for an empty admitted batch", async () => {
+  const f = await selectionAppFixture();
+  try {
+    const { recognizeMcpBlocks } =
+      await import("../src/main/mcp/mcpBlockOcrAdapter");
+    const guard = vi.fn();
+    expect(
+      await recognizeMcpBlocks(
+        f.app,
+        "chapter",
+        [],
+        {
+          id: "empty",
+          signal: new AbortController().signal,
+          progress: vi.fn(),
+          assertAuthorized: guard,
+        },
+        f.runtime.ocr,
+      ),
+    ).toEqual([]);
+    expect(guard).toHaveBeenCalledOnce();
+    expect(f.collect).not.toHaveBeenCalled();
+    expect(f.collectBatch).not.toHaveBeenCalled();
+    expect(f.release).not.toHaveBeenCalled();
+  } finally {
+    await f.close();
+  }
+});
+
 it("observes multiple blocks and regions with exact original-pixel mapping and no saved changes", async () => {
   const f = await selectionAppFixture();
   const before = await readFile(f.chapterPath);
@@ -31,7 +108,8 @@ it("observes multiple blocks and regions with exact original-pixel mapping and n
     expect(result.items[1].overlaps[0].blockIds).toContain("a");
     expect((await f.get(job.jobId, 1, 1)).items[0]).toEqual(result.items[1]);
     expect(f.collect).toHaveBeenCalledTimes(4);
-    expect(f.release).toHaveBeenCalledTimes(4);
+    expect(f.collectBatch).toHaveBeenCalledOnce();
+    expect(f.release).toHaveBeenCalledTimes(1);
     expect(
       f.collect.mock.calls.map(([options]) => options.ocrInputKind),
     ).toEqual(["known-block-crop", "page", "known-block-crop", "page"]);
@@ -124,7 +202,7 @@ it("retains selected-page leases until cancellation cleanup settles and publishe
     expect(f.app.jobs.all).toHaveLength(1);
     finish();
     expect((await f.settle(id)).status).toBe("cancelled");
-    expect(f.collect).toHaveBeenCalledOnce();
+    expect(f.collectBatch).toHaveBeenCalledOnce();
     await expect(f.get(id)).rejects.toThrow();
     expect(f.app.jobs.all).toEqual([]);
   } finally {
