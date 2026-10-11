@@ -51,7 +51,7 @@ type ModelCachePaths = Pick<
 let cachedAppPaths: AppPaths | null = null;
 
 function isRunningPackaged(): boolean {
-  return app.isPackaged || __dirname.includes("app.asar");
+  return app?.isPackaged || __dirname.includes("app.asar");
 }
 
 /**
