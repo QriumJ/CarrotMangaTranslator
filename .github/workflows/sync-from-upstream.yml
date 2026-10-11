@@ -16,7 +16,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ github.token }}
+          token: ${{ secrets.UPSTREAM_SYNC_TOKEN }}
       - name: 업스트림 리모트 추가
         run: |
           git remote add upstream https://github.com/ucx0204/CarrotMangaTranslator.git
