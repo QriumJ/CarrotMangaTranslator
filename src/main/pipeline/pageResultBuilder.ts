@@ -604,8 +604,4 @@ function applyStrictRefineOptions(
     Array.isArray(pageOptions.ocrBboxHints) ? pageOptions.ocrBboxHints : [],
     { assignSequentialCandidateIds: keepBlocks },
   );
-
-  pageOptions.temperature = Math.min(pageOptions.temperature, 0.1);
-  pageOptions.topP = Math.min(pageOptions.topP, 0.85);
-  pageOptions.topK = Math.min(pageOptions.topK, 32);
 }

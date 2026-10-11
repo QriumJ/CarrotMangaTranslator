@@ -52,6 +52,8 @@
     "noCurrentChapter": "未打开章节",
     "translate": "添加新原稿",
     "batchTranslate": "添加多个章节",
+    "addSource": "添加原稿",
+    "more": "更多",
     "libraryFolder": "资料库文件夹",
     "share": "导出项目",
     "importWork": "导入项目",
@@ -702,7 +704,7 @@
   "translationOptions": {
     "codexErasure": "用 Codex 擦除",
     "title": "运行翻译",
-    "workspaceAction": "翻译设置…",
+    "workspaceAction": "普通翻译",
     "workspaceUndoWarning": "重新翻译的页面会用新结果替换现有结果。",
     "start": "开始翻译",
     "startSelection": "翻译所选范围",
@@ -1787,6 +1789,9 @@
         "rateLimited": "Tavily 请求过多，请稍后重试。",
         "invalidResponse": "无法读取 Tavily 使用量响应。",
         "networkFailed": "无法连接 Tavily，请检查网络。"
+      },
+      "claude": {
+        "description": "使用 Claude 网页搜索调查作品信息和术语。"
       }
     },
     "options": {
@@ -1838,6 +1843,10 @@
         "api": {
           "label": "API",
           "description": "使用兼容OpenAI的API端点。"
+        },
+        "claude": {
+          "label": "Claude Code",
+          "description": "Translate using Claude Code."
         }
       },
       "reasoning": {
@@ -1938,13 +1947,13 @@
           "label": "SM75 CUDA",
           "description": "面向 RTX 20 系列（SM 7.5）的 FP16 CUDA 兼容路径。"
         },
-        "zluda": {
-          "label": "AMD ZLUDA",
-          "description": "在AMD GPU上通过ZLUDA运行Flux，需要AMD HIP SDK。"
-        },
         "cpu": {
           "label": "CPU",
           "description": "不使用 Python 或 Diffusers 的纯 CPU Flux 兼容模式。每页可能需要数分钟以上；实际 CPU 修复建议使用 LaMa 或 AOT。"
+        },
+        "rocm": {
+          "label": "AMD ROCm",
+          "description": "在 AMD GPU 上运行 ROCm 10 原生引擎。应用会自动准备所需运行时。"
         }
       },
       "inpaintingModels": {
@@ -2027,6 +2036,14 @@
         "mmprojFile": "mmproj文件",
         "mmprojPlaceholder": "同一文件夹中自动检测，也可手动指定",
         "mmprojDescription": "应用会在模型文件夹中自动查找mmproj；如果未找到，可以手动指定。"
+      },
+      "sampling": {
+        "title": "翻译生成设置",
+        "description": "应用于译文生成。气泡分组保留原有固定设置。如果配置了环境变量，则优先使用环境变量。",
+        "temperature": "较低的值倾向于选择概率更高的表达。较高的值会增加表达变化，但不保证翻译更准确。",
+        "topP": "按累积概率限制下一个词元的候选范围。建议先使用默认值0.95。",
+        "topK": "将候选范围限制为概率最高的K个词元。建议先使用默认值64。",
+        "reset": "恢复默认值"
       }
     },
     "codex": {
@@ -2075,7 +2092,8 @@
         "googleAiStudio": "Google AI Studio",
         "googleVertex": "Google Vertex AI",
         "openRouter": "OpenRouter",
-        "ollama": "Ollama（本地）"
+        "ollama": "Ollama（本地）",
+        "openCodeGo": "OpenCode GO"
       },
       "providerHintCustom": "直接输入 Base URL 和模型 ID。密钥、模型和生成上限会按供应商分别保存。",
       "providerHintVerified": "仅加载已验证支持图像输入的模型。密钥、模型和生成上限会按供应商分别保存。",
@@ -2090,6 +2108,9 @@
       "vertexServiceAccountChange": "更改",
       "vertexServiceAccountClear": "移除",
       "vertexServiceAccountDescription": "JSON密钥内容不会复制到应用设置中，只会从此电脑上选择的文件读取。该服务账号需要目标项目的Vertex AI User角色。请勿共享密钥文件或将其提交到代码仓库。",
+      "availableModel": "可用模型",
+      "modelListLoaded": "已加载 {{count}} 个模型。",
+      "providerHintCatalog": "加载提供商的模型列表。",
       "discoveredModel": "已验证的图像输入模型",
       "chooseModel": "选择模型…",
       "loadModels": "加载模型",
@@ -2160,7 +2181,13 @@
           "customHeaders": "以JSON对象填写附加的HTTP请求头。"
         }
       },
-      "requestIntervalSeconds": "最短调用间隔（秒）"
+      "requestIntervalSeconds": "最短调用间隔（秒）",
+      "customProfiles": {
+        "session": "发送会话标识请求头",
+        "header": "会话请求头名称",
+        "invalidHeader": "请输入有效的非保留名称，且不能与自定义请求头重复。",
+        "client": "客户端标识"
+      }
     },
     "hardware": {
       "summaryTitle": "自动检测GPU和当前路径",
@@ -2215,8 +2242,8 @@
       "fluxLowMemoryOverride": "允许在{{available}}统一内存下风险运行Flux",
       "sm75FluxWarningTitle": "仅限 RTX 20 系列",
       "sm75FluxWarningDetail": "其行为或结果可能与标准 NVIDIA CUDA 略有不同。",
-      "fluxAmdUnsupportedTitle": "AMD官方未支持的GPU",
-      "fluxAmdUnsupportedDetail": "{{gpu}}不在AMD当前Windows HIP SDK官方支持列表中。仍可实验性选择ZLUDA，但运行时可能失败。",
+      "fluxAmdUnsupportedTitle": "需要确认 AMD GPU 运行时兼容性",
+      "fluxAmdUnsupportedDetail": "未能确认 {{gpu}} 对应的 ROCm 运行时。启动时将再次检查 GPU 兼容性。",
       "fluxAmdUseCpu": "切换到CPU后端",
       "downloadHipSdk": "下载AMD HIP SDK",
       "openLinkFailed": "无法打开链接。请检查默认浏览器。",
@@ -2225,9 +2252,9 @@
       "fluxRequirements": {
         "cuda-native": "需要 SM75 以外的 NVIDIA GPU",
         "cuda-sm75-experimental": "仅限 RTX 20 / GTX 16 (SM75)",
-        "zluda-native": "需要 AMD GPU",
         "cpu-native": "无需 GPU · 较慢",
-        "metal-native": "需要 Apple Silicon"
+        "metal-native": "需要 Apple Silicon",
+        "rocm-native": "需要 AMD GPU"
       },
       "ocrRequirements": {
         "cuda": "需要 NVIDIA GPU",
@@ -2377,7 +2404,8 @@
     "image": {
       "localErasure": "默认原文擦除",
       "codex": "Codex 图像工具",
-      "description": "独立于翻译引擎，用于擦除原文和生成音效图像。强烈推荐使用 Astra。"
+      "description": "独立于翻译引擎，用于擦除原文和生成音效图像。强烈推荐使用 Astra。",
+      "review": "图像检查"
     },
     "backup": {
       "title": "备份与迁移",
@@ -2398,6 +2426,17 @@
       "cancel": "取消操作",
       "saved": "备份已保存：{{path}}",
       "restored": "环境已恢复。请检查 API 密钥、登录、外部文件夹、自定义模型路径，并重新设置 API 自定义请求头和附加请求正文。"
+    },
+    "claude": {
+      "account": "Claude 账户",
+      "login": "登录 Claude",
+      "console": "登录 API 账户",
+      "logout": "退出登录",
+      "refresh": "刷新",
+      "model": "模型",
+      "effort": "推理级别",
+      "error": "无法连接到 Claude。",
+      "testing": "检查 Claude Code 连接和模型响应。"
     }
   },
   "pageBlocks": {
@@ -2474,7 +2513,8 @@
         "environment-restore": "环境恢复",
         "model-test": "模型检查",
         "codex-auth": "ChatGPT 账户",
-        "sound-effect-translation": "音效翻译"
+        "sound-effect-translation": "音效翻译",
+        "claude-auth": "Claude Code"
       },
       "status": {
         "idle": "空闲",
@@ -2728,7 +2768,7 @@
     "target": "修整对象",
     "asset": "文字形状",
     "page": "遮挡边界",
-    "mode": "画笔功能",
+    "mode": "修饰工具",
     "hide": "擦除",
     "restore": "恢复",
     "shape": "画笔形状",
@@ -2737,7 +2777,14 @@
     "size": "大小",
     "softness": "柔和度",
     "showMask": "显示蒙版",
-    "reset": "重置"
+    "reset": "重置",
+    "move": "局部移动",
+    "selectionShape": "选区形状",
+    "lasso": "自由选择",
+    "rectangle": "矩形选择",
+    "moveHint": "圈选要移动的笔画，再拖动选区内部。方向键微调，Shift 加大移动距离，Enter 应用，Esc 取消。",
+    "applyMove": "应用移动",
+    "cancelSelection": "取消选择"
   },
   "codexFonts": {
     "title": "编辑字体",
@@ -3014,5 +3061,83 @@
       "clipboard": "无法复制列表。",
       "save": "无法保存。"
     }
+  },
+  "chat": {
+    "open": "聊天",
+    "translateInChat": "聊天翻译",
+    "panelMode": "右侧面板",
+    "editor": "编辑",
+    "history": "历史对话",
+    "new": "新建对话",
+    "compact": "压缩对话",
+    "model": "模型",
+    "effort": "推理级别",
+    "modelSettings": "模型与推理级别",
+    "effortChip": "推理 {{level}}",
+    "library": "整个书库",
+    "contextBlocks": "气泡 {{count}} 个",
+    "loginHint": "需要登录 ChatGPT 账户。",
+    "login": "登录 ChatGPT",
+    "loading": "正在加载对话…",
+    "older": "查看更早的消息",
+    "openPage": "打开页面",
+    "undo": "检查是否可撤销",
+    "undoRequest": "请检查 {{tool}} 的恢复记录，只在仍可恢复时撤销这次更改，不要覆盖后续编辑。结果：{{result}}",
+    "removeImage": "移除图片",
+    "message": "消息",
+    "placeholder": "输入请求",
+    "attach": "添加图片",
+    "enterHint": "Enter 发送 · Shift+Enter 换行",
+    "stop": "停止",
+    "steer": "追加指示",
+    "send": "发送",
+    "answer": "发送回答",
+    "roles": {
+      "user": "我",
+      "assistant": "Codex",
+      "status": "进度"
+    },
+    "operation": {
+      "running": "处理中…",
+      "completed": "结果",
+      "failed": "失败"
+    },
+    "toolGroup": "工具 {{count}} 个",
+    "state": {
+      "idle": "就绪",
+      "running": "处理中…",
+      "compacting": "正在压缩对话…",
+      "needs-input": "等待回答",
+      "paused": "已暂停 · 发送消息以继续",
+      "failed": "连接中断 · 发送消息以重新连接"
+    },
+    "tools": {
+      "font": "比较字体",
+      "image": "处理图片",
+      "library": "查看书库",
+      "sound": "处理音效",
+      "erase": "修复原画",
+      "review": "质量检查",
+      "edit": "编辑页面",
+      "context": "查看上下文",
+      "inspect": "检查页面"
+    },
+    "quality": {
+      "observation": "本次检查时的质量记录",
+      "incomplete": "仍需检查或修正",
+      "accepted-at-current-revisions": "通过精细检查",
+      "accepted-with-font-substitutions": "通过检查，含字体替代",
+      "chapter": "整话 · 后续编辑需要重新检查",
+      "selection": "仅选定页面",
+      "substitutions": "{{count}} 项字体替代",
+      "details": "未验收原因",
+      "pages": "{{count}} 页"
+    },
+    "redo": "检查能否重新应用",
+    "redoRequest": "请检查 {{tool}} 的恢复记录和当前修订，只在不会覆盖后续手动编辑且仍可恢复时重新应用。结果：{{result}}",
+    "runtime": "AI",
+    "claudeLoginHint": "请登录 Claude 账户。",
+    "claudeLogin": "登录 Claude",
+    "moreImages": "再显示 {{count}} 张图片"
   }
 }

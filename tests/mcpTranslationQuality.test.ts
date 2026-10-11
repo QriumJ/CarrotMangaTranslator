@@ -13,6 +13,7 @@ import { McpTranslationQualityAssessmentSchema } from "../src/shared/mcpTranslat
 import { inspectTranslationSavedQuality } from "../src/main/application/mcpTranslationQuality";
 import { assertTranslationQualityReport } from "../src/main/application/mcpTranslationQuality";
 import { compositeWorkflowView } from "../src/main/application/mcpCompositeWorkflowProjection";
+import { detailedQualityFixture } from "./mcpDetailedQuality.fixture";
 
 const quality = () =>
   McpTranslationQualityAssessmentSchema.parse({
@@ -27,6 +28,31 @@ const quality = () =>
     soundEffectsCompleted: 1,
     unresolved: [],
   });
+
+it("discloses accepted font substitutions by page and keeps their explanation", async () => {
+  const f = await awaitingQuality();
+  try {
+    const detail = detailedQualityFixture().input.assessment.quality?.detailed;
+    if (!detail) throw Error("Missing detailed fixture");
+    detail.inventory[0].outcome = "font-fallback";
+    detail.inventory[0].reason =
+      "Four retained attempts could not preserve the approved syllable";
+    f.report.assessments[0].quality.detailed = detail;
+    f.awaiting.phases[0].report = f.report;
+    const view = compositeWorkflowView(f.awaiting);
+    expect(view.qualityReview).toBe("accepted-with-font-substitutions");
+    expect(view.fontSubstitutions).toEqual([
+      {
+        chapterId: f.report.assessments[0].chapterId,
+        pageId: f.report.assessments[0].pageId,
+        itemId: detail.inventory[0].itemId,
+        reason: detail.inventory[0].reason,
+      },
+    ]);
+  } finally {
+    await f.service.close();
+  }
+});
 async function awaitingQuality() {
   const f = compositeFixture();
   const render = f.native.renderEvidence;
@@ -74,6 +100,41 @@ it("requires a final render review for quality plans while retaining manual work
       qualityPolicy: "complete-translation-v1",
     }).success,
   ).toBe(false);
+});
+it("requires v2 inventory for preserved SFX without ignoring ordinary omissions", async () => {
+  const f = await awaitingQuality();
+  try {
+    const assessment = f.report.assessments[0];
+    Object.assign(assessment.quality, {
+      soundEffectScope: "preserve-original",
+      soundEffectsCompleted: 0,
+      soundEffectsPreserved: 1,
+    });
+    expect(() => assertTranslationQualityReport(f.awaiting, f.report)).toThrow(
+      /v2 inventory/,
+    );
+    f.awaiting.plan.qualityPolicy = "complete-translation-v2";
+    const evidence = f.awaiting.phases
+      .flatMap((phase) => phase.evidence ?? [])
+      .find((item) => item.id === assessment.evidenceId);
+    if (!evidence?.savedQuality) throw Error("Missing saved quality");
+    evidence.savedQuality.pendingSoundEffects = 1;
+    expect(() => assertTranslationQualityReport(f.awaiting, f.report)).toThrow(
+      /Unresolved/,
+    );
+    const detail = detailedQualityFixture().input.assessment.quality?.detailed;
+    if (!detail) throw Error("Missing inventory fixture");
+    Object.assign(assessment.quality, { detailed: detail });
+    expect(() =>
+      assertTranslationQualityReport(f.awaiting, f.report),
+    ).not.toThrow();
+    evidence.savedQuality.untranslated = 1;
+    expect(() => assertTranslationQualityReport(f.awaiting, f.report)).toThrow(
+      /Unresolved/,
+    );
+  } finally {
+    await f.service.close();
+  }
 });
 it("requires per-page quality and accepts fresh complete review with replay-safe receipts", async () => {
   const f = await awaitingQuality();
@@ -208,7 +269,7 @@ it("requires applicable glyph, restoration and typography checks", async () => {
     if (!saved) throw new Error("Missing saved quality evidence");
     saved.generatedLettering = 1;
     expect(() => assertTranslationQualityReport(f.awaiting, f.report)).toThrow(
-      /Unresolved/,
+      /required visual checks are generatedGlyphs/,
     );
     f.report.assessments[0].quality.generatedGlyphs = "passed";
     expect(() =>
@@ -216,7 +277,11 @@ it("requires applicable glyph, restoration and typography checks", async () => {
     ).not.toThrow();
     f.report.assessments[0].quality.backgroundRestoration = "not-applicable";
     expect(() => assertTranslationQualityReport(f.awaiting, f.report)).toThrow(
-      /Unresolved/,
+      /required visual checks are backgroundRestoration.*done earlier/,
+    );
+    f.report.assessments[0].quality.typography = "not-applicable";
+    expect(() => assertTranslationQualityReport(f.awaiting, f.report)).toThrow(
+      `Page ${f.report.assessments[0].pageId}: required visual checks are typography, backgroundRestoration`,
     );
   } finally {
     await f.service.close();
@@ -236,7 +301,7 @@ it("bounds combined generation attempts and preserves cumulative history and ref
     expect(
       McpTranslationQualityAssessmentSchema.safeParse({
         ...quality(),
-        imageHistory: [{ ...prior, appAttempts: 2 }],
+        imageHistory: [{ ...prior, appAttempts: 3 }],
       }).success,
     ).toBe(false);
     expect(

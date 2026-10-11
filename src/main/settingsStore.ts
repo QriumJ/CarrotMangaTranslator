@@ -1,3 +1,4 @@
+import { resolveCustomApiProfiles } from "../shared/customApiProfiles";
 import {
   withSettingsMutation,
   preserveCodexPreferences,
@@ -14,7 +15,7 @@ import {
 } from "./appSettings";
 import { CURRENT_GENERATION_LIMITS_VERSION } from "./settings/appSettingsGenerationLimitMigration";
 import { supportsWindowsRocmOcrGpu } from "./settings/ocrRocmSupport";
-import { resolveWindowsHipSdkGpuSupport } from "./settings/fluxZludaSupport";
+import { resolveNativeRocmGpuSupport } from "./settings/fluxZludaSupport";
 import {
   detectBestGpuInfo,
   resolveAmdRocmTargetFromInfo,
@@ -153,6 +154,10 @@ async function saveAppSettingsUnlocked(
   env: NodeJS.ProcessEnv = process.env,
   detectGpu: GpuInfoProvider = detectBestGpuInfo,
 ): Promise<AppSettings> {
+  settings = {
+    ...settings,
+    api: { ...settings.api, ...resolveCustomApiProfiles(settings.api) },
+  };
   const normalized = await normalizeAppSettingsForRuntime(
     settings,
     env,
@@ -283,7 +288,7 @@ function createDetectedRuntimeHardware(
     ...(detectedGpu.vendor === "amd"
       ? {
           supportsOcrRocm: supportsWindowsRocmOcrGpu(detectedGpu),
-          supportsFluxZluda: resolveWindowsHipSdkGpuSupport(detectedGpu),
+          supportsFluxZluda: resolveNativeRocmGpuSupport(detectedGpu),
         }
       : {}),
     supportsRocm: Boolean(detectedGpu.supportsRocm),
@@ -367,7 +372,11 @@ function mergeApiProfileSecrets(
   encrypted: SettingsSecrets,
 ): NonNullable<SettingsSecrets["apiProfiles"]> {
   const apiProfiles: NonNullable<SettingsSecrets["apiProfiles"]> = {};
-  for (const provider of API_PROVIDER_PRESET_IDS) {
+  for (const provider of new Set([
+    ...API_PROVIDER_PRESET_IDS,
+    ...Object.keys(plaintext.apiProfiles ?? {}),
+    ...Object.keys(encrypted.apiProfiles ?? {}),
+  ])) {
     const plaintextProfile = plaintext.apiProfiles?.[provider];
     const encryptedProfile = encrypted.apiProfiles?.[provider];
     if (!plaintextProfile && !encryptedProfile) continue;

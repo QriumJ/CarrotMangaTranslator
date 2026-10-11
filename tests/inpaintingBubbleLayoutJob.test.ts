@@ -1,29 +1,91 @@
+import {
+  makeRuntime,
+  makeContext,
+  makePage,
+  makeChapter,
+} from "./inpaintingBubbleLayoutJob.fixture";
 import { describe, expect, it, vi } from "vitest";
 import { resolveDefaultAppSettings } from "../src/main/appSettings";
-import type { AppPaths } from "../src/main/appPaths";
 import {
   runBubbleLayoutPostprocess,
   type BubbleLayoutRunner,
 } from "../src/main/inpainting/bubbleLayoutRunner";
 import type { InpaintingRevisionChange } from "../src/main/inpainting/inpaintingRevisionStore";
-import { ActiveJobStore } from "../src/main/jobs/activeJob";
 import { runBubbleLayoutMaskPrepass } from "../src/main/jobs/bubbleLayoutJob";
-import type { InpaintingJobContext } from "../src/main/jobs/inpaintingJobTypes";
-import {
-  productionInpaintingJobRuntime,
-  type InpaintingJobRuntime,
-} from "../src/main/jobs/inpaintingJobRuntime";
+import { type InpaintingJobRuntime } from "../src/main/jobs/inpaintingJobRuntime";
 import type { BubbleLayout } from "../src/shared/bubbleLayout";
-import type { ChapterSnapshot, MangaPage } from "../src/shared/libraryTypes";
 
 const CHAPTER_ID = "11111111-1111-4111-8111-111111111111";
 const PAGE_ID = "22222222-2222-4222-8222-222222222222";
 const BLOCK_ID = "block-1";
 const SECOND_BLOCK_ID = "block-2";
-const TRANSACTION_ID = "33333333-3333-4333-8333-333333333333";
 const NATURAL_LAYOUT_TEXT = "자연스러운 문장 배치를 여러 단어로 확인합니다";
 
 describe("bubble-aware inpainting postprocess", () => {
+  it.each([false, true])(
+    "prepares the entire selection before FLUX and never retries a failed preparation (%s)",
+    async (fail) => {
+      const first = makePage();
+      const second = {
+        ...makePage(),
+        id: "44444444-4444-4444-8444-444444444444",
+        imagePath: "C:/manga/page-2.png",
+      };
+      const chapters = new Map([
+        [CHAPTER_ID, { ...makeChapter(first), pages: [first, second] }],
+      ]);
+      const events: string[] = [];
+      const preparePages = vi.fn<
+        NonNullable<BubbleLayoutRunner["preparePages"]>
+      >(async (pages, _signal, onProgress) => {
+        pages.forEach((page, index) => onProgress?.(page, index));
+        expect(pages.map((page) => page.id)).toEqual([first.id, second.id]);
+        events.push("prepare");
+        if (fail) throw new Error("GPU release failed");
+        await Promise.resolve();
+        events.push("released-detector");
+      });
+      const dispose = vi.fn(async () => {
+        events.push("dispose");
+      });
+      const runtime = makeRuntime(chapters, () => ({
+        preparePages,
+        dispose,
+        runPage: async () => ({ patches: [] }),
+      }));
+      const acquire = runtime.acquireEngine;
+      const settings = resolveDefaultAppSettings();
+      settings.inpainting = { ...settings.inpainting, model: "flux-klein" };
+      runtime.getSettings = async () => settings;
+      runtime.acquireEngine = vi.fn(async (options) => {
+        expect(events).toEqual(["prepare", "released-detector"]);
+        events.push("acquire-flux");
+        return acquire(options);
+      });
+      const { startInpaintingJob } =
+        await import("../src/main/jobs/inpaintingJobs");
+      const result = await startInpaintingJob(
+        makeContext([]),
+        {
+          mode: "selection-pattern",
+          workId: makeChapter(first).workId,
+          selections: [
+            {
+              chapterId: CHAPTER_ID,
+              mode: "page-set",
+              pageIds: [first.id, second.id],
+            },
+          ],
+        },
+        runtime,
+      );
+      expect(result.status).toBe(fail ? "failed" : "completed");
+      expect(preparePages).toHaveBeenCalledOnce();
+      expect(runtime.acquireEngine).toHaveBeenCalledTimes(fail ? 0 : 1);
+      expect(runtime.inpaintPatternPage).toHaveBeenCalledTimes(fail ? 0 : 2);
+      expect(dispose).toHaveBeenCalledOnce();
+    },
+  );
   it("applies only the render allowlist and records one compound revision", async () => {
     const originalPage = makePage();
     originalPage.translationCompletion = {
@@ -44,6 +106,10 @@ describe("bubble-aware inpainting postprocess", () => {
       imageHeight: 1000,
       detections: [],
     };
+    const sourceEraseConstraint = {
+      bounds: { x: 100, y: 120, w: 3, h: 2 },
+      data: new Uint8Array([1, 1, 0, 0, 1, 1]),
+    };
     const runPage = vi.fn<BubbleLayoutRunner["runPage"]>(
       async ({ page, paddingRatio }) => {
         // Adapter-side mutation cannot escape because the port receives a clone.
@@ -61,7 +127,7 @@ describe("bubble-aware inpainting postprocess", () => {
               renderBboxSpace: "normalized_1000",
               bubbleLayout: paddingRatio === 0 ? maskLayout : layout,
               ...(paddingRatio === 0
-                ? { sharedInpaintGroupIds: ["shared-1"] }
+                ? { sharedInpaintGroupIds: ["shared-1"], sourceEraseConstraint }
                 : {}),
               // Runtime-shaped malicious data is deliberately outside the type.
               bbox: { x: 900, y: 900, w: 10, h: 10 },
@@ -99,7 +165,7 @@ describe("bubble-aware inpainting postprocess", () => {
     );
 
     expect(result.status).toBe("completed");
-    expect(runtime.disposeBubbleLayoutSessions).toHaveBeenCalledTimes(1);
+    expect(runtime.disposeBubbleLayoutSessions).toHaveBeenCalledOnce();
     expect(runtime.logError).not.toHaveBeenCalled();
     expect(createBubbleLayoutRunner).toHaveBeenCalledTimes(1);
     expect(createBubbleLayoutRunner).toHaveBeenCalledWith(
@@ -107,7 +173,6 @@ describe("bubble-aware inpainting postprocess", () => {
         directMl: { ...gpuSettings.hardware, computeGpuBackend: "cuda" },
       }),
     );
-    expect(runPage).toHaveBeenCalledTimes(2);
     expect(runPage.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({
         imagePath: originalPage.imagePath,
@@ -157,7 +222,13 @@ describe("bubble-aware inpainting postprocess", () => {
       h: 260,
     });
     expect(savedBlock?.bubbleLayout).toEqual(layout);
-    expect(savedBlock).not.toHaveProperty("sharedInpaintGroupIds");
+    for (const key of ["sharedInpaintGroupIds", "sourceEraseConstraint"])
+      expect(savedBlock).not.toHaveProperty(key);
+    expect(
+      vi.mocked(runtime.inpaintPatternPage).mock.calls[0]?.[1],
+    ).toHaveProperty("sourceEraseConstraintsByBlock", {
+      [BLOCK_ID]: sourceEraseConstraint,
+    });
     expect(result.chapter?.pages[0]?.translationCompletion).toEqual({
       workflow: "bubble-layout",
       status: "completed",
@@ -1028,157 +1099,6 @@ describe("bubble-aware inpainting postprocess", () => {
     ).rejects.toThrow(/기존 말풍선 배치가 없는/);
   });
 });
-
-function makeRuntime(
-  chapters: Map<string, ChapterSnapshot>,
-  createBubbleLayoutRunner: NonNullable<
-    InpaintingJobRuntime["createBubbleLayoutRunner"]
-  >,
-): InpaintingJobRuntime {
-  const settings = resolveDefaultAppSettings();
-  const savePages = vi.fn<InpaintingJobRuntime["savePages"]>(
-    async (chapterId, pages) => {
-      const current = chapters.get(chapterId);
-      if (!current) {
-        throw new Error("missing chapter");
-      }
-      const updates = new Map(pages.map((page) => [page.id, page]));
-      const saved = {
-        ...current,
-        pages: current.pages.map((page) => updates.get(page.id) ?? page),
-      };
-      chapters.set(chapterId, saved);
-      return saved;
-    },
-  );
-  return {
-    acquireEngine: vi.fn(async () => ({
-      engine: {
-        model: "flux-klein",
-        backend: "cpu",
-        runtimePath: "C:\\runtime\\runner.exe",
-        runRootDir: "C:\\runtime\\runs",
-        inpaint: vi.fn(),
-        dispose: vi.fn(),
-      },
-      release: vi.fn(),
-    })) as InpaintingJobRuntime["acquireEngine"],
-    createBubbleLayoutRunner,
-    disposeBubbleLayoutSessions: vi.fn(async () => true),
-    emitEvent: (jobs, _window, event) => {
-      jobs.updateLastEvent(event.id, event);
-    },
-    getSettings: vi.fn(async () => settings),
-    inpaintDrawnPage: vi.fn(async () => {
-      throw new Error("unexpected drawn inpainting");
-    }),
-    inpaintPatternPage: vi.fn(async (page) => ({
-      page: {
-        ...page,
-        inpaintedImagePath: `${page.imagePath}.inpainted.png`,
-      },
-      blocksErased: 1,
-    })),
-    logError: vi.fn(),
-    openPageTimingSession: productionInpaintingJobRuntime.openPageTimingSession,
-    openChapter: vi.fn(async (chapterId) => {
-      const chapter = chapters.get(chapterId);
-      if (!chapter) {
-        throw new Error("missing chapter");
-      }
-      return chapter;
-    }),
-    savePages,
-  };
-}
-
-function makeContext(
-  changes: InpaintingRevisionChange[],
-): InpaintingJobContext {
-  return {
-    appPaths: makeAppPaths(),
-    jobs: new ActiveJobStore({ error: vi.fn(), info: vi.fn() }),
-    getMainWindow: () => null,
-    decodeImage: async () => null,
-    inpaintingRevisionStore: {
-      beginTransaction: () => TRANSACTION_ID,
-      addChange: (_transactionId, change) => {
-        changes.push(structuredClone(change));
-        return true;
-      },
-      removeChange: async () => undefined,
-      discardIfEmpty: () => undefined,
-      getReference: () => ({ transactionId: TRANSACTION_ID }),
-      getRetainedArtifactPaths: () => [],
-    },
-  };
-}
-
-function makeAppPaths(): AppPaths {
-  return {
-    isPackaged: false,
-    repoRoot: "C:\\repo",
-    executableDir: "C:\\repo",
-    resourcesDir: "C:\\repo\\resources",
-    dataRoot: "C:\\repo",
-    settingsPath: "C:\\repo\\settings.json",
-    libraryDir: "C:\\repo\\library",
-    fontsDir: "C:\\repo\\fonts",
-    logsDir: "C:\\repo\\logs",
-    logFile: "C:\\repo\\logs\\app.log",
-    runtimeDir: "C:\\repo\\runtime",
-    toolsDir: "C:\\repo\\tools",
-    ocrRuntimeDir: "C:\\repo\\ocr",
-    llamaRuntimeDir: "C:\\repo\\llama",
-    llamaServerPath: "C:\\repo\\llama\\server.exe",
-  };
-}
-
-function makePage(): MangaPage {
-  return {
-    id: PAGE_ID,
-    name: "page.png",
-    imagePath: "C:\\library\\page.png",
-    dataUrl: "data:image/png;base64,AA==",
-    width: 1000,
-    height: 1000,
-    blocks: [
-      {
-        id: BLOCK_ID,
-        type: "nonsolid",
-        bbox: { x: 50, y: 60, w: 200, h: 220 },
-        sourceText: "source",
-        translatedText: "translated text",
-        confidence: 1,
-        sourceDirection: "horizontal",
-        renderDirection: "horizontal",
-        fontSizePx: 16,
-        lineHeight: 1.2,
-        textAlign: "center",
-        textColor: "#000000",
-        backgroundColor: "#ffffff",
-        opacity: 1,
-      },
-    ],
-    analysisStatus: "completed",
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
-  };
-}
-
-function makeChapter(page: MangaPage): ChapterSnapshot {
-  return {
-    id: CHAPTER_ID,
-    workId: "work-1",
-    title: "chapter",
-    sourceKind: "images",
-    status: "completed",
-    pageOrder: [page.id],
-    pages: [page],
-    createdAt: "2026-01-01T00:00:00.000Z",
-    updatedAt: "2026-01-01T00:00:00.000Z",
-  };
-}
 
 function makeBubbleLayout(): BubbleLayout {
   return {

@@ -15,6 +15,16 @@ const TEST_EXTENSIONS = new Set([".ts", ".tsx", ".js", ".jsx"]);
  * mocking the same internal dependency by convention.
  */
 const ALLOWED_INTERNAL_BOUNDARY_MOCKS = new Set([
+  // Resolve real PSD font files and metadata against isolated storage, never the user's font library.
+  "tests/psdFontResolver.test.ts::../src/main/appPaths",
+  // Native tests keep archive publication real; substitute only network data and the external asset catalog.
+  "tests/nativeInferenceRuntime.test.ts::../src/main/runtimeSupport/modelDownloads",
+  "tests/nativeInferenceRuntime.test.ts::../src/main/runtime/native-inference-manifest.json",
+  // Installer/process adapters are exercised separately by real cold-cache hardware smoke tests.
+  "tests/nativeInferenceLaunch.test.ts::../src/main/runtimeSupport/nativeInferenceRuntime",
+  "tests/fluxCpuWorker.test.ts::../src/main/runtimeSupport/nativeInferenceLaunch",
+  "tests/fluxWorker.test.ts::../src/main/runtimeSupport/nativeInferenceLaunch",
+  "tests/koharuInpaintingExports.test.ts::../src/main/runtimeSupport/nativeInferenceLaunch",
   // Substitute only the Python installer; use real command/env modules and worker transport.
   "tests/hayaiRecognitionSession.test.ts::../src/main/runtimeModuleLoader",
   // Exercise real context analysis/research against isolated storage and a controlled provider lifecycle.
@@ -26,6 +36,8 @@ const ALLOWED_INTERNAL_BOUNDARY_MOCKS = new Set([
   "tests/bubbleOnnxRuntime.test.ts::../src/main/runtimeSupport/nativeOnnxRuntime",
   "tests/bubbleOnnxRuntime.test.ts::../src/main/logger",
   "tests/fontMatchingRuntimeAssets.test.ts::../src/main/runtimeSupport/modelDownloads",
+  // Optional glyph verifier: isolate only its managed network gateway; cold-cache install is smoke-tested.
+  "tests/fontGlyphVerificationAssets.test.ts::../src/main/runtimeSupport/modelDownloads",
   // Keep archive extraction, inventory verification and publication real; isolate only the network gateway.
   "tests/fontChapterAssetInstaller.test.ts::../src/main/runtimeSupport/modelDownloads",
   "tests/fontChapterC23Manifest.test.ts::../src/main/runtimeSupport/modelDownloads",

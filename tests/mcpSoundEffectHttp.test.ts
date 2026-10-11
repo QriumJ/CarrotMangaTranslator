@@ -67,6 +67,13 @@ it("serves versioned sound-effect metadata to read-only OAuth and rejects malfor
       generation: { runtimeChecked: false },
     });
     expect(result.result.content).toHaveLength(1);
+    expect(result.result.structuredContent.letteringTargets).toEqual([
+      {
+        blockId: expect.any(String),
+        text: "쿥",
+        hangul: [{ syllable: "쿥", initial: "ㅋ", vowel: "ㅜ", final: "ㄵ" }],
+      },
+    ]);
     expect(JSON.parse(result.result.content[0].text)).toEqual(
       result.result.structuredContent,
     );
@@ -101,32 +108,38 @@ it("serves versioned sound-effect metadata to read-only OAuth and rejects malfor
     const owner = f.operations.list("unused", 0, 1);
     expect(owner.total).toBe(0);
     let planId = "";
-    await vi.waitFor(async () => {
-      const duplicate = await call(
-        "carrot_prepare_sound_effect_batch",
-        input,
-        editor,
-      );
-      expect(duplicate.result.structuredContent.jobId).toBe(jobId);
-      if (duplicate.result.structuredContent.status === "running")
-        throw new Error("Waiting for sound-effect plan");
-      planId =
-        duplicate.result.structuredContent.result.soundEffectPlan.batchId;
-    });
+    await vi.waitFor(
+      async () => {
+        const duplicate = await call(
+          "carrot_prepare_sound_effect_batch",
+          input,
+          editor,
+        );
+        expect(duplicate.result.structuredContent.jobId).toBe(jobId);
+        if (duplicate.result.structuredContent.status === "running")
+          throw new Error("Waiting for sound-effect plan");
+        planId =
+          duplicate.result.structuredContent.result.soundEffectPlan.batchId;
+      },
+      { timeout: 10000 },
+    );
     const applied = await call(
       "carrot_apply_sound_effect_batch",
       { batchId: planId, requestId: randomUUID() },
       editor,
     );
     expect(applied.result.isError).toBe(false);
-    await vi.waitFor(async () => {
-      const state = await call(
-        "carrot_get_sound_effect_batch",
-        { batchId: planId },
-        editor,
-      );
-      expect(state.result.structuredContent.status).toBe("completed");
-    });
+    await vi.waitFor(
+      async () => {
+        const state = await call(
+          "carrot_get_sound_effect_batch",
+          { batchId: planId },
+          editor,
+        );
+        expect(state.result.structuredContent.status).toBe("completed");
+      },
+      { timeout: 10000 },
+    );
     expect((await f.snapshot()).pages[0].blocks[0].translatedText).toBe(
       "SCOPED SFX",
     );
@@ -135,14 +148,17 @@ it("serves versioned sound-effect metadata to read-only OAuth and rejects malfor
       { batchId: planId, requestId: randomUUID() },
       editor,
     );
-    await vi.waitFor(async () => {
-      const state = await call(
-        "carrot_get_sound_effect_batch",
-        { batchId: planId },
-        editor,
-      );
-      expect(state.result.structuredContent.status).toBe("completed");
-    });
+    await vi.waitFor(
+      async () => {
+        const state = await call(
+          "carrot_get_sound_effect_batch",
+          { batchId: planId },
+          editor,
+        );
+        expect(state.result.structuredContent.status).toBe("completed");
+      },
+      { timeout: 10000 },
+    );
     expect((await f.snapshot()).pages[0].blocks).toEqual(page.blocks);
 
     expect(f.startClient).not.toHaveBeenCalled();

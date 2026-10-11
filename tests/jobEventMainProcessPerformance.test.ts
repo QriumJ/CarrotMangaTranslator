@@ -7,6 +7,7 @@ import {
 import type { JobEvent } from "../src/shared/jobTypes";
 import { isTerminalJobStatus } from "../src/shared/jobContracts";
 import { JOB_EVENT_DISPATCH_INTERVAL_MS } from "../src/main/jobs/jobEventDispatchQueue";
+import { JobEventSchema } from "../src/shared/ipcJobSchemas";
 
 const writeLog = vi.fn();
 const validateEvent = vi.fn();
@@ -18,6 +19,84 @@ afterEach(() => {
 });
 
 describe("main-process job event throughput", () => {
+  it("bounds a long running log history and preserves short presentation fields", () => {
+    const jobs = new ActiveJobStore();
+    jobs.start({
+      id: "job-1",
+      kind: "gemma-analysis",
+      abortController: new AbortController(),
+    });
+    const emitter = createJobEventEmitter({
+      writeLog,
+      validateEvent: (event) => {
+        JobEventSchema.parse(event);
+      },
+    });
+    const event = makeEvent({
+      phase: "page_done",
+      detail: "detail",
+      installLogLine: "line",
+      notification: { variant: "info", message: "message" },
+      installLogLines: Array.from({ length: 501 }, (_, i) => String(i)),
+    });
+    emitter(jobs, { webContents: { send: vi.fn() } }, event);
+    expect(jobs.current?.lastEvent?.installLogLines?.[0]).toBe("1");
+    expect(jobs.current?.lastEvent).toMatchObject({
+      detail: "detail",
+      installLogLine: "line",
+      notification: event.notification,
+    });
+    expect(writeLog).toHaveBeenCalledWith(
+      "info",
+      "Job event text shortened for IPC; full diagnostic",
+      expect.objectContaining({ installLogLines: event.installLogLines }),
+    );
+  });
+  it.each([true, false])(
+    "delivers and stores long native failures within the IPC contract (renderer=%s)",
+    (renderer) => {
+      const jobs = new ActiveJobStore();
+      jobs.start({
+        id: "job-1",
+        kind: "gemma-analysis",
+        abortController: new AbortController(),
+      });
+      const send = vi.fn();
+      const emitter = createJobEventEmitter({
+        writeLog,
+        validateEvent: (event) => {
+          JobEventSchema.parse(event);
+        },
+      });
+      const failure = makeEvent({
+        status: "failed",
+        phase: "failed",
+        progressText: "NumPy import failed\n".repeat(100),
+        detail: "traceback".repeat(1000),
+        installLogLine: "x".repeat(5000),
+        installLogLines: Array.from({ length: 501 }, () => "y".repeat(4001)),
+        notification: { variant: "error", message: "z".repeat(1001) },
+      });
+      expect(() =>
+        emitter(jobs, renderer ? { webContents: { send } } : null, failure),
+      ).not.toThrow();
+      const stored = JobEventSchema.parse(jobs.current?.lastEvent);
+      expect(stored.status).toBe("failed");
+      expect(stored.progressText).toHaveLength(1000);
+      expect(stored.detail).toHaveLength(4000);
+      expect(stored.installLogLines).toHaveLength(500);
+      expect(stored.notification?.message).toHaveLength(1000);
+      if (renderer) expect(send.mock.calls[0]?.[1]).toEqual(stored);
+      expect(writeLog).toHaveBeenCalledWith(
+        "error",
+        "Job event text shortened for IPC; full diagnostic",
+        expect.objectContaining({
+          progressText: failure.progressText,
+          detail: failure.detail,
+        }),
+      );
+    },
+  );
   it.each([
     ["idle", false],
     ["starting", false],

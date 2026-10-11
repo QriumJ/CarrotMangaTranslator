@@ -92,19 +92,21 @@ describe("Koharu backend contracts across GPU vendors and generations", () => {
   it.each(devices)(
     "routes %s without model-name-specific workarounds",
     async (name, vendor, computeCapability, rocmArch, backend) => {
-      const detectGpu = vi.fn(
-        async (): Promise<DetectedGpuInfo> => ({
-          name,
-          vendor,
-          computeCapability,
-          rocmArch,
-          memoryMb: 8192,
-          rtxGeneration: null,
-        }),
-      );
+      const detectGpu = vi.fn(async (): Promise<DetectedGpuInfo> => ({
+        name,
+        vendor,
+        computeCapability,
+        rocmArch,
+        memoryMb: 8192,
+        rtxGeneration: null,
+      }));
       expect(
         await resolveKoharuBackendCandidates("auto", detectGpu, "win32"),
-      ).toEqual(backend === "cpu" ? ["cpu"] : [backend, "cpu"]);
+      ).toEqual(
+        backend === "cpu"
+          ? ["cpu"]
+          : [backend === "zluda-native" ? "rocm-native" : backend, "cpu"],
+      );
       expect(detectGpu).toHaveBeenCalledOnce();
     },
   );
@@ -129,10 +131,30 @@ describe("Koharu backend contracts across GPU vendors and generations", () => {
       const detectGpu = vi.fn(async () => null);
       expect(
         await resolveKoharuBackendCandidates(backend, detectGpu, "win32"),
-      ).toEqual(backend === "cpu" ? ["cpu"] : [backend, "cpu"]);
+      ).toEqual(
+        backend === "cpu"
+          ? ["cpu"]
+          : [backend === "zluda-native" ? "rocm-native" : backend, "cpu"],
+      );
       expect(detectGpu).not.toHaveBeenCalled();
     },
   );
+
+  it("preserves the managed native DLL path without discovering the old CUDA runtime", () => {
+    const env = buildKoharuWorkerEnv({
+      backend: "rocm-native",
+      executable: process.execPath,
+      runtimePath: process.execPath,
+      label: "native",
+      args: ["--native-runtime", "runtime.json"],
+      env: { PATH: "managed-rocm", RUST_LOG: "error", RUST_BACKTRACE: "0" },
+    });
+    expect(env.PATH?.startsWith("managed-rocm")).toBe(true);
+    expect(env.RUST_LOG).toBe("error");
+    expect(env.HIP_VISIBLE_DEVICES).toBe(
+      process.platform === "win32" ? "0" : undefined,
+    );
+  });
 
   it.each(["cuda-native", "zluda-native", "cpu", "metal-native"] as const)(
     "isolates the selected device for %s only in its own API",

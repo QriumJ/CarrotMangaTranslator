@@ -27,6 +27,10 @@ vi.mock("electron", () => ({
 function rasterImage(bytes: Buffer) {
   return {
     isEmpty: () => false,
+    getSize: () => {
+      const { width, height } = PNG.sync.read(bytes);
+      return { width, height };
+    },
     toPNG: () => bytes,
     toDataURL: () => `data:image/png;base64,${bytes.toString("base64")}`,
     crop: (rect: { x: number; y: number; width: number; height: number }) => {
@@ -216,7 +220,10 @@ beforeEach(() => {
   );
   vi.clearAllMocks();
   vi.mocked(readFile).mockResolvedValue(Buffer.from("source-fixture"));
-  sourceImage.open.mockReturnValue({ crop: sourceImage.crop });
+  sourceImage.open.mockReturnValue({
+    crop: sourceImage.crop,
+    getSize: () => ({ width: page.width, height: page.height }),
+  });
   sourceImage.crop.mockReturnValue({
     toDataURL: () =>
       `data:image/png;base64,${imageBytes(true).toString("base64")}`,
@@ -296,8 +303,8 @@ describe("lettering generation binding and reuse", () => {
       );
       if (firstSafe) {
         const later:
-          | Parameters<CodexAppServerClient["runEphemeralTurn"]>[0]
-          | undefined = client.runEphemeralTurn.mock.calls.at(-1)?.[0];
+          Parameters<CodexAppServerClient["runEphemeralTurn"]>[0] | undefined =
+          client.runEphemeralTurn.mock.calls.at(-1)?.[0];
         expect(
           later?.input.filter((part) => part.type === "image")[1]?.url,
         ).toBe(firstSafe.generatedLettering?.dataUrl);
@@ -512,6 +519,7 @@ describe("lettering generation binding and reuse", () => {
   });
 
   it.each([
+    ["쾅", ["쾅"]],
     ["두근", ["두", "근"]],
     ["탓", ["탓"]],
     ["끼익!", ["끼", "익"]],
@@ -550,6 +558,10 @@ describe("lettering generation binding and reuse", () => {
       expect(prompt).toContain('sourceText="ドン"');
       expect(prompt).not.toContain('target="ドン"');
       if (syllables) {
+        if (translatedText === "쾅")
+          expect(prompt).toContain(
+            '"syllable":"쾅","initial":"ㅋ","vowel":"ㅘ","final":"ㅇ"',
+          );
         expect(prompt).toContain(
           `Required syllable blocks in reading order: ${JSON.stringify(syllables)}`,
         );

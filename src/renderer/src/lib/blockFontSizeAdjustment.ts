@@ -1,3 +1,4 @@
+import { resolvePageDialogueFontSizes } from "./dialogueFontSizeMatching";
 import { resolveBlockDisplayText } from "../../../shared/blockDisplayText";
 import type { ChapterSnapshot, MangaPage } from "../../../shared/libraryTypes";
 import type { TranslationBlock } from "../../../shared/textTypes";
@@ -45,6 +46,19 @@ export function adjustBlocksFontSizeInChapter(
   }
 
   const targetIds = new Set(blockIds);
+  const pageSize = { width: targetPage.width, height: targetPage.height };
+  // All selected blocks resolve against the same original page, before edits.
+  const needsLayout = targetPage.blocks.some(
+    (block) =>
+      targetIds.has(block.id) &&
+      ((block.autoFitText ?? true) || block.fontSizeIntent === "source-match"),
+  );
+  const fallbacks = needsLayout
+    ? resolvePageSourceFontFaceFallbacks(targetPage.blocks, pageSize)
+    : undefined;
+  const dialogueSizes = needsLayout
+    ? resolvePageDialogueFontSizes(targetPage.blocks, pageSize, fontCatalog)
+    : undefined;
   let changed = false;
   const blocks = targetPage.blocks.map((block) => {
     if (!targetIds.has(block.id)) {
@@ -55,6 +69,8 @@ export function adjustBlocksFontSizeInChapter(
       targetPage,
       adjustment,
       fontCatalog,
+      fallbacks?.get(block.id),
+      dialogueSizes?.get(block.id),
     );
     changed ||= next !== block;
     return next;
@@ -78,21 +94,20 @@ function adjustBlockFontSize(
   page: MangaPage,
   adjustment: FontSizeAdjustment,
   fontCatalog: BlockFontCatalog,
+  sourceFontFaceFallbackPx?: number,
+  dialogueFontSizePx?: number,
 ): TranslationBlock {
   const autoFitText = block.autoFitText ?? true;
   const usesResolvedFontSize =
     autoFitText || block.fontSizeIntent === "source-match";
   const naturalPageSize = { width: page.width, height: page.height };
-  const sourceFontFaceFallbackPx = resolvePageSourceFontFaceFallbacks(
-    page.blocks,
-    naturalPageSize,
-  ).get(block.id);
   const baseFontSize = usesResolvedFontSize
-    ? resolveBlockFontSizeAtNaturalPageScale(
+    ? resolveBlockFontSizeWithDialogue(
         block,
         naturalPageSize,
         fontCatalog,
         sourceFontFaceFallbackPx,
+        dialogueFontSizePx,
       )
     : block.fontSizePx;
   const fontSizePx = clampFontSizePx(
@@ -124,6 +139,28 @@ export function resolveBlockFontSizeAtNaturalPageScale(
   pageSize: Readonly<{ width: number; height: number }>,
   fontCatalog: BlockFontCatalog,
   sourceFontFaceFallbackPx?: number,
+  pageBlocks?: readonly TranslationBlock[],
+): number {
+  const dialogueFontSizePx = pageBlocks
+    ? resolvePageDialogueFontSizes(pageBlocks, pageSize, fontCatalog).get(
+        block.id,
+      )
+    : undefined;
+  return resolveBlockFontSizeWithDialogue(
+    block,
+    pageSize,
+    fontCatalog,
+    sourceFontFaceFallbackPx,
+    dialogueFontSizePx,
+  );
+}
+
+function resolveBlockFontSizeWithDialogue(
+  block: TranslationBlock,
+  pageSize: Readonly<{ width: number; height: number }>,
+  fontCatalog: BlockFontCatalog,
+  sourceFontFaceFallbackPx?: number,
+  dialogueFontSizePx?: number,
 ): number {
   const displayText = resolveBlockDisplayText(block) || "...";
   return resolveBlockTextLayout(
@@ -132,6 +169,6 @@ export function resolveBlockFontSizeAtNaturalPageScale(
     pageSize,
     pageSize,
     fontCatalog,
-    { sourceFontFaceFallbackPx },
+    { sourceFontFaceFallbackPx, dialogueFontSizePx },
   ).fontSizePx;
 }

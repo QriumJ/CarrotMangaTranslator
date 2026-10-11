@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  ClaudePreferencesSchema,
+  ImageReviewSettingsSchema,
+} from "./ipcClaudeContracts";
 import { UiSettingsSchema } from "./ipcUiSettingsSchema";
 import {
   AmdRocmTargetSchema,
@@ -70,7 +74,7 @@ const LanguageCodeSchema = z
   .max(MAX_LANGUAGE_CODE_LENGTH)
   .regex(/^[a-z]{2,3}(-[a-zA-Z0-9]{1,16})*$/);
 
-const KeybindingOverridesSchema = z.record(
+const KeybindingOverridesSchema = z.partialRecord(
   z.enum(SHORTCUT_ACTION_IDS),
   z
     .string()
@@ -187,7 +191,12 @@ const BlockStylePresetGroupSchema = z
 
 export const AppSettingsSchema = z
   .object({
-    modelProvider: z.enum(["gemma", "openai-codex", "openai-api"]),
+    modelProvider: z.enum([
+      "gemma",
+      "openai-codex",
+      "openai-api",
+      "claude-code",
+    ]),
     translation: z
       .object({
         sourceLanguage: LanguageCodeSchema,
@@ -205,6 +214,9 @@ export const AppSettingsSchema = z
         localModelPath: filePath.optional(),
         localMmprojPath: filePath.optional(),
         vramMode: GemmaVramModeSchema,
+        temperature: z.number().min(0).max(2).optional(),
+        topP: z.number().min(0.01).max(1).optional(),
+        topK: z.number().int().min(1).max(500).optional(),
         fitTargetMb: z.number().int().min(0).max(16384).optional(),
         mmprojOffload: z.boolean().optional(),
         llamaRuntimeProfile: LlamaRuntimeProfileSchema.optional(),
@@ -212,6 +224,8 @@ export const AppSettingsSchema = z
         allowUnsafeUnifiedMemory: z.boolean().optional(),
       })
       .strict(),
+    imageReview: ImageReviewSettingsSchema.optional(),
+    claude: ClaudePreferencesSchema.optional(),
     codex: z
       .object({
         imageReasoningEffort: z.enum(CODEX_REASONING_EFFORTS).optional(),
@@ -223,6 +237,7 @@ export const AppSettingsSchema = z
       .strict(),
     internetResearch: z
       .object({
+        claude: ClaudePreferencesSchema.optional(),
         tavilyAnalysisProvider: z.enum(TAVILY_ANALYSIS_PROVIDERS),
         gemmaPreset: z.enum(RESEARCH_GEMMA_PRESETS),
         gemmaReasoningEffort: z.enum(RESEARCH_GEMMA_REASONING_EFFORTS),
@@ -267,7 +282,20 @@ export const AppSettingsSchema = z
           .min(MIN_TAVILY_MAX_CREDITS_PER_RUN),
       })
       .strict(),
-    api: ApiProviderProfileSettingsSchema.extend({
+    api: ApiProviderProfileSettingsSchema.safeExtend({
+      activeCustomProfileId: z
+        .string()
+        .regex(/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/)
+        .optional(),
+      customProfiles: z
+        .record(
+          z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/),
+          ApiProviderProfileSettingsSchema.safeExtend({
+            name: z.string().trim().min(1).max(80),
+            generationLimits: GenerationLimitSettingsSchema.optional(),
+          }),
+        )
+        .optional(),
       provider: ApiProviderPresetSchema.optional(),
       profiles: apiProviderProfileMapSchema(
         ApiProviderProfileSettingsSchema,
@@ -366,6 +394,7 @@ export const AppSettingsSchema = z
       .object({
         gemma: GenerationLimitSettingsSchema,
         codex: GenerationLimitSettingsSchema,
+        claude: GenerationLimitSettingsSchema.optional(),
         api: apiProviderProfileMapSchema(GenerationLimitSettingsSchema),
       })
       .strict()

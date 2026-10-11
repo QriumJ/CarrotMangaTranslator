@@ -25,10 +25,9 @@ type EnvironmentBuilder = {
   ) => NodeJS.ProcessEnv;
 };
 
-export async function launchFontChapterC18Worker(
+export async function prepareFontChapterC18WorkerRuntime(
   paths: AppPaths,
   options: TranslationOptions,
-  assets: string,
 ) {
   const runtime = await loadSimplePageRuntime(
     paths.runtimeDir,
@@ -40,6 +39,49 @@ export async function launchFontChapterC18Worker(
     "ocrEnvironment",
   ) as EnvironmentBuilder;
   const env = environment.buildOcrRuntimeEnv(options, runtime);
+  const shell = loadRuntimeModuleFromDirectory(
+    paths.runtimeDir,
+    "shellCommand",
+  ) as {
+    runCommand: (
+      command: { executable: string; args: string[] },
+      options: {
+        env: NodeJS.ProcessEnv;
+        signal?: AbortSignal;
+        timeoutMs: number;
+      },
+    ) => Promise<{ stdout: string }>;
+  };
+  const probe = await shell.runCommand(
+    {
+      executable: runtime.pythonPath,
+      args: [
+        "-c",
+        "import sys; print(sys.implementation.cache_tag); print(sys.version.split()[0])",
+      ],
+    },
+    { env, signal: options.abortSignal, timeoutMs: 30_000 },
+  );
+  const [pythonAbi, pythonVersion] = probe.stdout.trim().split(/\r?\n/);
+  if (pythonAbi !== "cpython-312" && pythonAbi !== "cpython-314")
+    throw new Error(`Unsupported font matching Python ABI: ${pythonAbi}`);
+  logPipelineInfo("C23 Python runtime selected", {
+    pythonPath: runtime.pythonPath,
+    pythonAbi,
+    pythonVersion,
+  });
+  return { pythonPath: runtime.pythonPath, env, pythonAbi };
+}
+
+export async function launchFontChapterC18Worker(
+  paths: AppPaths,
+  options: TranslationOptions,
+  assets: string,
+  prepared?: Awaited<ReturnType<typeof prepareFontChapterC18WorkerRuntime>>,
+) {
+  const runtime =
+    prepared ?? (await prepareFontChapterC18WorkerRuntime(paths, options));
+  const { env } = runtime;
   const batchPolicy = loadRuntimeModuleFromDirectory(
     paths.runtimeDir,
     "ocrBatch",

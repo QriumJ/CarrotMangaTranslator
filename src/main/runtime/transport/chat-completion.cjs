@@ -19,6 +19,7 @@ const {
 } = require("../simple-page-request-builders.cjs");
 const {
   resolveRequestModelName,
+  recordRequestGeneration,
 } = require("../simple-page-request-summary.cjs");
 const {
   createDetailedError,
@@ -53,6 +54,7 @@ async function sendChatCompletion(
     "model_requesting",
     isOpenAIApiProvider(options) ? "API 번역 요청 중" : "Gemma 4 번역 요청 중",
     resolveRequestModelName(options),
+    { sentGeneration: recordRequestGeneration(requestSummary, requestBody) },
   );
   try {
     return await fetch(`${server.baseUrl}/chat/completions`, {

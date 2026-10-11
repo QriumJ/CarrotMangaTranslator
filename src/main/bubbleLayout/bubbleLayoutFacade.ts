@@ -10,6 +10,9 @@ import type {
 } from "../inpainting/bubbleLayoutRunner";
 import { ensureKoharuLayoutAssets } from "./assets";
 import { detectKoharuPageLayout } from "./detector";
+import { disposeCachedKoharuLayoutSessions } from "./session";
+import { PreparedLayoutDetections } from "./preparedLayoutDetections";
+import type { MangaPage } from "../../shared/libraryTypes";
 import type { ComicPageDetectionResult } from "./contracts";
 import {
   processDetectedBubbleLayouts,
@@ -22,6 +25,7 @@ type DetectionCache = {
     { promise: Promise<ComicPageDetectionResult>; bytes: number }
   >;
   bytes: number;
+  prepared?: PreparedLayoutDetections;
 };
 const MAX_DETECTION_CACHE_BYTES = 64 * 1024 * 1024;
 
@@ -33,6 +37,24 @@ export function createProductionBubbleLayoutRunner(
     bytes: 0,
   };
   return {
+    preparePages: async (pages, signal, onProgress) => {
+      detectionsByOriginalPath.entries.clear();
+      detectionsByOriginalPath.bytes = 0;
+      const prepared = (detectionsByOriginalPath.prepared ??=
+        new PreparedLayoutDetections());
+      await prepared.prepare(
+        pages,
+        signal,
+        (page) => detectOriginalPageLayoutUncached(options, page, signal),
+        disposeCachedKoharuLayoutSessions,
+        onProgress,
+      );
+    },
+    dispose: async () => {
+      detectionsByOriginalPath.entries.clear();
+      detectionsByOriginalPath.bytes = 0;
+      await detectionsByOriginalPath.prepared?.dispose();
+    },
     runPage: (request) =>
       runProductionBubbleLayout(options, request, detectionsByOriginalPath),
   };
@@ -65,6 +87,7 @@ async function runProductionBubbleLayout(
         policy: request.policy,
         paddingRatio: request.paddingRatio,
         sharedOwnershipGapPx: request.sharedOwnershipGapPx,
+        sourceEraseMask: request.sourceEraseMask,
         pageRevision,
       }),
       ...(request.includeTypographySegmentation
@@ -81,7 +104,9 @@ async function runProductionBubbleLayout(
     if (request.signal.aborted) {
       throw new DOMException("Aborted", "AbortError");
     }
-    const failureIsRequired = request.failureMode !== "best-effort";
+    const failureIsRequired =
+      !!detectionsByOriginalPath.prepared ||
+      request.failureMode !== "best-effort";
     logWarn(
       failureIsRequired
         ? "Bubble-aware layout postprocess failed"
@@ -106,11 +131,16 @@ async function detectOriginalPageLayout(
   cache: DetectionCache,
 ): Promise<ComicPageDetectionResult> {
   const originalPath = request.page.imagePath;
+  if (cache.prepared) return cache.prepared.read(originalPath);
   const source = await stat(originalPath);
   const key = `${originalPath}:${source.size}:${source.mtimeMs}:${source.ctimeMs}`;
   const cached = cache.entries.get(key);
   if (cached) return cached.promise;
-  const detection = detectOriginalPageLayoutUncached(options, request);
+  const detection = detectOriginalPageLayoutUncached(
+    options,
+    request.page,
+    request.signal,
+  );
   if (cache.entries.size >= 128) return detection;
   const entry = { promise: detection, bytes: 0 };
   cache.entries.set(key, entry);
@@ -135,17 +165,18 @@ async function detectOriginalPageLayout(
 
 async function detectOriginalPageLayoutUncached(
   options: BubbleLayoutRunnerFactoryOptions,
-  request: BubbleLayoutRunnerRequest,
+  page: MangaPage,
+  signal: AbortSignal,
 ): Promise<ComicPageDetectionResult> {
   const detectorAssets = await ensureKoharuLayoutAssets({
     dataRoot: options.dataRoot,
-    signal: request.signal,
+    signal,
   });
   return detectKoharuPageLayout({
-    imagePath: request.page.imagePath,
+    imagePath: page.imagePath,
     modelPath: detectorAssets.modelPath,
     directMl: options.directMl,
-    signal: request.signal,
+    signal,
     decodeFallback: options.decodeFallback,
   });
 }

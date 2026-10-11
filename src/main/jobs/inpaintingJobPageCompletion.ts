@@ -1,3 +1,4 @@
+import type { StartInpaintingRequest } from "../../shared/inpaintingTypes";
 import type { MangaPage } from "../../shared/libraryTypes";
 import { isBubbleLayoutBlockEligible } from "../bubbleLayout/bubbleLayoutBlockEligibility";
 import { normalizeTranslationCompletionReferences } from "../translationCompletionReferences";
@@ -267,4 +268,35 @@ export function resolveExpectedTranslationCompletionWorkflow(
     state.bubbleLayoutPostprocess
     ? "bubble-layout"
     : "erase-original";
+}
+
+export function resolveInpaintingTarget(
+  request: StartInpaintingRequest,
+): InpaintingTarget {
+  if (request.mode === "page-bubble-layout") {
+    return {
+      ...(request.blockId === undefined ? {} : { blockId: request.blockId }),
+      drawnPatternMode: false,
+      drawnStrokes: [],
+      layoutOnly: true,
+      targetType: "source",
+    };
+  }
+  if (request.mode === "page-pattern-drawn") {
+    return {
+      drawnPatternMode: true,
+      drawnStrokes: request.strokes,
+      drawnFeatherPx: request.featherPx,
+      layoutOnly: false,
+      targetType: "drawn",
+    };
+  }
+  const blockId = request.mode === "page-pattern" ? request.blockId : undefined;
+  return {
+    ...(blockId === undefined ? {} : { blockId }),
+    drawnPatternMode: false,
+    drawnStrokes: [],
+    layoutOnly: false,
+    targetType: "source",
+  };
 }

@@ -1,6 +1,11 @@
 import { performance } from "node:perf_hooks";
 import { ipcEventContracts } from "../../shared/ipcContracts";
-import { isTerminalJobStatus } from "../../shared/jobContracts";
+import {
+  isTerminalJobStatus,
+  JOB_PROGRESS_TEXT_LIMIT,
+  JOB_DETAIL_TEXT_LIMIT,
+  JOB_INSTALL_LOG_LINES_LIMIT,
+} from "../../shared/jobContracts";
 import type { JobEvent } from "../../shared/jobTypes";
 import { writeLog } from "../logger";
 import type { ActiveJobStore } from "./activeJob";
@@ -65,14 +70,18 @@ export function createJobEventEmitter(
     queues.set(id, queue);
     return queue;
   };
-  return (jobs, mainWindow, event) => {
-    const current = jobs.get(event.id);
+  return (jobs, mainWindow, untagged) => {
+    const current = jobs.get(untagged.id);
     if (
-      current?.id !== event.id ||
+      current?.id !== untagged.id ||
       (current.lastEvent && isTerminalJobStatus(current.lastEvent.status))
     ) {
       return;
     }
+    const tagged = current.origin
+      ? { ...untagged, origin: current.origin }
+      : untagged;
+    const event = boundJobEventText(tagged, runtime);
     jobs.updateLastEvent(event.id, event);
     const queue = resolveQueue(jobs, event.id);
     queue.enqueue(mainWindow, event);
@@ -84,6 +93,61 @@ export function createJobEventEmitter(
 }
 
 export const emitJobEvent = createJobEventEmitter();
+
+function boundJobEventText(
+  event: JobEvent,
+  runtime: JobEventEmitterRuntime,
+): JobEvent {
+  let shortened = false;
+  const bound = (text: string, limit: number): string => {
+    if (text.length <= limit) return text;
+    shortened = true;
+    return `${text.slice(0, limit - 1)}…`;
+  };
+  const result: JobEvent = {
+    ...event,
+    progressText: bound(event.progressText, JOB_PROGRESS_TEXT_LIMIT),
+    ...(event.detail === undefined
+      ? {}
+      : { detail: bound(event.detail, JOB_DETAIL_TEXT_LIMIT) }),
+    ...(event.installLogLine === undefined
+      ? {}
+      : { installLogLine: bound(event.installLogLine, JOB_DETAIL_TEXT_LIMIT) }),
+    ...(event.notification
+      ? {
+          notification: {
+            ...event.notification,
+            message: bound(event.notification.message, JOB_PROGRESS_TEXT_LIMIT),
+          },
+        }
+      : {}),
+    ...(event.installLogLines
+      ? {
+          installLogLines: event.installLogLines
+            .slice(-JOB_INSTALL_LOG_LINES_LIMIT)
+            .map((line) => bound(line, JOB_DETAIL_TEXT_LIMIT)),
+        }
+      : {}),
+  };
+  if (
+    shortened ||
+    (event.installLogLines?.length ?? 0) > JOB_INSTALL_LOG_LINES_LIMIT
+  ) {
+    runtime.writeLog(
+      event.status === "failed" ? "error" : "info",
+      "Job event text shortened for IPC; full diagnostic",
+      {
+        id: event.id,
+        progressText: event.progressText,
+        detail: event.detail,
+        installLogLine: event.installLogLine,
+        installLogLines: event.installLogLines,
+        notification: event.notification,
+      },
+    );
+  }
+  return result;
+}
 
 export function createAnalysisJobEventTimer(
   now: () => number = () => performance.now(),

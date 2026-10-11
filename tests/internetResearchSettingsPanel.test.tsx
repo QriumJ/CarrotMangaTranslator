@@ -80,6 +80,8 @@ function createBaseEngineProps(): EngineSettingsPanelProps {
     gpuMemoryMb: 12288,
     customModelFile: "custom.gguf",
     customModelRepo: "owner/model",
+    gemmaSampling: { temperature: 0.1, topP: 0.95, topK: 64 },
+    setGemmaSampling: noop,
     gemmaFitTargetMb: 512,
     gemmaMmprojOffload: true,
     isLlamaRuntimeOptionDisabled: () => false,

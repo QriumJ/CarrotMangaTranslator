@@ -33,7 +33,8 @@ export function buildFluxRuntimeExitError(
   stderr: string,
   backend: FluxWorkerBackend,
 ): Error {
-  const detail = formatFluxRuntimeDetail(stderr);
+  const detail =
+    `exitCode=${code ?? "unknown"} ${formatFluxRuntimeDetail(stderr)}`.trim();
   return (
     buildMetalRuntimeExitError(stderr, detail, code, backend) ??
     buildZludaRuntimeExitError(stderr, detail, code, backend) ??
@@ -168,7 +169,7 @@ function buildPythonRuntimeExitError(
   code: number | null,
   backend: FluxWorkerBackend,
 ): Error | null {
-  if (backend === "python-rocm") {
+  if (backend === "python-rocm" || backend === "rocm-native") {
     return buildPythonRocmRuntimeExitError(stderr, detail, code);
   }
   if (backend === "python-cpu") {
@@ -187,17 +188,8 @@ function buildPythonRocmRuntimeExitError(
       `Flux stable-diffusion.cpp ROCm 런타임 패키지를 불러오지 못했습니다. Flux 런타임 설치를 다시 실행하세요. ${detail}`,
     );
   }
-  if (
-    /ROCm|HIP|hipError|HSA|gfx|hipblas|rocblas|amdgpu|GPU_TARGETS|AMDGPU_TARGETS/i.test(
-      stderr,
-    )
-  ) {
-    return new Error(
-      `Flux stable-diffusion.cpp ROCm/HIP 런타임이 AMD GPU를 사용할 수 없습니다. AMD 드라이버, ROCm/HIP 지원 아키텍처, GPU target 설정을 확인하세요. ${detail}`,
-    );
-  }
   return new Error(
-    `Flux stable-diffusion.cpp ROCm 인페인팅 런타임이 종료되었습니다 (${code}). ${detail}`,
+    `Flux ROCm/HIP 인페인팅 런타임이 종료되었습니다 (${code}). 원본 오류를 확인하세요. ${detail}`,
   );
 }
 
@@ -250,7 +242,7 @@ function buildCudaRuntimeExitError(
   }
   if (isFluxBlackwellRuntimeError(stderr)) {
     return new Error(
-      `RTX 50번대/Blackwell에서 Flux CUDA 커널 실행에 실패했습니다. Flux는 앱이 준비한 CUDA 12.9/cuDNN 9.21 런타임만 사용해야 합니다. 앱을 최신 설치 파일로 업데이트하고 Flux 런타임 캐시를 다시 준비하세요. ${detail}`,
+      `Flux 네이티브 CUDA 커널 실행에 실패했습니다. 앱이 준비한 CUDA 13.3/cuDNN 9.25 런타임과 NVIDIA 드라이버의 호환성을 확인하세요. ${detail}`,
     );
   }
   if (isFluxInvalidPtxRuntimeError(stderr)) {
@@ -308,7 +300,7 @@ function buildCudaNativeWorkerResponseError(
     return null;
   }
   return new Error(
-    `Flux CUDA 커널/심볼을 현재 NVIDIA GPU에서 찾지 못했습니다. 배포된 Flux 실행 파일이 이 GPU의 compute capability와 맞지 않거나 앱 데이터의 Flux runner 캐시가 오래됐을 수 있습니다. 최신 설치 파일로 업데이트한 뒤 Flux runner 캐시를 갱신하세요. RTX 30번대/Ampere 계열은 sm86용 Flux 실행 파일이 필요합니다. 원인=${message}${detail ? ` ${detail}` : ""}`,
+    `Flux CUDA 커널/심볼을 현재 NVIDIA GPU에서 찾지 못했습니다. 앱이 준비한 CUDA 13.3 네이티브 런타임과 NVIDIA 드라이버의 호환성을 확인하세요. 원인=${message}${detail ? ` ${detail}` : ""}`,
   );
 }
 
@@ -331,9 +323,20 @@ function isFluxCudaKernelSymbolError(stderr: string): boolean {
 }
 
 export function formatFluxRuntimeDetail(stderr: string): string {
-  const detail = sanitizeFluxRuntimeStderr(stderr)
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(-1600);
+  const sanitized = sanitizeFluxRuntimeStderr(stderr);
+  let detail = sanitized.replace(/\s+/g, " ").trim();
+  if (detail.length > 1600) {
+    const failure = (findFluxRuntimeFailure(sanitized) || sanitized)
+      .replace(/\s+/g, " ")
+      .trim();
+    detail = `${failure.slice(0, 1000)} … ${detail.slice(-600)}`;
+  }
   return detail ? `detail=${detail}` : "";
+}
+
+export function findFluxRuntimeFailure(stderr: string): string {
+  const index = stderr.search(
+    /^.*(?:\b(?:error|fatal|failed|failure|panic(?:ked)?|abort(?:ed)?|assertion)\b|GGML_ASSERT|hipError[A-Za-z]+|out of memory)/im,
+  );
+  return index < 0 ? "" : stderr.slice(index, index + 1200);
 }

@@ -254,9 +254,11 @@ describe("Apple Silicon Alpha packaging", () => {
       scripts: Record<string, string>;
     };
 
-    expect(packageJson.devDependencies.electron).toBe("43.3.0");
-    expect(packageJson.devDependencies["ffmpeg-static"]).toBe("5.3.0");
-    expect(packageJson.dependencies.tar).toBe("^7.5.7");
+    expect(packageJson.devDependencies.electron).toBe("44.5.1");
+    expect(packageJson.scripts["prepare:ffmpeg"]).toBe(
+      "node scripts/prepare-ffmpeg-runtime.cjs",
+    );
+    expect(packageJson.dependencies.tar).toBe("^7.5.22");
     expect(packageJson.scripts["dist:mac:alpha"]).toBe(
       "node scripts/dist-mac-alpha.cjs",
     );
@@ -284,29 +286,51 @@ describe("Apple Silicon Alpha packaging", () => {
     });
     expect(MAC_RUNTIME_MANIFEST.llamaRuntimes).toEqual([
       expect.objectContaining({
-        id: "llama-b10621-metal-arm64",
+        id: "llama-b11146-metal-arm64",
         sha256:
-          "429c8270608600188035e5e92f7d78dffb7900904fe7dd7e6a84f48068cd13cf",
+          "1ad3f9eff80edb9dbef4259ad564d1720612ef7eea48fa4afed0e54f5f3d5711",
       }),
       expect.objectContaining({
-        id: "llama-b9547-metal-arm64",
+        id: "beellama-v0.4.7-metal-arm64",
         sha256:
-          "8791fdac4d5b7008b53fd15c609491d5a2fce2d180bb0b0e041eac53c5ade000",
-      }),
-      expect.objectContaining({
-        id: "beellama-v0.3.1-metal-arm64",
-        sha256:
-          "14c0af87fc124e50469279ceae96016bbc6f7649de484b1de8a0a38675004556",
+          "20085c6da04585c36e06233b78b8172f95b5bd9e4797856761e9502dc1a46b4d",
       }),
     ]);
     for (const manifest of [
       join(repoRoot, "tools", "mgt-koharu-inpaint-runner", "Cargo.toml"),
-      join(repoRoot, "tools", "mgt-flux-klein-runner", "Cargo.toml"),
+      join(
+        repoRoot,
+        "tools",
+        "mgt-flux-klein-runner",
+        "vendor",
+        "koharu-diffusion-sys",
+        "Cargo.toml",
+      ),
     ]) {
       expect(readFileSync(manifest, "utf8")).toContain(
-        'rev = "0d640615d435a399bc195c892de8f5d17efb68f8"',
+        'rev = "52bb4f55e2266f72c1523562a583c827ec191ceb"',
       );
     }
+    const fluxManifest = readFileSync(
+      join(repoRoot, "tools", "mgt-flux-klein-runner", "Cargo.toml"),
+      "utf8",
+    );
+    expect(fluxManifest).toContain('path = "vendor/koharu-diffusion"');
+    const provenance = JSON.parse(
+      readFileSync(
+        join(
+          repoRoot,
+          "tools",
+          "mgt-flux-klein-runner",
+          "vendor",
+          "provenance.json",
+        ),
+        "utf8",
+      ),
+    );
+    expect(provenance.diffusion).toBe(
+      "3f8527a46c54ecf4cb4ed6003da8e8982283c73c",
+    );
   });
 
   it("pins every transitive macOS OCR wheel by version and SHA-256", async () => {
@@ -985,18 +1009,14 @@ describe("Apple Silicon Alpha packaging", () => {
       "utf8",
     );
 
-    expect(workflow).toContain("runs-on: macos-15");
+    expect(workflow).toContain("runs-on: macos-26");
     expect(workflow).not.toContain("macos-latest");
     expect(workflow).toContain("MAC_CSC_LINK");
     expect(workflow).toContain("APPLE_API_KEY_P8_B64");
     expect(workflow).toContain("MGT_MAC_SIGNING_MODE=adhoc");
     expect(workflow).toContain("MGT_MAC_SIGNING_MODE=developer-id");
-    expect(workflow).toContain(
-      "MGT_MAC_ALPHA_ALLOW_HOSTED_APP_SMOKE_TRAP: macos15-electron43-crbrowsermain-v1",
-    );
-    expect(workflow).toContain(
-      "MGT_MAC_ALPHA_RUNNER_ENVIRONMENT: ${{ runner.environment }}",
-    );
+    expect(workflow).not.toContain("MGT_MAC_ALPHA_ALLOW_HOSTED_APP_SMOKE_TRAP");
+    expect(workflow).not.toContain("MGT_MAC_ALPHA_RUNNER_ENVIRONMENT");
     expect(workflow).toContain("--prerelease");
     expect(workflow).toContain("SHA256SUMS-mac-alpha.txt");
     expect(workflow).toContain("Confirm release artifacts");
@@ -1014,7 +1034,7 @@ describe("Apple Silicon Alpha packaging", () => {
     expect(workflow).not.toContain('echo "CSC_LINK=$CSC_LINK"');
     expect(workflow).not.toContain('echo "CSC_KEY_PASSWORD=$CSC_KEY_PASSWORD"');
     expect(checks).toContain("macos-arm64-check:");
-    expect(checks).toContain("runs-on: macos-15");
+    expect(checks).toContain("runs-on: macos-26");
   });
 
   it("strictly verifies stable macOS artifacts before attaching them to the existing release", () => {
@@ -1023,7 +1043,7 @@ describe("Apple Silicon Alpha packaging", () => {
       "utf8",
     );
 
-    expect(workflow).toContain("runs-on: macos-15");
+    expect(workflow).toContain("runs-on: macos-26");
     expect(workflow).toContain("npm run check");
     expect(workflow).toContain("npm run verify:hf-assets");
     expect(workflow).toContain("npm run dist:mac");
@@ -1051,6 +1071,11 @@ describe("Apple Silicon Alpha packaging", () => {
     );
     expect(workflow).toContain("--build-channel stable");
     expect(workflow).toContain("gh release upload");
+    expect(workflow).toContain("VERIFY_ONLY: ${{ inputs.verify_only }}");
+    expect(workflow).toContain(
+      "if: ${{ needs.build_verify.result == 'success' && !inputs.verify_only }}",
+    );
+    expect(workflow).toContain("default: false");
     expect(workflow).toContain("--clobber");
     expect(workflow).toContain("publish_attempt=1");
     expect(workflow).toContain("retrying in ${delay} seconds");

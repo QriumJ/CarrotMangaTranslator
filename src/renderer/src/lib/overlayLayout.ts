@@ -1,3 +1,4 @@
+import { isAutomaticFontSize } from "./sourceFontSizeMatching";
 import type { TranslationBlock } from "../../../shared/textTypes";
 import { MIN_READABLE_FONT_SIZE_PX } from "../../../shared/readableTextBox";
 import {
@@ -14,6 +15,7 @@ import type { BlockFontCatalog } from "./fonts";
 import {
   doesBlockTextFit as doesTextFit,
   resolveFixedHorizontalTextLines,
+  resolveFixedVerticalTextLines,
   resolveHorizontalTextContentWidth,
 } from "./blockTextMeasurement";
 import { resolveBubbleWrappedText } from "./bubbleBlockTextLayout";
@@ -55,6 +57,7 @@ export type BlockTextLayout = {
 };
 
 type BlockTextLayoutOptions = {
+  dialogueFontSizePx?: number;
   sourceFontFaceFallbackPx?: number;
   textLayoutScale?: number;
   textLayoutStageSize?: ViewportSize;
@@ -72,24 +75,6 @@ export function resolveBlockTextLayout(
   stageSize: ViewportSize,
   fontCatalog: BlockFontCatalog,
   options: BlockTextLayoutOptions = {},
-): BlockTextLayout {
-  return resolveBlockTextLayoutCore(
-    block,
-    text,
-    pageSize,
-    stageSize,
-    fontCatalog,
-    options,
-  );
-}
-
-function resolveBlockTextLayoutCore(
-  block: TranslationBlock,
-  text: string,
-  pageSize: ViewportSize,
-  stageSize: ViewportSize,
-  fontCatalog: BlockFontCatalog,
-  options: BlockTextLayoutOptions,
 ): BlockTextLayout {
   const { plainText } = parseRichText(
     text,
@@ -124,6 +109,7 @@ function resolveBlockTextLayoutCore(
     layoutStageSize,
     pageSize,
     sourceFontFaceFallbackPx: options.sourceFontFaceFallbackPx,
+    dialogueFontSizePx: options.dialogueFontSizePx,
   });
 
   return {
@@ -150,6 +136,7 @@ type TextMetricsInput = {
   layoutStageSize: ViewportSize;
   pageSize: ViewportSize;
   sourceFontFaceFallbackPx?: number;
+  dialogueFontSizePx?: number;
 };
 
 type BubbleMeasurer = (
@@ -200,21 +187,28 @@ function resolveBlockTextMetrics(
     sourceMatchedCapPx,
   );
   const bubbleMeasurer = createBubbleMeasurer(input);
+  if (
+    isAutomaticFontSize(block) &&
+    Number.isFinite(input.dialogueFontSizePx) &&
+    Number(input.dialogueFontSizePx) > 0
+  )
+    return resolveFinalTextMetrics(
+      input,
+      Number(input.dialogueFontSizePx) * scale,
+      bubbleMeasurer,
+    );
   const fittedFontSizePx = resolveTextFontSizePx(
     block,
     text,
     maxFontSize,
     createFitsAtFontSize(input, bubbleMeasurer),
   );
-  const fontSizePx =
-    sourceMatchedCapPx !== null
-      ? resolveSourceMatchedBubbleFontSize(
-          block,
-          text,
-          fittedFontSizePx,
-          bubbleMeasurer,
-        )
-      : fittedFontSizePx;
+  const fontSizePx = resolveSourceMatchedBubbleFontSize(
+    block,
+    text,
+    fittedFontSizePx,
+    bubbleMeasurer,
+  );
   return resolveFinalTextMetrics(input, fontSizePx, bubbleMeasurer);
 }
 
@@ -276,6 +270,14 @@ function resolveFinalTextMetrics(
     textContentWidth,
     lines:
       bubbleMeasurement?.lines ??
+      resolveFixedVerticalTextLines(
+        block,
+        text,
+        fontSizePx,
+        fitInnerWidth,
+        fitInnerHeight,
+        fontCatalog,
+      ) ??
       resolveFixedHorizontalTextLines(
         block,
         text,
@@ -341,7 +343,7 @@ function resolveTextFontSizePx(
 ): number {
   const bounded = Math.max(MIN_FONT_SIZE_PX, maxFontSize);
   const automaticSourceFit =
-    block.fontSizeIntent === "source-match" &&
+    isAutomaticFontSize(block) &&
     block.renderDirection === "horizontal" &&
     !/[\r\n]/u.test(text);
   if (!text.trim()) return bounded;

@@ -1,4 +1,5 @@
 import { throwSoundEffectPhaseErrors } from "../src/main/jobs/soundEffectTranslationResult";
+import { resolveDefaultAppSettings } from "../src/main/appSettings";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -867,8 +868,32 @@ describe("dedicated sound-effect translation contract", () => {
       erasedBlockIds: ["dialogue"],
     };
     const chapter = { ...makeChapter(), pages: [page] };
-    const release = vi.fn();
-    const updatePages = vi.fn(async () => chapter);
+    const typographySegmentation = {
+      imageWidth: 1000,
+      imageHeight: 1400,
+      detections: [],
+    };
+    const runPage = vi.fn(async () => ({
+      patches: [
+        {
+          blockId: "sfx-new-1",
+          renderBbox: { x: 25, y: 30, w: 80, h: 90 },
+          renderBboxSpace: "normalized_1000" as const,
+        },
+      ],
+      typographySegmentation,
+    }));
+    const release = vi.fn(async () => {});
+    const preparePages = vi.fn(async (pages: readonly MangaPage[]) => {
+      expect(pages.map((input) => input.id)).toEqual([page.id]);
+      expect(runPage).not.toHaveBeenCalled();
+    });
+    const dispose = vi.fn(async () => {
+      expect(release).toHaveBeenCalledOnce();
+    });
+    const updatePages = vi.fn(
+      async (_chapterId: string, _pages: MangaPage[]) => chapter,
+    );
     const inpaintPage = vi.fn(
       async (
         inputPage: MangaPage,
@@ -886,21 +911,40 @@ describe("dedicated sound-effect translation contract", () => {
       new AbortController().signal,
       {
         getAppPaths: () => ({}) as never,
-        getAppSettings: async () => ({ inpainting: {} }) as never,
-        acquireEngine: async () =>
-          ({ engine: { model: "flux-klein" }, release }) as never,
+        getAppSettings: async () => ({
+          ...resolveDefaultAppSettings(),
+          inpainting: {
+            ...resolveDefaultAppSettings().inpainting,
+            model: "flux-klein",
+          },
+        }),
+        acquireEngine: async () => {
+          expect(preparePages).toHaveBeenCalledOnce();
+          return { engine: { model: "flux-klein" }, release } as never;
+        },
+        createBubbleLayoutRunner: () => ({ runPage, preparePages, dispose }),
         openChapter: async () => chapter,
         inpaintPage,
         updatePages,
       } as SoundEffectInpaintingDependencies,
     );
 
+    expect(result.warnings).toEqual([]);
+    expect(runPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        targetBlockIds: ["sfx-new-1", "sfx-new-2"],
+        includeTypographySegmentation: true,
+        sharedOwnershipGapPx: undefined,
+      }),
+    );
+    expect(updatePages.mock.calls[0]?.[1]?.[0]?.blocks).toEqual(page.blocks);
     expect(inpaintPage).toHaveBeenCalledOnce();
     expect(inpaintPage).toHaveBeenCalledWith(
-      page,
+      expect.objectContaining({ id: page.id }),
       expect.objectContaining({
         blockIds: ["sfx-new-1", "sfx-new-2"],
         preserveExistingInpainting: true,
+        typographySegmentation,
       }),
     );
     expect(updatePages).toHaveBeenCalledWith(chapter.id, [
@@ -915,46 +959,63 @@ describe("dedicated sound-effect translation contract", () => {
     ]);
     expect(result).toEqual({ changedPageIds: [page.id], warnings: [] });
     expect(release).toHaveBeenCalledOnce();
+    expect(dispose).toHaveBeenCalledOnce();
   });
 
-  it("keeps a page without a prior completion receipt receipt-free", async () => {
-    const page = makePage();
-    page.blocks = [makeBlock("sfx-new", false)];
-    const chapter = { ...makeChapter(), pages: [page] };
-    let persisted: MangaPage | undefined;
-    const updatePages = vi.fn(
-      async (_chapterId: string, pages: MangaPage[]) => {
-        persisted = pages[0];
-        return chapter;
-      },
-    );
+  it.each(["flux-klein", "lama-manga"] as const)(
+    "keeps a page without a prior completion receipt receipt-free with %s",
+    async (model) => {
+      const page = makePage();
+      page.blocks = [makeBlock("sfx-new", false)];
+      const chapter = { ...makeChapter(), pages: [page] };
+      let persisted: MangaPage | undefined;
+      const createBubbleLayoutRunner = vi.fn(() => ({
+        runPage: async () => ({ patches: [] }),
+      }));
+      const updatePages = vi.fn(
+        async (_chapterId: string, pages: MangaPage[]) => {
+          persisted = pages[0];
+          return chapter;
+        },
+      );
 
-    await inpaintCreatedSoundEffectBlocks(
-      chapter.id,
-      [{ pageId: page.id, blockIds: ["sfx-new"] }],
-      vi.fn() as never,
-      new AbortController().signal,
-      {
-        getAppPaths: () => ({}) as never,
-        getAppSettings: async () => ({ inpainting: {} }) as never,
-        acquireEngine: async () =>
-          ({ engine: { model: "flux-klein" }, release: vi.fn() }) as never,
-        openChapter: async () => chapter,
-        inpaintPage: async (inputPage: MangaPage) => ({
-          page: {
-            ...inputPage,
-            inpaintedImagePath: "C:/manga/sfx-clean.png",
-          },
-          blocksErased: 1,
-          erasedBlockIds: ["sfx-new"],
-        }),
-        updatePages,
-      } as SoundEffectInpaintingDependencies,
-    );
+      await inpaintCreatedSoundEffectBlocks(
+        chapter.id,
+        [{ pageId: page.id, blockIds: ["sfx-new"] }],
+        vi.fn() as never,
+        new AbortController().signal,
+        {
+          getAppPaths: () => ({}) as never,
+          getAppSettings: async () => ({
+            ...resolveDefaultAppSettings(),
+            inpainting: {
+              ...resolveDefaultAppSettings().inpainting,
+              model: model,
+            },
+          }),
+          acquireEngine: async () =>
+            ({ engine: { model }, release: vi.fn() }) as never,
+          createBubbleLayoutRunner,
+          openChapter: async () => chapter,
+          inpaintPage: async (inputPage: MangaPage) => ({
+            page: {
+              ...inputPage,
+              inpaintedImagePath: "C:/manga/sfx-clean.png",
+            },
+            blocksErased: 1,
+            erasedBlockIds: ["sfx-new"],
+          }),
+          updatePages,
+        } as SoundEffectInpaintingDependencies,
+      );
 
-    expect(persisted?.inpaintedImagePath).toBe("C:/manga/sfx-clean.png");
-    expect(persisted).not.toHaveProperty("translationCompletion");
-  });
+      expect(persisted?.inpaintedImagePath).toBe("C:/manga/sfx-clean.png");
+      expect(persisted).not.toHaveProperty("translationCompletion");
+      expect(createBubbleLayoutRunner).toHaveBeenCalledTimes(
+        model === "flux-klein" ? 1 : 0,
+      );
+    },
+  );
 
   it("keeps completion pending while an eligible dialogue block remains", async () => {
     const page = makePage();
@@ -982,9 +1043,18 @@ describe("dedicated sound-effect translation contract", () => {
       new AbortController().signal,
       {
         getAppPaths: () => ({}) as never,
-        getAppSettings: async () => ({ inpainting: {} }) as never,
+        getAppSettings: async () => ({
+          ...resolveDefaultAppSettings(),
+          inpainting: {
+            ...resolveDefaultAppSettings().inpainting,
+            model: "flux-klein",
+          },
+        }),
         acquireEngine: async () =>
           ({ engine: { model: "flux-klein" }, release: vi.fn() }) as never,
+        createBubbleLayoutRunner: () => ({
+          runPage: async () => ({ patches: [] }),
+        }),
         openChapter: async () => chapter,
         inpaintPage: async (inputPage: MangaPage) => ({
           page: inputPage,
@@ -1014,9 +1084,18 @@ describe("dedicated sound-effect translation contract", () => {
       new AbortController().signal,
       {
         getAppPaths: () => ({}) as never,
-        getAppSettings: async () => ({ inpainting: {} }) as never,
+        getAppSettings: async () => ({
+          ...resolveDefaultAppSettings(),
+          inpainting: {
+            ...resolveDefaultAppSettings().inpainting,
+            model: "flux-klein",
+          },
+        }),
         acquireEngine: async () =>
           ({ engine: { model: "flux-klein" }, release: vi.fn() }) as never,
+        createBubbleLayoutRunner: () => ({
+          runPage: async () => ({ patches: [] }),
+        }),
         openChapter: async () => chapter,
         inpaintPage: async () => {
           throw new Error("engine exploded");

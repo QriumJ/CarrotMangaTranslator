@@ -129,8 +129,8 @@ function resolveCpuTransformersInstallBatches(options) {
 function buildCpuTorchInstallBatches(options, applicationPackages) {
   const cpuTag = process.platform === "win32" ? "+cpu" : "";
   const torchPackages = [
-    `torch==${resolvePinnedTorchBaseVersion("torch")}${cpuTag}`,
-    `torchvision==${resolvePinnedTorchBaseVersion("torchvision")}${cpuTag}`,
+    `torch==${resolvePinnedTorchBaseVersion("torch", options)}${cpuTag}`,
+    `torchvision==${resolvePinnedTorchBaseVersion("torchvision", options)}${cpuTag}`,
   ];
   if (process.platform === "win32") {
     torchPackages.push("--index-url", "https://download.pytorch.org/whl/cpu");
@@ -159,6 +159,20 @@ function resolveRocmInstallBatches(options) {
 
 /** @param {RuntimeOptions} options @param {string[]} applicationPackages @returns {string[][]} */
 function buildRocmInstallBatches(options, applicationPackages) {
+  if (isHayaiOcrPipeline(options)) {
+    return [
+      [
+        "torch==2.13.0+rocm10.0.0",
+        "torchvision==0.28.0+rocm10.0.0",
+        "torchaudio==2.11.0.2+rocm10.0.0",
+        "--index-url",
+        "https://stable.repo.amd.com/rocm/whl-next/",
+        "--extra-index-url",
+        "https://pypi.org/simple",
+      ],
+      resolveTransformerApplicationPackages(applicationPackages),
+    ];
+  }
   return [
     resolveAmdRocmSdkWheelPackages(options),
     resolveAmdRocmMetaPackage(options),
@@ -205,15 +219,17 @@ function resolveTransformerApplicationPackages(packages) {
 function resolveCudaTransformersTorchPackages(options) {
   const cudaTag = resolveOcrTorchCudaTag(options);
   return [
-    `torch==${resolvePinnedTorchBaseVersion("torch")}+${cudaTag}`,
-    `torchvision==${resolvePinnedTorchBaseVersion("torchvision")}+${cudaTag}`,
+    `torch==${resolvePinnedTorchBaseVersion("torch", options)}+${cudaTag}`,
+    `torchvision==${resolvePinnedTorchBaseVersion("torchvision", options)}+${cudaTag}`,
     "--index-url",
     resolveOcrTorchPackageIndexUrl(options),
   ];
 }
 
-/** @param {"torch" | "torchvision"} packageName @returns {string} */
-function resolvePinnedTorchBaseVersion(packageName) {
+/** @param {"torch" | "torchvision"} packageName @param {RuntimeOptions} options @returns {string} */
+function resolvePinnedTorchBaseVersion(packageName, options) {
+  if (isHayaiOcrPipeline(options))
+    return packageName === "torch" ? "2.14.1" : "0.29.1";
   const pattern = new RegExp(
     `(?:^|/)${packageName}-([^/+]+)(?:%2B|\\+)rocm`,
     "i",

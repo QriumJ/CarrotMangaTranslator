@@ -28,6 +28,11 @@ type CoverageManifest = {
     vitestVersion: string;
     coverageV8Version: string;
   };
+  toolchain: {
+    validatedNodeV8: string[];
+    vitestVersion: string;
+    coverageV8Version: string;
+  };
   floors: Record<
     string,
     Partial<Record<CoverageMetricName, CoverageFloorMetric>>
@@ -390,24 +395,41 @@ describe("production cleanup coverage floor gate", () => {
     );
 
     const unsupportedManifest = createFixture();
-    unsupportedManifest.manifest.schemaVersion = 3;
+    unsupportedManifest.manifest.schemaVersion = 4;
     unsupportedManifest.writeManifest();
     expect(() => runGate(unsupportedManifest, "win32")).toThrow(
       /schemaVersion is unsupported/u,
     );
 
     const mismatchedToolchain = createFixture();
-    mismatchedToolchain.manifest.provenance.vitestVersion = "0.0.0";
+    mismatchedToolchain.manifest.toolchain.vitestVersion = "0.0.0";
     mismatchedToolchain.writeManifest();
     expect(() => runGate(mismatchedToolchain, "win32")).toThrow(
       /tool versions do not match/u,
     );
 
     const unvalidatedRuntime = createFixture();
-    unvalidatedRuntime.manifest.provenance.validatedNodeV8 = ["99/99.9"];
+    unvalidatedRuntime.manifest.toolchain.validatedNodeV8 = ["99/99.9"];
     unvalidatedRuntime.writeManifest();
     expect(() => runGate(unvalidatedRuntime, "win32")).toThrow(
       /has not been validated with Node\/V8/u,
+    );
+  });
+
+  it("preserves baseline provenance while requiring the current measurement toolchain", () => {
+    const fixture = createFixture();
+    expect(fixture.manifest.provenance.vitestVersion).toBe("4.1.11");
+    expect(runGate(fixture, "win32").comparedFloors).toBe(true);
+    fixture.manifest.toolchain.coverageV8Version = "4.1.11";
+    fixture.writeManifest();
+    expect(() => runGate(fixture, "win32")).toThrow(
+      /tool versions do not match/u,
+    );
+    fixture.manifest.toolchain.coverageV8Version = "5.0.3";
+    Reflect.set(fixture.manifest.toolchain, "skipFloorChecks", true);
+    fixture.writeManifest();
+    expect(() => runGate(fixture, "win32")).toThrow(
+      /missing or unknown fields/u,
     );
   });
 
@@ -525,10 +547,13 @@ describe("production cleanup coverage floor gate", () => {
     expect(Object.keys(manifest.floors)).toEqual(scope.existing);
     expect(Object.keys(manifest.introducedFloors)).toEqual(scope.added);
     expect(manifest.deletedFiles).toEqual(scope.deleted);
-    expect(scope.existing).toHaveLength(801);
-    // Includes MCP and master additions; the renderer gatherText floor follows its shared owner.
-    expect(scope.added).toHaveLength(1334);
-    expect(scope.deleted).toHaveLength(11);
+    expect(scope.existing).toHaveLength(842);
+    // Includes global chat, shared actions, OpenCode help, MCP event streams, shared
+    // translation instructions and image budget; inherited floors remain unchanged.
+    // inherited floors remain unchanged.
+    // Gemma sampling adds a production control and its shared default contract.
+    expect(scope.added).toHaveLength(1448);
+    expect(scope.deleted).toHaveLength(12);
   });
 });
 
@@ -571,7 +596,7 @@ function createFixture(
   write(addedFileAbsolute, "export const added = true;\n");
 
   const manifest: CoverageManifest = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     provenance: {
       baseCommit: gate.CLEANUP_BASE_COMMIT,
       baselinePlatform: "win32",
@@ -586,6 +611,11 @@ function createFixture(
       ],
       vitestVersion: "4.1.11",
       coverageV8Version: "4.1.11",
+    },
+    toolchain: {
+      validatedNodeV8: [CURRENT_NODE_V8_FAMILY],
+      vitestVersion: "5.0.3",
+      coverageV8Version: "5.0.3",
     },
     floors: {
       [existingFile]: {

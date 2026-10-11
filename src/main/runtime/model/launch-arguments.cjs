@@ -106,9 +106,6 @@ function buildDraftArgs(options, target) {
       String(options.cacheTypeV || "q4_0"),
     );
   }
-  if (specType === "dflash") {
-    args.push("--spec-dflash-cross-ctx", "512", "--spec-branch-budget", "0");
-  }
   return args;
 }
 
@@ -126,7 +123,7 @@ function resolveDraftSpecType(value) {
     .trim()
     .toLowerCase() === "draft-mtp"
     ? "draft-mtp"
-    : "dflash";
+    : "draft-dflash";
 }
 
 /** @param {LaunchOptions} options */
@@ -154,7 +151,7 @@ function buildSamplingArgs(options) {
     "--temp",
     String(
       options.temperature ??
-        configuredSamplingValue(options, "MANGA_TRANSLATOR_TEMPERATURE", "0.2"),
+        configuredSamplingValue(options, "MANGA_TRANSLATOR_TEMPERATURE", "0.1"),
     ),
     "--top-k",
     String(
@@ -231,7 +228,7 @@ function buildComputeArgs(options, useBeellama) {
     "-np",
     "1",
     ...(useBeellama ? [] : ["--no-cache-prompt", "--no-warmup"]),
-    ...(disableMmap ? ["--no-mmap"] : []),
+    ...(disableMmap ? ["--load-mode", "none"] : []),
     options.mmprojOffload === true ? "--mmproj-offload" : "--no-mmproj-offload",
     "--cache-ram",
     "0",
@@ -241,7 +238,7 @@ function buildComputeArgs(options, useBeellama) {
 /** @param {string[]} args @param {LaunchOptions} options @param {boolean} enabled */
 function appendBeellamaArgs(args, options, enabled) {
   if (!enabled) return;
-  args.push("--kv-unified", "--jinja", "--no-mmap", "--mlock");
+  args.push("--kv-unified", "--jinja", "--load-mode", "mlock");
   if (options.noHost !== false) args.push("--no-host");
 }
 

@@ -7,7 +7,7 @@
 
 const {
   isOpenAIApiProvider,
-  isOpenAICodexProvider,
+  usesResponsesTransport,
   resolveConfiguredCodexReasoningEffort,
 } = require("../simple-page-model-config.cjs");
 const { inspectModelLaunch } = require("../simple-page-model-assets.cjs");
@@ -35,6 +35,8 @@ const {
 const { buildChatRequestBody } = require("./request-bodies.cjs");
 const { createLinkedDeadlineController } = require("./http-deadline.cjs");
 
+const { withApiConversation } = require("./api-conversation.cjs");
+
 const VISION_PROBE_DATA_URL =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=";
 
@@ -44,6 +46,7 @@ const VISION_PROBE_DATA_URL =
  * @returns {Promise<Record<string, unknown>>}
  */
 async function testModelReply(server, options) {
+  options = withApiConversation(options, true);
   const deadline = createLinkedDeadlineController(
     options.abortSignal,
     30000,
@@ -51,14 +54,14 @@ async function testModelReply(server, options) {
   );
   const boundedOptions = { ...options, abortSignal: deadline.signal };
   try {
-    if (isOpenAICodexProvider(boundedOptions)) {
+    if (usesResponsesTransport(boundedOptions)) {
       return await testCodexResponsesReply(server, boundedOptions);
     }
 
     const requestBody = buildChatRequestBody(
       boundedOptions,
       buildProbeMessages(),
-      48,
+      isOpenAIApiProvider(boundedOptions) ? 1024 : 48,
     );
     if (!isOpenAIApiProvider(boundedOptions)) {
       await applyLocalForbiddenTokenBias(server, boundedOptions, requestBody);
@@ -98,7 +101,7 @@ function buildProbeMessages() {
       content: [
         {
           type: "text",
-          text: "Confirm that you can inspect the attached image. Reply in one short sentence.",
+          text: 'Confirm that you can inspect the attached image. Reply in one short sentence. If JSON output is required, return {"message":"model test ok"}.',
         },
       ],
     },
@@ -212,7 +215,12 @@ function buildCodexProbeRequest(options) {
         content: [{ type: "input_text", text: "Say 'model test ok'." }],
       },
     ],
-    reasoning: { effort: resolveConfiguredCodexReasoningEffort(options) },
+    reasoning: {
+      effort:
+        options.modelProvider === "claude-code"
+          ? String(options.claudeEffort || "high")
+          : resolveConfiguredCodexReasoningEffort(options),
+    },
     stream: true,
     store: false,
   };

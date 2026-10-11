@@ -53,6 +53,35 @@ const responseFormat = {
 };
 
 describe("semantic OCR structured output budgets", () => {
+  it("applies user sampling to translation while keeping grouping greedy and thinking disabled", () => {
+    const options = {
+      modelProvider: "gemma",
+      maxTokens: 24576,
+      temperature: 0.6,
+      topP: 0.8,
+      topK: 40,
+    };
+    for (const stage of ["grouping", "translation"] as const) {
+      expect(
+        buildSemanticStageRequestBody(
+          options,
+          messages,
+          responseFormat,
+          stage,
+          3,
+        ),
+      ).toMatchObject({
+        temperature: stage === "grouping" ? 0 : 0.6,
+        top_p: 0.8,
+        top_k: 40,
+        enable_thinking: false,
+        reasoning_budget: 0,
+        seed: 424242,
+        repeat_penalty: 1.08,
+      });
+    }
+  });
+
   it("uses standard OpenAI-compatible JSON Schema without llama-only fields", () => {
     const body = buildSemanticStageRequestBody(
       {
@@ -215,7 +244,13 @@ describe("semantic OCR structured output budgets", () => {
 
   it("keeps llama.cpp's native structured-output and sampling contract", () => {
     const body = buildSemanticStageRequestBody(
-      { modelProvider: "gemma", maxTokens: 24_576, temperature: 0.2 },
+      {
+        modelProvider: "gemma",
+        maxTokens: 24_576,
+        temperature: 0.1,
+        topP: 0.95,
+        topK: 64,
+      },
       messages,
       responseFormat,
       "translation",

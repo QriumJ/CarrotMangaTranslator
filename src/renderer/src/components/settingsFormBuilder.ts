@@ -1,3 +1,4 @@
+import type { GemmaSamplingSettings } from "../../../shared/gemmaSamplingSettings";
 import type { CodexImageGenerationModel } from "../../../shared/codexSettings";
 import type {
   AppSettings,
@@ -53,10 +54,13 @@ type BuildSettingsFromFormInput = {
   localModelPath: string;
   localMmprojPath: string;
   vramMode: GemmaVramMode;
+  gemmaSampling: GemmaSamplingSettings;
   fitTargetMb: number;
   mmprojOffload: boolean;
   llamaRuntimeProfile: LlamaRuntimeProfile;
   allowUnsafeUnifiedMemory: boolean;
+  imageReview: NonNullable<AppSettings["imageReview"]>;
+  claude: NonNullable<AppSettings["claude"]>;
   codexModel: string;
   codexReasoningEffort: CodexReasoningEffort;
   codexImageReasoningEffort: CodexReasoningEffort;
@@ -71,6 +75,7 @@ type BuildSettingsFromFormInput = {
   researchApiMaxOutputTokens: number;
   researchApiContextTokens: number;
   researchApiProfiles: AppSettings["internetResearch"]["apiProfiles"];
+  researchClaude: NonNullable<AppSettings["claude"]>;
   researchCodexModel: string;
   researchCodexReasoningEffort: CodexReasoningEffort;
   researchCodexMaxOutputTokens: number;
@@ -80,6 +85,10 @@ type BuildSettingsFromFormInput = {
   apiBaseUrl: string;
   apiProvider: ApiProviderPresetId;
   apiProfiles: AppSettings["api"]["profiles"];
+  customProfiles?: AppSettings["api"]["customProfiles"];
+  activeCustomProfileId?: string;
+  apiSessionHeaderEnabled?: boolean;
+  apiSessionHeaderName?: string;
   apiModel: string;
   apiKey: string;
   apiVertexAuthMode: import("../../../shared/apiProviderPresets").VertexAuthMode;
@@ -128,6 +137,8 @@ export function buildSettingsFromForm(
       resolveTranslationLanguageSettings(input.initialSettings.translation),
     ),
     gemma: buildGemmaSettings(input),
+    claude: input.claude,
+    imageReview: input.imageReview,
     codex: {
       model: input.codexModel || input.initialSettings.codex.model,
       reasoningEffort: input.codexReasoningEffort,
@@ -137,6 +148,7 @@ export function buildSettingsFromForm(
         input.codexImageGenerationModel ?? "gpt-image-2.5-flare",
     },
     internetResearch: {
+      claude: input.researchClaude,
       tavilyAnalysisProvider: input.researchTavilyAnalysisProvider,
       gemmaPreset: input.researchGemmaPreset,
       gemmaReasoningEffort: input.researchGemmaReasoningEffort,
@@ -201,6 +213,7 @@ function buildGemmaSettings(input: BuildSettingsFromFormInput) {
       ? { localMmprojPath: input.localMmprojPath }
       : {}),
     vramMode: input.vramMode,
+    ...input.gemmaSampling,
     fitTargetMb: input.fitTargetMb,
     mmprojOffload: input.mmprojOffload,
     llamaRuntimeProfile: input.llamaRuntimeProfile,
@@ -239,10 +252,14 @@ function buildApiSettings(input: BuildSettingsFromFormInput) {
     reasoningEffort: input.apiReasoningEffort,
     extraBodyJson: input.apiExtraBodyJson,
     customHeadersJson: input.apiCustomHeadersJson,
+    sessionHeaderEnabled: input.apiSessionHeaderEnabled,
+    sessionHeaderName: input.apiSessionHeaderName,
   };
   return {
     ...activeProfile,
     provider: input.apiProvider,
+    customProfiles: input.customProfiles,
+    activeCustomProfileId: input.activeCustomProfileId,
     profiles: {
       ...input.apiProfiles,
       [input.apiProvider]: activeProfile,

@@ -11,6 +11,8 @@ const MCP_HELP_URLS = {
   codex: "https://learn.chatgpt.com/docs/extend/mcp?surface=cli",
   claude: "https://claude.ai/",
   "claude-code": "https://code.claude.com/docs/en/mcp",
+  opencode: "https://opencode.ai/docs/mcp-servers/",
+  generic: "https://modelcontextprotocol.io/docs/learn/client-concepts",
 } as const;
 
 /** App configuration is available to the trusted main renderer only, never MCP. */
@@ -64,7 +66,7 @@ export function registerMcpDesktopIpc(context: IpcContext): void {
   trustedHandleContract(context, mcpIpcContracts.copyMcpUrl, async () => {
     const status = await requireService(context).getStatus();
     if (!status.url) throw new Error("먼저 MCP 서버를 켜세요.");
-    clipboard.writeText(status.url);
+    await clipboard.writeText(status.url);
     return { completed: true };
   });
 }

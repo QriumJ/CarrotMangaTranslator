@@ -1,0 +1,261 @@
+{
+  "status": "complete-validated-with-explicit-hardware-limits",
+  "scope": "User-approved Koharu engine migration; PaddleOCR and installed local development tools excluded",
+  "koharu": {
+    "version": "0.83.5",
+    "revision": "52bb4f55e2266f72c1523562a583c827ec191ceb",
+    "torchShim": "2.13.0.7",
+    "diffusionTag": "master-853-b68d586",
+    "diffusionRevision": "b68d58624d227682eb4b95ef8bcf569cd1311eb5"
+  },
+  "contracts": {
+    "lamaAot": "LibTorch explicit model paths and app-installed native runtime",
+    "flux": "stable-diffusion.cpp, explicit transformer / Qwen3 text encoder / full-encoder small-decoder VAE",
+    "animeText": "Existing YOLO12 and postprocessing, Candle 0.11 F32, portable sm75 CUDA kernels; existing ZLUDA path retained",
+    "orchestration": "Old crop, balloon, mask, alpha and pixel-budget behavior characterized before moving into runner-image-processing",
+    "windowsPaths": "UTF-8 activeCodePage manifests; no system locale change",
+    "amd": "Native ROCm 10 exact-device probe and managed packages; hardware validation pending",
+    "mac": "Native Metal libraries and colocated worker; macOS arm64 builds/Rust tests and real CPU inference passed. Metal GPU inference unverified."
+  },
+  "validation": {
+    "issue147WindowsNativePaths": {
+      "date": "2026-10-11",
+      "issue": "https://github.com/ucx0204/CarrotMangaTranslator/issues/147#issuecomment-6103731697",
+      "evidence": "plantsun450 v3.3.1 app (9).log and default.log: gfx1200 hipBLASLt kernel lookup used a verbatim Windows directory followed by a forward slash, then exited with 0xC0000005. The pinned gfx1200 wheel contains the reported kernel; its 377648520 bytes and SHA-256 f33226078932ee2200f5595c521895edf5d7abf3170975d8c6f72a2a3949f516 were independently verified.",
+      "rootCause": "The shared Rust native loader canonicalized every DLL to a verbatim Windows path. GetModuleFileNameW preserves that spelling, and DLL-relative GPU kernel discovery appends forward slashes. Raw CreateFileW rejects the resulting mixed-separator verbatim path with error 123 even when the file exists.",
+      "scope": "Fix the common loader for diffusion, LibTorch and ROCm probing, including DLL-relative hipBLASLt/rocBLAS/other native resource discovery. Normalize app-managed PATH, HIP_PATH and ROCM_PATH at worker/probe launch too. Extraction, checksum receipts, model paths, data roots and GPU-selection authority stay in their existing owners.",
+      "longPaths": "Canonical DLL identities are preserved while drive/UNC spelling becomes joinable. Existing DOS directory aliases handle MAX_PATH-limited native DLLs; vcomp140.dll retains its previous verbatim loading behavior if an alias is unavailable. No links, directory relocation or system settings are created. Paths on volumes without DOS aliases cannot all be certified for third-party MAX_PATH-only libraries.",
+      "regressionTests": "Rust native policy: 8 passed, including an actual DLL load and raw CreateFileW kernel read from a long Unicode path. TypeScript installer/launch/plan: 29 passed. Rust and TypeScript consume the same drive/UNC/Unicode/long-path fixture. Windows Check now runs the Rust tests with a longPathAware test manifest matching the worker policy.",
+      "repositoryCheck": "Node 26.10.0 scripts/check.cjs: all 27 gates passed, 10633 tests passed and 9 skipped; type checks, lint, coverage, build, Electron image protocol and zero-mismatch page artwork parity passed (481.75 seconds).",
+      "inferenceSmoke": ".tmp/issue-147/smoke-results.json records FLUX CUDA, LaMa CPU/CUDA and AOT CPU/CUDA inference using synthetic 256x256 input and DLL paths longer than 260 characters with Korean text and spaces.",
+      "hardwareLimit": "Local GPU is RTX 4090. The Windows file-path failure is reproduced and fixed; RX 9060 XT / gfx1200 inference still requires AMD hardware validation. Existing gfx1200 packages are unchanged.",
+      "rebuiltBundledWorkers": [
+        {
+          "path": "tools/mgt-flux-klein/mgt-flux-klein.exe",
+          "bytes": 8436224,
+          "sha256": "371abcfaf174799f5223018e0e59efb3af0953c01f931aefcaa6f60941b208be"
+        },
+        {
+          "path": "tools/mgt-koharu-inpaint-runner/mgt-koharu-inpaint-runner.exe",
+          "bytes": 55412224,
+          "sha256": "5b0873e21e0652c897734bd71d171484ff6a1b1ed40f9a9bf26b0963f6676850"
+        }
+      ],
+      "distribution": "The v3.3.2 app release includes the rebuilt bundled Windows workers. Immutable remote CPU assets and GPU packages are unchanged. Existing managed Flux worker copies update by comparing the bundled worker hash; Koharu copies the bundled worker at launch."
+    },
+    "preMoveImageTests": 18,
+    "adapterTests": 19,
+    "nativePolicyTests": 5,
+    "fluxTests": 3,
+    "installerTests": 21,
+    "actualProductionWorkerInferences": [
+      "LaMa CPU",
+      "AOT CPU",
+      "FLUX CPU",
+      "LaMa RTX4090",
+      "AOT RTX4090",
+      "FLUX RTX4090",
+      "AnimeText CPU (clean PATH)",
+      "AnimeText RTX4090 F32"
+    ],
+    "actualAdapterInferences": ["AnimeText CPU", "AnimeText RTX4090 F32"],
+    "smokeFixture": "Synthetic 256x256 manga lettering mask; validates execution, dimensions and JSON protocol, not image-quality equivalence between engines",
+    "smokeReceipt": ".tmp/runtime-update-stage23/production-native-smoke.json",
+    "windowsUnicodeRegression": "All production smokes used Korean absolute paths; SDCPP failed before the process UTF-8 manifest fix",
+    "coldRemoteInstall": "Empty native-cold-r1 data root: actual app installers fetched LaMa CPU libraries and FLUX CPU runner/runtime from remote, and both workers completed inference.",
+    "rocmInstall": "Actual ROCm 10 core/libraries/gfx1100 archive installation passed under a long Korean Windows data path. Core DLL probe loaded successfully and returned HIP status 100/devices 0 on the NVIDIA-only machine; AMD inference is unverified.",
+    "hfAssets": "npm run verify:hf-assets: 36 assets verified, including pinned new VAE and Qwen3 text encoder.",
+    "ui": {
+      "wide": "C:/tmp/native-runtime-qa-wide-r2.png",
+      "narrow": "C:/tmp/native-runtime-qa-narrow-r2.png",
+      "result": "Actual FluxBackendSettings component, supported/unsupported AMD states, 1440x900 and 390x844; no horizontal overflow, clipping or overlap. Temporary entrypoints removed."
+    },
+    "introducedCoverage": {
+      "artifact": ".tmp/runtime-update-stage23/native-focused-coverage/coverage-summary.json",
+      "sha256": "83c66bdc172d2a5fee01e7293eb65156c42b9b1828a803ec7637ca9fb98f5cc2",
+      "platform": "Windows",
+      "node": "26.10.0",
+      "vitest": "5.0.3",
+      "result": "21 tests passed; three new native modules measured separately. Existing coverage floors unchanged."
+    },
+    "windowsCpuPortability": "PE import-table regression guard rejects nvcuda/cudart/cublas/curand loader imports. Actual LaMa and AnimeText CPU inference passed with PATH restricted to Windows/System32 and app-private MSVC DLLs.",
+    "coverageRetirement": "Existing numerical coverage floors were not lowered. Removed the baseline entry for deleted, unreachable zludaRuntime.ts and the introduced entry for deleted hipSdk.ts; scope manifest tracks 817 existing, 1336 added and 12 deleted files.",
+    "finalCheck": {
+      "command": "npm run check",
+      "node": "26.10.0 (isolated portable runtime)",
+      "gates": 27,
+      "passed": 10127,
+      "failed": 0,
+      "skipped": 9,
+      "durationSeconds": 624.23,
+      "coverage": {
+        "statements": 85.44,
+        "branches": 78.74,
+        "functions": 87.73,
+        "lines": 86.63
+      },
+      "coverageFloors": "passed without lowering existing floors",
+      "build": "passed, rebuilt Electron/renderer/runtime assets",
+      "postBuild": [
+        "page artwork parity",
+        "image protocol smoke",
+        "renderer bundle boundary",
+        "preload bundle boundary"
+      ],
+      "sourceCommit": "82127672758552928c5e82cd6636b5649878929c"
+    },
+    "windowsFullRemoteModelInstall": {
+      "firstRun": "Downloaded and SHA-256 verified LaMa, FLUX transformer, Qwen3 and VAE into an initially empty model directory. This exposed stale local CPU runner selection.",
+      "regression": "Autodiscovered tools/mgt-flux-klein-cpu legacy Candle binaries must pass the bounded --capabilities engine/CPU check or be skipped for the pinned remote runner. Explicit developer overrides remain explicit.",
+      "retry": "Fresh runtime directory, real remote libraries/CPU runner, reusing only the just-verified isolated model downloads; LaMa and FLUX inference passed.",
+      "responses": [
+        {
+          "name": "lama",
+          "id": "lama",
+          "ok": true,
+          "elapsed_ms": 305,
+          "error": null
+        },
+        {
+          "name": "flux",
+          "id": "flux",
+          "ok": true,
+          "elapsed_ms": 46179,
+          "error": null
+        }
+      ],
+      "receipt": ".tmp/native-hardware/한글-0RPToX/receipt.json"
+    },
+    "macOS": {
+      "workflow": "https://github.com/ucx0204/CarrotMangaTranslator/actions/runs/37197800000",
+      "sourceCommit": "82127672758552928c5e82cd6636b5649878929c",
+      "conclusion": "success",
+      "platform": "darwin",
+      "arch": "arm64",
+      "nativeBuilds": "Both Metal-capable workers compiled on macos-26 arm64",
+      "rustTests": "5 runtime policy, 3 Flux, 18 image-processing tests passed",
+      "remoteCpuInference": [
+        {
+          "name": "lama",
+          "id": "lama",
+          "ok": true,
+          "elapsed_ms": 1802,
+          "error": null
+        },
+        {
+          "name": "flux",
+          "id": "flux",
+          "ok": true,
+          "elapsed_ms": 174548,
+          "error": null
+        }
+      ],
+      "hardwareLimitation": "Metal GPU inference is not verified; the actual macOS inference smoke selects CPU.",
+      "artifactReceipt": ".tmp/runtime-update-stage23/mac-native-final-artifacts/한글-6Htxhi/receipt.json",
+      "previousSuccessfulRun": "https://github.com/ucx0204/CarrotMangaTranslator/actions/runs/37196504023"
+    },
+    "cleanup": "Automatic approval review rejected recursive removal of isolated verification download copies, including an explicit single verified path. Copies retained under .tmp; source artifacts, receipts and user data preserved.",
+    "windowsPackage": {
+      "directory": ".tmp/runtime-update-stage23/native-package/win-unpacked",
+      "publish": false,
+      "installed": false,
+      "electron": "44.5.1",
+      "files": 371,
+      "unpackedMiB": 1306.5,
+      "asciiPayloadEntries": 402,
+      "maxRelativePathLength": 79,
+      "verification": "Existing verify-packaged-runtime.cjs executed with only its unpackedDir redirected to the isolated package; all checks retained.",
+      "passed": [
+        "Codex app-server handshake",
+        "ONNX WASM",
+        "ONNX Node CPU/DirectML/font proxy",
+        "Electron main module graph",
+        "FFmpeg WebP conversion",
+        "PDF/RAR/CBR import runner capabilities",
+        "private-file exclusion and installer path budget"
+      ],
+      "koharuSha256": "08b3195dab998630312fc44478fab987a1daaa9cb7b7b3ffc22db2a4dde116d3",
+      "fluxSha256": "219fbf182c85d8f7fed27dd87d1ae49028e66c36af28f9848055ab4025bbba27",
+      "logs": [
+        ".tmp/runtime-update-stage23/native-package-build.log",
+        ".tmp/runtime-update-stage23/native-package-verify.log"
+      ]
+    }
+  },
+  "build": {
+    "installedToolsChanged": false,
+    "isolatedTools": ["CMake 4.4.3", "libclang 18.1.1"],
+    "cudaCompiler": "Existing CUDA 12.9, only needed for AnimeText Candle kernels",
+    "nativeCudaRuntime": "Official CUDA 13.3 packages, downloaded independently of local CUDA",
+    "msvcRuntime": "Official signed Microsoft VC++ 14.51.36247.0 DLLs, extracted without running the installer",
+    "cpuDiffusion": "scripts/build-native-diffusion-cpu.ps1, AVX2, no Vulkan/CUDA dependency",
+    "assetProducer": "scripts/package-native-inference-release.cjs",
+    "removedLegacy": [
+      "Flux Candle Metal wrapper and its implementation-specific QMatMul test",
+      "Flux build-time Cargo cache mutation",
+      "Unreferenced Flux manual HIP SDK discovery and ZLUDA support installer; separate AnimeText ZLUDA retained"
+    ],
+    "windowsKoharuArtifact": {
+      "path": "tools/mgt-koharu-inpaint-runner/mgt-koharu-inpaint-runner.exe",
+      "bytes": 55410176,
+      "sha256": "08b3195dab998630312fc44478fab987a1daaa9cb7b7b3ffc22db2a4dde116d3",
+      "embeddedLocalUserPath": false
+    },
+    "candleCorePatch": {
+      "upstreamVersion": "0.11.0",
+      "upstreamCrateSha256": "5ecb245093b0f791b89d3420c3df9c6d49c60ab63ba54db896bf8a3baf486706",
+      "sourceFilesCompared": 65,
+      "algorithmChanges": 0,
+      "whitespaceOnlyChanges": ["src\\tensor.rs"],
+      "contract": "Switch cudarc from dynamic-linking to dynamic-loading. Link static CUDART on Windows for native kernel registration before main; optional NVIDIA DLLs are loaded only when AnimeText selects CUDA."
+    }
+  },
+  "release": {
+    "url": "https://github.com/ucx0204/CarrotMangaTranslator/releases/tag/koharu-native-0.83.5-win-x64-r1",
+    "tag": "koharu-native-0.83.5-win-x64-r1",
+    "sourceCommit": "223cbdaeaabaf021739d128ee5364b186b51d19f",
+    "manifest": "docs/koharu-0835-native-assets.json",
+    "remoteVerification": {
+      "url": "https://github.com/ucx0204/CarrotMangaTranslator/releases/tag/koharu-native-0.83.5-win-x64-r1",
+      "assets": [
+        {
+          "name": "manifest.json",
+          "bytes": 7134,
+          "sha256": "c1d81dc7a86d27dfbac5827a8018463809f44407f4578a207e13cf3ac1bb449d"
+        },
+        {
+          "name": "mgt-flux-klein-cpu-0.83.5-win-x64.zip",
+          "bytes": 3244240,
+          "sha256": "1aff35d63b44397b53168225495463315f4981877c157a54b99d6fb35235229e"
+        },
+        {
+          "name": "mgt-flux-klein-native-0.83.5-win-x64.zip",
+          "bytes": 3243118,
+          "sha256": "7977e384dc8882d88eb687e516f3ad6036f3e4d14e406a2624e6ce0eb35505a3"
+        },
+        {
+          "name": "msvc-14.51.36247-native-win-x64.zip",
+          "bytes": 631189,
+          "sha256": "5dd740b84a0d315852b1e3e64c041a551b3adff3d0696c59354ffe7b7ca7f5cc"
+        },
+        {
+          "name": "stable-diffusion-master-853-cpu-win-x64.zip",
+          "bytes": 22590910,
+          "sha256": "91ecf36a94007c17c8cd997b7c3d71c893b92ca6d1249e4c5a36f710c2f3fad3"
+        }
+      ],
+      "verified": true
+    },
+    "contract": "Four flat ZIP archives plus binding manifest.json; five server assets matched names, bytes and SHA-256 after re-download. Archive member inventories verified. Immutable asset-only prerelease; no application release."
+  },
+  "remaining": [],
+  "consumerContracts": {
+    "runtimeCatalog": "src/main/runtime/native-inference-manifest.json",
+    "runtimeCache": "koharu-0.83.5-r1 + platform/backend/engine/exact ROCm target; package fingerprint and file SHA receipts",
+    "models": "Transformer unchanged; FLUX.2-small-decoder full_encoder_small_decoder.safetensors and Qwen3-4B-Q4_K_M.gguf pinned by revision/SHA",
+    "backendMigration": "Existing zluda-native/python-rocm choices normalize to rocm-native for inpainting. AnimeText retains its separate Candle/ZLUDA contract. Legacy supportsFluxZluda IPC field now describes native ROCm package availability, not AMD hardware certification.",
+    "gpuSelection": "ROCm probes an unmasked physical adapter index before selecting the exact gfx package, then uses the same adapter for worker visibility. CUDA keeps UUID binding.",
+    "nativeDllSearch": "Managed CUDA 13.3/ROCm/MSVC directories precede host PATH; native workers skip legacy CUDA 12.9 discovery."
+  },
+  "rollback": "Revert migration commits as one source/catalog/native-binary unit to dependency checkpoint 39e997ff. Old external releases and caches are retained; new assets use unique tags/cache versions. Never delete library, originals or outputs."
+}

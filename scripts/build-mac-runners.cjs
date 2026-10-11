@@ -3,7 +3,7 @@
 
 const { spawnSync } = require("node:child_process");
 const { join } = require("node:path");
-const { patchCandleMetalQMatMul } = require("./patch-candle-metal-qmatmul.cjs");
+const { nativeBindgenEnv } = require("./native-bindgen-env.cjs");
 const {
   assertFluxProtocolSmoke,
   assertMetalCapabilities,
@@ -36,7 +36,7 @@ const root = join(__dirname, "..");
  */
 function createCommandRunner(options = {}) {
   const cwd = options.cwd ?? root;
-  const environment = options.environment ?? process.env;
+  const environment = nativeBindgenEnv(options.environment ?? process.env);
   return (command, args, runOptions = {}) => {
     const result = spawnSync(command, args, {
       cwd,
@@ -44,7 +44,6 @@ function createCommandRunner(options = {}) {
         ...environment,
         CARGO_INCREMENTAL: "0",
         CANDLE_METAL_XCODE: "1",
-        LLAMA_CPP_TAG: environment.LLAMA_CPP_TAG || "b-mgt-unused",
       },
       ...(runOptions.captureOutput
         ? {
@@ -116,13 +115,6 @@ function main() {
     throw new Error("Metal runner builds require an Apple Silicon Mac.");
   }
   const plan = createMetalRunnerBuildPlan(root);
-  const fluxManifest = plan.find(
-    (entry) => entry.id === "mgt-flux-klein",
-  )?.manifestPath;
-  if (!fluxManifest) {
-    throw new Error("Flux Metal build plan is missing");
-  }
-  patchCandleMetalQMatMul({ cwd: root, manifestPath: fluxManifest });
   const run = createCommandRunner();
   executeMetalRunnerBuildPlan(plan, run);
   run(process.execPath, [

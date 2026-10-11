@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "provenance": {
     "baseCommit": "01768a05a2e74666c1fd38f2b22e4efb1cf9822b",
     "baselinePlatform": "win32",
@@ -7,10 +7,15 @@
     "sourceArtifact": ".tmp/production-cleanup-coverage-baseline-node22.json",
     "sourceArtifactSha256": "a0e1199f46a80734d228ff1772b99d1fde2f700321346da77abf9c29795e4c0a",
     "introducedArtifact": ".tmp/production-cleanup-coverage-accepted-node26.json",
-    "introducedArtifactSha256": "f16a550fda45a762fcd8bd43078f244e2b043b64b31679e001d10a805f004509",
+    "introducedArtifactSha256": "77bdf6ab36ca10ebc252a472e42793e8a029fe9003daa798779b81f5a6f53fe5",
     "validatedNodeV8": ["22/12.4", "24/13.6", "26/14.6"],
     "vitestVersion": "4.1.11",
     "coverageV8Version": "4.1.11"
+  },
+  "toolchain": {
+    "validatedNodeV8": ["22/12.4", "24/13.6", "26/14.6"],
+    "vitestVersion": "5.0.3",
+    "coverageV8Version": "5.0.3"
   },
   "floors": {
     "src/main/amdRocmTargets.ts": {
@@ -55,6 +60,28 @@
         "covered": 15,
         "total": 18,
         "pct": 83.33
+      }
+    },
+    "src/main/apiModelDiscoveryCatalogs.ts": {
+      "lines": {
+        "covered": 41,
+        "total": 42,
+        "pct": 97.61
+      },
+      "statements": {
+        "covered": 42,
+        "total": 43,
+        "pct": 97.67
+      },
+      "functions": {
+        "covered": 14,
+        "total": 14,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 13,
+        "total": 14,
+        "pct": 92.85
       }
     },
     "src/main/appActivityGate.ts": {
@@ -143,6 +170,28 @@
         "total": 35,
         "covered": 27,
         "pct": 77.14
+      }
+    },
+    "src/main/appQuitCoordinator.ts": {
+      "lines": {
+        "covered": 41,
+        "total": 42,
+        "pct": 97.61
+      },
+      "statements": {
+        "covered": 42,
+        "total": 43,
+        "pct": 97.67
+      },
+      "functions": {
+        "covered": 10,
+        "total": 10,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 17,
+        "total": 17,
+        "pct": 100
       }
     },
     "src/main/appSettings.ts": {
@@ -319,6 +368,28 @@
         "covered": 50,
         "total": 60,
         "pct": 83.33
+      }
+    },
+    "src/main/bubbleLayout/bubbleMaskComponents.ts": {
+      "lines": {
+        "covered": 51,
+        "total": 51,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 55,
+        "total": 55,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 12,
+        "total": 12,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 15,
+        "total": 19,
+        "pct": 78.94
       }
     },
     "src/main/bubbleLayout/bubbleRegionPartition.ts": {
@@ -563,6 +634,28 @@
         "pct": 0
       }
     },
+    "src/main/customFontInspection.ts": {
+      "lines": {
+        "covered": 156,
+        "total": 173,
+        "pct": 90.17
+      },
+      "statements": {
+        "covered": 162,
+        "total": 179,
+        "pct": 90.5
+      },
+      "functions": {
+        "covered": 22,
+        "total": 22,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 100,
+        "total": 120,
+        "pct": 83.33
+      }
+    },
     "src/main/customFonts.ts": {
       "lines": {
         "covered": 114,
@@ -673,6 +766,28 @@
         "pct": 100
       }
     },
+    "src/main/fatalMainProcessIncident.ts": {
+      "lines": {
+        "covered": 66,
+        "total": 70,
+        "pct": 94.28
+      },
+      "statements": {
+        "covered": 66,
+        "total": 70,
+        "pct": 94.28
+      },
+      "functions": {
+        "covered": 19,
+        "total": 19,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 10,
+        "total": 12,
+        "pct": 83.33
+      }
+    },
     "src/main/fontMatchingPageImage.ts": {
       "lines": {
         "covered": 0,
@@ -739,6 +854,50 @@
         "pct": 100
       }
     },
+    "src/main/imageProtocol.ts": {
+      "lines": {
+        "total": 46,
+        "covered": 30,
+        "pct": 65.21
+      },
+      "statements": {
+        "total": 47,
+        "covered": 30,
+        "pct": 63.82
+      },
+      "functions": {
+        "total": 19,
+        "covered": 10,
+        "pct": 52.63
+      },
+      "branches": {
+        "total": 15,
+        "covered": 8,
+        "pct": 53.33
+      }
+    },
+    "src/main/imageUrlCodec.ts": {
+      "lines": {
+        "total": 92,
+        "covered": 85,
+        "pct": 92.39
+      },
+      "statements": {
+        "total": 92,
+        "covered": 85,
+        "pct": 92.39
+      },
+      "functions": {
+        "total": 23,
+        "covered": 23,
+        "pct": 100
+      },
+      "branches": {
+        "total": 84,
+        "covered": 75,
+        "pct": 89.28
+      }
+    },
     "src/main/index.ts": {
       "lines": {
         "covered": 0,
@@ -783,6 +942,28 @@
         "pct": 0
       }
     },
+    "src/main/inpainting/bubbleLayoutConstraintMask.ts": {
+      "lines": {
+        "covered": 40,
+        "total": 40,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 45,
+        "total": 47,
+        "pct": 95.74
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 23,
+        "total": 34,
+        "pct": 67.64
+      }
+    },
     "src/main/inpainting/bubbleLayoutNaturalText.ts": {
       "lines": {
         "covered": 35,
@@ -825,6 +1006,28 @@
         "covered": 58,
         "total": 75,
         "pct": 77.33
+      }
+    },
+    "src/main/inpainting/bubbleLayoutRunnerPatches.ts": {
+      "lines": {
+        "covered": 46,
+        "total": 52,
+        "pct": 88.46
+      },
+      "statements": {
+        "covered": 53,
+        "total": 59,
+        "pct": 89.83
+      },
+      "functions": {
+        "covered": 14,
+        "total": 14,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 44,
+        "total": 51,
+        "pct": 86.27
       }
     },
     "src/main/inpainting/computeGpuEnv.ts": {
@@ -981,6 +1184,28 @@
         "pct": 0
       }
     },
+    "src/main/inpainting/fluxAssets/pythonIntegrity.ts": {
+      "lines": {
+        "covered": 2,
+        "total": 15,
+        "pct": 13.33
+      },
+      "statements": {
+        "covered": 2,
+        "total": 16,
+        "pct": 12.5
+      },
+      "functions": {
+        "covered": 0,
+        "total": 5,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 8,
+        "pct": 0
+      }
+    },
     "src/main/inpainting/fluxAssets/pythonRuntimeInstaller.ts": {
       "lines": {
         "covered": 0,
@@ -1001,6 +1226,28 @@
         "covered": 0,
         "total": 33,
         "pct": 0
+      }
+    },
+    "src/main/inpainting/fluxAssets/pythonRuntimeLaunchSpec.ts": {
+      "lines": {
+        "total": 17,
+        "covered": 9,
+        "pct": 52.94
+      },
+      "statements": {
+        "total": 17,
+        "covered": 9,
+        "pct": 52.94
+      },
+      "functions": {
+        "total": 5,
+        "covered": 3,
+        "pct": 60
+      },
+      "branches": {
+        "total": 5,
+        "covered": 2,
+        "pct": 40
       }
     },
     "src/main/inpainting/fluxAssets/pythonRuntimeLayout.ts": {
@@ -1047,6 +1294,28 @@
         "pct": 0
       }
     },
+    "src/main/inpainting/fluxAssets/rocmRuntime.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 62,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 62,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 17,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 61,
+        "pct": 0
+      }
+    },
     "src/main/inpainting/fluxAssets/runner.ts": {
       "lines": {
         "covered": 92,
@@ -1067,6 +1336,28 @@
         "covered": 55,
         "total": 81,
         "pct": 67.9
+      }
+    },
+    "src/main/inpainting/fluxAssets/runnerSourceHelpers.ts": {
+      "lines": {
+        "total": 3,
+        "covered": 3,
+        "pct": 100
+      },
+      "statements": {
+        "total": 4,
+        "covered": 4,
+        "pct": 100
+      },
+      "functions": {
+        "total": 2,
+        "covered": 2,
+        "pct": 100
+      },
+      "branches": {
+        "total": 6,
+        "covered": 6,
+        "pct": 100
       }
     },
     "src/main/inpainting/fluxAssets/workerLaunch.ts": {
@@ -1091,28 +1382,6 @@
         "pct": 50
       }
     },
-    "src/main/inpainting/fluxAssets/zludaRuntime.ts": {
-      "lines": {
-        "covered": 21,
-        "total": 33,
-        "pct": 63.63
-      },
-      "statements": {
-        "covered": 21,
-        "total": 33,
-        "pct": 63.63
-      },
-      "functions": {
-        "covered": 4,
-        "total": 5,
-        "pct": 80
-      },
-      "branches": {
-        "covered": 6,
-        "total": 10,
-        "pct": 60
-      }
-    },
     "src/main/inpainting/fluxCompositeConstraint.ts": {
       "lines": {
         "covered": 8,
@@ -1133,6 +1402,28 @@
         "covered": 7,
         "total": 10,
         "pct": 70
+      }
+    },
+    "src/main/inpainting/fluxCropIO.ts": {
+      "lines": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
       }
     },
     "src/main/inpainting/fluxEngine.ts": {
@@ -1531,6 +1822,28 @@
         "pct": 100
       }
     },
+    "src/main/inpainting/inpaintingWindowMask.ts": {
+      "lines": {
+        "covered": 46,
+        "total": 48,
+        "pct": 95.83
+      },
+      "statements": {
+        "covered": 53,
+        "total": 56,
+        "pct": 94.64
+      },
+      "functions": {
+        "covered": 13,
+        "total": 13,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 20,
+        "total": 23,
+        "pct": 86.95
+      }
+    },
     "src/main/inpainting/koharuAssets.ts": {
       "lines": {
         "covered": 28,
@@ -1617,6 +1930,28 @@
         "covered": 0,
         "total": 4,
         "pct": 0
+      }
+    },
+    "src/main/inpainting/koharuWorker.ts": {
+      "lines": {
+        "total": 35,
+        "covered": 26,
+        "pct": 74.28
+      },
+      "statements": {
+        "total": 35,
+        "covered": 26,
+        "pct": 74.28
+      },
+      "functions": {
+        "total": 18,
+        "covered": 12,
+        "pct": 66.66
+      },
+      "branches": {
+        "total": 27,
+        "covered": 19,
+        "pct": 70.37
       }
     },
     "src/main/inpainting/patternBlockEligibility.ts": {
@@ -1748,6 +2083,28 @@
       "branches": {
         "covered": 0,
         "total": 0,
+        "pct": 100
+      }
+    },
+    "src/main/ipc/errorReportIpc.ts": {
+      "lines": {
+        "covered": 28,
+        "total": 33,
+        "pct": 84.84
+      },
+      "statements": {
+        "covered": 29,
+        "total": 34,
+        "pct": 85.29
+      },
+      "functions": {
+        "covered": 8,
+        "total": 13,
+        "pct": 61.53
+      },
+      "branches": {
+        "covered": 8,
+        "total": 8,
         "pct": 100
       }
     },
@@ -2147,6 +2504,28 @@
         "pct": 71.42
       }
     },
+    "src/main/jobs/beforeQuitCleanup.ts": {
+      "lines": {
+        "covered": 30,
+        "total": 34,
+        "pct": 88.23
+      },
+      "statements": {
+        "covered": 30,
+        "total": 34,
+        "pct": 88.23
+      },
+      "functions": {
+        "covered": 10,
+        "total": 10,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 11,
+        "total": 13,
+        "pct": 84.61
+      }
+    },
     "src/main/jobs/bubbleLayoutJob.ts": {
       "lines": {
         "covered": 41,
@@ -2211,6 +2590,28 @@
         "covered": 30,
         "total": 37,
         "pct": 81.08
+      }
+    },
+    "src/main/jobs/inpaintingJobPageCompletion.ts": {
+      "lines": {
+        "covered": 52,
+        "total": 56,
+        "pct": 92.85
+      },
+      "statements": {
+        "covered": 57,
+        "total": 63,
+        "pct": 90.47
+      },
+      "functions": {
+        "covered": 19,
+        "total": 19,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 86,
+        "total": 92,
+        "pct": 93.47
       }
     },
     "src/main/jobs/inpaintingJobPageProcessor.ts": {
@@ -4523,6 +4924,28 @@
         "pct": 71.48
       }
     },
+    "src/main/pipeline/fontMatchingRuntimeArtifactContract.ts": {
+      "lines": {
+        "covered": 10,
+        "total": 10,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 10,
+        "total": 10,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
     "src/main/pipeline/fontMatchingRuntimeArtifactStatus.ts": {
       "lines": {
         "covered": 75,
@@ -4609,6 +5032,28 @@
         "covered": 55,
         "total": 59,
         "pct": 93.22
+      }
+    },
+    "src/main/pipeline/fontMatchingSelectionCalibrationContract.ts": {
+      "lines": {
+        "covered": 209,
+        "total": 232,
+        "pct": 90.08
+      },
+      "statements": {
+        "covered": 219,
+        "total": 267,
+        "pct": 82.02
+      },
+      "functions": {
+        "covered": 54,
+        "total": 57,
+        "pct": 94.73
+      },
+      "branches": {
+        "covered": 295,
+        "total": 349,
+        "pct": 84.52
       }
     },
     "src/main/pipeline/keepBlocksOcr.ts": {
@@ -5205,6 +5650,28 @@
         "pct": 0
       }
     },
+    "src/main/runtime/assets/ffmpeg-path.cjs": {
+      "lines": {
+        "covered": 20,
+        "total": 21,
+        "pct": 95.23
+      },
+      "statements": {
+        "covered": 21,
+        "total": 22,
+        "pct": 95.45
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 15,
+        "total": 23,
+        "pct": 65.21
+      }
+    },
     "src/main/runtime/assets/image-source-assets.cjs": {
       "lines": {
         "covered": 50,
@@ -5337,6 +5804,28 @@
         "pct": 70
       }
     },
+    "src/main/runtime/model/compact-model-cache.cjs": {
+      "lines": {
+        "covered": 55,
+        "total": 64,
+        "pct": 85.93
+      },
+      "statements": {
+        "covered": 59,
+        "total": 76,
+        "pct": 77.63
+      },
+      "functions": {
+        "covered": 13,
+        "total": 15,
+        "pct": 86.66
+      },
+      "branches": {
+        "covered": 38,
+        "total": 56,
+        "pct": 67.85
+      }
+    },
     "src/main/runtime/model/gemma4-official-chat-template.cjs": {
       "lines": {
         "covered": 23,
@@ -5379,6 +5868,28 @@
         "covered": 30,
         "total": 33,
         "pct": 90.9
+      }
+    },
+    "src/main/runtime/model/hf-model-download.cjs": {
+      "lines": {
+        "covered": 42,
+        "total": 84,
+        "pct": 50
+      },
+      "statements": {
+        "covered": 45,
+        "total": 91,
+        "pct": 49.45
+      },
+      "functions": {
+        "covered": 7,
+        "total": 16,
+        "pct": 43.75
+      },
+      "branches": {
+        "covered": 16,
+        "total": 60,
+        "pct": 26.66
       }
     },
     "src/main/runtime/model/launch-arguments.cjs": {
@@ -5599,6 +6110,28 @@
         "covered": 60,
         "total": 62,
         "pct": 96.77
+      }
+    },
+    "src/main/runtime/model/server-environment.cjs": {
+      "lines": {
+        "covered": 43,
+        "total": 46,
+        "pct": 93.47
+      },
+      "statements": {
+        "covered": 46,
+        "total": 51,
+        "pct": 90.19
+      },
+      "functions": {
+        "covered": 7,
+        "total": 8,
+        "pct": 87.5
+      },
+      "branches": {
+        "covered": 22,
+        "total": 46,
+        "pct": 47.82
       }
     },
     "src/main/runtime/model/server-preflight.cjs": {
@@ -6151,6 +6684,28 @@
         "pct": 75
       }
     },
+    "src/main/runtime/prompts/model-profile.cjs": {
+      "lines": {
+        "covered": 13,
+        "total": 14,
+        "pct": 92.85
+      },
+      "statements": {
+        "covered": 13,
+        "total": 14,
+        "pct": 92.85
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 8,
+        "total": 10,
+        "pct": 80
+      }
+    },
     "src/main/runtime/prompts/ocr-bbox-section.cjs": {
       "lines": {
         "covered": 64,
@@ -6415,6 +6970,28 @@
         "pct": 87.5
       }
     },
+    "src/main/runtime/semantic-ocr/fixed-block-quality.cjs": {
+      "lines": {
+        "covered": 32,
+        "total": 33,
+        "pct": 96.96
+      },
+      "statements": {
+        "covered": 37,
+        "total": 39,
+        "pct": 94.87
+      },
+      "functions": {
+        "covered": 12,
+        "total": 12,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 25,
+        "total": 29,
+        "pct": 86.2
+      }
+    },
     "src/main/runtime/semantic-ocr/fixed-block-response.cjs": {
       "lines": {
         "covered": 118,
@@ -6479,6 +7056,28 @@
         "covered": 55,
         "total": 65,
         "pct": 84.61
+      }
+    },
+    "src/main/runtime/semantic-ocr/group-only-review-application.cjs": {
+      "lines": {
+        "covered": 50,
+        "total": 56,
+        "pct": 89.28
+      },
+      "statements": {
+        "covered": 50,
+        "total": 58,
+        "pct": 86.2
+      },
+      "functions": {
+        "covered": 9,
+        "total": 9,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 25,
+        "total": 34,
+        "pct": 73.52
       }
     },
     "src/main/runtime/semantic-ocr/group-only-review-deferred-ruby-geometry.cjs": {
@@ -7273,6 +7872,28 @@
         "pct": 84.61
       }
     },
+    "src/main/runtime/transport/chat-completion.cjs": {
+      "lines": {
+        "covered": 23,
+        "total": 26,
+        "pct": 88.46
+      },
+      "statements": {
+        "covered": 23,
+        "total": 26,
+        "pct": 88.46
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 7,
+        "total": 8,
+        "pct": 87.5
+      }
+    },
     "src/main/runtime/transport/download-budget-utils.cjs": {
       "lines": {
         "covered": 61,
@@ -7315,6 +7936,50 @@
         "covered": 12,
         "total": 19,
         "pct": 63.15
+      }
+    },
+    "src/main/runtime/transport/group-only-review-image-options.cjs": {
+      "lines": {
+        "total": 3,
+        "covered": 3,
+        "pct": 100
+      },
+      "statements": {
+        "total": 3,
+        "covered": 3,
+        "pct": 100
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "pct": 100
+      },
+      "branches": {
+        "total": 5,
+        "covered": 5,
+        "pct": 100
+      }
+    },
+    "src/main/runtime/transport/group-only-review-request.cjs": {
+      "lines": {
+        "total": 106,
+        "covered": 80,
+        "pct": 75.47
+      },
+      "statements": {
+        "total": 114,
+        "covered": 83,
+        "pct": 72.8
+      },
+      "functions": {
+        "total": 35,
+        "covered": 26,
+        "pct": 74.28
+      },
+      "branches": {
+        "total": 112,
+        "covered": 60,
+        "pct": 53.57
       }
     },
     "src/main/runtime/transport/hf-download.cjs": {
@@ -7403,6 +8068,28 @@
         "covered": 131,
         "total": 165,
         "pct": 79.39
+      }
+    },
+    "src/main/runtime/transport/model-probe.cjs": {
+      "lines": {
+        "covered": 43,
+        "total": 64,
+        "pct": 67.18
+      },
+      "statements": {
+        "covered": 43,
+        "total": 64,
+        "pct": 67.18
+      },
+      "functions": {
+        "covered": 7,
+        "total": 11,
+        "pct": 63.63
+      },
+      "branches": {
+        "covered": 16,
+        "total": 25,
+        "pct": 64
       }
     },
     "src/main/runtime/transport/semantic-ocr-request-builders.cjs": {
@@ -7623,6 +8310,28 @@
         "covered": 74,
         "total": 83,
         "pct": 89.15
+      }
+    },
+    "src/main/runtimeSupport/processTreeTermination.ts": {
+      "lines": {
+        "total": 142,
+        "covered": 75,
+        "pct": 52.81
+      },
+      "statements": {
+        "total": 146,
+        "covered": 77,
+        "pct": 52.73
+      },
+      "functions": {
+        "total": 35,
+        "covered": 22,
+        "pct": 62.85
+      },
+      "branches": {
+        "total": 80,
+        "covered": 40,
+        "pct": 50
       }
     },
     "src/main/runtimeSupport/runtimeDirectoryPublish.ts": {
@@ -8329,6 +9038,28 @@
         "pct": 0
       }
     },
+    "src/main/workContextAnalysisBudget.ts": {
+      "lines": {
+        "covered": 26,
+        "total": 26,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 26,
+        "total": 26,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 15,
+        "total": 15,
+        "pct": 100
+      }
+    },
     "src/main/workContextAnalysisPrompt.ts": {
       "lines": {
         "total": 67,
@@ -8349,6 +9080,28 @@
         "total": 72,
         "covered": 61,
         "pct": 84.72
+      }
+    },
+    "src/main/workContextModelRequest.ts": {
+      "lines": {
+        "covered": 36,
+        "total": 43,
+        "pct": 83.72
+      },
+      "statements": {
+        "covered": 36,
+        "total": 43,
+        "pct": 83.72
+      },
+      "functions": {
+        "covered": 8,
+        "total": 8,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 11,
+        "total": 17,
+        "pct": 64.7
       }
     },
     "src/main/workContextPageMemory.ts": {
@@ -11541,6 +12294,28 @@
         "pct": 95.45
       }
     },
+    "src/renderer/src/components/pageList/pageListStatus.ts": {
+      "lines": {
+        "covered": 19,
+        "total": 21,
+        "pct": 90.47
+      },
+      "statements": {
+        "covered": 23,
+        "total": 25,
+        "pct": 92
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 23,
+        "total": 29,
+        "pct": 79.31
+      }
+    },
     "src/renderer/src/components/pageList/usePageListState.ts": {
       "lines": {
         "covered": 15,
@@ -13409,6 +14184,28 @@
         "covered": 39,
         "total": 44,
         "pct": 88.63
+      }
+    },
+    "src/renderer/src/components/ui/useSelectController.ts": {
+      "lines": {
+        "covered": 70,
+        "total": 75,
+        "pct": 93.33
+      },
+      "statements": {
+        "covered": 83,
+        "total": 101,
+        "pct": 82.17
+      },
+      "functions": {
+        "covered": 22,
+        "total": 22,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 45,
+        "total": 68,
+        "pct": 66.17
       }
     },
     "src/renderer/src/components/ui/useSelectLifecycle.ts": {
@@ -15413,6 +16210,28 @@
         "pct": 94.11
       }
     },
+    "src/renderer/src/lib/bubbleLayoutSculpt.ts": {
+      "lines": {
+        "covered": 99,
+        "total": 105,
+        "pct": 94.28
+      },
+      "statements": {
+        "covered": 114,
+        "total": 128,
+        "pct": 89.06
+      },
+      "functions": {
+        "covered": 27,
+        "total": 28,
+        "pct": 96.42
+      },
+      "branches": {
+        "covered": 82,
+        "total": 114,
+        "pct": 71.92
+      }
+    },
     "src/renderer/src/lib/bubbleTextLayout.ts": {
       "lines": {
         "covered": 42,
@@ -16535,6 +17354,72 @@
         "pct": 100
       }
     },
+    "src/shared/curveTransformMath.ts": {
+      "lines": {
+        "covered": 56,
+        "total": 61,
+        "pct": 91.8
+      },
+      "statements": {
+        "covered": 58,
+        "total": 66,
+        "pct": 87.87
+      },
+      "functions": {
+        "covered": 19,
+        "total": 20,
+        "pct": 95
+      },
+      "branches": {
+        "covered": 39,
+        "total": 53,
+        "pct": 73.58
+      }
+    },
+    "src/shared/fontMatchingProfileSchemas.ts": {
+      "lines": {
+        "covered": 53,
+        "total": 60,
+        "pct": 88.33
+      },
+      "statements": {
+        "covered": 55,
+        "total": 62,
+        "pct": 88.7
+      },
+      "functions": {
+        "covered": 17,
+        "total": 20,
+        "pct": 85
+      },
+      "branches": {
+        "covered": 26,
+        "total": 30,
+        "pct": 86.66
+      }
+    },
+    "src/shared/fontMatchingProfileTypes.ts": {
+      "lines": {
+        "total": 4,
+        "covered": 4,
+        "pct": 100
+      },
+      "statements": {
+        "total": 4,
+        "covered": 4,
+        "pct": 100
+      },
+      "functions": {
+        "total": 0,
+        "covered": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 0,
+        "covered": 0,
+        "pct": 100
+      }
+    },
     "src/shared/gemmaMemoryPolicy.ts": {
       "lines": {
         "covered": 14,
@@ -17591,6 +18476,28 @@
         "pct": 92.59
       }
     },
+    "src/shared/webImportTypes.ts": {
+      "lines": {
+        "covered": 3,
+        "total": 3,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 3,
+        "total": 3,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
     "src/shared/workContextBudget.ts": {
       "lines": {
         "covered": 73,
@@ -17656,6 +18563,72 @@
       "branches": {
         "covered": 7,
         "total": 7,
+        "pct": 100
+      }
+    },
+    "src/main/application/chatRuntimePorts.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/main/application/chatService.ts": {
+      "lines": {
+        "covered": 145,
+        "total": 171,
+        "pct": 84.79
+      },
+      "statements": {
+        "covered": 154,
+        "total": 186,
+        "pct": 82.79
+      },
+      "functions": {
+        "covered": 37,
+        "total": 43,
+        "pct": 86.04
+      },
+      "branches": {
+        "covered": 54,
+        "total": 76,
+        "pct": 71.05
+      }
+    },
+    "src/main/application/codexLetteringShapeReview.ts": {
+      "lines": {
+        "total": 5,
+        "covered": 5,
+        "pct": 100
+      },
+      "statements": {
+        "total": 5,
+        "covered": 5,
+        "pct": 100
+      },
+      "functions": {
+        "total": 3,
+        "covered": 3,
+        "pct": 100
+      },
+      "branches": {
+        "total": 0,
+        "covered": 0,
         "pct": 100
       }
     },
@@ -18671,6 +19644,28 @@
         "pct": 78.12
       }
     },
+    "src/main/application/mcpDetailedTranslationQuality.ts": {
+      "lines": {
+        "total": 89,
+        "covered": 79,
+        "pct": 88.76
+      },
+      "statements": {
+        "total": 102,
+        "covered": 89,
+        "pct": 87.25
+      },
+      "functions": {
+        "total": 23,
+        "covered": 23,
+        "pct": 100
+      },
+      "branches": {
+        "total": 109,
+        "covered": 92,
+        "pct": 84.4
+      }
+    },
     "src/main/application/mcpEditPolicy.ts": {
       "lines": {
         "covered": 17,
@@ -18845,6 +19840,28 @@
         "covered": 41,
         "total": 46,
         "pct": 89.13
+      }
+    },
+    "src/main/application/mcpGeneratedTouchup.ts": {
+      "lines": {
+        "total": 33,
+        "covered": 31,
+        "pct": 93.93
+      },
+      "statements": {
+        "total": 34,
+        "covered": 31,
+        "pct": 91.17
+      },
+      "functions": {
+        "total": 6,
+        "covered": 6,
+        "pct": 100
+      },
+      "branches": {
+        "total": 36,
+        "covered": 26,
+        "pct": 72.22
       }
     },
     "src/main/application/mcpImageEditPolicy.ts": {
@@ -19947,6 +20964,28 @@
         "pct": 93.58
       }
     },
+    "src/main/application/mcpSnapshotPayload.ts": {
+      "lines": {
+        "total": 18,
+        "covered": 18,
+        "pct": 100
+      },
+      "statements": {
+        "total": 18,
+        "covered": 18,
+        "pct": 100
+      },
+      "functions": {
+        "total": 2,
+        "covered": 2,
+        "pct": 100
+      },
+      "branches": {
+        "total": 10,
+        "covered": 10,
+        "pct": 100
+      }
+    },
     "src/main/application/mcpSoundEffectBlocks.ts": {
       "lines": {
         "covered": 24,
@@ -20167,6 +21206,28 @@
         "pct": 100
       }
     },
+    "src/main/application/mcpTranslationCompletion.ts": {
+      "lines": {
+        "total": 54,
+        "covered": 54,
+        "pct": 100
+      },
+      "statements": {
+        "total": 56,
+        "covered": 56,
+        "pct": 100
+      },
+      "functions": {
+        "total": 16,
+        "covered": 16,
+        "pct": 100
+      },
+      "branches": {
+        "total": 60,
+        "covered": 58,
+        "pct": 96.66
+      }
+    },
     "src/main/application/mcpTranslationGuide.ts": {
       "lines": {
         "covered": 33,
@@ -20341,6 +21402,28 @@
         "total": 6,
         "covered": 6,
         "pct": 100
+      }
+    },
+    "src/main/application/mcpWorkTypographyPolicy.ts": {
+      "lines": {
+        "total": 26,
+        "covered": 23,
+        "pct": 88.46
+      },
+      "statements": {
+        "total": 27,
+        "covered": 24,
+        "pct": 88.88
+      },
+      "functions": {
+        "total": 10,
+        "covered": 9,
+        "pct": 90
+      },
+      "branches": {
+        "total": 34,
+        "covered": 30,
+        "pct": 88.23
       }
     },
     "src/main/application/mcpWorkflowHandoffService.ts": {
@@ -20805,6 +21888,28 @@
         "pct": 70.27
       }
     },
+    "src/main/bubbleLayout/preparedLayoutDetections.ts": {
+      "lines": {
+        "covered": 38,
+        "total": 38,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 39,
+        "total": 39,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 12,
+        "total": 12,
+        "pct": 100
+      }
+    },
     "src/main/bubbleLayout/wasmWorker.ts": {
       "lines": {
         "total": 77,
@@ -20847,6 +21952,336 @@
         "total": 89,
         "covered": 64,
         "pct": 71.91
+      }
+    },
+    "src/main/chat/chatInstructions.ts": {
+      "lines": {
+        "covered": 6,
+        "total": 7,
+        "pct": 85.71
+      },
+      "statements": {
+        "covered": 6,
+        "total": 7,
+        "pct": 85.71
+      },
+      "functions": {
+        "covered": 3,
+        "total": 4,
+        "pct": 75
+      },
+      "branches": {
+        "covered": 7,
+        "total": 8,
+        "pct": 87.5
+      }
+    },
+    "src/main/chat/chatOperationControl.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 35,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 39,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 7,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 35,
+        "pct": 0
+      }
+    },
+    "src/main/chat/chatReducer.ts": {
+      "lines": {
+        "covered": 42,
+        "total": 63,
+        "pct": 66.66
+      },
+      "statements": {
+        "covered": 47,
+        "total": 72,
+        "pct": 65.27
+      },
+      "functions": {
+        "covered": 7,
+        "total": 10,
+        "pct": 70
+      },
+      "branches": {
+        "covered": 31,
+        "total": 66,
+        "pct": 46.96
+      }
+    },
+    "src/main/chat/chatRepository.ts": {
+      "lines": {
+        "covered": 27,
+        "total": 30,
+        "pct": 90
+      },
+      "statements": {
+        "covered": 27,
+        "total": 31,
+        "pct": 87.09
+      },
+      "functions": {
+        "covered": 10,
+        "total": 14,
+        "pct": 71.42
+      },
+      "branches": {
+        "covered": 7,
+        "total": 8,
+        "pct": 87.5
+      }
+    },
+    "src/main/chat/chatToolObservation.ts": {
+      "lines": {
+        "covered": 31,
+        "total": 34,
+        "pct": 91.17
+      },
+      "statements": {
+        "covered": 33,
+        "total": 37,
+        "pct": 89.18
+      },
+      "functions": {
+        "covered": 9,
+        "total": 9,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 19,
+        "total": 29,
+        "pct": 65.51
+      }
+    },
+    "src/main/chat/claudeChatEvents.ts": {
+      "lines": {
+        "covered": 38,
+        "total": 39,
+        "pct": 97.43
+      },
+      "statements": {
+        "covered": 42,
+        "total": 46,
+        "pct": 91.3
+      },
+      "functions": {
+        "covered": 8,
+        "total": 8,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 36,
+        "total": 45,
+        "pct": 80
+      }
+    },
+    "src/main/chat/claudeChatRuntime.ts": {
+      "lines": {
+        "covered": 82,
+        "total": 97,
+        "pct": 84.53
+      },
+      "statements": {
+        "covered": 90,
+        "total": 110,
+        "pct": 81.81
+      },
+      "functions": {
+        "covered": 15,
+        "total": 18,
+        "pct": 83.33
+      },
+      "branches": {
+        "covered": 44,
+        "total": 65,
+        "pct": 67.69
+      }
+    },
+    "src/main/chat/codexChatRuntime.ts": {
+      "lines": {
+        "covered": 64,
+        "total": 94,
+        "pct": 68.08
+      },
+      "statements": {
+        "covered": 69,
+        "total": 109,
+        "pct": 63.3
+      },
+      "functions": {
+        "covered": 13,
+        "total": 21,
+        "pct": 61.9
+      },
+      "branches": {
+        "covered": 44,
+        "total": 76,
+        "pct": 57.89
+      }
+    },
+    "src/main/chat/createChatService.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 8,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 8,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 3,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/main/claude/claudeAccount.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 29,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 29,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 9,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 26,
+        "pct": 0
+      }
+    },
+    "src/main/claude/claudeCompletion.ts": {
+      "lines": {
+        "covered": 18,
+        "total": 20,
+        "pct": 90
+      },
+      "statements": {
+        "covered": 18,
+        "total": 23,
+        "pct": 78.26
+      },
+      "functions": {
+        "covered": 2,
+        "total": 3,
+        "pct": 66.66
+      },
+      "branches": {
+        "covered": 12,
+        "total": 18,
+        "pct": 66.66
+      }
+    },
+    "src/main/claude/claudeEndpoint.ts": {
+      "lines": {
+        "covered": 34,
+        "total": 39,
+        "pct": 87.17
+      },
+      "statements": {
+        "covered": 35,
+        "total": 44,
+        "pct": 79.54
+      },
+      "functions": {
+        "covered": 10,
+        "total": 11,
+        "pct": 90.9
+      },
+      "branches": {
+        "covered": 17,
+        "total": 26,
+        "pct": 65.38
+      }
+    },
+    "src/main/claude/claudeResearch.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 24,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 25,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 3,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 29,
+        "pct": 0
+      }
+    },
+    "src/main/claude/claudeRuntime.ts": {
+      "lines": {
+        "covered": 28,
+        "total": 28,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 31,
+        "total": 31,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 8,
+        "total": 8,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 23,
+        "total": 24,
+        "pct": 95.83
+      }
+    },
+    "src/main/codexAppServerAccounting.ts": {
+      "lines": {
+        "covered": 14,
+        "total": 14,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 15,
+        "total": 15,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 14,
+        "total": 14,
+        "pct": 100
       }
     },
     "src/main/codexAppServerBinary.ts": {
@@ -21663,6 +23098,28 @@
         "pct": 80
       }
     },
+    "src/main/fontPostScriptName.ts": {
+      "lines": {
+        "covered": 26,
+        "total": 27,
+        "pct": 96.29
+      },
+      "statements": {
+        "covered": 33,
+        "total": 34,
+        "pct": 97.05
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 34,
+        "total": 39,
+        "pct": 87.17
+      }
+    },
     "src/main/imageFingerprint.ts": {
       "lines": {
         "covered": 1,
@@ -21971,6 +23428,94 @@
         "pct": 80
       }
     },
+    "src/main/imageReviewSession.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 11,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 11,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 3,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 8,
+        "pct": 0
+      }
+    },
+    "src/main/imageThumbnailBrowser.ts": {
+      "lines": {
+        "total": 90,
+        "covered": 2,
+        "pct": 2.22
+      },
+      "statements": {
+        "total": 107,
+        "covered": 3,
+        "pct": 2.8
+      },
+      "functions": {
+        "total": 12,
+        "covered": 2,
+        "pct": 16.66
+      },
+      "branches": {
+        "total": 84,
+        "covered": 0,
+        "pct": 0
+      }
+    },
+    "src/main/imageThumbnailRenderer.ts": {
+      "lines": {
+        "total": 58,
+        "covered": 48,
+        "pct": 82.75
+      },
+      "statements": {
+        "total": 68,
+        "covered": 53,
+        "pct": 77.94
+      },
+      "functions": {
+        "total": 17,
+        "covered": 13,
+        "pct": 76.47
+      },
+      "branches": {
+        "total": 38,
+        "covered": 30,
+        "pct": 78.94
+      }
+    },
+    "src/main/imageThumbnailResponse.ts": {
+      "lines": {
+        "total": 27,
+        "covered": 27,
+        "pct": 100
+      },
+      "statements": {
+        "total": 28,
+        "covered": 27,
+        "pct": 96.42
+      },
+      "functions": {
+        "total": 4,
+        "covered": 4,
+        "pct": 100
+      },
+      "branches": {
+        "total": 20,
+        "covered": 19,
+        "pct": 95
+      }
+    },
     "src/main/inpainting/codexInpaintingEngine.ts": {
       "lines": {
         "covered": 42,
@@ -22125,28 +23670,6 @@
         "pct": 44.44
       }
     },
-    "src/main/inpainting/fluxAssets/hipSdk.ts": {
-      "lines": {
-        "total": 124,
-        "covered": 121,
-        "pct": 97.58
-      },
-      "statements": {
-        "total": 139,
-        "covered": 134,
-        "pct": 96.4
-      },
-      "functions": {
-        "total": 31,
-        "covered": 31,
-        "pct": 100
-      },
-      "branches": {
-        "total": 77,
-        "covered": 65,
-        "pct": 84.41
-      }
-    },
     "src/main/inpainting/fluxCudaDevice.ts": {
       "lines": {
         "total": 14,
@@ -22211,6 +23734,28 @@
         "total": 0,
         "covered": 0,
         "pct": 100
+      }
+    },
+    "src/main/inpainting/fluxFlatBackground.ts": {
+      "lines": {
+        "covered": 37,
+        "total": 37,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 51,
+        "total": 52,
+        "pct": 98.07
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 28,
+        "total": 29,
+        "pct": 96.55
       }
     },
     "src/main/inpainting/fluxMaskContracts.ts": {
@@ -22695,6 +24240,50 @@
         "total": 0,
         "covered": 0,
         "pct": 100
+      }
+    },
+    "src/main/ipc/chatIpc.ts": {
+      "lines": {
+        "covered": 10,
+        "total": 21,
+        "pct": 47.61
+      },
+      "statements": {
+        "covered": 10,
+        "total": 22,
+        "pct": 45.45
+      },
+      "functions": {
+        "covered": 1,
+        "total": 11,
+        "pct": 9.09
+      },
+      "branches": {
+        "covered": 0,
+        "total": 2,
+        "pct": 0
+      }
+    },
+    "src/main/ipc/claudeAccountIpc.ts": {
+      "lines": {
+        "covered": 4,
+        "total": 9,
+        "pct": 44.44
+      },
+      "statements": {
+        "covered": 4,
+        "total": 9,
+        "pct": 44.44
+      },
+      "functions": {
+        "covered": 1,
+        "total": 6,
+        "pct": 16.66
+      },
+      "branches": {
+        "covered": 0,
+        "total": 2,
+        "pct": 0
       }
     },
     "src/main/ipc/codexAccountIpc.ts": {
@@ -25579,6 +27168,28 @@
         "pct": 100
       }
     },
+    "src/main/mcp/mcpClaudeClientGuidance.ts": {
+      "lines": {
+        "total": 5,
+        "covered": 5,
+        "pct": 100
+      },
+      "statements": {
+        "total": 5,
+        "covered": 5,
+        "pct": 100
+      },
+      "functions": {
+        "total": 3,
+        "covered": 3,
+        "pct": 100
+      },
+      "branches": {
+        "total": 4,
+        "covered": 4,
+        "pct": 100
+      }
+    },
     "src/main/mcp/mcpCompositeAuthorization.ts": {
       "lines": {
         "covered": 3,
@@ -25599,6 +27210,28 @@
         "covered": 2,
         "total": 2,
         "pct": 100
+      }
+    },
+    "src/main/mcp/mcpCompositeDetailedReview.ts": {
+      "lines": {
+        "total": 8,
+        "covered": 0,
+        "pct": 0
+      },
+      "statements": {
+        "total": 8,
+        "covered": 0,
+        "pct": 0
+      },
+      "functions": {
+        "total": 3,
+        "covered": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 6,
+        "covered": 0,
+        "pct": 0
       }
     },
     "src/main/mcp/mcpCompositeNativeActions.ts": {
@@ -26635,6 +28268,28 @@
         "pct": 0
       }
     },
+    "src/main/mcp/mcpEndpointTools.ts": {
+      "lines": {
+        "covered": 16,
+        "total": 18,
+        "pct": 88.88
+      },
+      "statements": {
+        "covered": 19,
+        "total": 23,
+        "pct": 82.6
+      },
+      "functions": {
+        "covered": 7,
+        "total": 8,
+        "pct": 87.5
+      },
+      "branches": {
+        "covered": 12,
+        "total": 14,
+        "pct": 85.71
+      }
+    },
     "src/main/mcp/mcpErasureAdapter.ts": {
       "lines": {
         "covered": 33,
@@ -26699,6 +28354,28 @@
         "covered": 13,
         "total": 14,
         "pct": 92.85
+      }
+    },
+    "src/main/mcp/mcpEventStream.ts": {
+      "lines": {
+        "covered": 20,
+        "total": 20,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 24,
+        "total": 26,
+        "pct": 92.3
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 10,
+        "total": 13,
+        "pct": 76.92
       }
     },
     "src/main/mcp/mcpExchangeSession.ts": {
@@ -27163,6 +28840,72 @@
         "pct": 100
       }
     },
+    "src/main/mcp/mcpGeneratedGlyphRendering.ts": {
+      "lines": {
+        "total": 24,
+        "covered": 0,
+        "pct": 0
+      },
+      "statements": {
+        "total": 26,
+        "covered": 0,
+        "pct": 0
+      },
+      "functions": {
+        "total": 1,
+        "covered": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 6,
+        "covered": 0,
+        "pct": 0
+      }
+    },
+    "src/main/mcp/mcpGeneratedGlyphVerification.ts": {
+      "lines": {
+        "total": 29,
+        "covered": 0,
+        "pct": 0
+      },
+      "statements": {
+        "total": 33,
+        "covered": 0,
+        "pct": 0
+      },
+      "functions": {
+        "total": 8,
+        "covered": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 16,
+        "covered": 0,
+        "pct": 0
+      }
+    },
+    "src/main/mcp/mcpHttpAuthorization.ts": {
+      "lines": {
+        "covered": 8,
+        "total": 8,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 8,
+        "total": 8,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 6,
+        "total": 6,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      }
+    },
     "src/main/mcp/mcpHttpPolicy.ts": {
       "lines": {
         "covered": 37,
@@ -27205,6 +28948,28 @@
         "covered": 62,
         "total": 74,
         "pct": 83.78
+      }
+    },
+    "src/main/mcp/mcpImageBudgetTool.ts": {
+      "lines": {
+        "total": 25,
+        "covered": 24,
+        "pct": 96
+      },
+      "statements": {
+        "total": 26,
+        "covered": 25,
+        "pct": 96.15
+      },
+      "functions": {
+        "total": 7,
+        "covered": 6,
+        "pct": 85.71
+      },
+      "branches": {
+        "total": 23,
+        "covered": 20,
+        "pct": 86.95
       }
     },
     "src/main/mcp/mcpImageEditAdapter.ts": {
@@ -28109,6 +29874,28 @@
         "pct": 100
       }
     },
+    "src/main/mcp/mcpLocalHost.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 62,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 66,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 22,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 10,
+        "pct": 0
+      }
+    },
     "src/main/mcp/mcpMemoryRefreshTools.ts": {
       "lines": {
         "covered": 21,
@@ -28371,6 +30158,28 @@
         "covered": 19,
         "total": 30,
         "pct": 63.33
+      }
+    },
+    "src/main/mcp/mcpOtherClientGuidance.ts": {
+      "lines": {
+        "total": 24,
+        "covered": 24,
+        "pct": 100
+      },
+      "statements": {
+        "total": 30,
+        "covered": 30,
+        "pct": 100
+      },
+      "functions": {
+        "total": 6,
+        "covered": 6,
+        "pct": 100
+      },
+      "branches": {
+        "total": 35,
+        "covered": 34,
+        "pct": 97.14
       }
     },
     "src/main/mcp/mcpOutputDeliveryAdapter.ts": {
@@ -29143,6 +30952,50 @@
         "pct": 100
       }
     },
+    "src/main/mcp/mcpQualityEvidenceStore.ts": {
+      "lines": {
+        "total": 15,
+        "covered": 0,
+        "pct": 0
+      },
+      "statements": {
+        "total": 16,
+        "covered": 0,
+        "pct": 0
+      },
+      "functions": {
+        "total": 3,
+        "covered": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 4,
+        "covered": 0,
+        "pct": 0
+      }
+    },
+    "src/main/mcp/mcpQualityTools.ts": {
+      "lines": {
+        "total": 4,
+        "covered": 4,
+        "pct": 100
+      },
+      "statements": {
+        "total": 4,
+        "covered": 4,
+        "pct": 100
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "pct": 100
+      },
+      "branches": {
+        "total": 2,
+        "covered": 2,
+        "pct": 100
+      }
+    },
     "src/main/mcp/mcpReadTools.ts": {
       "lines": {
         "covered": 18,
@@ -29493,6 +31346,28 @@
         "covered": 34,
         "total": 38,
         "pct": 89.47
+      }
+    },
+    "src/main/mcp/mcpRetentionImages.ts": {
+      "lines": {
+        "total": 62,
+        "covered": 55,
+        "pct": 88.7
+      },
+      "statements": {
+        "total": 68,
+        "covered": 59,
+        "pct": 86.76
+      },
+      "functions": {
+        "total": 7,
+        "covered": 7,
+        "pct": 100
+      },
+      "branches": {
+        "total": 42,
+        "covered": 33,
+        "pct": 78.57
       }
     },
     "src/main/mcp/mcpRetentionRecords.ts": {
@@ -29847,6 +31722,50 @@
         "pct": 100
       }
     },
+    "src/main/mcp/mcpSoundEffectCandidateTools.ts": {
+      "lines": {
+        "total": 51,
+        "covered": 6,
+        "pct": 11.76
+      },
+      "statements": {
+        "total": 53,
+        "covered": 6,
+        "pct": 11.32
+      },
+      "functions": {
+        "total": 13,
+        "covered": 4,
+        "pct": 30.76
+      },
+      "branches": {
+        "total": 32,
+        "covered": 1,
+        "pct": 3.12
+      }
+    },
+    "src/main/mcp/mcpSoundEffectCandidates.ts": {
+      "lines": {
+        "total": 43,
+        "covered": 37,
+        "pct": 86.04
+      },
+      "statements": {
+        "total": 46,
+        "covered": 39,
+        "pct": 84.78
+      },
+      "functions": {
+        "total": 12,
+        "covered": 10,
+        "pct": 83.33
+      },
+      "branches": {
+        "total": 16,
+        "covered": 12,
+        "pct": 75
+      }
+    },
     "src/main/mcp/mcpSoundEffectCommands.ts": {
       "lines": {
         "covered": 18,
@@ -30021,6 +31940,28 @@
         "covered": 12,
         "total": 14,
         "pct": 85.71
+      }
+    },
+    "src/main/mcp/mcpSoundEffectReferences.ts": {
+      "lines": {
+        "total": 19,
+        "covered": 6,
+        "pct": 31.57
+      },
+      "statements": {
+        "total": 20,
+        "covered": 6,
+        "pct": 30
+      },
+      "functions": {
+        "total": 3,
+        "covered": 1,
+        "pct": 33.33
+      },
+      "branches": {
+        "total": 21,
+        "covered": 3,
+        "pct": 14.28
       }
     },
     "src/main/mcp/mcpSoundEffectSession.ts": {
@@ -30439,6 +32380,28 @@
         "covered": 4,
         "total": 4,
         "pct": 100
+      }
+    },
+    "src/main/mcp/mcpTranslationSourceTool.ts": {
+      "lines": {
+        "total": 16,
+        "covered": 2,
+        "pct": 12.5
+      },
+      "statements": {
+        "total": 18,
+        "covered": 2,
+        "pct": 11.11
+      },
+      "functions": {
+        "total": 4,
+        "covered": 1,
+        "pct": 25
+      },
+      "branches": {
+        "total": 4,
+        "covered": 0,
+        "pct": 0
       }
     },
     "src/main/mcp/mcpTypographyAnalysisAdapter.ts": {
@@ -30901,6 +32864,28 @@
         "total": 2,
         "covered": 2,
         "pct": 100
+      }
+    },
+    "src/main/mcp/mcpWorkTypographyTools.ts": {
+      "lines": {
+        "total": 40,
+        "covered": 5,
+        "pct": 12.5
+      },
+      "statements": {
+        "total": 41,
+        "covered": 5,
+        "pct": 12.19
+      },
+      "functions": {
+        "total": 13,
+        "covered": 4,
+        "pct": 30.76
+      },
+      "branches": {
+        "total": 21,
+        "covered": 2,
+        "pct": 9.52
       }
     },
     "src/main/mcp/mcpWorkflowAuthorization.ts": {
@@ -31717,6 +33702,28 @@
         "pct": 100
       }
     },
+    "src/main/pipeline/codexLetteringCorrectionReferences.ts": {
+      "lines": {
+        "total": 5,
+        "covered": 3,
+        "pct": 60
+      },
+      "statements": {
+        "total": 5,
+        "covered": 3,
+        "pct": 60
+      },
+      "functions": {
+        "total": 3,
+        "covered": 1,
+        "pct": 33.33
+      },
+      "branches": {
+        "total": 7,
+        "covered": 6,
+        "pct": 85.71
+      }
+    },
     "src/main/pipeline/codexLetteringGroups.ts": {
       "lines": {
         "total": 24,
@@ -32264,6 +34271,28 @@
       "branches": {
         "covered": 6,
         "total": 6,
+        "pct": 100
+      }
+    },
+    "src/main/pipeline/fontGlyphVerificationAssets.ts": {
+      "lines": {
+        "total": 12,
+        "covered": 12,
+        "pct": 100
+      },
+      "statements": {
+        "total": 12,
+        "covered": 12,
+        "pct": 100
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "pct": 100
+      },
+      "branches": {
+        "total": 0,
+        "covered": 0,
         "pct": 100
       }
     },
@@ -33411,6 +35440,28 @@
         "pct": 56.52
       }
     },
+    "src/main/psdFontResolver.ts": {
+      "lines": {
+        "covered": 21,
+        "total": 22,
+        "pct": 95.45
+      },
+      "statements": {
+        "covered": 22,
+        "total": 23,
+        "pct": 95.65
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 19,
+        "total": 22,
+        "pct": 86.36
+      }
+    },
     "src/main/regionEditProtection.ts": {
       "lines": {
         "covered": 10,
@@ -33719,6 +35770,50 @@
         "pct": 81.08
       }
     },
+    "src/main/runtime/transport/api-conversation.cjs": {
+      "lines": {
+        "covered": 18,
+        "total": 19,
+        "pct": 94.73
+      },
+      "statements": {
+        "covered": 20,
+        "total": 21,
+        "pct": 95.23
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 27,
+        "total": 29,
+        "pct": 93.1
+      }
+    },
+    "src/main/runtime/transport/api-http-failure.cjs": {
+      "lines": {
+        "covered": 16,
+        "total": 23,
+        "pct": 69.56
+      },
+      "statements": {
+        "covered": 16,
+        "total": 24,
+        "pct": 66.66
+      },
+      "functions": {
+        "covered": 1,
+        "total": 5,
+        "pct": 20
+      },
+      "branches": {
+        "covered": 23,
+        "total": 33,
+        "pct": 69.69
+      }
+    },
     "src/main/runtime/transport/api-request-pacing.cjs": {
       "lines": {
         "covered": 26,
@@ -33983,6 +36078,72 @@
         "pct": 87.5
       }
     },
+    "src/main/runtimeSupport/nativeInferenceLaunch.ts": {
+      "lines": {
+        "total": 19,
+        "covered": 19,
+        "pct": 100
+      },
+      "statements": {
+        "total": 19,
+        "covered": 19,
+        "pct": 100
+      },
+      "functions": {
+        "total": 2,
+        "covered": 2,
+        "pct": 100
+      },
+      "branches": {
+        "total": 14,
+        "covered": 14,
+        "pct": 100
+      }
+    },
+    "src/main/runtimeSupport/nativeInferencePlan.ts": {
+      "lines": {
+        "total": 54,
+        "covered": 53,
+        "pct": 98.14
+      },
+      "statements": {
+        "total": 57,
+        "covered": 56,
+        "pct": 98.24
+      },
+      "functions": {
+        "total": 7,
+        "covered": 7,
+        "pct": 100
+      },
+      "branches": {
+        "total": 49,
+        "covered": 47,
+        "pct": 95.91
+      }
+    },
+    "src/main/runtimeSupport/nativeInferenceRuntime.ts": {
+      "lines": {
+        "total": 82,
+        "covered": 78,
+        "pct": 95.12
+      },
+      "statements": {
+        "total": 90,
+        "covered": 86,
+        "pct": 95.55
+      },
+      "functions": {
+        "total": 16,
+        "covered": 16,
+        "pct": 100
+      },
+      "branches": {
+        "total": 48,
+        "covered": 44,
+        "pct": 91.66
+      }
+    },
     "src/main/runtimeSupport/nativeOnnxRuntime.ts": {
       "lines": {
         "total": 21,
@@ -34090,6 +36251,28 @@
       "branches": {
         "covered": 4,
         "total": 4,
+        "pct": 100
+      }
+    },
+    "src/main/settings/appSettingsApiProfile.ts": {
+      "lines": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 10,
+        "total": 10,
         "pct": 100
       }
     },
@@ -34222,6 +36405,28 @@
       "branches": {
         "covered": 0,
         "total": 0,
+        "pct": 100
+      }
+    },
+    "src/main/settings/claudePreferences.ts": {
+      "lines": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 8,
+        "total": 8,
         "pct": 100
       }
     },
@@ -34377,6 +36582,28 @@
         "total": 10,
         "covered": 8,
         "pct": 80
+      }
+    },
+    "src/main/settingsCustomProfileSecrets.ts": {
+      "lines": {
+        "covered": 22,
+        "total": 22,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 24,
+        "total": 24,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 28,
+        "total": 29,
+        "pct": 96.55
       }
     },
     "src/main/settingsPairCodec.ts": {
@@ -34663,6 +36890,50 @@
         "total": 24,
         "covered": 12,
         "pct": 50
+      }
+    },
+    "src/main/webImportNavigation.ts": {
+      "lines": {
+        "covered": 80,
+        "total": 81,
+        "pct": 98.76
+      },
+      "statements": {
+        "covered": 87,
+        "total": 88,
+        "pct": 98.86
+      },
+      "functions": {
+        "covered": 19,
+        "total": 19,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 57,
+        "total": 59,
+        "pct": 96.61
+      }
+    },
+    "src/main/webImportNavigationPreload.ts": {
+      "lines": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 6,
+        "total": 6,
+        "pct": 100
       }
     },
     "src/main/windowsAmdGpuInfo.ts": {
@@ -35039,6 +37310,28 @@
         "pct": 0
       }
     },
+    "src/renderer/src/api/accountConnection.ts": {
+      "lines": {
+        "covered": 24,
+        "total": 24,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 27,
+        "total": 27,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 10,
+        "total": 10,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      }
+    },
     "src/renderer/src/api/blockLibraryGateway.ts": {
       "lines": {
         "total": 1,
@@ -35058,6 +37351,72 @@
       "branches": {
         "total": 0,
         "covered": 0,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/api/chatGateway.ts": {
+      "lines": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/api/claudeConnection.ts": {
+      "lines": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/api/claudeGateway.ts": {
+      "lines": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
         "pct": 100
       }
     },
@@ -36821,6 +39180,28 @@
         "pct": 0
       }
     },
+    "src/renderer/src/components/LetteringMoveSurface.tsx": {
+      "lines": {
+        "total": 4,
+        "covered": 0,
+        "pct": 0
+      },
+      "statements": {
+        "total": 4,
+        "covered": 0,
+        "pct": 0
+      },
+      "functions": {
+        "total": 1,
+        "covered": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 7,
+        "covered": 0,
+        "pct": 0
+      }
+    },
     "src/renderer/src/components/LinkedWorkspaceFolderRoles.tsx": {
       "lines": {
         "total": 4,
@@ -37809,6 +40190,28 @@
         "total": 22,
         "covered": 4,
         "pct": 18.18
+      }
+    },
+    "src/renderer/src/components/blockLibraryPreviewVisibility.ts": {
+      "lines": {
+        "total": 31,
+        "covered": 27,
+        "pct": 87.09
+      },
+      "statements": {
+        "total": 35,
+        "covered": 29,
+        "pct": 82.85
+      },
+      "functions": {
+        "total": 11,
+        "covered": 9,
+        "pct": 81.81
+      },
+      "branches": {
+        "total": 12,
+        "covered": 8,
+        "pct": 66.66
       }
     },
     "src/renderer/src/components/conditionalBatchActionModel.ts": {
@@ -39549,6 +41952,50 @@
         "pct": 100
       }
     },
+    "src/renderer/src/components/settingsModal/ApiSessionFields.tsx": {
+      "lines": {
+        "covered": 25,
+        "total": 45,
+        "pct": 55.55
+      },
+      "statements": {
+        "covered": 26,
+        "total": 49,
+        "pct": 53.06
+      },
+      "functions": {
+        "covered": 8,
+        "total": 19,
+        "pct": 42.1
+      },
+      "branches": {
+        "covered": 18,
+        "total": 30,
+        "pct": 60
+      }
+    },
+    "src/renderer/src/components/settingsModal/ClaudeSettingsFields.tsx": {
+      "lines": {
+        "covered": 11,
+        "total": 30,
+        "pct": 36.66
+      },
+      "statements": {
+        "covered": 11,
+        "total": 34,
+        "pct": 32.35
+      },
+      "functions": {
+        "covered": 2,
+        "total": 13,
+        "pct": 15.38
+      },
+      "branches": {
+        "covered": 13,
+        "total": 34,
+        "pct": 38.23
+      }
+    },
     "src/renderer/src/components/settingsModal/CodexAccountField.tsx": {
       "lines": {
         "total": 45,
@@ -39613,6 +42060,28 @@
         "total": 30,
         "covered": 24,
         "pct": 80
+      }
+    },
+    "src/renderer/src/components/settingsModal/GemmaSamplingFields.tsx": {
+      "lines": {
+        "covered": 9,
+        "total": 9,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 10,
+        "total": 10,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
       }
     },
     "src/renderer/src/components/settingsModal/GemmaVramWarning.tsx": {
@@ -39835,6 +42304,28 @@
         "pct": 100
       }
     },
+    "src/renderer/src/components/settingsModal/McpOpenCodeGuide.tsx": {
+      "lines": {
+        "covered": 3,
+        "total": 3,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 3,
+        "total": 3,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 3,
+        "total": 6,
+        "pct": 50
+      }
+    },
     "src/renderer/src/components/settingsModal/McpSettingsPanel.tsx": {
       "lines": {
         "covered": 15,
@@ -40009,6 +42500,28 @@
         "total": 14,
         "covered": 14,
         "pct": 100
+      }
+    },
+    "src/renderer/src/components/settingsModal/settingsCustomApiProfiles.ts": {
+      "lines": {
+        "covered": 9,
+        "total": 9,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 9,
+        "total": 10,
+        "pct": 90
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 9,
+        "total": 12,
+        "pct": 75
       }
     },
     "src/renderer/src/components/settingsModal/settingsModalProfileFormValues.ts": {
@@ -40581,6 +43094,28 @@
         "covered": 0,
         "total": 0,
         "pct": 100
+      }
+    },
+    "src/renderer/src/components/ui/ActionMenu.tsx": {
+      "lines": {
+        "covered": 9,
+        "total": 12,
+        "pct": 75
+      },
+      "statements": {
+        "covered": 9,
+        "total": 13,
+        "pct": 69.23
+      },
+      "functions": {
+        "covered": 4,
+        "total": 5,
+        "pct": 80
+      },
+      "branches": {
+        "covered": 14,
+        "total": 16,
+        "pct": 87.5
       }
     },
     "src/renderer/src/components/ui/FavoriteToggleButton.tsx": {
@@ -41463,6 +43998,270 @@
         "pct": 75
       }
     },
+    "src/renderer/src/features/chat/ChatComposer.tsx": {
+      "lines": {
+        "covered": 12,
+        "total": 27,
+        "pct": 44.44
+      },
+      "statements": {
+        "covered": 12,
+        "total": 27,
+        "pct": 44.44
+      },
+      "functions": {
+        "covered": 5,
+        "total": 15,
+        "pct": 33.33
+      },
+      "branches": {
+        "covered": 15,
+        "total": 20,
+        "pct": 75
+      }
+    },
+    "src/renderer/src/features/chat/ChatControls.tsx": {
+      "lines": {
+        "covered": 11,
+        "total": 16,
+        "pct": 68.75
+      },
+      "statements": {
+        "covered": 11,
+        "total": 16,
+        "pct": 68.75
+      },
+      "functions": {
+        "covered": 7,
+        "total": 12,
+        "pct": 58.33
+      },
+      "branches": {
+        "covered": 15,
+        "total": 15,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/features/chat/ChatImages.tsx": {
+      "lines": {
+        "covered": 15,
+        "total": 19,
+        "pct": 78.94
+      },
+      "statements": {
+        "covered": 16,
+        "total": 21,
+        "pct": 76.19
+      },
+      "functions": {
+        "covered": 6,
+        "total": 9,
+        "pct": 66.66
+      },
+      "branches": {
+        "covered": 11,
+        "total": 18,
+        "pct": 61.11
+      }
+    },
+    "src/renderer/src/features/chat/ChatMarkdown.tsx": {
+      "lines": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/features/chat/ChatPanel.tsx": {
+      "lines": {
+        "covered": 12,
+        "total": 14,
+        "pct": 85.71
+      },
+      "statements": {
+        "covered": 12,
+        "total": 14,
+        "pct": 85.71
+      },
+      "functions": {
+        "covered": 4,
+        "total": 6,
+        "pct": 66.66
+      },
+      "branches": {
+        "covered": 12,
+        "total": 18,
+        "pct": 66.66
+      }
+    },
+    "src/renderer/src/features/chat/ChatQualityReceipt.tsx": {
+      "lines": {
+        "covered": 0,
+        "total": 13,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 15,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 4,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 15,
+        "pct": 0
+      }
+    },
+    "src/renderer/src/features/chat/ChatQuestionForm.tsx": {
+      "lines": {
+        "covered": 0,
+        "total": 9,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 9,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 7,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 4,
+        "pct": 0
+      }
+    },
+    "src/renderer/src/features/chat/ChatTranscript.tsx": {
+      "lines": {
+        "covered": 8,
+        "total": 51,
+        "pct": 15.68
+      },
+      "statements": {
+        "covered": 8,
+        "total": 61,
+        "pct": 13.11
+      },
+      "functions": {
+        "covered": 2,
+        "total": 20,
+        "pct": 10
+      },
+      "branches": {
+        "covered": 6,
+        "total": 71,
+        "pct": 8.45
+      }
+    },
+    "src/renderer/src/features/chat/chatQualityReceiptModel.ts": {
+      "lines": {
+        "covered": 6,
+        "total": 7,
+        "pct": 85.71
+      },
+      "statements": {
+        "covered": 6,
+        "total": 7,
+        "pct": 85.71
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 6,
+        "total": 7,
+        "pct": 85.71
+      }
+    },
+    "src/renderer/src/features/chat/useChat.ts": {
+      "lines": {
+        "covered": 45,
+        "total": 54,
+        "pct": 83.33
+      },
+      "statements": {
+        "covered": 49,
+        "total": 62,
+        "pct": 79.03
+      },
+      "functions": {
+        "covered": 16,
+        "total": 23,
+        "pct": 69.56
+      },
+      "branches": {
+        "covered": 12,
+        "total": 24,
+        "pct": 50
+      }
+    },
+    "src/renderer/src/features/chat/useChatDraft.ts": {
+      "lines": {
+        "covered": 20,
+        "total": 35,
+        "pct": 57.14
+      },
+      "statements": {
+        "covered": 20,
+        "total": 37,
+        "pct": 54.05
+      },
+      "functions": {
+        "covered": 5,
+        "total": 13,
+        "pct": 38.46
+      },
+      "branches": {
+        "covered": 11,
+        "total": 20,
+        "pct": 55
+      }
+    },
+    "src/renderer/src/features/chat/useChatModel.ts": {
+      "lines": {
+        "covered": 11,
+        "total": 16,
+        "pct": 68.75
+      },
+      "statements": {
+        "covered": 12,
+        "total": 21,
+        "pct": 57.14
+      },
+      "functions": {
+        "covered": 5,
+        "total": 10,
+        "pct": 50
+      },
+      "branches": {
+        "covered": 14,
+        "total": 20,
+        "pct": 70
+      }
+    },
     "src/renderer/src/hooks/appOperationEventScheduler.ts": {
       "lines": {
         "covered": 33,
@@ -41593,6 +44392,28 @@
         "total": 21,
         "covered": 19,
         "pct": 90.47
+      }
+    },
+    "src/renderer/src/hooks/useAccountConnection.ts": {
+      "lines": {
+        "covered": 19,
+        "total": 19,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 21,
+        "total": 21,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 6,
+        "total": 6,
+        "pct": 100
       }
     },
     "src/renderer/src/hooks/useAppActivities.ts": {
@@ -41813,6 +44634,28 @@
         "covered": 6,
         "total": 8,
         "pct": 75
+      }
+    },
+    "src/renderer/src/hooks/useLetteringPartMove.ts": {
+      "lines": {
+        "total": 90,
+        "covered": 87,
+        "pct": 96.66
+      },
+      "statements": {
+        "total": 96,
+        "covered": 89,
+        "pct": 92.7
+      },
+      "functions": {
+        "total": 20,
+        "covered": 20,
+        "pct": 100
+      },
+      "branches": {
+        "total": 55,
+        "covered": 44,
+        "pct": 80
       }
     },
     "src/renderer/src/hooks/useLetteringStroke.ts": {
@@ -42189,6 +45032,28 @@
         "pct": 55.55
       }
     },
+    "src/renderer/src/hooks/useThumbnailResolution.ts": {
+      "lines": {
+        "total": 26,
+        "covered": 26,
+        "pct": 100
+      },
+      "statements": {
+        "total": 31,
+        "covered": 31,
+        "pct": 100
+      },
+      "functions": {
+        "total": 10,
+        "covered": 10,
+        "pct": 100
+      },
+      "branches": {
+        "total": 24,
+        "covered": 22,
+        "pct": 91.66
+      }
+    },
     "src/renderer/src/hooks/useTranslateSoundEffectsAction.ts": {
       "lines": {
         "total": 39,
@@ -42387,6 +45252,28 @@
         "pct": 94.73
       }
     },
+    "src/renderer/src/lib/dialogueFontSizeMatching.ts": {
+      "lines": {
+        "total": 51,
+        "covered": 47,
+        "pct": 92.15
+      },
+      "statements": {
+        "total": 58,
+        "covered": 52,
+        "pct": 89.65
+      },
+      "functions": {
+        "total": 13,
+        "covered": 12,
+        "pct": 92.3
+      },
+      "branches": {
+        "total": 64,
+        "covered": 50,
+        "pct": 78.12
+      }
+    },
     "src/renderer/src/lib/environmentBackupPreferences.ts": {
       "lines": {
         "covered": 13,
@@ -42429,6 +45316,72 @@
         "covered": 30,
         "total": 32,
         "pct": 93.75
+      }
+    },
+    "src/renderer/src/lib/letteringPartMoveDraft.ts": {
+      "lines": {
+        "total": 26,
+        "covered": 23,
+        "pct": 88.46
+      },
+      "statements": {
+        "total": 32,
+        "covered": 26,
+        "pct": 81.25
+      },
+      "functions": {
+        "total": 9,
+        "covered": 8,
+        "pct": 88.88
+      },
+      "branches": {
+        "total": 12,
+        "covered": 6,
+        "pct": 50
+      }
+    },
+    "src/renderer/src/lib/letteringPointer.ts": {
+      "lines": {
+        "total": 2,
+        "covered": 2,
+        "pct": 100
+      },
+      "statements": {
+        "total": 2,
+        "covered": 2,
+        "pct": 100
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "pct": 100
+      },
+      "branches": {
+        "total": 0,
+        "covered": 0,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/lib/mcpNotificationBatch.ts": {
+      "lines": {
+        "covered": 56,
+        "total": 56,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 62,
+        "total": 63,
+        "pct": 98.41
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 35,
+        "total": 36,
+        "pct": 97.22
       }
     },
     "src/renderer/src/lib/modalWorkCenterHandoff.ts": {
@@ -42759,6 +45712,28 @@
         "covered": 0,
         "total": 6,
         "pct": 0
+      }
+    },
+    "src/renderer/src/lib/renderedGlyphEvidence.ts": {
+      "lines": {
+        "total": 23,
+        "covered": 1,
+        "pct": 4.34
+      },
+      "statements": {
+        "total": 28,
+        "covered": 2,
+        "pct": 7.14
+      },
+      "functions": {
+        "total": 3,
+        "covered": 1,
+        "pct": 33.33
+      },
+      "branches": {
+        "total": 17,
+        "covered": 1,
+        "pct": 5.88
       }
     },
     "src/renderer/src/lib/richTextEditorDom.ts": {
@@ -43201,6 +46176,28 @@
         "pct": 100
       }
     },
+    "src/shared/apiSessionHeaders.ts": {
+      "lines": {
+        "covered": 10,
+        "total": 10,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 12,
+        "total": 13,
+        "pct": 92.3
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 13,
+        "total": 16,
+        "pct": 81.25
+      }
+    },
     "src/shared/appActivityTypes.ts": {
       "lines": {
         "total": 14,
@@ -43441,6 +46438,72 @@
         "total": 31,
         "covered": 20,
         "pct": 64.51
+      }
+    },
+    "src/shared/chatSchemas.ts": {
+      "lines": {
+        "covered": 9,
+        "total": 10,
+        "pct": 90
+      },
+      "statements": {
+        "covered": 9,
+        "total": 10,
+        "pct": 90
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 2,
+        "pct": 0
+      }
+    },
+    "src/shared/chatTypes.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/shared/claudeTypes.ts": {
+      "lines": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
       }
     },
     "src/shared/codexAccountSchemas.ts": {
@@ -43795,6 +46858,28 @@
         "pct": 72.36
       }
     },
+    "src/shared/customApiProfiles.ts": {
+      "lines": {
+        "covered": 7,
+        "total": 7,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 7,
+        "total": 7,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 13,
+        "total": 14,
+        "pct": 92.85
+      }
+    },
     "src/shared/demotedBlockFonts.ts": {
       "lines": {
         "covered": 3,
@@ -43905,6 +46990,50 @@
         "pct": 76.63
       }
     },
+    "src/shared/gemmaSamplingSettings.ts": {
+      "lines": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/shared/generatedGlyphReview.ts": {
+      "lines": {
+        "total": 8,
+        "covered": 8,
+        "pct": 100
+      },
+      "statements": {
+        "total": 8,
+        "covered": 8,
+        "pct": 100
+      },
+      "functions": {
+        "total": 4,
+        "covered": 4,
+        "pct": 100
+      },
+      "branches": {
+        "total": 16,
+        "covered": 15,
+        "pct": 93.75
+      }
+    },
     "src/shared/generatedLettering.ts": {
       "lines": {
         "covered": 2,
@@ -43925,6 +47054,28 @@
         "covered": 6,
         "total": 6,
         "pct": 100
+      }
+    },
+    "src/shared/generatedLetteringComposition.ts": {
+      "lines": {
+        "total": 31,
+        "covered": 2,
+        "pct": 6.45
+      },
+      "statements": {
+        "total": 34,
+        "covered": 2,
+        "pct": 5.88
+      },
+      "functions": {
+        "total": 6,
+        "covered": 0,
+        "pct": 0
+      },
+      "branches": {
+        "total": 18,
+        "covered": 0,
+        "pct": 0
       }
     },
     "src/shared/generatedLetteringMask.ts": {
@@ -43993,6 +47144,28 @@
         "pct": 100
       }
     },
+    "src/shared/generatedLetteringPartMove.ts": {
+      "lines": {
+        "total": 30,
+        "covered": 30,
+        "pct": 100
+      },
+      "statements": {
+        "total": 31,
+        "covered": 31,
+        "pct": 100
+      },
+      "functions": {
+        "total": 7,
+        "covered": 7,
+        "pct": 100
+      },
+      "branches": {
+        "total": 28,
+        "covered": 27,
+        "pct": 96.42
+      }
+    },
     "src/shared/glossaryOmission.ts": {
       "lines": {
         "total": 41,
@@ -44013,6 +47186,28 @@
         "total": 34,
         "covered": 25,
         "pct": 73.52
+      }
+    },
+    "src/shared/imageEditingBudget.ts": {
+      "lines": {
+        "total": 7,
+        "covered": 7,
+        "pct": 100
+      },
+      "statements": {
+        "total": 7,
+        "covered": 7,
+        "pct": 100
+      },
+      "functions": {
+        "total": 1,
+        "covered": 1,
+        "pct": 100
+      },
+      "branches": {
+        "total": 21,
+        "covered": 21,
+        "pct": 100
       }
     },
     "src/shared/imageRedaction.ts": {
@@ -44276,6 +47471,72 @@
       "branches": {
         "total": 0,
         "covered": 0,
+        "pct": 100
+      }
+    },
+    "src/shared/ipcChapterPageContracts.ts": {
+      "lines": {
+        "total": 3,
+        "covered": 3,
+        "pct": 100
+      },
+      "statements": {
+        "total": 3,
+        "covered": 3,
+        "pct": 100
+      },
+      "functions": {
+        "total": 0,
+        "covered": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 0,
+        "covered": 0,
+        "pct": 100
+      }
+    },
+    "src/shared/ipcChatContracts.ts": {
+      "lines": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/shared/ipcClaudeContracts.ts": {
+      "lines": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
         "pct": 100
       }
     },
@@ -44585,6 +47846,28 @@
         "covered": 0,
         "total": 0,
         "pct": 100
+      }
+    },
+    "src/shared/letteringTextStructure.ts": {
+      "lines": {
+        "total": 10,
+        "covered": 10,
+        "pct": 100
+      },
+      "statements": {
+        "total": 11,
+        "covered": 11,
+        "pct": 100
+      },
+      "functions": {
+        "total": 2,
+        "covered": 2,
+        "pct": 100
+      },
+      "branches": {
+        "total": 8,
+        "covered": 7,
+        "pct": 87.5
       }
     },
     "src/shared/linkedWorkspaceSchemas.ts": {
@@ -45225,6 +48508,28 @@
         "pct": 93.18
       }
     },
+    "src/shared/mcpGeneratedTouchup.ts": {
+      "lines": {
+        "total": 3,
+        "covered": 3,
+        "pct": 100
+      },
+      "statements": {
+        "total": 4,
+        "covered": 4,
+        "pct": 100
+      },
+      "functions": {
+        "total": 3,
+        "covered": 3,
+        "pct": 100
+      },
+      "branches": {
+        "total": 2,
+        "covered": 2,
+        "pct": 100
+      }
+    },
     "src/shared/mcpImageEditing.ts": {
       "lines": {
         "total": 17,
@@ -45355,6 +48660,28 @@
         "total": 19,
         "covered": 19,
         "pct": 100
+      }
+    },
+    "src/shared/mcpLayoutReview.ts": {
+      "lines": {
+        "total": 15,
+        "covered": 15,
+        "pct": 100
+      },
+      "statements": {
+        "total": 18,
+        "covered": 18,
+        "pct": 100
+      },
+      "functions": {
+        "total": 10,
+        "covered": 10,
+        "pct": 100
+      },
+      "branches": {
+        "total": 39,
+        "covered": 34,
+        "pct": 87.17
       }
     },
     "src/shared/mcpLettering.ts": {
@@ -45630,6 +48957,50 @@
       "statements": {
         "total": 8,
         "covered": 8,
+        "pct": 100
+      },
+      "functions": {
+        "total": 0,
+        "covered": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 0,
+        "covered": 0,
+        "pct": 100
+      }
+    },
+    "src/shared/mcpQualityEvidence.ts": {
+      "lines": {
+        "total": 8,
+        "covered": 8,
+        "pct": 100
+      },
+      "statements": {
+        "total": 8,
+        "covered": 8,
+        "pct": 100
+      },
+      "functions": {
+        "total": 0,
+        "covered": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 0,
+        "covered": 0,
+        "pct": 100
+      }
+    },
+    "src/shared/mcpQualityOutputs.ts": {
+      "lines": {
+        "total": 7,
+        "covered": 7,
+        "pct": 100
+      },
+      "statements": {
+        "total": 7,
+        "covered": 7,
         "pct": 100
       },
       "functions": {
@@ -45929,6 +49300,28 @@
         "pct": 100
       }
     },
+    "src/shared/mcpTranslationInstructions.ts": {
+      "lines": {
+        "total": 1,
+        "covered": 1,
+        "pct": 100
+      },
+      "statements": {
+        "total": 1,
+        "covered": 1,
+        "pct": 100
+      },
+      "functions": {
+        "total": 0,
+        "covered": 0,
+        "pct": 100
+      },
+      "branches": {
+        "total": 0,
+        "covered": 0,
+        "pct": 100
+      }
+    },
     "src/shared/mcpTranslationQuality.ts": {
       "lines": {
         "covered": 28,
@@ -46080,6 +49473,28 @@
       "branches": {
         "total": 8,
         "covered": 8,
+        "pct": 100
+      }
+    },
+    "src/shared/mcpWorkTypography.ts": {
+      "lines": {
+        "total": 6,
+        "covered": 6,
+        "pct": 100
+      },
+      "statements": {
+        "total": 7,
+        "covered": 7,
+        "pct": 100
+      },
+      "functions": {
+        "total": 4,
+        "covered": 4,
+        "pct": 100
+      },
+      "branches": {
+        "total": 0,
+        "covered": 0,
         "pct": 100
       }
     },
@@ -46987,6 +50402,7 @@
     }
   },
   "deletedFiles": [
+    "src/main/inpainting/fluxAssets/zludaRuntime.ts",
     "src/main/nativeDynamicImport.ts",
     "src/main/openaiOauthEndpoint.ts",
     "src/renderer/src/components/AutomaticFontMatchNotice.tsx",

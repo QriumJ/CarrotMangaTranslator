@@ -1,4 +1,9 @@
 import { McpTranslationGuideOutputSchema } from "../../shared/mcpTranslationGuide";
+import {
+  mcpQualityOutputs,
+  mcpRenderedPageEvidenceFields,
+  McpPageImageKindSchema,
+} from "../../shared/mcpQualityOutputs";
 import { mcpWorkFileOutputs } from "../../shared/mcpWorkFileImport";
 import { mcpCompositeWorkflowOutputs } from "../../shared/mcpCompositeWorkflowOutputs";
 import { mcpTextExchangeOutputs } from "../../shared/mcpTextExchange";
@@ -38,6 +43,7 @@ import { mcpStructureOutputs } from "../../shared/mcpBlockStructure";
 import { mcpErasureRecoveryOutputs } from "../../shared/mcpErasureRecoverySchemas";
 import { McpExportPreflightOutput } from "../../shared/mcpExportBatch";
 import { z } from "zod/v4";
+import { ImageEditingBudgetSchema } from "../../shared/imageEditingBudget";
 import { mcpContextOutputSchemas } from "../../shared/mcpContextEditing";
 import { mcpJobReceiptOutput, mcpJobFileOutput } from "./mcpJobOutputSchema";
 import { McpWorkFileExportReviewSchema } from "../../shared/mcpWorkFileExport";
@@ -84,7 +90,8 @@ const block = z
 const image = z
   .object({
     ...target,
-    kind: z.enum(["source-crop", "rendered-page"]),
+    kind: McpPageImageKindSchema,
+    ...mcpRenderedPageEvidenceFields,
     sourceWidth: size,
     sourceHeight: size,
     width: size,
@@ -102,6 +109,8 @@ const image = z
   .strict();
 /** Public projections only. JSON Schema and runtime validation share these definitions. */
 export const mcpOutputSchemas: Record<string, z.ZodType> = {
+  carrot_get_image_budget: ImageEditingBudgetSchema,
+  ...mcpQualityOutputs,
   carrot_get_translation_guide: McpTranslationGuideOutputSchema,
   ...mcpCompositeWorkflowOutputs,
   ...mcpTextExchangeOutputs,
@@ -138,6 +147,7 @@ export const mcpOutputSchemas: Record<string, z.ZodType> = {
   ...mcpSoundEffectOutputs,
   carrot_prepare_sound_effect_batch: mcpJobReceiptOutput,
   carrot_generate_sound_effects: mcpJobReceiptOutput,
+  carrot_verify_generated_lettering: mcpJobReceiptOutput,
   ...mcpSelectionBatchOutputs,
   ...mcpTypographyBatchOutputs,
   ...mcpTypographyReadOutputs,

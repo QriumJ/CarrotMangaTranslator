@@ -58,6 +58,27 @@ function fixture(autoAcknowledge = true) {
   };
 }
 describe("MCP uses the existing app erasure job", () => {
+  it.each(["aot-inpainting", "flux-klein"] as const)(
+    "selects %s for just this job without changing saved settings",
+    async (localModel) => {
+      const f = fixture();
+      const settings = await f.harness.runtime.getSettings(f.app.appPaths);
+      const before = structuredClone(settings);
+      f.harness.runtime.getSettings = async () => settings;
+      await eraseMcpPage(
+        f.app,
+        f.editing,
+        { ...f.target, localModel },
+        f.operation,
+        f.harness.runtime,
+      );
+      expect(f.harness.acquireEngine).toHaveBeenCalledWith(
+        expect.objectContaining({ model: localModel }),
+      );
+      expect(settings).toEqual(before);
+      expect(f.harness.releaseEngine).toHaveBeenCalledOnce();
+    },
+  );
   it("routes explicitly selected Codex erasure through native ownership without a local engine or layout", async () => {
     const f = fixture();
     const settings = await f.harness.runtime.getSettings(f.app.appPaths);
@@ -130,10 +151,11 @@ describe("MCP uses the existing app erasure job", () => {
     expect(f.harness.acquireEngine).not.toHaveBeenCalled();
     expect(f.harness.runtime.savePages).not.toHaveBeenCalled();
   });
-  it("runs local page-pattern removal and preserves text and history with no Codex or layout", async () => {
+  it("prepares local FLUX masks without committing layout or invoking Codex", async () => {
     const f = fixture();
     const codex = vi.fn();
-    const layout = vi.fn();
+    const runPage = vi.fn(async () => ({ patches: [] }));
+    const layout = vi.fn(() => ({ runPage }));
     f.harness.runtime.acquireCodexEngine = codex;
     f.harness.runtime.createBubbleLayoutRunner = layout;
     const before = structuredClone(f.page.blocks);
@@ -153,7 +175,13 @@ describe("MCP uses the existing app erasure job", () => {
     expect(f.harness.inpaintPatternPage).toHaveBeenCalledTimes(1);
     expect(f.harness.releaseEngine).toHaveBeenCalledTimes(1);
     expect(codex).not.toHaveBeenCalled();
-    expect(layout).not.toHaveBeenCalled();
+    expect(layout).toHaveBeenCalledOnce();
+    expect(runPage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sourceEraseMask: true,
+        includeTypographySegmentation: true,
+      }),
+    );
     expect(f.chapters.get("chapter")?.pages[0].blocks).toEqual(before);
     expect(f.editing.assertClean).toHaveBeenCalled();
     expect(f.app.jobs.current).toBeNull();

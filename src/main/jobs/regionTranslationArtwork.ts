@@ -14,6 +14,9 @@ import { inpaintPatternPage } from "../inpainting";
 import { acquireInpaintingEngine } from "../inpainting/inpaintingEnginePool";
 import { getAppPaths } from "../appPaths";
 import { getAppSettings } from "../settingsStore";
+import { createProductionBubbleLayoutRunner } from "../bubbleLayout/bubbleLayoutFacade";
+import { runBubbleLayoutMaskPrepass } from "./bubbleLayoutJob";
+import { applyInpaintingLayoutStates } from "../inpainting/inpaintingLayoutState";
 
 type RegionArtworkInput = {
   source: MangaPage;
@@ -30,6 +33,7 @@ const productionDependencies = {
   getAppPaths,
   getAppSettings,
   acquireInpaintingEngine,
+  createBubbleLayoutRunner: createProductionBubbleLayoutRunner,
 };
 
 export async function prepareRegionArtwork(
@@ -166,28 +170,91 @@ async function eraseRegionWithConfiguredEngine(
 ) {
   const appPaths = dependencies.getAppPaths();
   const settings = await dependencies.getAppSettings(appPaths);
-  const lease = await dependencies.acquireInpaintingEngine({
-    appPaths,
-    model: settings.inpainting?.model ?? "flux-klein",
-    fluxBackend: settings.inpainting?.fluxBackend,
-    koharuBackend: settings.inpainting?.koharuBackend,
-    computeGpuIndex: settings.hardware?.computeGpuIndex,
-    allowUnsafeLowMemoryFlux:
-      settings.inpainting?.allowUnsafeLowMemoryFlux ?? false,
-    signal,
-  });
+  const inpainting = settings.inpainting ?? {};
+  const model = inpainting.model ?? "flux-klein";
+  const runner =
+    model === "flux-klein"
+      ? dependencies.createBubbleLayoutRunner({
+          dataRoot: appPaths.dataRoot,
+          decodeFallback,
+          directMl: {
+            ...settings.hardware,
+            computeGpuBackend: settings.ocr.gpuBackend,
+          },
+        })
+      : undefined;
+  let lease:
+    | Awaited<ReturnType<typeof dependencies.acquireInpaintingEngine>>
+    | undefined;
   try {
-    const result = await inpaintPatternPage(page, {
-      blockIds: page.blocks.map((block) => block.id),
+    await runner?.preparePages?.([page], signal);
+    lease = await dependencies.acquireInpaintingEngine({
+      appPaths,
+      model,
+      fluxBackend: inpainting.fluxBackend,
+      koharuBackend: inpainting.koharuBackend,
+      computeGpuIndex: settings.hardware?.computeGpuIndex,
+      allowUnsafeLowMemoryFlux: inpainting.allowUnsafeLowMemoryFlux ?? false,
       signal,
-      decodeFallback,
-      inpaintingEngine: lease.engine,
-      preserveExistingInpainting: true,
     });
-    if (page.blocks.some((block) => !result.erasedBlockIds?.includes(block.id)))
-      throw new Error("일부 원문을 지우지 못했습니다.");
-    return result.page;
+    return await erasePreparedRegion(
+      page,
+      decodeFallback,
+      signal,
+      lease,
+      runner,
+    );
   } finally {
-    await lease.release();
+    try {
+      await lease?.release();
+    } finally {
+      await runner?.dispose?.();
+    }
   }
+}
+
+function assertRegionBlocksErased(
+  page: MangaPage,
+  erasedIds: readonly string[] | undefined,
+): void {
+  const erased = new Set(erasedIds);
+  if (page.blocks.some((block) => !erased.has(block.id)))
+    throw new Error("일부 원문을 지우지 못했습니다.");
+}
+
+async function erasePreparedRegion(
+  page: MangaPage,
+  decodeFallback: ImageDecodeFallback,
+  signal: AbortSignal,
+  lease: Awaited<ReturnType<typeof acquireInpaintingEngine>>,
+  runner: ReturnType<typeof createProductionBubbleLayoutRunner> | undefined,
+) {
+  const blockIds = page.blocks.map((block) => block.id);
+  const prepared =
+    lease.engine.model === "flux-klein" && runner
+      ? await runBubbleLayoutMaskPrepass({
+          page,
+          blockIds,
+          signal,
+          config: { policy: "balanced", overwriteManual: false },
+          runner,
+        })
+      : undefined;
+  const {
+    page: maskPage = page,
+    restoreLayout,
+    ...maskOptions
+  } = prepared ?? {};
+  const result = await inpaintPatternPage(maskPage, {
+    ...maskOptions,
+    blockIds,
+    signal,
+    decodeFallback,
+    inpaintingEngine: lease.engine,
+    preserveExistingInpainting: true,
+  });
+  assertRegionBlocksErased(page, result.erasedBlockIds);
+  return restoreLayout
+    ? applyInpaintingLayoutStates(result.page, restoreLayout)
+    : result.page;
 }

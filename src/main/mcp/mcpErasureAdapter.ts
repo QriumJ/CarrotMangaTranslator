@@ -10,6 +10,7 @@ import { createPageRevision } from "../../shared/pageRevision";
 import { McpEditError } from "../application/mcpEditPolicy";
 import type { McpOperationContext } from "../application/mcpOperationService";
 import type { McpOperationTarget } from "./mcpOperationTools";
+import { currentRetentionInvocation } from "./mcpRecoveryCapture";
 
 type Editing = {
   assertWritable: (chapterId: string, pageId: string) => Promise<void>;
@@ -26,11 +27,19 @@ export async function eraseMcpPage(
   onHistory?: (reference: InpaintingHistoryTransactionRef) => void,
 ) {
   operation.assertAuthorized();
+  const retention = currentRetentionInvocation();
+  if (retention) await retention.assertCapacity();
   const { startInpaintingJob } = await import("../jobs/inpaintingJobs.js");
   runtime ??= (await import("../jobs/inpaintingJobRuntime.js"))
     .productionInpaintingJobRuntime;
   operation.assertAuthorized();
-  const settings = await runtime.getSettings(app.appPaths);
+  const storedSettings = await runtime.getSettings(app.appPaths);
+  const settings = target.localModel
+    ? {
+        ...storedSettings,
+        inpainting: { ...storedSettings.inpainting, model: target.localModel },
+      }
+    : storedSettings;
   await assertErasureEngine(app, target, settings);
   const scopedApp = {
     ...app,
@@ -64,6 +73,7 @@ export async function eraseMcpPage(
   const job = app.jobs.all.find(
     (entry) => !previous.has(entry.id) && entry.kind === "inpainting",
   );
+  if (job) job.origin = "mcp";
   const cancel = () => {
     if (job && app.jobs.get(job.id) === job) job.abortController.abort();
   };
@@ -214,7 +224,10 @@ function cleanupFailure(
     blocksErased: undefined,
     blocksIncomplete: undefined,
     performed: ["erase-original"],
-    engine: target.engine === "codex" ? "codex" : "app-configured-local",
+    engine:
+      target.engine === "codex"
+        ? "codex"
+        : (target.localModel ?? "app-configured-local"),
   };
 }
 
@@ -242,6 +255,9 @@ function erasureResult(
     blocksErased: result.blocksErased ?? 0,
     blocksIncomplete: result.blocksIncomplete ?? 0,
     performed: ["erase-original"],
-    engine: target.engine === "codex" ? "codex" : "app-configured-local",
+    engine:
+      target.engine === "codex"
+        ? "codex"
+        : (target.localModel ?? "app-configured-local"),
   };
 }

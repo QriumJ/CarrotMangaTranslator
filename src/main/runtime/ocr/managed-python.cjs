@@ -57,11 +57,12 @@ const {
   installedManagedPythonHashesMatch,
   managedPythonMarkerMatches,
 } = require("./managed-python-integrity.cjs");
-const { resolveOcrEngineLabel } = require("./engine-profile.cjs");
+const {
+  resolveOcrEngineLabel,
+  isHayaiOcrPipeline,
+} = require("./engine-profile.cjs");
 
 const DEFAULT_MANAGED_PYTHON = RUNTIME_INTEGRITY_MANIFEST.managedPython;
-const DEFAULT_EMBED_PYTHON_VERSION = DEFAULT_MANAGED_PYTHON.version;
-const DEFAULT_GET_PIP_URL = DEFAULT_MANAGED_PYTHON.getPip.url;
 const PYTHON_RUNTIME_MARKER_FILE = ".mgt-bootstrap-python.json";
 
 /** @param {RuntimeOptions} options @param {string} runtimeDir @returns {Promise<string>} */
@@ -114,9 +115,14 @@ function assertManagedPythonPlatform() {
 
 /** @param {RuntimeOptions} options @param {string} runtimeDir @returns {ManagedPythonContext} */
 function resolveManagedPythonContext(options, runtimeDir) {
+  // Hayai's stable Windows CPU/CUDA/ROCm wheels all support CPython 3.14.
+  // Keep the legacy Paddle bootstrap frozen.
+  const managedPython = isHayaiOcrPipeline(options)
+    ? RUNTIME_INTEGRITY_MANIFEST.hayaiManagedPython
+    : DEFAULT_MANAGED_PYTHON;
   const version = String(
     runtimeOverrideEnv("MANGA_TRANSLATOR_EMBED_PYTHON_VERSION", options) ||
-      DEFAULT_EMBED_PYTHON_VERSION,
+      managedPython.version,
   ).trim();
   const pythonUrl = String(
     runtimeOverrideEnv("MANGA_TRANSLATOR_EMBED_PYTHON_URL", options) ||
@@ -124,11 +130,11 @@ function resolveManagedPythonContext(options, runtimeDir) {
   ).trim();
   const getPipUrl = String(
     runtimeOverrideEnv("MANGA_TRANSLATOR_GET_PIP_URL", options) ||
-      DEFAULT_GET_PIP_URL,
+      managedPython.getPip.url,
   ).trim();
   const pythonAsset = resolvePinnedRemoteAsset({
-    defaultUrl: DEFAULT_MANAGED_PYTHON.archive.url,
-    defaultSha256: DEFAULT_MANAGED_PYTHON.archive.sha256,
+    defaultUrl: managedPython.archive.url,
+    defaultSha256: managedPython.archive.sha256,
     url: pythonUrl,
     overrideSha256: runtimeOverrideEnv(
       "MANGA_TRANSLATOR_EMBED_PYTHON_SHA256",
@@ -137,8 +143,8 @@ function resolveManagedPythonContext(options, runtimeDir) {
     label: "Managed Python archive",
   });
   const getPipAsset = resolvePinnedRemoteAsset({
-    defaultUrl: DEFAULT_MANAGED_PYTHON.getPip.url,
-    defaultSha256: DEFAULT_MANAGED_PYTHON.getPip.sha256,
+    defaultUrl: managedPython.getPip.url,
+    defaultSha256: managedPython.getPip.sha256,
     url: getPipUrl,
     overrideSha256: runtimeOverrideEnv(
       "MANGA_TRANSLATOR_GET_PIP_SHA256",

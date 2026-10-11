@@ -136,11 +136,11 @@ describe("Windows installer clean uninstall option", () => {
         },
         {
           from: "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs",
-          to: "app-runtime/onnxruntime-web/1.27.0/ort-wasm-simd-threaded.mjs",
+          to: "app-runtime/onnxruntime-web/1.30.0/ort-wasm-simd-threaded.mjs",
         },
         {
           from: "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm",
-          to: "app-runtime/onnxruntime-web/1.27.0/ort-wasm-simd-threaded.wasm",
+          to: "app-runtime/onnxruntime-web/1.30.0/ort-wasm-simd-threaded.wasm",
         },
         {
           from: "out/app-runtime/o",
@@ -238,9 +238,9 @@ describe("Windows installer clean uninstall option", () => {
     ]) {
       expect(packageJson.dependencies).toHaveProperty(runtimePackage);
     }
-    expect(packageJson.dependencies["onnxruntime-web"]).toBe("1.27.0");
-    expect(packageJson.dependencies["onnxruntime-node"]).toBe("1.27.0");
-    expect(packageJson.dependencies["@openai/codex"]).toBe("0.156.1");
+    expect(packageJson.dependencies["onnxruntime-web"]).toBe("1.30.0");
+    expect(packageJson.dependencies["onnxruntime-node"]).toBe("1.30.0");
+    expect(packageJson.dependencies["@openai/codex"]).toBe("0.160.0");
     expect(packageJson.devDependencies).not.toHaveProperty("@openai/codex");
     expect(packageJson.overrides["onnxruntime-node"]?.["adm-zip"]).toBe(
       "^0.6.1",
@@ -276,14 +276,14 @@ describe("Windows installer clean uninstall option", () => {
     );
 
     // The trained font matching runtime bundle is externalized out of the
-    // installer (downloaded on first use), so the unpacked size budget guards
-    // the ~745 MiB floor without the bundle and rejects the 467 MiB bundle
-    // returning (~1212 MiB).
+    // installer (downloaded on first use). The budget includes the audited
+    // official Codex and Claude native payloads while keeping the external
+    // font bundle and training data out of the installer.
     expect(packagedRuntimeVerifier).toContain(
-      "const MAX_PACKAGED_BYTES = 1450 * 1024 * 1024;",
+      "const MAX_PACKAGED_BYTES = 1695 * 1024 * 1024;",
     );
     expect(packagedRuntimeVerifier).toContain(
-      "const MAX_PACKAGED_FILES = 371;",
+      "const MAX_PACKAGED_FILES = 379;",
     );
     expect(packagedRuntimeVerifier).toContain(
       "const mainRuntimeSmokeMessage = runPackagedMainRuntimeSmoke();",

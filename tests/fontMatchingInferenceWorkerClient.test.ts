@@ -565,6 +565,32 @@ describe("font matching worker client protocol", () => {
     await port.dispose?.();
   });
 
+  it("copies a stage-borrowed raster before worker transfer so source-size pixels survive", async () => {
+    const borrowed = makeRaster();
+    borrowed.bgra[0] = 37;
+    const fallbackDecode = vi.fn(async () => makeRaster());
+    const sharedLoad = vi.fn(async () => borrowed);
+    const port = makePort({ loadRaster: fallbackDecode });
+    await port.inferPage(makeRequest({ loadRaster: sharedLoad }));
+    const message = FakeWorker.instances[0].posted.find(
+      (item) => item.type === "infer",
+    );
+    if (!message || message.type !== "infer")
+      throw new Error("Missing inference packet");
+    expect(message.raster.bgra).toEqual(borrowed.bgra);
+    expect(message.raster.bgra.buffer).not.toBe(borrowed.bgra.buffer);
+    // Simulate the actual transfer-list detachment, which FakeWorker omits.
+    const transferred = structuredClone(message.raster, {
+      transfer: [message.raster.bgra.buffer as ArrayBuffer],
+    });
+    expect(transferred.bgra[0]).toBe(37);
+    expect(borrowed.bgra.byteLength).toBeGreaterThan(0);
+    expect(borrowed.bgra[0]).toBe(37);
+    expect(fallbackDecode).not.toHaveBeenCalled();
+    expect(sharedLoad).toHaveBeenCalledTimes(1);
+    await port.dispose?.();
+  });
+
   it("transfers the decoded raster buffer to the worker", async () => {
     const raster = makeRaster();
     const loadRaster = vi.fn(async () => raster);
@@ -703,15 +729,13 @@ describe("font matching worker client protocol", () => {
 
   it("falls back to the in-process port when worker spawn fails", async () => {
     FakeWorker.failSpawn = true;
-    const fallback = vi.fn(
-      (): FontMatchingPageInferencePort => ({
-        inferPage: async (request) => ({
-          pixelInferenceByBlockId: new Map([
-            [request.blocks[0]?.blockId ?? "x", {} as never],
-          ]),
-        }),
+    const fallback = vi.fn((): FontMatchingPageInferencePort => ({
+      inferPage: async (request) => ({
+        pixelInferenceByBlockId: new Map([
+          [request.blocks[0]?.blockId ?? "x", {} as never],
+        ]),
       }),
-    );
+    }));
     const reportWarning = vi.fn();
     const port = makePort({ createFallbackPort: fallback, reportWarning });
 
@@ -747,11 +771,9 @@ describe("font matching worker client protocol", () => {
         ]),
       }),
     );
-    const fallback = vi.fn(
-      (): FontMatchingPageInferencePort => ({
-        inferPage: fallbackInfer,
-      }),
-    );
+    const fallback = vi.fn((): FontMatchingPageInferencePort => ({
+      inferPage: fallbackInfer,
+    }));
     const reportWarning = vi.fn();
     const port = makePort({ createFallbackPort: fallback, reportWarning });
 
@@ -778,11 +800,9 @@ describe("font matching worker client protocol", () => {
           ]),
         }),
       );
-      const fallback = vi.fn(
-        (): FontMatchingPageInferencePort => ({
-          inferPage: fallbackInfer,
-        }),
-      );
+      const fallback = vi.fn((): FontMatchingPageInferencePort => ({
+        inferPage: fallbackInfer,
+      }));
       const reportWarning = vi.fn();
       const port = makePort({ createFallbackPort: fallback, reportWarning });
 

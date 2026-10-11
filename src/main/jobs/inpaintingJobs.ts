@@ -305,6 +305,7 @@ async function finishInpaintingJob(
         await disposeBubbleLayoutSessions(
           runtime,
           context.jobs.get(id)?.resources,
+          state.bubbleLayoutRunner,
         );
       } finally {
         context.jobs.clearIfCurrent(id);
@@ -319,19 +320,22 @@ async function disposeBubbleLayoutSessions(
   resources:
     | readonly import("../../shared/appActivityTypes").AppActivityResource[]
     | undefined,
+  runner: InpaintingJobState["bubbleLayoutRunner"],
 ): Promise<void> {
-  if (
-    resources &&
-    !resources.some((resource) => resource.kind === "model-runtime")
-  )
-    return;
   try {
+    if (
+      resources &&
+      !resources.some((resource) => resource.kind === "model-runtime")
+    )
+      return;
     await runtime.disposeBubbleLayoutSessions?.();
   } catch (error) {
     runtime.logError("Failed to release KoharuLayout sessions after job", {
       error,
     });
     throw error;
+  } finally {
+    await runner?.dispose?.();
   }
 }
 

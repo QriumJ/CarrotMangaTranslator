@@ -1,5 +1,16 @@
 # 코드 경계와 품질 규칙
 
+## 2026-10-12 Gemma 생성 설정
+
+Gemma Temperature·Top P·Top K의 기본값은 shared `gemmaSamplingSettings`가 소유한다.
+설정 기본값·저장값 정규화·런타임 fallback·렌더러 초기화와 복원이 같은 계약을 직접
+사용하므로 `appSettingsDefaults`의 직접 import 상한만 13에서 14로 조정한다.
+기본값 복제나 재수출 우회는 만들지 않는다. 저장/IPC/환경변수 우선순위와 실제 요청의
+샘플링 전달, grouping의 Temperature 0 및 추론 비활성화는 행동 테스트로 검증한다.
+새 UI·공용 기본값 파일의 Windows 커버리지 기준은 기존 기준을 유지한 채 추가했다.
+측정 출처는 `.tmp/gemma-sampling-coverage-20261012.json`이며 SHA-256은
+`96a8397ca5881f7d50e1ff27c9533fc68f0be02cf7a28e8cf1d140fb66629a3c`다.
+
 ## 2026-10-03 반복 초기화 제거
 
 모델·숨은 렌더러 재사용은 native 작업/단계의 명시적 workload 안으로 한정한다.
@@ -90,6 +101,12 @@ main IPC/job ──> application service ──> pure policy ──> port
 
 Codex 전체 위임 경로는 제품에서 제거했다. 일반 OCR·번역·용어/스토리 기억이 텍스트를 확정한 뒤 `codexImageEditing` composition root가 선택한 영역의 제거·ImageGen·실제 렌더러 미리보기만 연결한다. 텍스트 엔진과 이미지 작업용 Codex 모델·추론 강도는 독립적이다. `wholePagePipeline`의 영역 후처리, `soundEffectTranslationJobRunner`의 번역 후 이미지 작업, `AppSessionView`의 가리기 검토, `SettingsModalView`의 이미지 설정 연결에만 각각 26/16/26/17의 import 상한 사유를 기록한다. 일반 모듈 상한은 유지한다. `runCodexTypesetting`은 기존 오프라인 검증용 계약으로만 남는다.
 
+2026-10-09 글로벌 채팅은 위 일반 번역 파이프라인과 별도의 사용자 진입점이다.
+`application/ChatService`의 지속 대화가 `chat/CodexChatRuntime`과 기존 native MCP를
+사용하며 번역/편집/검수 엔진을 복제하지 않는다. 전역 저장, 내부/외부 MCP 공용
+authority와 composition 예산의 변경 근거는
+[글로벌 채팅 인계](global-chat-translation-20261009.md)에 기록한다.
+
 부분 강조에는 기존 `richTextMarkup`의 안전한 문법을 그대로 사용한다. 식자 직렬화,
 이미지 문자 생성의 실제 문구, 독립 재판독의 기대 문구, literal 폰트 견본이 같은 parser/serializer를
 직접 사용하고, master의 조건부 일괄 식자도 같은 문법을 소비하므로 병합 후 이 공개 문법 모듈의 fan-in만 28로 명시한다. 문법을 복제하거나
@@ -113,6 +130,12 @@ Codex 전체 위임 경로는 제품에서 제거했다. 일반 OCR·번역·용
 UI 표면과 primitive 선택은 [`ui-design-rules.md`](ui-design-rules.md)를 따른다.
 
 ## 공용 계약과 SSOT
+
+생성 레터링의 자모 기준은 `letteringTextStructure`가 확정 문구의 Unicode 음절을
+분해해 제공한다. 기존 `richTextMarkup` parser로 표시 문구를 얻으며 해당 모듈의
+직접 소비 상한만 38로 기록한다. 생성 지시와 MCP 수정용 메타데이터에 공유하고,
+정답을 숨기는 이미지 재판독·자형 검사에는 전달하지 않는다. NFC/NFD·혼합 문자·
+겹받침·서식 문구와 실제 MCP HTTP/미리보기 응답 테스트로 이 경계를 확인한다.
 
 클립보드는 렌더러와 같은 `richTextMarkup` parser로 표시 문자열을 얻어 자동 확장된
 텍스트 상자를 보존한다. 이 직접 소비자를 포함해 parser fan-in은 29다.

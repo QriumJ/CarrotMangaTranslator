@@ -1,3 +1,4 @@
+import type { InpaintingWindowMask } from "../inpainting/inpaintingEngine";
 import type { JobEvent } from "../../shared/jobTypes";
 import type { MangaPage } from "../../shared/libraryTypes";
 import type { KoharuTypographySegmentation } from "../bubbleLayout/contracts";
@@ -302,6 +303,12 @@ function buildPatternInpaintingOptions({
             maskPreparation.sharedInpaintGroupIdsByBlock,
         }
       : {}),
+    ...("sourceEraseConstraintsByBlock" in maskPreparation
+      ? {
+          sourceEraseConstraintsByBlock:
+            maskPreparation.sourceEraseConstraintsByBlock,
+        }
+      : {}),
     ...("typographySegmentation" in maskPreparation
       ? { typographySegmentation: maskPreparation.typographySegmentation }
       : {}),
@@ -332,14 +339,11 @@ async function preparePatternMaskPage({
   page: MangaPage;
   restoreLayout?: InpaintingBlockLayoutState[];
   sharedInpaintGroupIdsByBlock?: Record<string, string[]>;
+  sourceEraseConstraintsByBlock?: Record<string, InpaintingWindowMask>;
   typographySegmentation?: KoharuTypographySegmentation;
 }> {
   const engineModel = state.inpaintingEngineLease?.engine.model;
-  if (
-    engineModel !== "flux-klein" ||
-    !state.bubbleLayoutPostprocess ||
-    !state.bubbleLayoutRunner
-  ) {
+  if (engineModel !== "flux-klein" || !state.bubbleLayoutRunner) {
     return { page };
   }
   const previouslyErasedBlockIds = resolvePreviouslyErasedBlockIds(
@@ -360,7 +364,10 @@ async function preparePatternMaskPage({
   const prepared = await runBubbleLayoutMaskPrepass({
     blockId: target.blockId,
     ...(retryBlockIds ? { blockIds: retryBlockIds } : {}),
-    config: state.bubbleLayoutPostprocess,
+    config: state.bubbleLayoutPostprocess ?? {
+      policy: "balanced",
+      overwriteManual: false,
+    },
     page: prepassPage,
     runner: state.bubbleLayoutRunner,
     signal,

@@ -113,7 +113,15 @@
       "failed": "작업에 실패했습니다.",
       "cancelled": "작업이 취소되었습니다.",
       "openLogs": "로그 폴더 열기",
-      "reportError": "오류 보고"
+      "reportError": "오류 보고",
+      "mcpCompleted": "MCP 작업을 마쳤습니다 ({{count}}건)",
+      "mcpFailed": "실패 {{count}}건",
+      "chat": {
+        "idle": "채팅 작업을 마쳤습니다",
+        "failed": "채팅 작업이 중단되었습니다",
+        "needs-input": "채팅이 답변을 기다리고 있습니다",
+        "paused": "채팅 작업을 중지했습니다"
+      }
     },
     "codex": {
       "stages": {
@@ -220,6 +228,9 @@
     "shortcutHelp": {
       "label": "단축키 도움말",
       "keywords": "shortcut help 단축키 도움말"
+    },
+    "chat": {
+      "label": "채팅으로 번역"
     }
   },
   "shortcuts": {
@@ -537,7 +548,8 @@
         "codexAuth": "ChatGPT 계정 연결",
         "background": "백그라운드 작업",
         "environmentBackup": "백업 내보내기",
-        "environmentRestore": "백업 가져오기"
+        "environmentRestore": "백업 가져오기",
+        "claudeAuth": "Claude 계정 연결"
       },
       "source": {
         "files": "파일",

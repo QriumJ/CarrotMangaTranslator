@@ -74,6 +74,10 @@ it.each([false, true])(
         save: async () => {},
         progress: vi.fn(),
         isFatal: () => false,
+        // This test replaces page inference with a native-engine lease probe.
+        // Replace its preparation too; real preparation order is covered by
+        // fluxErasureRouting and inpaintingBubbleLayoutJob with image fixtures.
+        prepareStage: async () => {},
         execute: async (_stage, _chapter, page) => {
           const lease = await acquireInpaintingEngine(
             {

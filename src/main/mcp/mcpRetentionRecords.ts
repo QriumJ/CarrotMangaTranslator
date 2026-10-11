@@ -12,14 +12,16 @@ import { z } from "zod";
 import { LibraryChapterFileSchema } from "../../shared/ipcLibrarySchemas";
 
 export const MCP_RETENTION_MS = 7 * 24 * 60 * 60_000;
-export const MCP_RETENTION_CAPACITY = 256;
+// A chapter can produce many source, cleanup, layout and review commits per page.
+// Keep those recoverable across chapters; the 1 GiB byte quota still bounds disk use.
+export const MCP_RETENTION_CAPACITY = 4096;
 export const MCP_RETENTION_BYTES = 1024 * 1024 * 1024;
 export const MCP_RETAINED_FILE_BYTES = 128 * 1024 * 1024;
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 const count = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
 const revision = z.string().regex(/^page-v1:[a-f0-9]{16}$/);
-// Native retained records use Zod 3; the shared work-file boundary uses Zod 4.
+// Keep the retained-record diagnostic stable at the shared work-file boundary.
 const retainedWorkFileBinding = z.unknown().transform((value, context) => {
   const parsed = McpWorkFileExportBindingSchema.safeParse(value);
   if (parsed.success) return parsed.data;
@@ -29,7 +31,7 @@ const retainedWorkFileBinding = z.unknown().transform((value, context) => {
   });
   return z.NEVER;
 });
-const page = LibraryChapterFileSchema.shape.pages.element.innerType().pick({
+const page = LibraryChapterFileSchema.shape.pages.element.in.pick({
   id: true,
   imagePath: true,
   width: true,

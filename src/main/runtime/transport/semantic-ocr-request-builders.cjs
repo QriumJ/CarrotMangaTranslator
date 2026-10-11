@@ -25,7 +25,7 @@ const { buildChatRequestBody } = require("./request-bodies.cjs");
 const {
   isOllamaCloudApiModel,
   isOpenAIApiProvider,
-  isOpenAICodexProvider,
+  usesResponsesTransport,
   resolveConfiguredCodexModel,
   resolveConfiguredCodexReasoningEffort,
 } = require("../simple-page-model-config.cjs");
@@ -112,7 +112,7 @@ function buildSemanticStageRequestBody(
   unitCount,
 ) {
   const tokenBudget = resolveStructuredTokenBudget(options, stage, unitCount);
-  if (isOpenAICodexProvider(options)) {
+  if (usesResponsesTransport(options)) {
     return buildCodexSemanticRequestBody(
       options,
       messages,
@@ -123,6 +123,16 @@ function buildSemanticStageRequestBody(
   }
   const body = buildChatRequestBody(options, messages, tokenBudget.maxTokens);
   if (isOpenAIApiProvider(options)) {
+    // Respect explicitly configured JSON mode for APIs without JSON Schema.
+    // The prompt and application parser still enforce the fixed-block contract.
+    if (
+      body.response_format &&
+      typeof body.response_format === "object" &&
+      "type" in body.response_format &&
+      body.response_format.type === "json_object"
+    ) {
+      return Object.assign(body, { response_format: { type: "json_object" } });
+    }
     return Object.assign(body, {
       response_format: buildOpenAiStructuredResponseFormat(
         options,
@@ -137,15 +147,11 @@ function buildSemanticStageRequestBody(
     reasoning_format: "none",
     reasoning_budget: 0,
     enable_thinking: false,
-    temperature:
-      stage === "grouping"
-        ? 0
-        : Math.max(0, Math.min(0.2, Number(options.temperature) || 0.2)),
-    top_p: 0.95,
-    top_k: 64,
+    // Group classification is deterministic; translation inherits the input sampler.
+    ...(stage === "grouping" ? { temperature: 0 } : {}),
     seed: SEMANTIC_SEED,
     cache_prompt: false,
-    // Fixed sampling contract for stable small-model output.
+    // Repetition controls are independent of the configured sampling values.
     repeat_penalty: SEMANTIC_REPEAT_PENALTY,
     repeat_last_n: SEMANTIC_REPEAT_LAST_N,
   });
@@ -341,14 +347,22 @@ function buildCodexSemanticRequestBody(
   const systemMessage = messages.find((message) => message.role === "system");
   const userMessages = messages.filter((message) => message.role !== "system");
   return {
-    model: resolveConfiguredCodexModel(options),
+    model:
+      options.modelProvider === "claude-code"
+        ? String(options.claudeModel || "default")
+        : resolveConfiguredCodexModel(options),
     instructions: readMessageText(systemMessage),
     input: userMessages.map((message) => ({
       role: String(message.role ?? "user"),
       content: readMessageContent(message.content).map(toResponsesContentPart),
     })),
     max_output_tokens: maxTokens,
-    reasoning: { effort: resolveConfiguredCodexReasoningEffort(options) },
+    reasoning: {
+      effort:
+        options.modelProvider === "claude-code"
+          ? String(options.claudeEffort || "high")
+          : resolveConfiguredCodexReasoningEffort(options),
+    },
     text: {
       format: {
         type: "json_schema",

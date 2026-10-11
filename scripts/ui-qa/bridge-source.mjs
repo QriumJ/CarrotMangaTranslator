@@ -1,3 +1,5 @@
+import { chatBridgeSource } from "./chat-bridge.mjs";
+
 const bridgeTemplate = `(() => {
   const runtimeErrors = [];
   const stringifyReason = (value) => {
@@ -94,13 +96,17 @@ const bridgeTemplate = `(() => {
     displayName: id.replace("gpt", "GPT"),
     isDefault: false,
   })));
+  let claudeAccount = {authenticated: true, email: "reader@example.com", plan: "pro", version: "2.1.294", models: [
+    {id:"default",displayName:"Default",supportedReasoningEfforts:["low","medium","high","xhigh","max"],defaultReasoningEffort:"high",isDefault:true},
+    {id:"sonnet",displayName:"Sonnet",supportedReasoningEfforts:["low","medium","high","xhigh","max"],defaultReasoningEffort:"high",isDefault:false},
+    {id:"opus",displayName:"Opus",supportedReasoningEfforts:["low","medium","high","xhigh","max"],defaultReasoningEffort:"high",isDefault:false}]};
   const signedInCodexAccount = {
     authenticated: true,
     accountKind: "chatgpt",
     email: "reader@example.com",
     planType: "plus",
     requiresOpenaiAuth: true,
-    appServerVersion: "0.156.1",
+    appServerVersion: "0.160.0",
     models: codexModels,
   };
   let codexAccount = signedInCodexAccount;
@@ -111,7 +117,9 @@ const bridgeTemplate = `(() => {
     schemes: conditionalBatchSchemes,
     sequences: conditionalBatchSequences,
   });
+  __CHAT_BRIDGE__
   const implementations = {
+    ...chatApi,
     getEnvironmentRestoreReceipt: async () => null,
     previewEnvironmentBackup: async () => ({ id: "11111111-1111-4111-8111-111111111111", createdAt: "2026-09-24T10:30:00.000Z", appVersion: "2.8.0", works: 12, pages: 842, bytes: 900000000, recoveryPath: "D:/CarrotData/.environment-backup/recovery/11111111-1111-4111-8111-111111111111", connections: ["E:/Manga/Originals"] }),
     discardEnvironmentBackup: async () => null,
@@ -141,6 +149,9 @@ const bridgeTemplate = `(() => {
     exportConditionalBatchYaml: async () =>
       \`schemaVersion: 1\\nschemes: []\\nsequences: []\\n\`,
     getCodexAccount: async () => codexAccount,
+    getClaudeAccount: async () => claudeAccount,
+    loginClaudeAccount: async () => (claudeAccount = {...claudeAccount, authenticated: true}),
+    logoutClaudeAccount: async () => (claudeAccount = {...claudeAccount, authenticated: false}),
     getFontLibrary: async () => fontSnapshot,
     getLibrary: async () => ({ workOrder: [], works: [] }),
     getPageImageDataUrl: async () => pageImageDataUrl,
@@ -258,8 +269,7 @@ const bridgeTemplate = `(() => {
 
 /** @param {"stable" | "mac-alpha"} buildChannel */
 export function qaBridgeSource(buildChannel) {
-  return bridgeTemplate.replace(
-    '"__BUILD_CHANNEL__"',
-    JSON.stringify(buildChannel),
-  );
+  return bridgeTemplate
+    .replace("__CHAT_BRIDGE__", chatBridgeSource)
+    .replace('"__BUILD_CHANNEL__"', JSON.stringify(buildChannel));
 }

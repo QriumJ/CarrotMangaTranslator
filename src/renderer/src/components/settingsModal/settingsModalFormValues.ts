@@ -1,3 +1,7 @@
+import {
+  DEFAULT_GEMMA_SAMPLING,
+  type GemmaSamplingSettings,
+} from "../../../../shared/gemmaSamplingSettings";
 import type { CodexImageGenerationModel } from "../../../../shared/codexSettings";
 import type {
   ApiReasoningEffort,
@@ -63,10 +67,14 @@ export type SettingsFormValues = {
   localModelPath: string;
   localMmprojPath: string;
   customVramMode: GemmaVramMode;
+  gemmaSampling: GemmaSamplingSettings;
   gemmaFitTargetMb: number;
   gemmaMmprojOffload: boolean;
   llamaRuntimeProfile: LlamaRuntimeProfile;
   allowUnsafeUnifiedMemory: boolean;
+  imageReview: NonNullable<AppSettings["imageReview"]>;
+  claudeModel: string;
+  claudeEffort: import("../../../../shared/claudeTypes").ClaudeEffort;
   codexModel: string;
   codexReasoningEffort: CodexReasoningEffort;
   codexImageReasoningEffort: CodexReasoningEffort;
@@ -83,6 +91,7 @@ export type SettingsFormValues = {
   researchApiProfiles: Partial<
     Record<ApiProviderPresetId, ResearchApiProfileFormValues>
   >;
+  researchClaude: import("../../../../shared/claudeTypes").ClaudePreferences;
   researchCodexModel: string;
   researchCodexReasoningEffort: CodexReasoningEffort;
   researchCodexMaxOutputTokens: string;
@@ -106,6 +115,13 @@ export type SettingsFormValues = {
   apiReasoningEffort: ApiReasoningEffort | "";
   apiExtraBodyJson: string;
   apiCustomHeadersJson: string;
+  apiSessionHeaderEnabled: boolean;
+  apiSessionHeaderName: string;
+  customApiProfiles: Record<
+    string,
+    import("./settingsModalProfileFormValues").CustomApiProfileForm
+  >;
+  activeCustomProfileId: string;
   ocrDevice: OcrDevice;
   ocrPipeline: OcrPipeline;
   ocrGpuBackend: OcrGpuBackend;
@@ -147,6 +163,7 @@ function resolveResearchFormValues(
   | "researchApiMaxOutputTokens"
   | "researchApiContextTokens"
   | "researchApiProfiles"
+  | "researchClaude"
   | "researchCodexModel"
   | "researchCodexReasoningEffort"
   | "researchCodexMaxOutputTokens"
@@ -165,6 +182,7 @@ function resolveResearchFormValues(
     researchApiMaxOutputTokens: String(research.apiMaxOutputTokens),
     researchApiContextTokens: String(research.apiContextTokens),
     researchApiProfiles: resolveResearchApiProfileFormValues(settings),
+    researchClaude: research.claude ?? { model: "default", effort: "high" },
     researchCodexModel: research.codexModel,
     researchCodexReasoningEffort: research.codexReasoningEffort,
     researchCodexMaxOutputTokens: String(research.codexMaxOutputTokens),
@@ -210,11 +228,15 @@ function resolveModelFormValues(
   | "localModelPath"
   | "localMmprojPath"
   | "customVramMode"
+  | "gemmaSampling"
   | "gemmaFitTargetMb"
   | "gemmaMmprojOffload"
   | "llamaRuntimeProfile"
   | "allowUnsafeUnifiedMemory"
   | "codexModel"
+  | "imageReview"
+  | "claudeModel"
+  | "claudeEffort"
   | "codexReasoningEffort"
   | "codexImageReasoningEffort"
   | "codexImageModel"
@@ -231,10 +253,17 @@ function resolveModelFormValues(
     localModelPath: settings.gemma.localModelPath ?? "",
     localMmprojPath: settings.gemma.localMmprojPath ?? "",
     customVramMode: settings.gemma.vramMode,
+    gemmaSampling: {
+      temperature:
+        settings.gemma.temperature ?? DEFAULT_GEMMA_SAMPLING.temperature,
+      topP: settings.gemma.topP ?? DEFAULT_GEMMA_SAMPLING.topP,
+      topK: settings.gemma.topK ?? DEFAULT_GEMMA_SAMPLING.topK,
+    },
     gemmaFitTargetMb: settings.gemma.fitTargetMb ?? 512,
     gemmaMmprojOffload: settings.gemma.mmprojOffload ?? true,
     llamaRuntimeProfile: settings.gemma.llamaRuntimeProfile ?? "cuda12",
     allowUnsafeUnifiedMemory: settings.gemma.allowUnsafeUnifiedMemory === true,
+    ...resolveClaudeFormValues(settings),
     codexModel: settings.codex.model,
     codexImageReasoningEffort: settings.codex.imageReasoningEffort ?? "low",
     codexImageModel: settings.codex.imageModel ?? "gpt-6-astra",
@@ -281,5 +310,16 @@ function resolveGpuFormValues(
   return {
     graphicsGpuPreference: settings.hardware?.graphicsGpuPreference ?? "auto",
     computeGpuIndex: settings.hardware?.computeGpuIndex ?? null,
+  };
+}
+
+function resolveClaudeFormValues(settings: AppSettings) {
+  return {
+    imageReview: settings.imageReview ?? {
+      provider: "codex",
+      claude: { model: "default", effort: "high" },
+    },
+    claudeModel: settings.claude?.model ?? "default",
+    claudeEffort: settings.claude?.effort ?? "high",
   };
 }

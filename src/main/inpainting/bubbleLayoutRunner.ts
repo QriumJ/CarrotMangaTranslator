@@ -9,6 +9,7 @@ import type { BBox, TranslationBlock } from "../../shared/textTypes";
 import { resolveBubbleLayoutPaddingRatio } from "../../shared/bubbleLayoutPadding";
 import type { ImageDecodeFallback } from "../regionCrop";
 import type { KoharuTypographySegmentation } from "../bubbleLayout/contracts";
+import type { InpaintingWindowMask } from "./inpaintingEngine";
 import { isUsableBubbleLayout } from "../../shared/bubbleLayout";
 import {
   applyInpaintingLayoutStates,
@@ -47,6 +48,8 @@ export type BubbleLayoutRunnerRequest = {
   sharedOwnershipGapPx?: number;
   /** Return job-local text/SFX masks for the inpainting mask prepass. */
   includeTypographySegmentation?: boolean;
+  /** Do not cut render-only gutters through a transient source erase mask. */
+  sourceEraseMask?: boolean;
   signal: AbortSignal;
 };
 
@@ -57,6 +60,14 @@ export type BubbleLayoutRunnerResult = {
 
 /** Model/process boundary. Production adapters and tests can implement this port. */
 export interface BubbleLayoutRunner {
+  /** Analyze all originals and release detector GPU resources before inpainting. */
+  preparePages?(
+    pages: readonly MangaPage[],
+    signal: AbortSignal,
+    onProgress?: (page: MangaPage, index: number) => void,
+  ): Promise<void>;
+  /** Remove job-local prepared detections. */
+  dispose?(): Promise<void>;
   runPage(
     request: BubbleLayoutRunnerRequest,
   ): Promise<BubbleLayoutRunnerResult>;
@@ -91,6 +102,7 @@ export type BubbleLayoutPostprocessResult = {
   afterLayout?: InpaintingBlockLayoutState[];
   sharedInpaintGroupIdsByBlock?: Record<string, string[]>;
   typographySegmentation?: KoharuTypographySegmentation;
+  sourceEraseConstraintsByBlock?: Record<string, InpaintingWindowMask>;
 };
 
 export function resolveBubbleLayoutPostprocessConfig(
@@ -124,6 +136,7 @@ export async function runBubbleLayoutPostprocess({
   config,
   failureMode = "required",
   includeTypographySegmentation = false,
+  sourceEraseMask,
   page,
   runner,
   signal,
@@ -134,6 +147,7 @@ export async function runBubbleLayoutPostprocess({
   config: BubbleLayoutPostprocessConfig;
   failureMode?: "best-effort" | "required";
   includeTypographySegmentation?: boolean;
+  sourceEraseMask?: boolean;
   page: MangaPage;
   runner: BubbleLayoutRunner;
   signal: AbortSignal;
@@ -142,7 +156,11 @@ export async function runBubbleLayoutPostprocess({
   // The manual layout-only action must also work before inpainting. Use the
   // cleaned artifact when it exists because it produces a better safe mask,
   // otherwise derive the same render-only layout from the original page.
-  const imagePath = page.inpaintedImagePath ?? page.imagePath;
+  // Erasure needs the original glyphs, including those hidden by an earlier
+  // partial output. Only render fitting should inspect the cleaned artifact.
+  const imagePath = sourceEraseMask
+    ? page.imagePath
+    : (page.inpaintedImagePath ?? page.imagePath);
 
   // Never expose the page instance that will be committed to an adapter.
   // Returned data is applied through the render-only patch allowlist below.
@@ -159,6 +177,7 @@ export async function runBubbleLayoutPostprocess({
       paddingRatio: resolveBubbleLayoutPaddingRatio(config.paddingRatio),
       sharedOwnershipGapPx: config.sharedOwnershipGapPx,
       includeTypographySegmentation,
+      sourceEraseMask,
       signal,
     });
   } catch (error) {
@@ -186,27 +205,40 @@ export async function runBubbleLayoutPostprocess({
     finalPage,
     patches.map((patch) => patch.blockId),
   );
-  const sharedInpaintGroupIdsByBlock = collectSharedInpaintGroups(patches);
-  if (afterLayout.length === 0) {
-    return attachRunnerMetadata(result, sharedInpaintGroupIdsByBlock, {
-      page: baselinePage,
-    });
-  }
-
-  return attachRunnerMetadata(result, sharedInpaintGroupIdsByBlock, {
-    page: applyInpaintingLayoutStates(baselinePage, afterLayout),
-    beforeLayout,
-    afterLayout,
-  });
+  return attachRunnerMetadata(
+    result,
+    patches,
+    sourceEraseMask,
+    afterLayout.length
+      ? {
+          page: applyInpaintingLayoutStates(baselinePage, afterLayout),
+          beforeLayout,
+          afterLayout,
+        }
+      : { page: baselinePage },
+  );
 }
 
 function attachRunnerMetadata(
   result: BubbleLayoutRunnerResult,
-  sharedInpaintGroupIdsByBlock: Record<string, string[]>,
+  patches: readonly BubbleLayoutBlockPatch[],
+  sourceEraseMask: boolean | undefined,
   output: BubbleLayoutPostprocessResult,
 ): BubbleLayoutPostprocessResult {
+  const sharedInpaintGroupIdsByBlock = collectSharedInpaintGroups(patches);
   return {
     ...output,
+    ...(sourceEraseMask
+      ? {
+          sourceEraseConstraintsByBlock: Object.fromEntries(
+            patches.flatMap((patch) =>
+              patch.sourceEraseConstraint
+                ? [[patch.blockId, patch.sourceEraseConstraint]]
+                : [],
+            ),
+          ),
+        }
+      : {}),
     ...(result.typographySegmentation
       ? { typographySegmentation: result.typographySegmentation }
       : {}),

@@ -26,7 +26,11 @@ tests, documentation updates, and pull requests are welcome.
 
 ## Development setup
 
-The primary development flow requires Node.js LTS, npm, Git, and Windows.
+The primary development flow uses Node.js 26.10.0 (`.node-version`), npm 12.2.0
+(`packageManager`), Git, and Windows. Native runner builds use Rust/Cargo 1.99.0
+(`rust-toolchain.toml`). Use the latest official stable releases, including
+non-LTS and major upgrades, after updating these pins and validating compatibility.
+CI installs the same Node.js and npm versions.
 Platform-specific macOS changes also need validation through the public macOS
 workflow or an appropriate Apple Silicon environment.
 
@@ -38,6 +42,27 @@ npm run dev
 Read [docs/architecture.md](docs/architecture.md) before changing process
 boundaries, shared contracts, IPC, runtime adapters, error handling, or test
 structure.
+
+The compiler and type checks use TypeScript 7 through the `@typescript/native`
+npm alias. The `typescript` dependency aliases `@typescript/typescript6` so
+ESLint and repository AST tools retain the supported TypeScript API. Use the
+npm scripts for builds and checks; importing `typescript` is for AST tooling.
+See the [TypeScript 7 migration guidance](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/).
+
+Vitest 5 requires Node.js 22.12 or newer. Coverage manifest schema 3 retains
+the historical Vitest 4 baseline hashes under `provenance` and keeps the exact
+coverage floors unchanged. `toolchain` pins the current measurement versions
+and validated Node/V8 families. A tool upgrade must pass those existing floors.
+Zod 4 schemas use `partialRecord` where stored settings and receipts intentionally
+contain only some enum keys; keep those sparse persisted contracts compatible.
+
+ONNX Node and Web are pinned to 1.30.0. Sealed model contracts retain their
+original 1.27.0 provenance; the loader explicitly accepts that contract version
+on 1.30.0 while rejecting other unvalidated version pairs. The 2026-10-04
+fixed-input encoder/ranker comparison produced identical WASM outputs and a
+maximum CPU absolute difference of 4.77e-7. This is runtime compatibility evidence,
+not a new model quality evaluation. Update packaging paths and benchmark runtime
+hashes together with the npm pins, and keep model artifacts unchanged.
 
 ## Making a change
 

@@ -4,6 +4,9 @@ export type CommandSpec = {
 };
 
 export type RuntimeOptions = {
+  modelProvider?: string;
+  claudeModel?: string;
+  claudeEffort?: string;
   prepareExternalImage?: (path: string) => Promise<string>;
   abortSignal?: AbortSignal | null;
   apiKey?: string | null;
@@ -115,7 +118,6 @@ export type LlamaRuntimeDescriptor = {
   backend?: string;
   platform?: string;
   arch?: string;
-  dflashRing?: "cpu" | "gpu";
   dir: string;
   id?: string;
   kind?: string;

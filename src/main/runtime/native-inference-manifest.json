@@ -1,0 +1,304 @@
+{
+  "version": "koharu-0.83.5-r2",
+  "koharuRevision": "52bb4f55e2266f72c1523562a583c827ec191ceb",
+  "torchVersion": "2.13.0.7",
+  "diffusionVersion": "master-929-3f8527a.6",
+  "rocmVersion": "10.0.0",
+  "packages": {
+    "torch-win32-cpu": {
+      "url": "https://github.com/koharu-rs/torch/releases/download/v2.13.0.7/x86_64-pc-windows-msvc-cpu.tar.gz",
+      "sha256": "db6917ea59ef4a3d5eff1d4f4232c364768296f3c98bad50713b93e3594da135",
+      "bytes": 75078065,
+      "format": "tar",
+      "preservePaths": true
+    },
+    "torch-win32-cuda": {
+      "url": "https://github.com/koharu-rs/torch/releases/download/v2.13.0.7/x86_64-pc-windows-msvc-cuda.tar.gz",
+      "sha256": "6ac600e10eac53e45b9a8ca4c3d04771a0423c0b2e70adf422df46ff07766f8d",
+      "bytes": 819352047,
+      "format": "tar",
+      "preservePaths": true
+    },
+    "torch-win32-rocm": {
+      "url": "https://github.com/koharu-rs/torch/releases/download/v2.13.0.7/x86_64-pc-windows-msvc-hip.tar.gz",
+      "sha256": "4cf2b9861507a199bf57fc3e0bf4182a61438161b8ad13906ac946c859be498c",
+      "bytes": 234661718,
+      "format": "tar",
+      "preservePaths": true
+    },
+    "torch-darwin-metal": {
+      "url": "https://github.com/koharu-rs/torch/releases/download/v2.13.0.7/aarch64-apple-darwin-metal.tar.gz",
+      "sha256": "cc13ec11bd014eb334595e6255ec450f8a3bbc6d8c90ff87fb04769066163754",
+      "bytes": 75866269,
+      "format": "tar",
+      "preservePaths": true
+    },
+    "diffusion-win32-cuda": {
+      "url": "https://github.com/koharu-rs/diffusion/releases/download/master-929-3f8527a.6/x86_64-pc-windows-msvc-cuda.tar.gz",
+      "sha256": "863b72d8b392ca38b2a69f0372d6b8f52a21eeee8e6902af9e8efbfee52fadaf",
+      "bytes": 146752108,
+      "format": "tar",
+      "preservePaths": true
+    },
+    "diffusion-win32-rocm": {
+      "url": "https://github.com/koharu-rs/diffusion/releases/download/master-929-3f8527a.6/x86_64-pc-windows-msvc-hip.tar.gz",
+      "sha256": "7853473762b73ea11fbea4da19d423b838b3006e6570ee29a3e690656e66aeba",
+      "bytes": 205713170,
+      "format": "tar",
+      "preservePaths": true
+    },
+    "diffusion-darwin-metal": {
+      "url": "https://github.com/koharu-rs/diffusion/releases/download/master-929-3f8527a.6/aarch64-apple-darwin-metal.tar.gz",
+      "sha256": "f0cf82a2b3d26124f3feba9128356ece9d258bb8af89370835536e9c0872e141",
+      "bytes": 15744530,
+      "format": "tar",
+      "preservePaths": true
+    },
+    "nvidia-cuda-runtime": {
+      "url": "https://files.pythonhosted.org/packages/86/00/d5436004268f049214193659ebc36550b5ef3925c3d13b4cc980e13be6f5/nvidia_cuda_runtime-13.4.92-py3-none-win_amd64.whl",
+      "sha256": "08dca5e4aba480c2fd5b55075c0fa71b84ef9dcf0521f2d58baa14a803a7311c",
+      "bytes": 2778543,
+      "format": "zip",
+      "preservePaths": false
+    },
+    "nvidia-cublas": {
+      "url": "https://files.pythonhosted.org/packages/a3/df/f1246959833e2c437db8be3e5b477f66b87f8817821ed40de6c7561c9a36/nvidia_cublas-13.8.0.4-py3-none-win_amd64.whl",
+      "sha256": "8c5494423bb8a46822cb6b0cb95d7fa4be2d7b96a31155dff083839ec8297910",
+      "bytes": 423266897,
+      "format": "zip",
+      "preservePaths": false
+    },
+    "nvidia-cufft": {
+      "url": "https://files.pythonhosted.org/packages/7b/cc/be7fe31058127336a66c88414a2ecc6beecf680baf85994a43eaf292b202/nvidia_cufft-12.4.0.43-py3-none-win_amd64.whl",
+      "sha256": "4ff7075f2d0b5f69291f70938d37a86ec632cbe5747184c74ba1f50f17accacc",
+      "bytes": 160953139,
+      "format": "zip",
+      "preservePaths": false
+    },
+    "nvidia-curand": {
+      "url": "https://files.pythonhosted.org/packages/e2/d4/f59ab342b82ff05ff27d674acd470ba625d788bf71338f7da6c89669d6b9/nvidia_curand-10.4.4.72-py3-none-win_amd64.whl",
+      "sha256": "e0bce83e083ef25976ee74f59e8f067c15149a74538f1be6c2462e286e7c9c68",
+      "bytes": 56731059,
+      "format": "zip",
+      "preservePaths": false
+    },
+    "nvidia-cudnn-cu13": {
+      "url": "https://files.pythonhosted.org/packages/87/6a/e55ff0ac26a5c6e2b21f41c9d04ad096b4ed6da593fba7e25845c61b0532/nvidia_cudnn_cu13-9.27.0.42-py3-none-win_amd64.whl",
+      "sha256": "7d96f634adafd55c72231eb0500ca77ab109ec8ebff7b33000b76e081bc4558e",
+      "bytes": 436469905,
+      "format": "zip",
+      "preservePaths": false
+    },
+    "nvidia-cuda-nvrtc": {
+      "url": "https://files.pythonhosted.org/packages/64/5b/aa91896f64444eff1dd7f189f4db05046c7f0ba08c0f531283c1c1aac581/nvidia_cuda_nvrtc-13.4.92-py3-none-win_amd64.whl",
+      "sha256": "6af7ac5372920f6a7a560d0699348560fe44cb52c1d722d6afd3119f8af948c4",
+      "bytes": 46972283,
+      "format": "zip",
+      "preservePaths": false
+    },
+    "nvidia-nvjitlink": {
+      "url": "https://files.pythonhosted.org/packages/72/7c/c44bd7277afafed9de262a23baec4dc8dcf7ecbb1b9ecb228821442d1e9b/nvidia_nvjitlink-13.4.92-py3-none-win_amd64.whl",
+      "sha256": "b286f3a4f227a9363efdec263c7b91788cef1478d2b8a5fa8bab7f3e82ff82fd",
+      "bytes": 39053950,
+      "format": "zip",
+      "preservePaths": false
+    },
+    "nvidia-cusparse": {
+      "url": "https://files.pythonhosted.org/packages/85/f7/e0d0edefab227c9967df12484fd50e5586b9af86439f38354779c7086e8b/nvidia_cusparse-12.8.6.72-py3-none-win_amd64.whl",
+      "sha256": "013d3f83316431dd3338cf15141dd5420b24dffc6663fc083c053c8409fa3cb7",
+      "bytes": 168202645,
+      "format": "zip",
+      "preservePaths": false
+    },
+    "nvidia-cusolver": {
+      "url": "https://files.pythonhosted.org/packages/65/0b/1d751c92e1429ef3261021eb4b6cf27076b547d7512c6dc4b9aebeb9c49a/nvidia_cusolver-12.3.4.7-py3-none-win_amd64.whl",
+      "sha256": "7ed56898cd98abe36d8727eaf1408622c67557f2acb3baca5a27e24e595a1ccb",
+      "bytes": 261421900,
+      "format": "zip",
+      "preservePaths": false
+    },
+    "rocm-core": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-core/rocm_sdk_core-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "066195cb0f7df02e6009facb17652dd992d13fae44d87652e5ab928d5b4f0851",
+      "bytes": 758050981,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1010": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1010/rocm_sdk_device_gfx1010-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "2b6da925376de9689ab9f22ce7cc55b6d476722d9458fbd1ec52d4aa066d3e6c",
+      "bytes": 47525108,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1011": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1011/rocm_sdk_device_gfx1011-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "1a6de3efe7bc92b1e55367a767eecf0468231b03d9319494d1e4b077571b6757",
+      "bytes": 47190349,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1012": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1012/rocm_sdk_device_gfx1012-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "51f2998d2f33164e4a14594107e6c33db54da1d9867fa6947ea993997c4ae06e",
+      "bytes": 47187798,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1030": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1030/rocm_sdk_device_gfx1030-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "19ada0359b499c19c1ecb1cba21b067fce89b4f0b0de6f0f7b76cbef85dcb85b",
+      "bytes": 52153384,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1031": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1031/rocm_sdk_device_gfx1031-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "ab7cbfb41e1ada00fb7254c974f7386303cdd1139a170fb022e84e6f10d9f5f2",
+      "bytes": 52179193,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1032": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1032/rocm_sdk_device_gfx1032-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "5d0581e077cc1a482e70430539c63e60c4b4d7b9b82be0ac0bab6d62c3feb4de",
+      "bytes": 52182885,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1033": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1033/rocm_sdk_device_gfx1033-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "46ba5b395bf75756f9c5f1154b2083dd576221dfbd15620b5fa597f498aad798",
+      "bytes": 52186039,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1034": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1034/rocm_sdk_device_gfx1034-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "8d527c2f127d42ecb098e0abc45c15ca28689b6317f01b99d455e6d3562a3b52",
+      "bytes": 52183796,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1035": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1035/rocm_sdk_device_gfx1035-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "c06479bad4963f4aecde4e0fe102eb39ae652e80da62546c3bd3fb0b9079a0a4",
+      "bytes": 52181539,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1036": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1036/rocm_sdk_device_gfx1036-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "655f343cd805f21bfd45244902f99afba9b7ada323288a1b9ba3336bd41c1ccc",
+      "bytes": 52183283,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1100": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1100/rocm_sdk_device_gfx1100-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "db39cbc5aae7a67c73d76692899a6a89bbc10eafc92f856f48e9c03247a91f8e",
+      "bytes": 189830160,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1101": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1101/rocm_sdk_device_gfx1101-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "7b8edd82943a11c29c80f84c95822e36ddd794b7024878e9660170d050a29243",
+      "bytes": 185030273,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1102": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1102/rocm_sdk_device_gfx1102-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "b9e0f3fa492f0a05a5c4f479b80915477911f8402956c0e2c593b593d6214531",
+      "bytes": 183114327,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1103": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1103/rocm_sdk_device_gfx1103-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "3de6ba204d78e0cb2a32cf064371c181d7a17d1ca8b25537b1a7f11eaa66fa17",
+      "bytes": 55710049,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1150": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1150/rocm_sdk_device_gfx1150-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "22c19fcee580102cdc2f9379edf056643843c86ac6312dcf34d8ed21964c2cc4",
+      "bytes": 134574199,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1151": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1151/rocm_sdk_device_gfx1151-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "1ab27ebfe61ea3c3fd2c5c1a0e780ae22ed9b662106ce0aefda0a30e3b11577f",
+      "bytes": 139346623,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1152": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1152/rocm_sdk_device_gfx1152-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "88db4e79f31bef68bf8cb321fb83704dda6d11ad6da8dcfbdc8660f077c7195c",
+      "bytes": 134480596,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1153": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1153/rocm_sdk_device_gfx1153-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "1fde64d87edd815403014743700000a016435f040c43114e764b5cc7b919413c",
+      "bytes": 134629087,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1200": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1200/rocm_sdk_device_gfx1200-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "f33226078932ee2200f5595c521895edf5d7abf3170975d8c6f72a2a3949f516",
+      "bytes": 377648520,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx1201": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx1201/rocm_sdk_device_gfx1201-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "c6e4c5a0da941230bed975765e644597570081c9a41654d5a052c277167f4576",
+      "bytes": 312303802,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx908": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx908/rocm_sdk_device_gfx908-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "d27dafc7732b4b71f2c51e797ac7f1669a26dfbc0042d09e5ecc52c98b6a8e27",
+      "bytes": 159537671,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-device-gfx90a": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-device-gfx90a/rocm_sdk_device_gfx90a-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "cf2466bba5f476473ca2d7ae3f633b1e3cd858ffb45b1f238440a50839cf2a76",
+      "bytes": 271936316,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "rocm-libraries": {
+      "url": "https://stable.repo.amd.com/rocm/core/whl-next/rocm-sdk-libraries/rocm_sdk_libraries-10.0.0-py3-none-win_amd64.whl",
+      "sha256": "bfc7a1bd3b6050fb4d36d8ac2eea80d3afd70c5604a29142463d6cb890fc73bf",
+      "bytes": 116831755,
+      "format": "zip",
+      "preservePaths": true
+    },
+    "diffusion-win32-cpu": {
+      "url": "https://github.com/ucx0204/CarrotMangaTranslator/releases/download/diffusion-master-929-cpu-win-x64-r1/stable-diffusion-master-929-cpu-win-x64.zip",
+      "sha256": "c8df813fb44823cfdd5f98394b905954bf5a5d65b1efa7ace0948b828344427b",
+      "bytes": 14792697,
+      "format": "zip",
+      "preservePaths": false
+    },
+    "msvc-win32": {
+      "url": "https://github.com/ucx0204/CarrotMangaTranslator/releases/download/koharu-native-0.83.5-win-x64-r1/msvc-14.51.36247-native-win-x64.zip",
+      "sha256": "5dd740b84a0d315852b1e3e64c041a551b3adff3d0696c59354ffe7b7ca7f5cc",
+      "bytes": 631189,
+      "format": "zip",
+      "preservePaths": false
+    }
+  },
+  "msvcVersion": "14.51.36247.0"
+}

@@ -11,14 +11,15 @@
  * @typedef {{ promptOptions: PromptRequestOptions; imageVariants: ImageVariant[]; requestBody: Record<string, unknown>; requestSummary: RequestSummary }} PreparedTranslationRequest
  */
 
+const { withApiConversation } = require("./api-conversation.cjs");
 const {
   buildSystemPrompt,
   getOverlayPrompt,
 } = require("../simple-page-prompts.cjs");
 const {
   isOpenAIApiProvider,
-  isOpenAICodexProvider,
-  resolveConfiguredCodexModel,
+  usesResponsesTransport,
+  resolveProviderDisplayName,
   resolveConfiguredCodexReasoningEffort,
 } = require("../simple-page-model-config.cjs");
 const { prepareImageVariants } = require("../simple-page-image-variants.cjs");
@@ -26,7 +27,10 @@ const { collectOcrBboxHints } = require("../simple-page-ocr-bbox-pipeline.cjs");
 const {
   applyLocalForbiddenTokenBias,
 } = require("../simple-page-logit-bias.cjs");
-const { buildRequestSummary } = require("../simple-page-request-summary.cjs");
+const {
+  buildRequestSummary,
+  resolveRequestModelName,
+} = require("../simple-page-request-summary.cjs");
 const { buildMessages } = require("../simple-page-request-builders.cjs");
 const { emitRuntimeProgress, nowMs } = require("./model-runtime-services.cjs");
 const { createLinkedDeadlineController } = require("./http-deadline.cjs");
@@ -71,6 +75,11 @@ const {
  * @returns {Promise<{ requestBody: RequestSummary; rawResponse: unknown; outputText: string }>}
  */
 async function requestTranslation(server, options) {
+  return requestTranslationInConversation(server, withApiConversation(options));
+}
+
+/** @param {ModelServer} server @param {TranslationRequestOptions} options */
+async function requestTranslationInConversation(server, options) {
   const requestStartedAt = nowMs();
   const ocrBboxResult = /** @type {OcrBboxResult} */ (
     await collectOcrBboxHints(options)
@@ -161,7 +170,7 @@ async function requestTranslation(server, options) {
 function completePreparedTranslation(server, prepared, requestStartedAt) {
   if (isSoundEffectTranslationRequest(prepared.promptOptions))
     return requestSoundEffectCompletion(server, prepared, requestStartedAt);
-  return isOpenAICodexProvider(prepared.promptOptions)
+  return usesResponsesTransport(prepared.promptOptions)
     ? requestCodexTranslation(server, prepared)
     : requestChatTranslation(server, prepared, requestStartedAt);
 }
@@ -329,7 +338,7 @@ function buildProviderRequestBody(
       buildMessages(options, imageVariants, promptText, systemPrompt),
     );
   }
-  if (isOpenAICodexProvider(options)) {
+  if (usesResponsesTransport(options)) {
     return buildResponsesRequestBody(
       options,
       imageVariants,
@@ -360,8 +369,8 @@ async function requestCodexTranslation(server, prepared) {
   emitRuntimeProgress(
     promptOptions,
     "model_requesting",
-    "OpenAI Codex 번역 요청 중",
-    `${resolveConfiguredCodexModel(promptOptions)}, thinking ${resolveConfiguredCodexReasoningEffort(promptOptions)}`,
+    `${resolveProviderDisplayName(promptOptions)} 번역 요청 중`,
+    `${resolveRequestModelName(promptOptions)}, thinking ${promptOptions.modelProvider === "claude-code" ? promptOptions.claudeEffort : resolveConfiguredCodexReasoningEffort(promptOptions)}`,
   );
   const finalResult = await requestCodexResponsesText(
     server,

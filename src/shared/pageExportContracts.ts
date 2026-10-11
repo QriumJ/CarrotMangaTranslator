@@ -32,6 +32,35 @@ export const pageExportLayoutEvidenceSchema = z
         innerWidth: z.number().finite(),
         innerHeight: z.number().finite(),
         overflow: z.boolean(),
+        // Native shape-slot usage, not an independent visual contour verdict.
+        shapeFlow: z.enum(["contained", "unverified"]).optional(),
+        rendered: z.enum(["text", "generated", "hidden"]).optional(),
+        displayText: z.string().optional(),
+        direction: z.enum(["horizontal", "vertical"]).optional(),
+        fontId: z.string().nullable().optional(),
+        rect: z
+          .object({
+            left: z.number(),
+            top: z.number(),
+            width: z.number(),
+            height: z.number(),
+          })
+          .strict()
+          .optional(),
+        textScaleX: z.number().positive().optional(),
+        textScaleY: z.number().positive().optional(),
+        contentWidth: z.number().nonnegative().optional(),
+        hangulInk: z
+          .object({
+            sampleCount: z.number().int().min(1).max(64),
+            medianHeight: z.number().positive(),
+            medianWidth: z.number().positive(),
+            minimumHeight: z.number().positive(),
+            maximumHeight: z.number().positive(),
+          })
+          .strict()
+          .nullable()
+          .optional(),
       })
       .strict(),
   )
@@ -48,6 +77,7 @@ export type PageExportDocumentData = {
   resolutionMode: PageExportResolutionMode;
   page: PageArtworkSnapshot;
   transparentBackground?: boolean;
+  visibleBlockIds?: string[];
 };
 
 const CustomFontSchema = z
@@ -145,6 +175,10 @@ export const PageExportDocumentDataSchema = z
     resolutionMode: z.enum(["safe-downscale", "original"]),
     page: PageArtworkSnapshotSchema,
     transparentBackground: z.boolean().optional(),
+    visibleBlockIds: z
+      .array(z.string().min(1).max(200))
+      .max(MAX_BLOCKS_PER_PAGE)
+      .optional(),
   })
   .strict()
   .superRefine((document, context) => {

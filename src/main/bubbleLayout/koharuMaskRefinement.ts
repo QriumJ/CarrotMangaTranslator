@@ -1,7 +1,10 @@
 import type { BubbleLayoutPolicy } from "../../shared/inpaintingTypes";
 import type { BBox } from "../../shared/textTypes";
 import { erodeBinaryMask } from "./bubbleDistanceTransform";
-import { extractPromptedMaskRegions } from "./bubbleMaskComponents";
+import {
+  extractPromptedMaskRegions,
+  fillEnclosedMaskHoles,
+} from "./bubbleMaskComponents";
 import type { KoharuInstanceMask } from "./contracts";
 import type { BubbleMaskRefinementResult } from "./bubbleMaskTypes";
 
@@ -25,17 +28,25 @@ export function refineKoharuBubbleMask(input: {
   fontSizePx: number;
   outlineWidthPx: number;
   policy: BubbleLayoutPolicy;
+  sourceEraseMask?: boolean;
 }): BubbleMaskRefinementResult | null {
   assertMask(input.mask);
   const crop = clampCrop(input.bubbleBox, input.imageWidth, input.imageHeight);
   if (crop.width < 4 || crop.height < 4) return null;
-  const raw = rasterizeMaskLogits(input.mask, crop, input);
+  const raster = rasterizeMaskLogits(input.mask, crop, input);
+  // Tiny holes at source ink otherwise expand under erosion and become
+  // entire missing profile bands. Render fitting keeps the original mask.
+  const raw = input.sourceEraseMask
+    ? fillEnclosedMaskHoles(raster, crop.width, crop.height)
+    : raster;
   const rawArea = countMask(raw);
   if (rawArea < 24) return null;
   const promptCoverage = measurePromptCoverage(input.promptBoxes, crop, raw);
   if (promptCoverage < 0.12) return null;
 
-  const insetPx = resolveKoharuSafeInsetPx(input);
+  // Translated font/outline sizes describe typesetting, not the original ink.
+  // Keep a pixel at the detected boundary without cutting off edge furigana.
+  const insetPx = input.sourceEraseMask ? 1 : resolveKoharuSafeInsetPx(input);
   const safeMask = erodeBinaryMask(raw, crop.width, crop.height, insetPx);
   const regions = extractPromptedMaskRegions({
     mask: safeMask,

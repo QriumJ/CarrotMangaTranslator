@@ -22,14 +22,14 @@ const { pathToFileURL } = require("node:url");
 const REQUEST_SCHEMA = "font-matching-onnx-wasm-parity-request-v1";
 const RESPONSE_SCHEMA = "font-matching-onnx-wasm-parity-response-v1";
 const EXPECTED_PACKAGE = "onnxruntime-web";
-const EXPECTED_VERSION = "1.27.0";
+const EXPECTED_VERSION = "1.30.0";
 
 /** @param {string} message @returns {never} */
 function fail(message) {
   throw new Error(message);
 }
 
-/** @param {import("node:crypto").BinaryLike} value */
+/** @param {string | Uint8Array} value */
 function sha256Bytes(value) {
   return createHash("sha256").update(value).digest("hex");
 }

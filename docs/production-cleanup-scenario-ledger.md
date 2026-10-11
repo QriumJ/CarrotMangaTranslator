@@ -440,3 +440,55 @@ not the canonical check or manga quality evidence.
   mixed/touched formatting, size-to-auto-fit behavior, focus/ARIA, preset
   guards, stacked narrow layout, and scoped table overflow. Temporary QA files
   and captures were removed after inspection.
+
+## 2026-10-11 translation sampling contract
+
+Gemma translation defaults are now temperature 0.1, top-p 0.95 and top-k 64.
+Existing-block refinement and fixed-block translation retain configured sampler
+values, including temperature zero. Group classification retains temperature zero.
+The HTTP boundary records allowlisted final generation fields in
+`requestSummary.sentGeneration` and the page progress logger, including retries.
+`translationSamplingContract.test.ts` checks the settings/page/request/HTTP path.
+
+The newly touched existing `transport/chat-completion.cjs` uses the sealed
+`.tmp/production-cleanup-coverage-baseline-node22.json` baseline (SHA-256
+`a0e1199f46a80734d228ff1772b99d1fde2f700321346da77abf9c29795e4c0a`):
+lines/statements 23/26, functions 3/3, branches 7/8. No existing floor is lowered.
+
+## 2026-10-11 issue 148 FLUX preparation boundary
+
+Normal erasure, page workflows, region translation and targeted SFX erasure now
+prepare original-page layout detections before acquiring FLUX. Job-local binary
+spill files preserve Float32 mask logits and avoid the old 128-page/64-MiB cache
+eviction causing GPU inference during erasure. Preparation awaits physical
+KoharuLayout session release, including on cancellation/failure. Prepared reads
+fail on missing/stale originals instead of inferring again. No resolution
+reduction or OOM retry was added. Engine release and spill cleanup are awaited.
+
+Tests cover 160 pages, a mask above 64 MiB, exact float-byte round trips,
+mask/final-layout parity, asynchronous GPU release, cancellation, changed inputs,
+and preparation-before-engine ordering across the four entry points. These are
+contract tests; they do not claim reproduction on the reporter's 8-GB GPU.
+
+The newly touched existing `inpaintingJobPageCompletion.ts` retains the sealed
+Node 22 baseline: lines 52/56, statements 57/63, functions 19/19, branches 86/92.
+The new `preparedLayoutDetections.ts` floor comes from
+`.tmp/issue-148/coverage/coverage-summary.json` (SHA-256
+`ed234eedf54d2c69404da6a49d4bd3b27ebe13c96d7f6af96c0fb71e7fc52c8c`):
+lines 38/38, statements 39/39, functions 4/4, branches 12/12. No prior floor is lowered.
+
+## 2026-10-11 font Python ABI and job failure delivery
+
+The shared chapter path probes the exact installed OCR interpreter before selecting
+the immutable CPython 3.12/r2 or 3.14/r3 font pack and launches that same interpreter.
+Both dev and installed environments use this path. Unsupported ABIs fail before
+download/inference. Neither Python nor GPU packages are upgraded by this change.
+Production workers on existing 3.12.7 and installed 3.14.8 return the same 11 choices
+for two pages from the failed job; source SHA-256 remains unchanged. Re-downloaded
+r2/r3 archives pass exact byte/hash checks, production extraction/inventory checks,
+native imports and frozen model parity. See `font-chapter-c23-release-handoff.md`.
+
+Job events bound presentation text before storing or dispatching terminal state,
+with unabridged diagnostics retained in logs. Tests cover traceback overflow,
+renderer absence, bounded install history and unchanged ordinary fields. Existing
+coverage floors remain unchanged.

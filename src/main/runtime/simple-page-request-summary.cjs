@@ -371,6 +371,8 @@ function summarizeRecognitionSegments(value) {
  * @returns {string}
  */
 function resolveRequestModelName(options = {}) {
+  if (options.modelProvider === "claude-code")
+    return String(options.claudeModel || "default");
   if (isOpenAICodexProvider(options)) {
     return resolveConfiguredCodexModel(options);
   }
@@ -384,7 +386,42 @@ function resolveRequestModelName(options = {}) {
   return resolveConfiguredModelRepo(options);
 }
 
+/**
+ * Record only allowlisted wire fields, never prompts, headers or extra-body secrets.
+ * Called at the transport boundary so retries and provider filtering are included.
+ * @param {Record<string, unknown>} summary
+ * @param {Record<string, unknown>} body
+ */
+function recordRequestGeneration(summary, body) {
+  const sentGeneration = Object.fromEntries(
+    [
+      "temperature",
+      "top_p",
+      "top_k",
+      "max_tokens",
+      "max_completion_tokens",
+      "max_output_tokens",
+      "seed",
+      "repeat_penalty",
+      "repeat_last_n",
+      "presence_penalty",
+      "frequency_penalty",
+      "min_p",
+      "cache_prompt",
+    ].flatMap((key) => {
+      const value = body[key];
+      return (typeof value === "number" && Number.isFinite(value)) ||
+        typeof value === "boolean"
+        ? [[key, value]]
+        : [];
+    }),
+  );
+  summary.sentGeneration = sentGeneration;
+  return sentGeneration;
+}
+
 module.exports = {
+  recordRequestGeneration,
   buildOptionSummary,
   buildRequestSummary,
   resolveRequestModelName,

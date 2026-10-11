@@ -71,6 +71,7 @@ recent-dialog-paths.json
 /linked-sync-queue.json
 /.linked-sync-queue.json.*.tmp
 /codex/
+/chat/
 /.codex-workspace/
 /.bug-hunter/
 /results/
@@ -89,9 +90,17 @@ recent-dialog-paths.json
 
 # OS-encrypted MCP authorization and local connection preferences
 mcp-private/
+# Runtime font evidence and generated lettering candidates
+/.mcp-quality/
 
 # Private environment backups and restore UI receipt
 /.environment-backup/
 /migration-ui.json
 /manual-redaction-drafts/
 /manual-redaction-workspaces.json
+
+# App-local FFmpeg is fetched and SHA-256 verified from the runtime manifest.
+/tools/ffmpeg/ffmpeg.exe
+/tools/ffmpeg/ffmpeg
+/tools/ffmpeg/*.tmp
+/tools/ffmpeg/ffmpeg-runtime.json

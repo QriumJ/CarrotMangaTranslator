@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
 import type { AppPaths } from "../appPaths";
+import type { TranslationOptions } from "../appSettings";
 import {
   isJapaneseLanguageCode,
   isKoreanLanguageCode,
@@ -11,7 +12,10 @@ import {
   buildFontChapterC18Input,
   fontChapterItemIdentity,
 } from "./fontChapterC18Input";
-import { launchFontChapterC18Worker } from "./fontChapterC18Worker";
+import {
+  launchFontChapterC18Worker,
+  prepareFontChapterC18WorkerRuntime,
+} from "./fontChapterC18Worker";
 import type {
   FontChapterC18Page,
   FontChapterC18Port,
@@ -21,6 +25,7 @@ import type {
 import { logPipelineInfo } from "./pipelineLogger";
 import { withFontChapterC18Worker } from "./fontChapterC18Lifecycle";
 import { runLocalInference } from "../runtimeSupport/localInferenceSection";
+import { prepareFontGlyphVerificationAssets } from "./fontGlyphVerificationAssets";
 
 const resultSchema = z.object({
   version: z.literal("c23.0"),
@@ -58,8 +63,17 @@ async function prepareChapter(
   if (!first) return undefined;
   const input = await buildFontChapterC18Input(selected, signal);
   if (input.identities.size === 0) return undefined;
+  const options = {
+    ...first.pageOptions,
+    ocrPipeline: "hayai" as const,
+    ocrRuntimeDir: paths.ocrRuntimeDir,
+    workingDir: paths.dataRoot,
+    abortSignal: signal,
+  };
+  const runtime = await prepareFontChapterC18WorkerRuntime(paths, options);
   const { assets, manifest } = await prepareFontChapterRuntime({
     paths,
+    pythonAbi: runtime.pythonAbi,
     signal,
     onProgress: (progress) =>
       first.pageOptions.onProgress?.({
@@ -72,12 +86,10 @@ async function prepareChapter(
   const job = await mkdtemp(join(parent, "chapter-"));
   const request = join(job, "request.json");
   const manifestPath = join(job, "manifest.json");
-  const options = {
-    ...first.pageOptions,
-    ocrPipeline: "hayai" as const,
-    ocrRuntimeDir: paths.ocrRuntimeDir,
-    workingDir: paths.dataRoot,
-  };
+  const glyphVerificationAssets = await prepareChapterGlyphVerification(
+    paths,
+    options,
+  );
   await writeFile(manifestPath, JSON.stringify(manifest));
   await writeFile(
     request,
@@ -89,10 +101,16 @@ async function prepareChapter(
       workingDir: paths.dataRoot,
       hayaiScript: join(paths.runtimeDir, "hayai-bboxes.py"),
       ocrDevice: options.ocrDevice === "gpu" ? "gpu" : "cpu",
+      glyphVerificationAssets,
     }),
   );
   signal.throwIfAborted();
-  const worker = await launchFontChapterC18Worker(paths, options, assets);
+  const worker = await launchFontChapterC18Worker(
+    paths,
+    options,
+    assets,
+    runtime,
+  );
   return withFontChapterC18Worker(worker, async () => {
     const { response } = worker.startRequest({ request }, signal);
     const result = await response;
@@ -109,6 +127,23 @@ async function prepareChapter(
     });
     return resolver;
   });
+}
+
+function prepareChapterGlyphVerification(
+  paths: AppPaths,
+  options: TranslationOptions & { abortSignal: AbortSignal },
+) {
+  return options.ocrDevice === "gpu"
+    ? undefined
+    : prepareFontGlyphVerificationAssets({
+        dataRoot: paths.dataRoot,
+        signal: options.abortSignal,
+        onProgress: (progress) =>
+          options.onProgress?.({
+            ...progress,
+            phase: "font_matching_downloading",
+          }),
+      });
 }
 
 function bindChoices(

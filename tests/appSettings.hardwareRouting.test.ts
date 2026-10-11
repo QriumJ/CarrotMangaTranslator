@@ -118,7 +118,7 @@ describeWindows("app settings helpers: GPU and OCR hardware routing", () => {
     expect(economyOptions.llamaRuntimeProfile).toBe("rtx50");
     expect(economyOptions.ocrGpuCudaTag).toBe(RTX_50_OCR_GPU_CUDA_TAG);
     expect(economyOptions.serverPath).toBe(
-      join("C:/app-data", "tools", "llama-b10621-cuda13.3", "llama-server.exe"),
+      join("C:/app-data", "tools", "llama-b11146-cuda13.4", "llama-server.exe"),
     );
 
     const rtx50LargeDefaults = resolveDefaultAppSettings(
@@ -147,7 +147,7 @@ describeWindows("app settings helpers: GPU and OCR hardware routing", () => {
     expect(rtx50LargeDefaults.gemma.vramMode).toBe("economy26b");
     expect(largeOptions.llamaRuntimeProfile).toBe("rtx50");
     expect(largeOptions.serverPath).toBe(
-      join("C:/app-data", "tools", "llama-b10621-cuda13.3", "llama-server.exe"),
+      join("C:/app-data", "tools", "llama-b11146-cuda13.4", "llama-server.exe"),
     );
   });
 
@@ -200,7 +200,7 @@ describeWindows("app settings helpers: GPU and OCR hardware routing", () => {
       join(
         "C:/app-data",
         "tools",
-        "beellama-v0.3.1-hip-radeon",
+        "beellama-v0.4.7-hip-radeon",
         "llama-server.exe",
       ),
     );
@@ -272,10 +272,25 @@ describeWindows("app settings helpers: GPU and OCR hardware routing", () => {
       join(
         "C:/app-data",
         "tools",
-        "lemonade-llama-b1317-rocm-gfx110X",
+        "lemonade-llama-b1338-rocm-gfx110X",
         "llama-server.exe",
       ),
     );
+  });
+
+  it("keeps an unknown AMD runtime target on the CPU inpainting backend", () => {
+    const settings = resolveDefaultAppSettings(
+      {},
+      {
+        name: "Unknown AMD GPU",
+        vendor: "amd",
+        memoryMb: 8192,
+        computeCapability: null,
+        rtxGeneration: null,
+        rocmArch: "gfx9999",
+      },
+    );
+    expect(settings.inpainting?.fluxBackend).toBe("cpu-native");
   });
 
   it("keeps GPU OCR off for AMD GPUs Windows ROCm PyTorch does not support", () => {
@@ -295,8 +310,8 @@ describeWindows("app settings helpers: GPU and OCR hardware routing", () => {
     expect(rx7600mXtDefaults.gemma.llamaRuntimeProfile).toBe("rocm");
     expect(rx7600mXtDefaults.ocr.gpuBackend).not.toBe("rocm-transformers");
     expect(rx7600mXtDefaults.ocr.device).toBe("cpu");
-    expect(rx7600mXtDefaults.inpainting?.model).toBe("aot-inpainting");
-    expect(rx7600mXtDefaults.inpainting?.fluxBackend).toBe("cpu-native");
+    expect(rx7600mXtDefaults.inpainting?.model).toBe("flux-klein");
+    expect(rx7600mXtDefaults.inpainting?.fluxBackend).toBe("rocm-native");
 
     const rx7600Defaults = resolveDefaultAppSettings(
       {},
@@ -315,7 +330,7 @@ describeWindows("app settings helpers: GPU and OCR hardware routing", () => {
     // ...but OCR must not default to the Windows ROCm PyTorch backend.
     expect(rx7600Defaults.ocr.gpuBackend).not.toBe("rocm-transformers");
     expect(rx7600Defaults.ocr.device).toBe("cpu");
-    expect(rx7600Defaults.inpainting?.fluxBackend).toBe("zluda-native");
+    expect(rx7600Defaults.inpainting?.fluxBackend).toBe("rocm-native");
 
     const igpuDefaults = resolveDefaultAppSettings(
       {},
@@ -348,8 +363,8 @@ describeWindows("app settings helpers: GPU and OCR hardware routing", () => {
     expect(rx6800Defaults.gemma.llamaRocmTarget).toBe("gfx103X");
     expect(rx6800Defaults.ocr.gpuBackend).not.toBe("rocm-transformers");
     expect(rx6800Defaults.ocr.device).toBe("cpu");
-    expect(rx6800Defaults.inpainting?.model).toBe("aot-inpainting");
-    expect(rx6800Defaults.inpainting?.fluxBackend).toBe("cpu-native");
+    expect(rx6800Defaults.inpainting?.model).toBe("flux-klein");
+    expect(rx6800Defaults.inpainting?.fluxBackend).toBe("rocm-native");
 
     const rx6700Defaults = resolveDefaultAppSettings(
       {},
@@ -363,8 +378,8 @@ describeWindows("app settings helpers: GPU and OCR hardware routing", () => {
         supportsRocm: false,
       },
     );
-    expect(rx6700Defaults.inpainting?.model).toBe("aot-inpainting");
-    expect(rx6700Defaults.inpainting?.fluxBackend).toBe("cpu-native");
+    expect(rx6700Defaults.inpainting?.model).toBe("flux-klein");
+    expect(rx6700Defaults.inpainting?.fluxBackend).toBe("rocm-native");
   });
 
   it("preserves an explicitly stored OCR device and backend", () => {
@@ -964,12 +979,12 @@ describeWindows("app settings helpers: GPU and OCR hardware routing", () => {
     expect(cuda12Options.ocrGpuCudaTag).toBe(RTX_50_OCR_GPU_CUDA_TAG);
     expect(cuda12Options.llamaRuntimeProfile).toBe("cuda12");
     expect(cuda12Options.serverPath).toBe(
-      join("C:/app-data", "tools", "llama-b10621-cuda12.4", "llama-server.exe"),
+      join("C:/app-data", "tools", "llama-b11146-cuda12.4", "llama-server.exe"),
     );
     expect(rtx50Options.ocrGpuCudaTag).toBe(RTX_50_OCR_GPU_CUDA_TAG);
     expect(rtx50Options.llamaRuntimeProfile).toBe("rtx50");
     expect(rtx50Options.serverPath).toBe(
-      join("C:/app-data", "tools", "llama-b10621-cuda13.3", "llama-server.exe"),
+      join("C:/app-data", "tools", "llama-b11146-cuda13.4", "llama-server.exe"),
     );
   });
 

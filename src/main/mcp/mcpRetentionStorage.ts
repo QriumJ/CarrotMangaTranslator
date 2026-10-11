@@ -7,7 +7,9 @@ import type { LibraryTransaction } from "../libraryStore/libraryTransaction";
 import {
   assertPathWithinRootWithoutSymlinks,
   writeDurableJsonFile,
+  writeDurableFile,
 } from "../libraryStore/libraryTransactionStorage";
+import { retainInlineImages, restoreInlineImages } from "./mcpRetentionImages";
 import { McpEditError } from "../application/mcpEditPolicy";
 import {
   RetentionIndexSchema,
@@ -103,7 +105,7 @@ export class McpRetentionStorage {
       MCP_RETENTION_BYTES
     )
       throw new McpEditError(
-        "editor_busy",
+        "retention_full",
         "Retained storage is full (1 GiB). Discard owned records explicitly; no page change was saved.",
       );
     await transaction.stageJsonReplacement(
@@ -158,7 +160,13 @@ export class McpRetentionStorage {
     const old = await lstat(path);
     if (!old.isFile() || old.isSymbolicLink())
       throw new Error("Invalid retained record file.");
-    const sealed = await this.sealMetadata(value);
+    const packed = await retainInlineImages(
+      getLibraryRoot(),
+      value,
+      dirname(path),
+      (target, bytes) => transaction.stageBytesReplacement(target, bytes),
+    );
+    const sealed = await this.sealMetadata(packed.value);
     const bytes = Buffer.byteLength(JSON.stringify(sealed, null, 2)) + 1;
     if (bytes > 8 * 1024 * 1024)
       throw new Error("Retained metadata exceeds 8 MiB.");
@@ -179,7 +187,7 @@ export class McpRetentionStorage {
       // The previous connection's prepare request is not a new owner's admission.
       entry.requestId = null;
     }
-    entry.bytes += bytes - old.size;
+    entry.bytes += bytes - old.size + packed.addedBytes;
     await transaction.stageJsonReplacement(path, sealed);
     // A coupled publication stages its shared index once, after all records.
     if (!stagedIndex) await this.stageIndex(transaction, index);
@@ -191,13 +199,19 @@ export class McpRetentionStorage {
     return transaction.createPublishedDirectory(join(base, id));
   }
   async writeRecord(directory: string, value: unknown): Promise<number> {
-    const sealed = await this.sealMetadata(value);
+    const packed = await retainInlineImages(
+      getLibraryRoot(),
+      value,
+      directory,
+      writeDurableFile,
+    );
+    const sealed = await this.sealMetadata(packed.value);
     const bytes = Buffer.byteLength(JSON.stringify(sealed, null, 2)) + 1;
     if (bytes > 8 * 1024 * 1024)
       throw new Error("Retained metadata exceeds 8 MiB.");
     await writeDurableJsonFile(join(directory, "record.json"), sealed);
     await this.verifyRecord(directory, value);
-    return bytes;
+    return bytes + packed.addedBytes;
   }
   /** Native staged record check. Uses the same bounded reader as restarted sessions. */
   async verifyRecord(directory: string, expected: unknown): Promise<void> {
@@ -214,24 +228,40 @@ export class McpRetentionStorage {
       );
   }
   async prune(transaction: LibraryTransaction, index: RetentionIndex) {
-    const expired = index.entries.filter(
-      (entry) =>
-        entry.expiresAt <= this.now() &&
-        (!["output-sync", "composite-workflow"].includes(entry.kind) ||
-          !this.activeSettlement(entry.id)),
-    );
+    const expired = index.entries.filter((entry) => this.expired(entry));
     const retired = new Set(expired.map((entry) => entry.id));
     for (const entry of expired) await this.retire(transaction, entry.id);
     const next = {
       ...index,
       entries: index.entries.filter((entry) => !retired.has(entry.id)),
     };
-    if (next.entries.length >= MCP_RETENTION_CAPACITY)
-      throw new McpEditError(
-        "editor_busy",
-        "Retained history contains 256 records. Discard owned records before another edit.",
-      );
+    this.assertAvailable(next.entries);
     return next;
+  }
+  /** Read-only early check before expensive image work. The caller holds a read
+   * lock; publication still rechecks quotas atomically in the write transaction. */
+  async assertCanAdd() {
+    this.assertAvailable(
+      (await this.index()).entries.filter((entry) => !this.expired(entry)),
+    );
+  }
+  private expired(entry: RetentionEntry) {
+    return (
+      entry.expiresAt <= this.now() &&
+      (!["output-sync", "composite-workflow"].includes(entry.kind) ||
+        !this.activeSettlement(entry.id))
+    );
+  }
+  private assertAvailable(entries: RetentionEntry[]) {
+    if (
+      entries.length >= MCP_RETENTION_CAPACITY ||
+      entries.reduce((sum, entry) => sum + entry.bytes, 0) >=
+        MCP_RETENTION_BYTES
+    )
+      throw new McpEditError(
+        "retention_full",
+        `Recovery storage has reached its ${MCP_RETENTION_CAPACITY}-record or 1 GiB limit. Existing history is preserved; no new page change was saved.`,
+      );
   }
   /** The caller verifies ownership under its library lock. A supplied index makes
    * directory retirement and catalog removal one indivisible publication. */
@@ -271,6 +301,10 @@ export class McpRetentionStorage {
     const text = await readFile(path, "utf8");
     if (Buffer.byteLength(text) > 8 * 1024 * 1024)
       throw new Error("Retained metadata grew while reading.");
-    return this.codec.open(JSON.parse(text));
+    return restoreInlineImages(
+      getLibraryRoot(),
+      await this.codec.open(JSON.parse(text)),
+      dirname(path),
+    );
   }
 }

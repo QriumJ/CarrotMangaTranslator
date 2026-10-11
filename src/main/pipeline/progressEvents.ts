@@ -4,6 +4,7 @@ import { tMain } from "./localization";
 import type { ModelEndpointHandle, PipelineOptions } from "./types";
 import type { OcrPipeline } from "../../shared/settingsTypes";
 import { isHayaiOcrPipeline } from "../../shared/ocrEngines";
+import { logPipelineInfo } from "./pipelineLogger";
 
 type Emit = PipelineOptions["emit"];
 
@@ -91,6 +92,14 @@ export function attachPageProgress(
   maxAttempts: number,
 ): void {
   pageOptions.onProgress = (progress) => {
+    if (progress.sentGeneration) {
+      logPipelineInfo("Model request generation settings", {
+        jobId: context.jobId,
+        pageIndex: pageIndex + 1,
+        attempt,
+        sentGeneration: progress.sentGeneration,
+      });
+    }
     context.emit({
       id: context.jobId,
       kind: "gemma-analysis",
@@ -143,6 +152,7 @@ export function emitEndpointStarting(
 type EndpointStartingOptions = Parameters<typeof emitEndpointStarting>[1];
 
 function resolveEndpointStartingText(options: EndpointStartingOptions): string {
+  if (options.baseOptions.modelProvider === "claude-code") return "Claude Code";
   if (options.localModelSelected) {
     return tMain("translation.progress.localModelPreparing");
   }
@@ -175,6 +185,7 @@ function resolveEndpointStartingDetail(
   options: EndpointStartingOptions,
 ): string {
   const { baseOptions } = options;
+  if (options.baseOptions.modelProvider === "claude-code") return "Claude Code";
   if (options.localModelSelected) {
     return tMain("translation.progress.localModelPreparingDetail");
   }
@@ -208,17 +219,20 @@ export function emitEndpointReady(
     progressCurrent: 0,
     progressTotal: context.progressTotal,
     pageTotal: context.pageTotal,
-    detail: options.codexSelected
-      ? tMain("translation.progress.appServerReadyDetail", {
-          endpoint: options.server.baseUrl,
-        })
-      : options.apiSelected
-        ? tMain("translation.progress.apiReadyDetail", {
-            endpoint: options.server.baseUrl,
-          })
-        : tMain("translation.progress.serverReadyDetail", {
-            port: options.baseOptions.port,
-          }),
+    detail:
+      options.baseOptions.modelProvider === "claude-code"
+        ? options.baseOptions.claudeModel
+        : options.codexSelected
+          ? tMain("translation.progress.appServerReadyDetail", {
+              endpoint: options.server.baseUrl,
+            })
+          : options.apiSelected
+            ? tMain("translation.progress.apiReadyDetail", {
+                endpoint: options.server.baseUrl,
+              })
+            : tMain("translation.progress.serverReadyDetail", {
+                port: options.baseOptions.port,
+              }),
   });
 }
 

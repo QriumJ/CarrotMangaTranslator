@@ -1,3 +1,4 @@
+import { snapshotCustomApiProfiles } from "./settingsCustomApiProfiles";
 import type {
   AppSettings,
   ApiProviderProfileSettings,
@@ -64,32 +65,20 @@ export function buildSettingsFromDraft({
     localModelPath: draft.trimmedLocalModelPath,
     localMmprojPath: draft.trimmedLocalMmprojPath,
     vramMode: draft.selectedVramMode,
+    gemmaSampling: values.gemmaSampling,
     fitTargetMb: values.gemmaFitTargetMb,
     mmprojOffload: values.gemmaMmprojOffload,
     llamaRuntimeProfile: values.llamaRuntimeProfile,
     allowUnsafeUnifiedMemory: values.allowUnsafeUnifiedMemory,
+    imageReview: values.imageReview,
+    claude: { model: values.claudeModel, effort: values.claudeEffort },
     codexModel: draft.trimmedCodexModel,
     codexReasoningEffort: values.codexReasoningEffort,
     codexImageReasoningEffort: values.codexImageReasoningEffort,
     codexImageModel: values.codexImageModel,
     codexImageGenerationModel: values.codexImageGenerationModel,
     ...buildInternetResearchFields(draft, values),
-    apiBaseUrl: draft.normalizedApiBaseUrl ?? initialSettings.api.baseUrl,
-    apiProvider: values.apiProvider,
-    apiProfiles: buildApiProfiles(values, initialSettings),
-    apiModel: draft.trimmedApiModel,
-    apiKey: draft.trimmedApiKey,
-    apiVertexAuthMode: values.apiVertexAuthMode,
-    apiVertexServiceAccountPath: draft.trimmedApiVertexServiceAccountPath,
-    apiKeyMaxAttempts: draft.parsedApiKeyMaxAttempts,
-    apiRetryDelaySeconds: draft.parsedApiRetryDelaySeconds,
-    apiRequestIntervalSeconds: draft.parsedApiRequestIntervalSeconds,
-    apiTemperature: draft.parsedApiTemperature.value,
-    apiTopP: draft.parsedApiTopP.value,
-    apiTopK: draft.parsedApiTopK.value,
-    apiReasoningEffort: values.apiReasoningEffort || null,
-    apiExtraBodyJson: values.apiExtraBodyJson.trim(),
-    apiCustomHeadersJson: values.apiCustomHeadersJson.trim(),
+    ...buildConnectionFields(draft, values, initialSettings),
     ocrDevice: values.ocrDevice,
     ocrPipeline: values.ocrPipeline,
     ocrGpuBackend: values.ocrGpuBackend,
@@ -117,6 +106,7 @@ function buildInternetResearchFields(
     researchApiMaxOutputTokens: draft.parsedResearchApiMaxOutputTokens,
     researchApiContextTokens: draft.parsedResearchApiContextTokens,
     researchApiProfiles: buildResearchApiProfiles(values),
+    researchClaude: values.researchClaude,
     researchCodexModel: draft.trimmedResearchCodexModel,
     researchCodexReasoningEffort: values.researchCodexReasoningEffort,
     researchCodexMaxOutputTokens: draft.parsedResearchCodexMaxOutputTokens,
@@ -176,6 +166,8 @@ function parseApiProfile(
     reasoningEffort: profile.apiReasoningEffort || null,
     extraBodyJson: profile.apiExtraBodyJson.trim(),
     customHeadersJson: profile.apiCustomHeadersJson.trim(),
+    sessionHeaderEnabled: profile.apiSessionHeaderEnabled,
+    sessionHeaderName: profile.apiSessionHeaderName.trim(),
   };
 }
 
@@ -197,6 +189,7 @@ function buildGenerationLimitProfiles(
       parseGenerationLimits(profiles.gemma) ??
       initialProfiles?.gemma ??
       resolveRecommendedGenerationLimits("gemma"),
+    claude: resolveClaudeLimits(profiles, initialProfiles),
     codex:
       parseGenerationLimits(profiles.codex) ??
       initialProfiles?.codex ??
@@ -215,6 +208,8 @@ function snapshotActiveGenerationLimit(
     maxTokens: values.maxTokens,
     contextTokens: values.contextTokens,
   };
+  if (values.modelProvider === "claude-code")
+    return { ...values.generationLimitProfiles, claude: active };
   if (values.modelProvider === "gemma") {
     return { ...values.generationLimitProfiles, gemma: active };
   }
@@ -283,4 +278,59 @@ function resolveBlockStyleCollections(
       groups ?? initialSettings.blockStylePresetGroups ?? [],
     blockStylePresets: presets ?? initialSettings.blockStylePresets ?? [],
   };
+}
+
+function buildConnectionFields(
+  draft: SettingsDraft,
+  values: SettingsFormValues,
+  initialSettings: AppSettings,
+) {
+  return {
+    apiBaseUrl: draft.normalizedApiBaseUrl ?? initialSettings.api.baseUrl,
+    apiProvider: values.apiProvider,
+    apiProfiles: buildApiProfiles(values, initialSettings),
+    customProfiles: Object.fromEntries(
+      Object.entries(snapshotCustomApiProfiles(values)).map(([id, profile]) => [
+        id,
+        {
+          ...requireApiProfile(profile.values),
+          name: profile.name,
+          generationLimits: parseGenerationLimits(profile.limits) ?? undefined,
+        },
+      ]),
+    ),
+    activeCustomProfileId: values.activeCustomProfileId,
+    apiSessionHeaderEnabled: values.apiSessionHeaderEnabled,
+    apiSessionHeaderName: values.apiSessionHeaderName.trim(),
+    apiModel: draft.trimmedApiModel,
+    apiKey: draft.trimmedApiKey,
+    apiVertexAuthMode: values.apiVertexAuthMode,
+    apiVertexServiceAccountPath: draft.trimmedApiVertexServiceAccountPath,
+    apiKeyMaxAttempts: draft.parsedApiKeyMaxAttempts,
+    apiRetryDelaySeconds: draft.parsedApiRetryDelaySeconds,
+    apiRequestIntervalSeconds: draft.parsedApiRequestIntervalSeconds,
+    apiTemperature: draft.parsedApiTemperature.value,
+    apiTopP: draft.parsedApiTopP.value,
+    apiTopK: draft.parsedApiTopK.value,
+    apiReasoningEffort: values.apiReasoningEffort || null,
+    apiExtraBodyJson: values.apiExtraBodyJson.trim(),
+    apiCustomHeadersJson: values.apiCustomHeadersJson.trim(),
+  };
+}
+
+function requireApiProfile(profile: ApiProfileFormValues) {
+  const parsed = parseApiProfile(profile);
+  if (!parsed)
+    throw new Error("A saved API profile has invalid connection settings.");
+  return parsed;
+}
+
+function resolveClaudeLimits(
+  profiles: SettingsFormValues["generationLimitProfiles"],
+  initialProfiles: AppSettings["generationLimits"],
+) {
+  return (
+    parseGenerationLimits(profiles.claude) ??
+    initialProfiles?.claude ?? { maxTokens: 32768, contextTokens: 65536 }
+  );
 }

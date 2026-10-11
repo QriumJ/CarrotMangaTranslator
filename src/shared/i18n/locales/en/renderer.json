@@ -113,7 +113,15 @@
       "failed": "The job failed.",
       "cancelled": "The job was cancelled.",
       "openLogs": "Open log folder",
-      "reportError": "Report error"
+      "reportError": "Report error",
+      "mcpCompleted": "MCP work finished ({{count}})",
+      "mcpFailed": "{{count}} failed",
+      "chat": {
+        "idle": "Chat work finished",
+        "failed": "Chat work was interrupted",
+        "needs-input": "Chat is waiting for your answer",
+        "paused": "Chat work stopped"
+      }
     },
     "codex": {
       "stages": {
@@ -220,6 +228,9 @@
     "shortcutHelp": {
       "label": "Shortcut help",
       "keywords": "shortcut keyboard help"
+    },
+    "chat": {
+      "label": "Chat translation"
     }
   },
   "shortcuts": {
@@ -537,7 +548,8 @@
         "codexAuth": "Connect ChatGPT account",
         "background": "Background task",
         "environmentBackup": "Export backup",
-        "environmentRestore": "Import backup"
+        "environmentRestore": "Import backup",
+        "claudeAuth": "Claude account"
       },
       "source": {
         "files": "file",

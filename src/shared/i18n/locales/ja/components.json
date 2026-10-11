@@ -52,6 +52,8 @@
     "noCurrentChapter": "話が開かれていません",
     "translate": "新しい原稿を追加",
     "batchTranslate": "複数話を追加",
+    "addSource": "原稿を追加",
+    "more": "その他",
     "libraryFolder": "ライブラリフォルダー",
     "share": "作業を書き出す",
     "importWork": "作業を読み込む",
@@ -702,7 +704,7 @@
   "translationOptions": {
     "codexErasure": "Codexで消去",
     "title": "翻訳を実行",
-    "workspaceAction": "翻訳設定…",
+    "workspaceAction": "通常の翻訳",
     "workspaceUndoWarning": "再翻訳したページの既存結果は新しい結果に変わります。",
     "start": "翻訳を開始",
     "startSelection": "選択範囲を翻訳",
@@ -1787,6 +1789,9 @@
         "rateLimited": "Tavily へのリクエストが多すぎます。しばらくしてから再試行してください。",
         "invalidResponse": "Tavily の使用量応答を読み取れませんでした。",
         "networkFailed": "Tavily に接続できませんでした。ネットワークを確認してください。"
+      },
+      "claude": {
+        "description": "Claude のウェブ検索で作品情報と用語を調べます。"
       }
     },
     "options": {
@@ -1838,6 +1843,10 @@
         "api": {
           "label": "API",
           "description": "OpenAI互換APIエンドポイントを使用します。"
+        },
+        "claude": {
+          "label": "Claude Code",
+          "description": "Translate using Claude Code."
         }
       },
       "reasoning": {
@@ -1938,13 +1947,13 @@
           "label": "SM75 CUDA",
           "description": "RTX 20シリーズ（SM 7.5）向けのFP16 CUDA互換パスです。"
         },
-        "zluda": {
-          "label": "AMD ZLUDA",
-          "description": "AMD GPUでFluxをZLUDA経由で実行します。AMD HIP SDKが必要です。"
-        },
         "cpu": {
           "label": "CPU",
           "description": "PythonやDiffusersを使わないCPU専用Flux互換モードです。1ページに数分以上かかる場合があるため、実用的なCPU修復にはLaMaまたはAOTを推奨します。"
+        },
+        "rocm": {
+          "label": "AMD ROCm",
+          "description": "AMD GPUでROCm 10ネイティブエンジンを実行します。必要なランタイムはアプリが自動で準備します。"
         }
       },
       "inpaintingModels": {
@@ -2027,6 +2036,14 @@
         "mmprojFile": "mmprojファイル",
         "mmprojPlaceholder": "同じフォルダーなら自動検出。必要に応じて指定",
         "mmprojDescription": "同じフォルダーからmmprojを自動検索し、見つからない場合は直接指定できます。"
+      },
+      "sampling": {
+        "title": "翻訳の生成設定",
+        "description": "翻訳文の生成に適用します。吹き出しのグループ判定は既存の固定値を維持します。環境変数が指定されている場合はそちらを優先します。",
+        "temperature": "低い値ほど確率の高い表現が選ばれやすくなります。高い値は表現の変動を増やしますが、翻訳の正確さを保証しません。",
+        "topP": "累積確率で次のトークン候補を制限します。まずは既定値の0.95を推奨します。",
+        "topK": "確率の高い上位K個のトークンに候補を制限します。まずは既定値の64を推奨します。",
+        "reset": "既定値に戻す"
       }
     },
     "codex": {
@@ -2075,7 +2092,8 @@
         "googleAiStudio": "Google AI Studio",
         "googleVertex": "Google Vertex AI",
         "openRouter": "OpenRouter",
-        "ollama": "Ollama（ローカル）"
+        "ollama": "Ollama（ローカル）",
+        "openCodeGo": "OpenCode GO"
       },
       "providerHintCustom": "Base URLとモデルIDを直接入力します。キー・モデル・生成上限はプロバイダーごとに個別保存されます。",
       "providerHintVerified": "画像入力を確認できたモデルだけを読み込みます。キー・モデル・生成上限はプロバイダーごとに個別保存されます。",
@@ -2090,6 +2108,9 @@
       "vertexServiceAccountChange": "変更",
       "vertexServiceAccountClear": "解除",
       "vertexServiceAccountDescription": "JSONキーの内容はアプリ設定にコピーせず、このPCで選択したファイルからのみ読み取ります。サービスアカウントには対象プロジェクトのVertex AIユーザーロールが必要です。キーファイルを共有したりリポジトリへ追加したりしないでください。",
+      "availableModel": "利用可能なモデル",
+      "modelListLoaded": "{{count}}件のモデルを読み込みました。",
+      "providerHintCatalog": "プロバイダーのモデル一覧を読み込みます。",
       "discoveredModel": "確認済み画像入力モデル",
       "chooseModel": "モデルを選択…",
       "loadModels": "モデルを読み込む",
@@ -2160,7 +2181,13 @@
           "customHeaders": "追加するHTTPヘッダーをJSONオブジェクトで指定します。"
         }
       },
-      "requestIntervalSeconds": "最小呼び出し間隔（秒）"
+      "requestIntervalSeconds": "最小呼び出し間隔（秒）",
+      "customProfiles": {
+        "session": "会話ごとのセッションヘッダーを送信",
+        "header": "セッションヘッダー名",
+        "invalidHeader": "予約済みの名前やカスタムヘッダーと重複しない、有効な名前を入力してください。",
+        "client": "クライアント識別"
+      }
     },
     "hardware": {
       "summaryTitle": "自動検出GPUと現在の経路",
@@ -2215,8 +2242,8 @@
       "fluxLowMemoryOverride": "ユニファイドメモリ{{available}}で危険なFlux実行を許可",
       "sm75FluxWarningTitle": "RTX 20シリーズ専用",
       "sm75FluxWarningDetail": "通常のNVIDIA CUDAとは動作や結果が少し異なる場合があります。",
-      "fluxAmdUnsupportedTitle": "AMDの公式サポート対象外GPU",
-      "fluxAmdUnsupportedDetail": "{{gpu}}は現在のWindows HIP SDK公式サポート一覧に含まれていません。ZLUDAを実験的に選択できますが、実行時エラーが発生する可能性があります。",
+      "fluxAmdUnsupportedTitle": "AMD GPU ランタイムの互換性を確認してください",
+      "fluxAmdUnsupportedDetail": "{{gpu}}に対応するROCmランタイムを確認できませんでした。実行時にGPU互換性を再確認します。",
       "fluxAmdUseCpu": "CPUバックエンドに切り替える",
       "downloadHipSdk": "AMD HIP SDKをダウンロード",
       "openLinkFailed": "リンクを開けませんでした。既定のブラウザーを確認してください。",
@@ -2225,9 +2252,9 @@
       "fluxRequirements": {
         "cuda-native": "SM75 以外の NVIDIA GPU が必要",
         "cuda-sm75-experimental": "RTX 20 / GTX 16 (SM75) 専用",
-        "zluda-native": "AMD GPU が必要",
         "cpu-native": "GPU 不要 · 低速",
-        "metal-native": "Apple Silicon が必要"
+        "metal-native": "Apple Silicon が必要",
+        "rocm-native": "AMD GPU が必要"
       },
       "ocrRequirements": {
         "cuda": "NVIDIA GPU が必要",
@@ -2377,7 +2404,8 @@
     "image": {
       "localErasure": "標準の原文消去",
       "codex": "Codex 画像ツール",
-      "description": "翻訳エンジンとは別に、原文消去と効果音画像に使用します。Astraの使用を強く推奨します。"
+      "description": "翻訳エンジンとは別に、原文消去と効果音画像に使用します。Astraの使用を強く推奨します。",
+      "review": "画像の確認"
     },
     "backup": {
       "title": "バックアップと移行",
@@ -2398,6 +2426,17 @@
       "cancel": "処理をキャンセル",
       "saved": "バックアップを保存しました: {{path}}",
       "restored": "環境を復元しました。APIキー、ログイン、外部フォルダー、カスタムモデルのパスを確認してください。APIのカスタムヘッダーと追加リクエスト本文も再設定してください。"
+    },
+    "claude": {
+      "account": "Claude アカウント",
+      "login": "Claude でログイン",
+      "console": "API アカウントでログイン",
+      "logout": "ログアウト",
+      "refresh": "更新",
+      "model": "モデル",
+      "effort": "推論レベル",
+      "error": "Claude に接続できませんでした。",
+      "testing": "Claude Code の接続とモデルの応答を確認します。"
     }
   },
   "pageBlocks": {
@@ -2474,7 +2513,8 @@
         "environment-restore": "環境の復元",
         "model-test": "モデル確認",
         "codex-auth": "ChatGPTアカウント",
-        "sound-effect-translation": "効果音翻訳"
+        "sound-effect-translation": "効果音翻訳",
+        "claude-auth": "Claude Code"
       },
       "status": {
         "idle": "待機",
@@ -2728,7 +2768,7 @@
     "target": "補正対象",
     "asset": "文字の形",
     "page": "遮蔽境界",
-    "mode": "ブラシ機能",
+    "mode": "補正ツール",
     "hide": "消去",
     "restore": "復元",
     "shape": "ブラシ形状",
@@ -2737,7 +2777,14 @@
     "size": "サイズ",
     "softness": "ぼかし",
     "showMask": "マスク表示",
-    "reset": "リセット"
+    "reset": "リセット",
+    "move": "部分移動",
+    "selectionShape": "選択範囲",
+    "lasso": "自由選択",
+    "rectangle": "矩形選択",
+    "moveHint": "移動する線を囲み、選択範囲内をドラッグします。矢印キーで微調整、Shiftで大きく移動、Enterで適用、Escでキャンセルします。",
+    "applyMove": "移動を適用",
+    "cancelSelection": "選択を解除"
   },
   "codexFonts": {
     "title": "フォント編集",
@@ -3014,5 +3061,83 @@
       "clipboard": "一覧をコピーできませんでした。",
       "save": "保存できませんでした。"
     }
+  },
+  "chat": {
+    "open": "チャット",
+    "translateInChat": "チャットで翻訳",
+    "panelMode": "右パネル",
+    "editor": "編集",
+    "history": "過去の会話",
+    "new": "新しい会話",
+    "compact": "会話を圧縮",
+    "model": "モデル",
+    "effort": "推論レベル",
+    "modelSettings": "モデル・推論レベル",
+    "effortChip": "推論 {{level}}",
+    "library": "ライブラリ全体",
+    "contextBlocks": "吹き出し{{count}}個",
+    "loginHint": "ChatGPTアカウントへのログインが必要です。",
+    "login": "ChatGPTにログイン",
+    "loading": "会話を読み込み中…",
+    "older": "以前のメッセージ",
+    "openPage": "ページを開く",
+    "undo": "復元の可否を確認",
+    "undoRequest": "{{tool}} の復元記録を確認し、まだ利用できる場合はこの変更を取り消してください。後から加えた編集は上書きしないでください。結果: {{result}}",
+    "removeImage": "画像を削除",
+    "message": "メッセージ",
+    "placeholder": "依頼を入力",
+    "attach": "画像を添付",
+    "enterHint": "Enterで送信 · Shift+Enterで改行",
+    "stop": "停止",
+    "steer": "追加の指示",
+    "send": "送信",
+    "answer": "回答を送信",
+    "roles": {
+      "user": "あなた",
+      "assistant": "Codex",
+      "status": "進行状況"
+    },
+    "operation": {
+      "running": "作業中…",
+      "completed": "結果",
+      "failed": "失敗"
+    },
+    "toolGroup": "ツール{{count}}件",
+    "state": {
+      "idle": "待機中",
+      "running": "作業中…",
+      "compacting": "会話を圧縮中…",
+      "needs-input": "回答を待っています",
+      "paused": "一時停止 · メッセージで再開",
+      "failed": "接続中断 · メッセージで再接続"
+    },
+    "tools": {
+      "font": "フォント比較",
+      "image": "画像処理",
+      "library": "ライブラリ確認",
+      "sound": "効果音処理",
+      "erase": "原画の復元",
+      "review": "品質確認",
+      "edit": "ページ編集",
+      "context": "文脈確認",
+      "inspect": "ページ確認"
+    },
+    "quality": {
+      "observation": "確認時点の品質記録",
+      "incomplete": "検査または修正が必要",
+      "accepted-at-current-revisions": "詳細検査に合格",
+      "accepted-with-font-substitutions": "フォント代替を含めて検査に合格",
+      "chapter": "章全体 · 後の編集には再検査が必要",
+      "selection": "選択ページのみ",
+      "substitutions": "フォント代替 {{count}}件",
+      "details": "未検収の理由",
+      "pages": "{{count}}ページ"
+    },
+    "redo": "再適用の可否を確認",
+    "redoRequest": "{{tool}} の復元記録と現在のリビジョンを確認し、後から加えた手動編集を上書きせずに再適用できる場合だけ実行してください。結果: {{result}}",
+    "runtime": "AI",
+    "claudeLoginHint": "Claude アカウントでログインしてください。",
+    "claudeLogin": "Claude でログイン",
+    "moreImages": "画像をあと{{count}}件表示"
   }
 }

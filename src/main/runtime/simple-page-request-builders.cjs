@@ -14,6 +14,9 @@
  * @typedef {Record<string, unknown>} JsonRecord
  * @typedef {(options: RequestOptions) => string} ResolveRequestModelName
  */
+const {
+  applyApiConnectionHeaders,
+} = require("./transport/api-conversation.cjs");
 const { DEFAULT_API_KEY } = require("./simple-page-defaults.cjs");
 const {
   buildSystemPrompt,
@@ -22,7 +25,7 @@ const {
 } = require("./simple-page-prompts.cjs");
 const {
   isOpenAIApiProvider,
-  isOpenAICodexProvider,
+  usesResponsesTransport,
   isOllamaOpenAiCompatibleEndpoint,
   resolveConfiguredApiBaseUrl,
   resolveConfiguredApiCustomHeadersJson,
@@ -246,7 +249,7 @@ function buildChatRequestHeaders(options = {}, apiKeyOverride) {
   const headers = {
     "Content-Type": "application/json",
   };
-  if (isOpenAICodexProvider(options)) {
+  if (usesResponsesTransport(options)) {
     return headers;
   }
   if (isOpenAIApiProvider(options)) {
@@ -256,7 +259,10 @@ function buildChatRequestHeaders(options = {}, apiKeyOverride) {
         : String(apiKeyOverride).trim();
     return {
       ...headers,
-      ...resolveConfiguredApiCustomHeaders(options),
+      ...applyApiConnectionHeaders(
+        options,
+        resolveConfiguredApiCustomHeaders(options),
+      ),
       ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}),
     };
   }
@@ -276,11 +282,14 @@ function buildChatRequestBodyWithModelResolver(
   maxTokens = options.maxTokens,
   resolveRequestModelName,
 ) {
-  if (isOpenAICodexProvider(options)) {
+  if (usesResponsesTransport(options)) {
     return {
       model: resolveRequestModelName(options),
       max_tokens: maxTokens,
-      reasoning_effort: resolveConfiguredCodexReasoningEffort(options),
+      reasoning_effort:
+        options.modelProvider === "claude-code"
+          ? String(options.claudeEffort || "high")
+          : resolveConfiguredCodexReasoningEffort(options),
       messages,
     };
   }
@@ -387,7 +396,10 @@ function buildResponsesRequestBodyWithModelResolver(
     input: buildResponsesInput(options, imageVariants, promptText),
     max_output_tokens: options.maxTokens,
     reasoning: {
-      effort: resolveConfiguredCodexReasoningEffort(options),
+      effort:
+        options.modelProvider === "claude-code"
+          ? String(options.claudeEffort || "high")
+          : resolveConfiguredCodexReasoningEffort(options),
     },
     stream: true,
     store: false,

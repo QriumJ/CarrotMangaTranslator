@@ -34,8 +34,20 @@ app
       join(moduleRoot, "main/pipeline/fontChapterRuntimeAssets.js"),
     );
     let lastPercent = -1;
+    const abiProbe = spawnSync(
+      python,
+      ["-c", "import sys; print(sys.implementation.cache_tag)"],
+      {
+        encoding: "utf8",
+        windowsHide: true,
+        timeout: 30_000,
+      },
+    );
+    if (abiProbe.error || abiProbe.status !== 0)
+      throw abiProbe.error ?? new Error(abiProbe.stderr);
     const installed = await prepareFontChapterRuntime({
       paths: { dataRoot, runtimeDir },
+      pythonAbi: abiProbe.stdout.trim(),
       signal: new AbortController().signal,
       onProgress: (/** @type {{ progressPercent?: number }} */ progress) => {
         const percent = Math.floor((progress.progressPercent ?? 0) * 10) * 10;

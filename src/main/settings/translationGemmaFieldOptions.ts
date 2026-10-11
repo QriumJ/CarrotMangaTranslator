@@ -1,3 +1,4 @@
+import { DEFAULT_GEMMA_SAMPLING } from "../../shared/gemmaSamplingSettings";
 import { MIN_CONTEXT_TOKENS } from "../../shared/modelPresets";
 import type { AppSettings, GemmaVramMode } from "../../shared/settingsTypes";
 import type { TranslationOptions } from "./appSettingsTypes";
@@ -86,18 +87,21 @@ export function resolveGemmaGenerationOptions(
     temperature: readNumberEnv(
       runtimeEnv,
       "MANGA_TRANSLATOR_TEMPERATURE",
-      0.2,
+      settings.gemma.temperature ?? DEFAULT_GEMMA_SAMPLING.temperature,
       { min: 0, max: 2 },
     ),
-    topP: readNumberEnv(runtimeEnv, "MANGA_TRANSLATOR_TOP_P", 0.95, {
-      min: 0.01,
-      max: 1,
-    }),
-    topK: readNumberEnv(runtimeEnv, "MANGA_TRANSLATOR_TOP_K", 64, {
-      min: 1,
-      max: 500,
-      integer: true,
-    }),
+    topP: readNumberEnv(
+      runtimeEnv,
+      "MANGA_TRANSLATOR_TOP_P",
+      settings.gemma.topP ?? DEFAULT_GEMMA_SAMPLING.topP,
+      { min: 0.01, max: 1 },
+    ),
+    topK: readNumberEnv(
+      runtimeEnv,
+      "MANGA_TRANSLATOR_TOP_K",
+      settings.gemma.topK ?? DEFAULT_GEMMA_SAMPLING.topK,
+      { min: 1, max: 500, integer: true },
+    ),
     maxTokens: resolveMaxTokens(
       runtimeEnv.MANGA_TRANSLATOR_MAX_TOKENS,
       settings.maxTokens,

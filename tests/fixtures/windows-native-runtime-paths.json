@@ -1,0 +1,34 @@
+[
+  {
+    "input": "C:\\runtime",
+    "expected": "C:\\runtime"
+  },
+  {
+    "input": "\\\\?\\C:\\runtime",
+    "expected": "C:\\runtime"
+  },
+  {
+    "input": "C:\\Users\\사용자\\App Data\\runtime",
+    "expected": "C:\\Users\\사용자\\App Data\\runtime"
+  },
+  {
+    "input": "\\\\?\\C:\\Users\\사용자\\App Data\\runtime",
+    "expected": "C:\\Users\\사용자\\App Data\\runtime"
+  },
+  {
+    "input": "\\\\server\\share\\한글 with spaces",
+    "expected": "\\\\server\\share\\한글 with spaces"
+  },
+  {
+    "input": "\\\\?\\UNC\\server\\share\\한글 with spaces",
+    "expected": "\\\\server\\share\\한글 with spaces"
+  },
+  {
+    "input": "C:\\longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong\\pathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpath",
+    "expected": "C:\\longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong\\pathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpath"
+  },
+  {
+    "input": "\\\\?\\C:\\longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong\\pathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpath",
+    "expected": "C:\\longlonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglonglong\\pathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpathpath"
+  }
+]

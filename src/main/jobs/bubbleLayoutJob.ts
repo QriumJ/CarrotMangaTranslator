@@ -1,3 +1,4 @@
+import type { InpaintingWindowMask } from "../inpainting/inpaintingEngine";
 import type { StartInpaintingRequest } from "../../shared/inpaintingTypes";
 import type {
   MangaPage,
@@ -17,6 +18,7 @@ import {
   type BubbleLayoutRunner,
 } from "../inpainting/bubbleLayoutRunner";
 import type { KoharuTypographySegmentation } from "../bubbleLayout/contracts";
+import { isBubbleLayoutBlockEligible } from "../bubbleLayout/bubbleLayoutBlockEligibility";
 import {
   captureInpaintingLayoutStates,
   type InpaintingBlockLayoutState,
@@ -52,7 +54,8 @@ export async function prepareBubbleLayoutJob({
     appSettings,
     completionWorkflow,
   );
-  if (!config) {
+  const needsFluxMask = needsFluxMaskPrepass(request, appSettings);
+  if (!config && (!needsFluxMask || !runtime.createBubbleLayoutRunner)) {
     return { appSettings, config: null, runner: null };
   }
   if (!runtime.createBubbleLayoutRunner) {
@@ -73,6 +76,32 @@ export async function prepareBubbleLayoutJob({
       },
     }),
   };
+}
+
+export async function prepareBubbleLayoutPages(
+  prepared: PreparedBubbleLayoutJob,
+  request: StartInpaintingRequest,
+  pages: readonly MangaPage[],
+  signal: AbortSignal,
+  onProgress: (page: MangaPage, index: number) => void,
+): Promise<void> {
+  if (
+    prepared.appSettings &&
+    needsFluxMaskPrepass(request, prepared.appSettings)
+  )
+    await prepared.runner?.preparePages?.(pages, signal, onProgress);
+}
+
+function needsFluxMaskPrepass(
+  request: StartInpaintingRequest,
+  settings: AppSettings,
+): boolean {
+  return (
+    request.mode !== "page-pattern-drawn" &&
+    request.mode !== "page-bubble-layout" &&
+    !("engine" in request && request.engine === "codex") &&
+    (settings.inpainting?.model ?? "flux-klein") === "flux-klein"
+  );
 }
 
 function resolveJobBubbleLayoutConfig(
@@ -152,16 +181,17 @@ export async function runBubbleLayoutMaskPrepass({
   page: MangaPage;
   runner: BubbleLayoutRunner;
   signal: AbortSignal;
-}): Promise<{
-  bubbleLayoutConstraintBlockIds: string[];
-  page: MangaPage;
-  restoreLayout?: InpaintingBlockLayoutState[];
-  sharedInpaintGroupIdsByBlock?: Record<string, string[]>;
-  typographySegmentation?: KoharuTypographySegmentation;
-}> {
+}): Promise<ReturnType<typeof buildMaskPrepassResult>> {
   const targetBlockIds = resolvePrepassBlockIds(page, blockId, blockIds);
   const targetBlockIdSet = new Set(targetBlockIds);
-  const hasSubset = blockId !== undefined || blockIds !== undefined;
+  // Workflow callers pass explicit ids even when selecting the whole page.
+  // Only missing owners require a protective gutter between selected blocks.
+  const hasSubset =
+    blockId !== undefined ||
+    page.blocks.some(
+      (block) =>
+        isBubbleLayoutBlockEligible(block) && !targetBlockIdSet.has(block.id),
+    );
   const restoreLayout = captureInpaintingLayoutStates(page, targetBlockIds);
   const maskBaselinePage: MangaPage = {
     ...page,
@@ -195,6 +225,7 @@ export async function runBubbleLayoutMaskPrepass({
     },
     failureMode: "best-effort",
     includeTypographySegmentation: true,
+    sourceEraseMask: true,
     page: maskBaselinePage,
     runner,
     signal,
@@ -230,11 +261,13 @@ function buildMaskPrepassResult(
   page: MangaPage;
   restoreLayout?: InpaintingBlockLayoutState[];
   sharedInpaintGroupIdsByBlock?: Record<string, string[]>;
+  sourceEraseConstraintsByBlock?: Record<string, InpaintingWindowMask>;
   typographySegmentation?: KoharuTypographySegmentation;
 } {
   return {
     bubbleLayoutConstraintBlockIds,
     page: processed.page,
+    sourceEraseConstraintsByBlock: processed.sourceEraseConstraintsByBlock,
     ...(restoreLayout.length ? { restoreLayout } : {}),
     ...(processed.sharedInpaintGroupIdsByBlock
       ? {

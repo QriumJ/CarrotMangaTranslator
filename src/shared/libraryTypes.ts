@@ -27,12 +27,7 @@ type ChapterStatus = "idle" | "running" | "completed" | "partial" | "failed";
 export type RunMode = "pending" | "all" | "single-page" | "page-set";
 
 export type ImportSourceKind =
-  | "images"
-  | "folder"
-  | "zip"
-  | "rar"
-  | "pdf"
-  | "zip-folder";
+  "images" | "folder" | "zip" | "rar" | "pdf" | "zip-folder";
 
 export type CustomFont = {
   id: string;
@@ -141,3 +136,22 @@ export type LibraryIndex = {
   workOrder: string[];
   works: LibraryWorkSummary[];
 };
+
+/** Display metadata only. No editor blocks or inline generated artwork. */
+export type ChapterPageMetadata = Pick<
+  MangaPage,
+  | "id"
+  | "name"
+  | "imagePath"
+  | "width"
+  | "height"
+  | "analysisStatus"
+  | "createdAt"
+  | "updatedAt"
+>;
+
+/** Successful save receipt containing only the requested pages. */
+export type ChapterPagesPatch = Pick<
+  ChapterSnapshot,
+  "id" | "workId" | "status" | "updatedAt" | "pageOrder" | "pages"
+>;

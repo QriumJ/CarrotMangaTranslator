@@ -14,6 +14,10 @@ import { capturePageRecovery } from "../../shared/pageRecoverySnapshot";
 import { hashStableValue } from "../../shared/blockFingerprint";
 import { McpEditError } from "../application/mcpEditPolicy";
 import {
+  MCP_SNAPSHOT_BYTES,
+  packMcpSnapshot,
+} from "../application/mcpSnapshotPayload";
+import {
   RetainedChangeSchema,
   MCP_RETENTION_MS,
   type RetainedChange,
@@ -29,6 +33,7 @@ type Invocation = {
   operation: string;
   requestId: string | null;
   assertAuthorized: () => void;
+  assertCapacity: () => Promise<void>;
 };
 const invocations = new AsyncLocalStorage<Invocation>();
 export function currentRetentionInvocation() {
@@ -41,6 +46,7 @@ type Staged = { before: ChapterFile; after: ChapterFile };
 export function wrapRetainedTool(
   storage: McpRetentionStorage,
   tool: McpTool,
+  assertCapacity: () => Promise<void>,
 ): McpTool {
   if (
     (tool.readOnly !== false &&
@@ -75,6 +81,7 @@ export function wrapRetainedTool(
         owner: context.principalId,
         operation: tool.name,
         requestId: typeof args?.requestId === "string" ? args.requestId : null,
+        assertCapacity,
         assertAuthorized: () => {
           if (context.assertJobAuthorized)
             context.assertJobAuthorized(tool.requiredScopes);
@@ -117,21 +124,20 @@ async function retainChanges(
 ) {
   const changed = changedPages(stages);
   if (!changed.length) return;
+  const size = packMcpSnapshot(
+    changed.map((item) => [
+      capturePageRecovery(item.before),
+      capturePageRecovery(item.after),
+    ]),
+  );
   if (
     changed.length > 50 ||
-    Buffer.byteLength(
-      JSON.stringify(
-        changed.map((item) => [
-          capturePageRecovery(item.before),
-          capturePageRecovery(item.after),
-        ]),
-      ),
-    ) >
-      4 * 1024 * 1024
+    size.metadataBytes > 4 * 1024 * 1024 ||
+    size.totalBytes > MCP_SNAPSHOT_BYTES
   )
     throw new McpEditError(
       "invalid_edit",
-      "Durable recovery supports at most 50 changed pages and 4 MiB of page metadata per native commit. Split the explicit target set.",
+      "Durable recovery supports at most 50 changed pages, 4 MiB of metadata and 32 MiB including inline lettering per native commit. Split the explicit target set.",
     );
   const index = await storage.prune(transaction, await storage.index());
   const id = randomUUID();

@@ -1,3 +1,4 @@
+import { resolveCustomApiProfiles } from "../../../../shared/customApiProfiles";
 import type {
   ApiProviderProfileSettings,
   ApiReasoningEffort,
@@ -45,6 +46,14 @@ export type ApiProfileFormValues = {
   apiReasoningEffort: ApiReasoningEffort | "";
   apiExtraBodyJson: string;
   apiCustomHeadersJson: string;
+  apiSessionHeaderEnabled: boolean;
+  apiSessionHeaderName: string;
+};
+
+export type CustomApiProfileForm = {
+  name: string;
+  values: ApiProfileFormValues;
+  limits: GenerationLimitFormValues;
 };
 
 export type GenerationLimitFormValues = {
@@ -55,6 +64,7 @@ export type GenerationLimitFormValues = {
 export type GenerationLimitProfilesFormValues = {
   gemma: GenerationLimitFormValues;
   codex: GenerationLimitFormValues;
+  claude?: GenerationLimitFormValues;
   api: Partial<Record<ApiProviderPresetId, GenerationLimitFormValues>>;
 };
 
@@ -69,6 +79,8 @@ export function resolveApiFormValues(
 ): ApiProfileFormValues & {
   apiProvider: ApiProviderPresetId;
   apiProfiles: Partial<Record<ApiProviderPresetId, ApiProfileFormValues>>;
+  customApiProfiles: Record<string, CustomApiProfileForm>;
+  activeCustomProfileId: string;
 } {
   const provider =
     settings.api.provider ?? inferApiProviderPreset(settings.api.baseUrl);
@@ -85,6 +97,24 @@ export function resolveApiFormValues(
     ...createApiProfileFormValues(settings.api, provider),
     apiProvider: provider,
     apiProfiles,
+    activeCustomProfileId: resolveCustomApiProfiles(settings.api)
+      .activeCustomProfileId,
+    customApiProfiles: Object.fromEntries(
+      Object.entries(resolveCustomApiProfiles(settings.api).customProfiles).map(
+        ([id, profile]) => [
+          id,
+          {
+            name: profile.name,
+            values: createApiProfileFormValues(profile, "custom"),
+            limits: formatGenerationLimits(
+              profile.generationLimits ??
+                settings.generationLimits?.api.custom ??
+                resolveRecommendedGenerationLimits("openai-api", profile.model),
+            ),
+          },
+        ],
+      ),
+    ),
   };
 }
 
@@ -137,6 +167,8 @@ function createApiProfileFormValues(
     apiReasoningEffort: profile.reasoningEffort ?? "",
     apiExtraBodyJson: profile.extraBodyJson ?? "",
     apiCustomHeadersJson: profile.customHeadersJson ?? "",
+    apiSessionHeaderEnabled: profile.sessionHeaderEnabled ?? false,
+    apiSessionHeaderName: profile.sessionHeaderName ?? "",
   };
 }
 
@@ -156,7 +188,9 @@ export function createDefaultApiProfileFormValues(
   const model =
     provider === "google-ai-studio"
       ? "gemini-3.5-flash-lite"
-      : DEFAULT_API_MODEL;
+      : provider === "opencode-go"
+        ? "deepseek-v4.1-flash"
+        : DEFAULT_API_MODEL;
   return {
     apiBaseUrl:
       resolveApiProviderBaseUrl({ provider }) ??
@@ -174,8 +208,14 @@ export function createDefaultApiProfileFormValues(
     apiTopP: formatNullableNumberInput(DEFAULT_API_TOP_P),
     apiTopK: formatNullableNumberInput(DEFAULT_API_TOP_K),
     apiReasoningEffort: DEFAULT_API_REASONING_EFFORT ?? "",
-    apiExtraBodyJson: DEFAULT_API_EXTRA_BODY_JSON,
+    apiExtraBodyJson:
+      provider === "opencode-go"
+        ? '{"response_format":{"type":"json_object"}}'
+        : DEFAULT_API_EXTRA_BODY_JSON,
     apiCustomHeadersJson: DEFAULT_API_CUSTOM_HEADERS_JSON,
+    apiSessionHeaderEnabled: provider === "opencode-go",
+    apiSessionHeaderName:
+      provider === "opencode-go" ? "x-opencode-session" : "",
   };
 }
 
@@ -211,6 +251,9 @@ export function resolveGenerationLimitProfileFormValues(
   return {
     gemma: formatGenerationLimits(
       stored?.gemma ?? resolveGemmaLegacyLimits(settings, legacy),
+    ),
+    claude: formatGenerationLimits(
+      stored?.claude ?? { maxTokens: 32768, contextTokens: 65536 },
     ),
     codex: formatGenerationLimits(
       stored?.codex ?? resolveCodexLegacyLimits(settings, legacy),
@@ -262,4 +305,28 @@ function formatGenerationLimits(
 
 function formatNullableNumberInput(value: number | null | undefined): string {
   return value === null || value === undefined ? "" : String(value);
+}
+
+export function readActiveApiProfile(
+  values: ApiProfileFormValues,
+): ApiProfileFormValues {
+  return {
+    apiBaseUrl: values.apiBaseUrl,
+    apiModel: values.apiModel,
+    apiKey: values.apiKey,
+    apiKeyCount: values.apiKeyCount,
+    apiVertexAuthMode: values.apiVertexAuthMode,
+    apiVertexServiceAccountPath: values.apiVertexServiceAccountPath,
+    apiKeyMaxAttempts: values.apiKeyMaxAttempts,
+    apiRetryDelaySeconds: values.apiRetryDelaySeconds,
+    apiRequestIntervalSeconds: values.apiRequestIntervalSeconds,
+    apiTemperature: values.apiTemperature,
+    apiTopP: values.apiTopP,
+    apiTopK: values.apiTopK,
+    apiReasoningEffort: values.apiReasoningEffort,
+    apiExtraBodyJson: values.apiExtraBodyJson,
+    apiCustomHeadersJson: values.apiCustomHeadersJson,
+    apiSessionHeaderEnabled: values.apiSessionHeaderEnabled,
+    apiSessionHeaderName: values.apiSessionHeaderName,
+  };
 }

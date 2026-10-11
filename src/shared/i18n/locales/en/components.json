@@ -52,6 +52,8 @@
     "noCurrentChapter": "No chapter open",
     "translate": "Add new source",
     "batchTranslate": "Add multiple chapters",
+    "addSource": "Add source",
+    "more": "More",
     "libraryFolder": "Library folder",
     "share": "Export work",
     "importWork": "Import work",
@@ -702,7 +704,7 @@
   "translationOptions": {
     "codexErasure": "Erase with Codex",
     "title": "Run translation",
-    "workspaceAction": "Translation settings…",
+    "workspaceAction": "Standard translation",
     "workspaceUndoWarning": "Re-translated pages replace their existing results.",
     "start": "Start translation",
     "startSelection": "Translate selection",
@@ -1787,6 +1789,9 @@
         "rateLimited": "Tavily is receiving too many requests. Try again shortly.",
         "invalidResponse": "Could not read the Tavily usage response.",
         "networkFailed": "Could not connect to Tavily. Check your network connection."
+      },
+      "claude": {
+        "description": "Research work details and terminology with Claude web search."
       }
     },
     "options": {
@@ -1838,6 +1843,10 @@
         "api": {
           "label": "API",
           "description": "Use an OpenAI-compatible API endpoint."
+        },
+        "claude": {
+          "label": "Claude Code",
+          "description": "Translate using Claude Code."
         }
       },
       "reasoning": {
@@ -1938,13 +1947,13 @@
           "label": "SM75 CUDA",
           "description": "An FP16 CUDA compatibility path for RTX 20-series GPUs (SM 7.5)."
         },
-        "zluda": {
-          "label": "AMD ZLUDA",
-          "description": "Runs Flux through ZLUDA on AMD GPUs. Requires the AMD HIP SDK."
-        },
         "cpu": {
           "label": "CPU",
           "description": "CPU-only native Flux without Python or Diffusers. This compatibility mode can take many minutes per page; LaMa or AOT is recommended for practical CPU inpainting."
+        },
+        "rocm": {
+          "label": "AMD ROCm",
+          "description": "Runs the native ROCm 10 engine on AMD GPUs. The app prepares the required runtime automatically."
         }
       },
       "inpaintingModels": {
@@ -2027,6 +2036,14 @@
         "mmprojFile": "mmproj file",
         "mmprojPlaceholder": "Detected automatically in the same folder, or choose manually",
         "mmprojDescription": "The app searches the model folder for mmproj automatically; choose it manually if it is not found."
+      },
+      "sampling": {
+        "title": "Translation generation",
+        "description": "Applies to translation generation. Bubble grouping keeps its fixed settings. Environment variables take precedence when configured.",
+        "temperature": "Lower values favor more likely wording. Higher values increase variation, but do not guarantee more accurate translation.",
+        "topP": "Limits candidate tokens by cumulative probability. Start with the default of 0.95.",
+        "topK": "Limits candidates to the K most likely tokens. Start with the default of 64.",
+        "reset": "Restore defaults"
       }
     },
     "codex": {
@@ -2075,7 +2092,8 @@
         "googleAiStudio": "Google AI Studio",
         "googleVertex": "Google Vertex AI",
         "openRouter": "OpenRouter",
-        "ollama": "Ollama (local)"
+        "ollama": "Ollama (local)",
+        "openCodeGo": "OpenCode GO"
       },
       "providerHintCustom": "Enter a Base URL and model ID. Keys, models, and generation limits are saved separately for each provider.",
       "providerHintVerified": "Only models with verified image input are loaded. Keys, models, and generation limits are saved separately for each provider.",
@@ -2090,6 +2108,9 @@
       "vertexServiceAccountChange": "Change",
       "vertexServiceAccountClear": "Remove",
       "vertexServiceAccountDescription": "The JSON key is read only from the selected file on this PC and is never copied into app settings. The service account needs the Vertex AI User role on the target project. Never share or commit the key file.",
+      "availableModel": "Available models",
+      "modelListLoaded": "Loaded {{count}} models.",
+      "providerHintCatalog": "Load the provider’s model list.",
       "discoveredModel": "Verified image-input model",
       "chooseModel": "Choose a model…",
       "loadModels": "Load models",
@@ -2160,7 +2181,13 @@
           "customHeaders": "Additional HTTP request headers as a JSON object."
         }
       },
-      "requestIntervalSeconds": "Minimum request interval (seconds)"
+      "requestIntervalSeconds": "Minimum request interval (seconds)",
+      "customProfiles": {
+        "session": "Send a conversation session header",
+        "header": "Session header name",
+        "invalidHeader": "Enter a valid, non-reserved header name that does not conflict with custom headers.",
+        "client": "Client identity"
+      }
     },
     "hardware": {
       "summaryTitle": "Auto-detected GPU and active routes",
@@ -2215,8 +2242,8 @@
       "fluxLowMemoryOverride": "Allow risky Flux runs with {{available}} unified memory",
       "sm75FluxWarningTitle": "RTX 20-series only",
       "sm75FluxWarningDetail": "Behavior or output may differ slightly from the standard NVIDIA CUDA backend.",
-      "fluxAmdUnsupportedTitle": "AMD GPU not officially supported",
-      "fluxAmdUnsupportedDetail": "{{gpu}} is not listed in AMD's current Windows HIP SDK support matrix. You can still try ZLUDA experimentally, but it may fail at runtime.",
+      "fluxAmdUnsupportedTitle": "AMD GPU runtime compatibility needs verification",
+      "fluxAmdUnsupportedDetail": "A matching ROCm runtime could not be confirmed for {{gpu}}. GPU compatibility is checked again at launch.",
       "fluxAmdUseCpu": "Switch to CPU backend",
       "downloadHipSdk": "Download AMD HIP SDK",
       "openLinkFailed": "Could not open the link. Check your default browser.",
@@ -2225,9 +2252,9 @@
       "fluxRequirements": {
         "cuda-native": "Requires NVIDIA GPU other than SM75",
         "cuda-sm75-experimental": "RTX 20 / GTX 16 (SM75) only",
-        "zluda-native": "Requires AMD GPU",
         "cpu-native": "No GPU needed · Slow",
-        "metal-native": "Requires Apple Silicon"
+        "metal-native": "Requires Apple Silicon",
+        "rocm-native": "Requires AMD GPU"
       },
       "ocrRequirements": {
         "cuda": "Requires NVIDIA GPU",
@@ -2377,7 +2404,8 @@
     "image": {
       "localErasure": "Default erasure",
       "codex": "Codex image tools",
-      "description": "Erase text and generate sound effects independently of the translation engine. Astra is strongly recommended."
+      "description": "Erase text and generate sound effects independently of the translation engine. Astra is strongly recommended.",
+      "review": "Image review"
     },
     "backup": {
       "title": "Backup and transfer",
@@ -2398,6 +2426,17 @@
       "cancel": "Cancel operation",
       "saved": "Backup saved: {{path}}",
       "restored": "Environment restored. Check API keys, account sign-in, external folders and custom model paths. Reconfigure custom API headers and extra request bodies."
+    },
+    "claude": {
+      "account": "Claude account",
+      "login": "Sign in",
+      "console": "Connect API account",
+      "logout": "Sign out",
+      "refresh": "Refresh",
+      "model": "Model",
+      "effort": "Reasoning effort",
+      "error": "Check your Claude connection.",
+      "testing": "Checking Claude Code connection and model response."
     }
   },
   "pageBlocks": {
@@ -2474,7 +2513,8 @@
         "environment-restore": "Environment restore",
         "model-test": "Model check",
         "codex-auth": "ChatGPT account",
-        "sound-effect-translation": "Sound effect translation"
+        "sound-effect-translation": "Sound effect translation",
+        "claude-auth": "Claude Code"
       },
       "status": {
         "idle": "Idle",
@@ -2728,7 +2768,7 @@
     "target": "Mask target",
     "asset": "Lettering",
     "page": "Occlusion",
-    "mode": "Brush mode",
+    "mode": "Retouch tool",
     "hide": "Erase",
     "restore": "Restore",
     "shape": "Brush shape",
@@ -2737,7 +2777,14 @@
     "size": "Size",
     "softness": "Softness",
     "showMask": "Show mask",
-    "reset": "Reset"
+    "reset": "Reset",
+    "move": "Move part",
+    "selectionShape": "Selection shape",
+    "lasso": "Lasso",
+    "rectangle": "Rectangle",
+    "moveHint": "Outline the strokes to move, then drag inside the selection. Arrow keys nudge; Shift moves farther. Enter applies and Esc cancels.",
+    "applyMove": "Apply move",
+    "cancelSelection": "Cancel selection"
   },
   "codexFonts": {
     "title": "Edit fonts",
@@ -3014,5 +3061,83 @@
       "clipboard": "Could not copy the list.",
       "save": "Could not save."
     }
+  },
+  "chat": {
+    "open": "Chat",
+    "translateInChat": "Chat translation",
+    "panelMode": "Right panel",
+    "editor": "Edit",
+    "history": "Conversation history",
+    "new": "New conversation",
+    "compact": "Compact conversation",
+    "model": "Model",
+    "effort": "Reasoning",
+    "modelSettings": "Model and reasoning",
+    "effortChip": "Reasoning {{level}}",
+    "library": "Entire library",
+    "contextBlocks": "Bubbles: {{count}}",
+    "loginHint": "ChatGPT sign-in required.",
+    "login": "Sign in to ChatGPT",
+    "loading": "Loading conversations…",
+    "older": "Show older messages",
+    "openPage": "Open page",
+    "undo": "Check undo",
+    "undoRequest": "Check the recovery record for {{tool}} and undo this change if it is still available. Do not overwrite later edits. Result: {{result}}",
+    "removeImage": "Remove image",
+    "message": "Message",
+    "placeholder": "Enter a request",
+    "attach": "Attach image",
+    "enterHint": "Enter to send · Shift+Enter for a new line",
+    "stop": "Stop",
+    "steer": "Add instruction",
+    "send": "Send",
+    "answer": "Send answer",
+    "roles": {
+      "user": "You",
+      "assistant": "Codex",
+      "status": "Status"
+    },
+    "operation": {
+      "running": "Working…",
+      "completed": "Result",
+      "failed": "Failed"
+    },
+    "toolGroup": "{{count}} tools",
+    "state": {
+      "idle": "Ready",
+      "running": "Working…",
+      "compacting": "Compacting conversation…",
+      "needs-input": "Waiting for your answer",
+      "paused": "Paused · send a message to continue",
+      "failed": "Interrupted · send a message to reconnect"
+    },
+    "tools": {
+      "font": "Comparing fonts",
+      "image": "Image work",
+      "library": "Checking library",
+      "sound": "Sound effects",
+      "erase": "Restoring artwork",
+      "review": "Quality review",
+      "edit": "Editing pages",
+      "context": "Reading context",
+      "inspect": "Checking pages"
+    },
+    "quality": {
+      "observation": "Quality at the time of this check",
+      "incomplete": "Review or fixes still required",
+      "accepted-at-current-revisions": "Detailed review passed",
+      "accepted-with-font-substitutions": "Review passed with font substitutions",
+      "chapter": "Whole chapter · later edits require another review",
+      "selection": "Selected pages only",
+      "substitutions": "{{count}} font substitutions",
+      "details": "Unreviewed reasons",
+      "pages": "{{count}} pages"
+    },
+    "redo": "Check reapply",
+    "redoRequest": "Check the retained recovery record and current revision for {{tool}}. Reapply only if still available without overwriting later manual edits. Result: {{result}}",
+    "runtime": "Assistant",
+    "claudeLoginHint": "Sign in to Claude to start chatting.",
+    "claudeLogin": "Sign in to Claude",
+    "moreImages": "Show {{count}} more images"
   }
 }

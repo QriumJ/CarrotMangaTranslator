@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { TranslationOptions } from "./appSettings";
 import type { ModelEndpointHandle } from "./pipeline/types";
 import { tMain } from "./i18n";
@@ -37,10 +38,13 @@ export async function requestWorkContextAnalysisText({
   );
   const boundedOptions: TranslationOptions = {
     ...options,
+    apiConversationId: options.apiSessionHeaderName ? randomUUID() : undefined,
     abortSignal: deadline.signal,
   };
   try {
-    return boundedOptions.modelProvider === "openai-codex"
+    return ["openai-codex", "claude-code"].includes(
+      boundedOptions.modelProvider,
+    )
       ? await requestCodexText(
           endpoint,
           boundedOptions,
@@ -146,7 +150,12 @@ async function requestCodexText(
       },
     ],
     max_output_tokens: maxOutputTokens,
-    reasoning: { effort: options.codexReasoningEffort },
+    reasoning: {
+      effort:
+        options.modelProvider === "claude-code"
+          ? options.claudeEffort
+          : options.codexReasoningEffort,
+    },
     stream: true,
     store: false,
   };

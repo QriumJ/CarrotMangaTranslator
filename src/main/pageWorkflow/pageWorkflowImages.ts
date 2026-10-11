@@ -1,4 +1,5 @@
-import type { MangaPage } from "../../shared/libraryTypes";
+import type { ChapterSnapshot, MangaPage } from "../../shared/libraryTypes";
+import type { PageWorkflowStage } from "../../shared/pageWorkflowStages";
 import { PageWorkflowPartialFailure } from "../application/pageWorkflowPartialFailure";
 import {
   workflowRegionKey,
@@ -9,13 +10,23 @@ import { acquireCodexInpaintingEngine } from "../inpainting/codexInpaintingEngin
 import { inpaintPatternPage } from "../inpainting/patternPage";
 import { createProductionBubbleLayoutRunner } from "../bubbleLayout/bubbleLayoutFacade";
 import { runBubbleLayoutMaskPrepass } from "../jobs/bubbleLayoutJob";
+import { emitInpaintingMaskPreparation } from "../jobs/inpaintingJobProgress";
 import { runBubbleLayoutPostprocess } from "../inpainting/bubbleLayoutRunner";
 import { applyInpaintingLayoutStates } from "../inpainting/inpaintingLayoutState";
 import { applyNaturalTextLayout } from "../../shared/naturalTextLayout";
 import type { PageWorkflowRuntimeContext } from "./pageWorkflowRuntimeTypes";
 
-function workflowBubbleRunner(context: PageWorkflowRuntimeContext) {
-  return createProductionBubbleLayoutRunner({
+const productionRuntime = {
+  acquireInpaintingEngine,
+  acquireCodexInpaintingEngine,
+  createProductionBubbleLayoutRunner,
+};
+
+function workflowBubbleRunner(
+  context: PageWorkflowRuntimeContext,
+  runtime: typeof productionRuntime,
+) {
+  return runtime.createProductionBubbleLayoutRunner({
     dataRoot: context.paths.dataRoot,
     decodeFallback: context.decodeImage,
     directMl: {
@@ -25,10 +36,57 @@ function workflowBubbleRunner(context: PageWorkflowRuntimeContext) {
   });
 }
 
-export function createWorkflowImages(context: PageWorkflowRuntimeContext) {
-  const runner = workflowBubbleRunner(context);
+export function createWorkflowImages(
+  context: PageWorkflowRuntimeContext,
+  runtime = productionRuntime,
+) {
+  const runner = workflowBubbleRunner(context, runtime);
+  let preparedPaths: Set<string> | undefined;
+  const prepare = async (pages: readonly MangaPage[]) => {
+    if (
+      preparedPaths &&
+      pages.every((page) => preparedPaths?.has(page.imagePath))
+    )
+      return;
+    if (
+      context.plan.erasureEngine !== "codex" &&
+      (context.settings.inpainting?.model ?? "flux-klein") === "flux-klein"
+    ) {
+      await runner.preparePages?.(pages, context.signal, (page, index) =>
+        emitInpaintingMaskPreparation(
+          context.runId,
+          context.emit,
+          page,
+          index,
+          pages.length,
+          "gemma-analysis",
+        ),
+      );
+      preparedPaths = new Set(pages.map((page) => page.imagePath));
+    }
+  };
   return {
-    erase: (page: MangaPage) => eraseWorkflowPage(context, page, runner),
+    prepare,
+    prepareStage: async (
+      stage: PageWorkflowStage,
+      chapter: ChapterSnapshot,
+      pageIds: string[],
+    ) => {
+      if (
+        stage === "erase" ||
+        (stage === "layout" && context.plan.bubbleLayout)
+      )
+        await prepare(
+          chapter.pages.filter((page) => pageIds.includes(page.id)),
+        );
+    },
+    dispose: async () => {
+      await runner.dispose?.();
+    },
+    erase: async (page: MangaPage) => {
+      if (!preparedPaths) await prepare([page]);
+      return eraseWorkflowPage(context, page, runner, runtime);
+    },
     layout: (page: MangaPage) => layoutWorkflowPage(context, page, runner),
   };
 }
@@ -37,16 +95,15 @@ async function eraseWorkflowPage(
   context: PageWorkflowRuntimeContext,
   page: MangaPage,
   runner: ReturnType<typeof workflowBubbleRunner>,
+  runtime: typeof productionRuntime,
 ): Promise<MangaPage> {
   const targets = workflowTargetBlocks(page, "erase", context.plan);
   if (!targets.length) return page;
-  const lease = await acquireWorkflowErasure(context);
+  const lease = await acquireWorkflowErasure(context, runtime);
   try {
     const blockIds = targets.map((block) => block.id);
     const prepass =
-      lease.engine.model === "flux-klein" &&
-      context.plan.bubbleLayout &&
-      context.plan.stages.includes("layout")
+      lease.engine.model === "flux-klein"
         ? await runBubbleLayoutMaskPrepass({
             page,
             blockIds,
@@ -54,31 +111,24 @@ async function eraseWorkflowPage(
             runner,
             signal: context.signal,
           })
-        : { page };
-    const result = await inpaintPatternPage(prepass.page, {
+        : undefined;
+    const {
+      page: maskPage = page,
+      restoreLayout,
+      ...maskOptions
+    } = prepass ?? {};
+    const result = await inpaintPatternPage(maskPage, {
+      ...maskOptions,
       blockIds,
       signal: context.signal,
       inpaintingEngine: lease.engine,
       decodeFallback: context.decodeImage,
       preserveExistingInpainting: true,
-      ...("bubbleLayoutConstraintBlockIds" in prepass
-        ? {
-            bubbleLayoutConstraintBlockIds:
-              prepass.bubbleLayoutConstraintBlockIds,
-          }
-        : {}),
-      ...("sharedInpaintGroupIdsByBlock" in prepass
-        ? { sharedInpaintGroupIdsByBlock: prepass.sharedInpaintGroupIdsByBlock }
-        : {}),
-      ...("typographySegmentation" in prepass
-        ? { typographySegmentation: prepass.typographySegmentation }
-        : {}),
     });
     const erased = new Set(result.erasedBlockIds);
-    const output =
-      "restoreLayout" in prepass && prepass.restoreLayout
-        ? applyInpaintingLayoutStates(result.page, prepass.restoreLayout)
-        : result.page;
+    const output = restoreLayout
+      ? applyInpaintingLayoutStates(result.page, restoreLayout)
+      : result.page;
     const committed = {
       ...output,
       erasedWorkflowRegions: {
@@ -152,15 +202,18 @@ async function layoutWorkflowPage(
   return output;
 }
 
-async function acquireWorkflowErasure(context: PageWorkflowRuntimeContext) {
+async function acquireWorkflowErasure(
+  context: PageWorkflowRuntimeContext,
+  runtime: typeof productionRuntime,
+) {
   const settings = context.settings;
   return context.plan.erasureEngine === "codex"
-    ? await acquireCodexInpaintingEngine(
+    ? await runtime.acquireCodexInpaintingEngine(
         context.paths,
         settings,
         context.signal,
       )
-    : await acquireInpaintingEngine({
+    : await runtime.acquireInpaintingEngine({
         appPaths: context.paths,
         signal: context.signal,
         model: settings.inpainting?.model ?? "flux-klein",

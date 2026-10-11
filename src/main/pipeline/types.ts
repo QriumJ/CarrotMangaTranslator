@@ -105,7 +105,8 @@ type ServerHandle = {
 export type ModelEndpointHandle =
   | ServerHandle
   | CodexAppServerEndpoint
-  | OpenAICompatibleApiEndpoint;
+  | OpenAICompatibleApiEndpoint
+  | import("../claude/claudeEndpoint").ClaudeEndpoint;
 
 export type TranslationResult = {
   outputText: string;

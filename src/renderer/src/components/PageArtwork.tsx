@@ -1,3 +1,4 @@
+import { resolvePageDialogueFontSizes } from "../lib/dialogueFontSizeMatching";
 import { resolveBlockDisplayText } from "../../../shared/blockDisplayText";
 import React from "react";
 import {
@@ -25,6 +26,10 @@ import {
 } from "./overlayBlockModel";
 import "./overlayTransforms.css";
 import styles from "./PageArtwork.module.css";
+import {
+  measureRenderedHangulInk,
+  observeRenderedShapeFlow,
+} from "../lib/renderedGlyphEvidence";
 
 type ArtworkBlockProps = {
   afterContent?: React.ReactNode;
@@ -62,23 +67,9 @@ export const ArtworkBlock = React.memo(function ArtworkBlock({
   return (
     <div
       className={model.outerClassName}
-      data-layout-evidence={JSON.stringify({
-        blockId: block.id,
-        lines:
-          getActiveGeneratedLettering(block) || model.curveRenderable
-            ? null
-            : (model.layout.lines?.map((line) =>
-                line.runs.map((run) => run.text).join(""),
-              ) ?? null),
-        fontSizePx: model.layout.fontSizePx,
-        innerWidth: model.layout.innerWidth,
-        innerHeight: model.layout.innerHeight,
-        // Generated lettering fills its own image rectangle. The fallback text
-        // layout is not rendered until editing invalidates that image asset.
-        overflow: getActiveGeneratedLettering(block)
-          ? false
-          : model.layout.overflow,
-      })}
+      data-layout-evidence={JSON.stringify(
+        layoutEvidence(block, model, fontCatalog),
+      )}
       style={model.outerStyle}
       onPointerDown={onPointerDown}
     >
@@ -183,6 +174,7 @@ export function PageArtwork({
   page,
   showImage = true,
   showBlockChrome = false,
+  visibleBlockIds,
   visualSize,
 }: {
   fontCatalog: BlockFontCatalog;
@@ -190,11 +182,16 @@ export function PageArtwork({
   page: PageArtworkSnapshot;
   showImage?: boolean;
   showBlockChrome?: boolean;
+  visibleBlockIds?: string[];
   visualSize: ViewportSize;
 }): React.JSX.Element {
   const pageSize = React.useMemo(
     () => ({ width: page.width, height: page.height }),
     [page.height, page.width],
+  );
+  const dialogueSizes = React.useMemo(
+    () => resolvePageDialogueFontSizes(page.blocks, pageSize, fontCatalog),
+    [page.blocks, pageSize, fontCatalog],
   );
   const sourceFontFaceFallbacks = React.useMemo(
     () => resolvePageSourceFontFaceFallbacks(page.blocks, pageSize),
@@ -217,17 +214,22 @@ export function PageArtwork({
           width={visualSize.width}
         />
       ) : null}
-      {page.blocks.map((block) => (
-        <PageArtworkBlock
-          block={block}
-          fontCatalog={fontCatalog}
-          key={block.id}
-          pageSize={pageSize}
-          showBlockChrome={showBlockChrome}
-          sourceFontFaceFallbackPx={sourceFontFaceFallbacks.get(block.id)}
-          visualSize={visualSize}
-        />
-      ))}
+      {page.blocks
+        .filter(
+          (block) => !visibleBlockIds || visibleBlockIds.includes(block.id),
+        )
+        .map((block) => (
+          <PageArtworkBlock
+            block={block}
+            fontCatalog={fontCatalog}
+            key={block.id}
+            pageSize={pageSize}
+            showBlockChrome={showBlockChrome}
+            sourceFontFaceFallbackPx={sourceFontFaceFallbacks.get(block.id)}
+            dialogueFontSizePx={dialogueSizes.get(block.id)}
+            visualSize={visualSize}
+          />
+        ))}
     </div>
   );
 }
@@ -238,6 +240,7 @@ function PageArtworkBlock({
   pageSize,
   showBlockChrome,
   sourceFontFaceFallbackPx,
+  dialogueFontSizePx,
   visualSize,
 }: {
   block: TranslationBlock;
@@ -245,6 +248,7 @@ function PageArtworkBlock({
   pageSize: ViewportSize;
   showBlockChrome: boolean;
   sourceFontFaceFallbackPx?: number;
+  dialogueFontSizePx?: number;
   visualSize: ViewportSize;
 }): React.JSX.Element {
   const displayText = resolveBlockDisplayText(block);
@@ -254,6 +258,7 @@ function PageArtworkBlock({
     fontCatalog,
     pageSize,
     sourceFontFaceFallbackPx,
+    dialogueFontSizePx,
     visualSize,
   });
   const model = resolveOverlayBlockRenderModel({
@@ -291,6 +296,7 @@ function useArtworkBlockLayout({
   fontCatalog,
   pageSize,
   sourceFontFaceFallbackPx,
+  dialogueFontSizePx,
   visualSize,
 }: {
   block: TranslationBlock;
@@ -298,6 +304,7 @@ function useArtworkBlockLayout({
   fontCatalog: BlockFontCatalog;
   pageSize: ViewportSize;
   sourceFontFaceFallbackPx?: number;
+  dialogueFontSizePx?: number;
   visualSize: ViewportSize;
 }): BlockTextLayout {
   return React.useMemo(
@@ -308,7 +315,11 @@ function useArtworkBlockLayout({
         pageSize,
         visualSize,
         fontCatalog,
-        { sourceFontFaceFallbackPx, textLayoutStageSize: pageSize },
+        {
+          sourceFontFaceFallbackPx,
+          dialogueFontSizePx,
+          textLayoutStageSize: pageSize,
+        },
       ),
     [
       block,
@@ -316,7 +327,63 @@ function useArtworkBlockLayout({
       fontCatalog,
       pageSize,
       sourceFontFaceFallbackPx,
+      dialogueFontSizePx,
       visualSize,
     ],
   );
+}
+
+function layoutEvidence(
+  block: TranslationBlock,
+  model: OverlayBlockRenderModel,
+  fontCatalog: BlockFontCatalog,
+) {
+  return {
+    blockId: block.id,
+    displayText: model.displayText,
+    lines:
+      getActiveGeneratedLettering(block) || model.curveRenderable
+        ? null
+        : (model.layout.lines?.map((line) =>
+            line.runs.map((run) => run.text).join(""),
+          ) ?? null),
+    fontSizePx: model.layout.fontSizePx,
+    innerWidth: model.layout.innerWidth,
+    innerHeight: model.layout.innerHeight,
+    rendered: !model.textVisible
+      ? "hidden"
+      : getActiveGeneratedLettering(block)
+        ? "generated"
+        : "text",
+    direction: model.renderDirection,
+    fontId: block.fontFamily ?? null,
+    rect: model.layout.rect,
+    textScaleX: model.layout.textScaleX,
+    textScaleY: model.layout.textScaleY,
+    contentWidth: model.layout.textContentWidth,
+    shapeFlow: shapeFlowEvidence(block, model),
+    hangulInk:
+      getActiveGeneratedLettering(block) || !model.textVisible
+        ? null
+        : measureRenderedHangulInk(
+            block,
+            model.displayText,
+            model.layout.fontSizePx,
+            fontCatalog,
+          ),
+    // Generated lettering fills its own image rectangle. The fallback text
+    // layout is not rendered until editing invalidates that image asset.
+    overflow: getActiveGeneratedLettering(block)
+      ? false
+      : model.layout.overflow,
+  };
+}
+
+function shapeFlowEvidence(
+  block: TranslationBlock,
+  model: OverlayBlockRenderModel,
+) {
+  return getActiveGeneratedLettering(block) || !model.textVisible
+    ? "unverified"
+    : observeRenderedShapeFlow(block, model.layout);
 }

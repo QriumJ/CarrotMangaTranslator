@@ -1,3 +1,4 @@
+import { DEFAULT_GEMMA_SAMPLING } from "../../shared/gemmaSamplingSettings";
 import type {
   AppSettings,
   GemmaVramMode,
@@ -5,6 +6,7 @@ import type {
 } from "../../shared/settingsTypes";
 import {
   resolveBoolean,
+  resolveNumberRange,
   resolveGemmaVramMode,
   resolveModelSource,
   resolveNullableIntegerRange,
@@ -41,6 +43,7 @@ export function normalizeGemmaSettings(
     ...resolveLocalModelPaths(gemma),
     vramMode,
     ...resolveGemmaMemoryTuning(gemma, defaults),
+    ...resolveGemmaSampling(gemma, defaults),
     ...resolveGemmaRuntime(gemma, defaults),
     ...resolveUnsafeUnifiedMemorySetting(gemma, defaults),
   };
@@ -127,4 +130,31 @@ function resolveUnsafeUnifiedMemorySetting(
   )
     ? { allowUnsafeUnifiedMemory: true }
     : {};
+}
+
+function resolveGemmaSampling(
+  gemma: Record<string, unknown> | null,
+  defaults: AppSettings,
+): Pick<AppSettings["gemma"], "temperature" | "topP" | "topK"> {
+  return {
+    temperature: resolveNumberRange(
+      gemma?.temperature,
+      defaults.gemma.temperature ?? DEFAULT_GEMMA_SAMPLING.temperature,
+      0,
+      2,
+    ),
+    topP: resolveNumberRange(
+      gemma?.topP,
+      defaults.gemma.topP ?? DEFAULT_GEMMA_SAMPLING.topP,
+      0.01,
+      1,
+    ),
+    topK:
+      resolveNullableIntegerRange(
+        gemma?.topK,
+        defaults.gemma.topK ?? DEFAULT_GEMMA_SAMPLING.topK,
+        1,
+        500,
+      ) ?? DEFAULT_GEMMA_SAMPLING.topK,
+  };
 }

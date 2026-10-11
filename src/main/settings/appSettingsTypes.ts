@@ -138,6 +138,8 @@ export type TranslationOptions = {
   mmprojFile?: string;
   localModelPath?: string;
   localMmprojPath?: string;
+  claudeModel?: string;
+  claudeEffort?: import("../../shared/claudeTypes").ClaudeEffort;
   codexModel: string;
   codexReasoningEffort: CodexReasoningEffort;
   apiBaseUrl: string;
@@ -153,6 +155,11 @@ export type TranslationOptions = {
   apiReasoningEffort?: ApiReasoningEffort | null;
   apiExtraBodyJson?: string;
   apiCustomHeadersJson?: string;
+  apiSessionHeaderName?: string;
+  apiConversationSeed?: string;
+  apiConversationId?: string;
+  apiUserAgent?: string;
+  apiProfileId?: string;
   ocrDevice: OcrDevice;
   /** Canonical OCR engine identity. App-created translation options always set it. */
   ocrPipeline: OcrPipeline;
@@ -211,6 +218,7 @@ export type TranslationOptions = {
   ocrBatchCompletedBefore?: number;
   ocrBatchTotal?: number;
   onProgress?: (event: {
+    sentGeneration?: Record<string, number | boolean>;
     phase: JobPhase;
     progressText: string;
     detail?: string;

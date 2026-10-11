@@ -4,7 +4,10 @@ import type {
 } from "../../shared/inpaintingTypes";
 import type { JobEvent } from "../../shared/jobTypes";
 import type { MangaPage } from "../../shared/libraryTypes";
-import { prepareBubbleLayoutJob } from "./bubbleLayoutJob";
+import {
+  prepareBubbleLayoutPages,
+  prepareBubbleLayoutJob,
+} from "./bubbleLayoutJob";
 import {
   assertInpaintingJobHasTargets,
   assertInpaintingCompletionWorkflow,
@@ -14,7 +17,10 @@ import {
 } from "./inpaintingJobCompletion";
 import { isAbortError } from "./jobEvents";
 import { processInpaintingPage } from "./inpaintingJobPageProcessor";
-import { countInpaintingPageTargets } from "./inpaintingJobPageCompletion";
+import {
+  countInpaintingPageTargets,
+  resolveInpaintingTarget,
+} from "./inpaintingJobPageCompletion";
 import type {
   InpaintingJobState,
   InpaintingTarget,
@@ -31,6 +37,7 @@ import {
   emitInpaintingFailed,
   emitInpaintingPartial,
   emitInpaintingStarting,
+  emitInpaintingMaskPreparation,
 } from "./inpaintingJobProgress";
 import {
   createPageProcessingTimingCollector,
@@ -217,37 +224,6 @@ export async function handleInpaintingJobError({
   };
 }
 
-function resolveInpaintingTarget(
-  request: StartInpaintingRequest,
-): InpaintingTarget {
-  if (request.mode === "page-bubble-layout") {
-    return {
-      ...(request.blockId === undefined ? {} : { blockId: request.blockId }),
-      drawnPatternMode: false,
-      drawnStrokes: [],
-      layoutOnly: true,
-      targetType: "source",
-    };
-  }
-  if (request.mode === "page-pattern-drawn") {
-    return {
-      drawnPatternMode: true,
-      drawnStrokes: request.strokes,
-      drawnFeatherPx: request.featherPx,
-      layoutOnly: false,
-      targetType: "drawn",
-    };
-  }
-  const blockId = request.mode === "page-pattern" ? request.blockId : undefined;
-  return {
-    ...(blockId === undefined ? {} : { blockId }),
-    drawnPatternMode: false,
-    drawnStrokes: [],
-    layoutOnly: false,
-    targetType: "source",
-  };
-}
-
 async function processInpaintingPages(
   options: ProcessInpaintingPagesOptions,
 ): Promise<ProcessInpaintingPagesResult> {
@@ -381,17 +357,22 @@ async function prepareInpaintingPageRuntime({
   if (!context.jobs.get(id)?.resources) {
     assertInpaintingJobHasTargets(targets, state, target, totalTargetBlocks);
   }
+  await measureSharedProcessingStage(timing, "preparing", () =>
+    prepareBubbleLayoutPages(
+      preparedBubbleLayout,
+      request,
+      targets.map(({ page }) => page),
+      abortController.signal,
+      (page, index) =>
+        emitInpaintingMaskPreparation(id, emit, page, index, targets.length),
+    ),
+  );
   state.inpaintingEngineLease = await measureSharedProcessingStage(
     timing,
     "preparing",
     () =>
       acquireInpaintingEngineIfNeeded({
-        engine:
-          request.mode === "selection-pattern" ||
-          request.mode === "page-pattern" ||
-          request.mode === "page-pattern-drawn"
-            ? request.engine
-            : undefined,
+        engine: "engine" in request ? request.engine : undefined,
         abortController,
         appSettings,
         context,

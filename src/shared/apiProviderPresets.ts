@@ -5,6 +5,7 @@ export const API_PROVIDER_PRESET_IDS = [
   "google-vertex",
   "openrouter",
   "ollama",
+  "opencode-go",
 ] as const;
 
 export type ApiProviderPresetId = (typeof API_PROVIDER_PRESET_IDS)[number];
@@ -71,6 +72,7 @@ export const GOOGLE_AI_STUDIO_BASE_URL =
   "https://generativelanguage.googleapis.com/v1beta/openai";
 export const OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
 export const OLLAMA_BASE_URL = "http://localhost:11434/v1";
+export const OPENCODE_GO_BASE_URL = "https://opencode.ai/zen/go/v1";
 const DEFAULT_VERTEX_LOCATION = "global";
 
 export function buildVertexOpenAiBaseUrl(
@@ -116,6 +118,7 @@ export function resolveApiProviderBaseUrl({
   if (provider === "ollama") {
     return OLLAMA_BASE_URL;
   }
+  if (provider === "opencode-go") return OPENCODE_GO_BASE_URL;
   return null;
 }
 
@@ -141,6 +144,8 @@ export function inferApiProviderPreset(baseUrl: string): ApiProviderPresetId {
   if (url.hostname === "openrouter.ai") {
     return "openrouter";
   }
+  if (url.hostname === "opencode.ai" && /^\/zen\/go\/v1\/?$/.test(url.pathname))
+    return "opencode-go";
   // Ollama 기본 포트. localhost/127.0.0.1/LAN 호스트 모두 포괄.
   if (url.port === "11434") {
     return "ollama";

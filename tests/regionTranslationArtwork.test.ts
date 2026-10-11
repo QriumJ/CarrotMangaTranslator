@@ -129,6 +129,41 @@ describe("region translation artwork commit", () => {
 });
 
 describe("configured local region inpainting", () => {
+  it("uses original full-page mask detection for FLUX without changing selected text", async () => {
+    const fixture = await regionContextFixture();
+    const before = structuredClone(fixture.input.analyzed.blocks);
+    const runPage = vi.fn(async () => ({
+      patches: [],
+      typographySegmentation: {
+        imageWidth: 200,
+        imageHeight: 240,
+        detections: [],
+      },
+    }));
+    const preparePages = vi.fn(async () => {
+      expect(fixture.acquire).not.toHaveBeenCalled();
+    });
+    const dispose = vi.fn(async () => {
+      expect(fixture.release).toHaveBeenCalledOnce();
+    });
+    fixture.dependencies.createBubbleLayoutRunner = () => ({
+      runPage,
+      preparePages,
+      dispose,
+    });
+    await prepareRegionArtwork(fixture.input, fixture.dependencies);
+    expect(preparePages).toHaveBeenCalledOnce();
+    expect(dispose).toHaveBeenCalledOnce();
+    expect(runPage).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        sourceEraseMask: true,
+        includeTypographySegmentation: true,
+        paddingRatio: 0,
+        page: expect.objectContaining({ width: 200, height: 240 }),
+      }),
+    );
+    expect(fixture.input.analyzed.blocks).toEqual(before);
+  });
   it.each(["flux-klein", "lama-manga", "aot-inpainting"] as const)(
     "%s receives surrounding page pixels and commits only the selected area",
     async (model) => {
@@ -321,6 +356,9 @@ async function regionContextFixture(
         ({}) as ReturnType<typeof import("../src/main/appPaths").getAppPaths>,
       getAppSettings: async () => settings,
       acquireInpaintingEngine: acquire,
+      createBubbleLayoutRunner: () => ({
+        runPage: async () => ({ patches: [] }),
+      }),
     },
     input: {
       source,

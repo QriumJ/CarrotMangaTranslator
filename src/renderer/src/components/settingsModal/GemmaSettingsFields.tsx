@@ -1,3 +1,4 @@
+import { GemmaSamplingFields } from "./GemmaSamplingFields";
 import React from "react";
 import { ControlTooltip } from "../ui/ControlTooltip";
 import { useTranslation } from "react-i18next";
@@ -23,6 +24,8 @@ type GemmaSettingsFieldsProps = Pick<
   | "customModelFile"
   | "customModelRepo"
   | "detectedGpuName"
+  | "gemmaSampling"
+  | "setGemmaSampling"
   | "gemmaFitTargetMb"
   | "gemmaMmprojOffload"
   | "gpuMemoryMb"
@@ -67,6 +70,7 @@ export function GemmaSettingsFields(
         <LocalModelFields {...props} />
       )}
       <GemmaVramTuningFields {...props} />
+      <GemmaSamplingFields {...props} />
     </>
   );
 }

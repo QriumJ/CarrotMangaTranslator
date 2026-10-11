@@ -52,6 +52,8 @@
     "noCurrentChapter": "尚未開啟章節",
     "translate": "新增原稿",
     "batchTranslate": "新增多個章節",
+    "addSource": "新增原稿",
+    "more": "更多",
     "libraryFolder": "資料庫資料夾",
     "share": "匯出專案",
     "importWork": "匯入專案",
@@ -702,7 +704,7 @@
   "translationOptions": {
     "codexErasure": "用 Codex 擦除",
     "title": "執行翻譯",
-    "workspaceAction": "翻譯設定…",
+    "workspaceAction": "一般翻譯",
     "workspaceUndoWarning": "重新翻譯的頁面會用新結果取代現有結果。",
     "start": "開始翻譯",
     "startSelection": "翻譯所選範圍",
@@ -1787,6 +1789,9 @@
         "rateLimited": "Tavily 請求過多，請稍後重試。",
         "invalidResponse": "無法讀取 Tavily 使用量回應。",
         "networkFailed": "無法連線 Tavily，請檢查網路。"
+      },
+      "claude": {
+        "description": "使用 Claude 網頁搜尋調查作品資訊和術語。"
       }
     },
     "options": {
@@ -1838,6 +1843,10 @@
         "api": {
           "label": "API",
           "description": "使用 OpenAI 相容 API 端點。"
+        },
+        "claude": {
+          "label": "Claude Code",
+          "description": "Translate using Claude Code."
         }
       },
       "reasoning": {
@@ -1938,13 +1947,13 @@
           "label": "SM75 CUDA",
           "description": "適用於 RTX 20 系列（SM 7.5）的 FP16 CUDA 相容路徑。"
         },
-        "zluda": {
-          "label": "AMD ZLUDA",
-          "description": "在 AMD GPU 上透過 ZLUDA 執行 Flux，需要 AMD HIP SDK。"
-        },
         "cpu": {
           "label": "CPU",
           "description": "不使用 Python 或 Diffusers 的純 CPU Flux 相容模式。每頁可能需要數分鐘以上；實用的 CPU 修補建議使用 LaMa 或 AOT。"
+        },
+        "rocm": {
+          "label": "AMD ROCm",
+          "description": "在 AMD GPU 上執行 ROCm 10 原生引擎。應用程式會自動準備所需執行環境。"
         }
       },
       "inpaintingModels": {
@@ -2027,6 +2036,14 @@
         "mmprojFile": "mmproj 檔案",
         "mmprojPlaceholder": "自動偵測同一資料夾中的檔案，也可手動指定",
         "mmprojDescription": "應用程式會在模型資料夾中自動尋找 mmproj；如果找不到，可以手動指定。"
+      },
+      "sampling": {
+        "title": "翻譯生成設定",
+        "description": "套用於譯文生成。氣泡分組保留原有固定設定。如果設定了環境變數，則優先使用環境變數。",
+        "temperature": "較低的值傾向於選擇機率較高的表達。較高的值會增加表達變化，但不保證翻譯更準確。",
+        "topP": "依累積機率限制下一個詞元的候選範圍。建議先使用預設值0.95。",
+        "topK": "將候選範圍限制為機率最高的K個詞元。建議先使用預設值64。",
+        "reset": "還原預設值"
       }
     },
     "codex": {
@@ -2075,7 +2092,8 @@
         "googleAiStudio": "Google AI Studio",
         "googleVertex": "Google Vertex AI",
         "openRouter": "OpenRouter",
-        "ollama": "Ollama（本地）"
+        "ollama": "Ollama（本地）",
+        "openCodeGo": "OpenCode GO"
       },
       "providerHintCustom": "直接輸入 Base URL 和模型 ID。金鑰、模型與生成上限會依供應商分別儲存。",
       "providerHintVerified": "只載入已驗證支援圖片輸入的模型。金鑰、模型與生成上限會依供應商分別儲存。",
@@ -2090,6 +2108,9 @@
       "vertexServiceAccountChange": "變更",
       "vertexServiceAccountClear": "移除",
       "vertexServiceAccountDescription": "JSON 金鑰內容不會複製到應用程式設定，只會從此電腦上選擇的檔案讀取。該服務帳戶需要目標專案的 Vertex AI User 角色。請勿分享金鑰檔案或將其提交至程式碼儲存庫。",
+      "availableModel": "可用模型",
+      "modelListLoaded": "已載入 {{count}} 個模型。",
+      "providerHintCatalog": "載入供應商的模型清單。",
       "discoveredModel": "已驗證的圖片輸入模型",
       "chooseModel": "選擇模型…",
       "loadModels": "載入模型",
@@ -2160,7 +2181,13 @@
           "customHeaders": "以JSON物件填寫附加的HTTP請求標頭。"
         }
       },
-      "requestIntervalSeconds": "最短呼叫間隔（秒）"
+      "requestIntervalSeconds": "最短呼叫間隔（秒）",
+      "customProfiles": {
+        "session": "傳送對話工作階段標頭",
+        "header": "工作階段標頭名稱",
+        "invalidHeader": "請輸入有效的非保留名稱，且不能與自訂標頭重複。",
+        "client": "用戶端識別"
+      }
     },
     "hardware": {
       "summaryTitle": "自動偵測GPU與目前路徑",
@@ -2215,8 +2242,8 @@
       "fluxLowMemoryOverride": "允許在 {{available}} 統一記憶體下風險執行 Flux",
       "sm75FluxWarningTitle": "僅限 RTX 20 系列",
       "sm75FluxWarningDetail": "其行為或結果可能與標準 NVIDIA CUDA 略有不同。",
-      "fluxAmdUnsupportedTitle": "AMD官方未支援的GPU",
-      "fluxAmdUnsupportedDetail": "{{gpu}}不在AMD目前Windows HIP SDK官方支援清單中。仍可實驗性選擇ZLUDA，但執行時可能失敗。",
+      "fluxAmdUnsupportedTitle": "需要確認 AMD GPU 執行階段相容性",
+      "fluxAmdUnsupportedDetail": "未能確認 {{gpu}} 對應的 ROCm 執行環境。啟動時將再次檢查 GPU 相容性。",
       "fluxAmdUseCpu": "切換到CPU後端",
       "downloadHipSdk": "下載AMD HIP SDK",
       "openLinkFailed": "無法開啟連結。請檢查預設瀏覽器。",
@@ -2225,9 +2252,9 @@
       "fluxRequirements": {
         "cuda-native": "需要 SM75 以外的 NVIDIA GPU",
         "cuda-sm75-experimental": "僅限 RTX 20 / GTX 16 (SM75)",
-        "zluda-native": "需要 AMD GPU",
         "cpu-native": "無需 GPU · 較慢",
-        "metal-native": "需要 Apple Silicon"
+        "metal-native": "需要 Apple Silicon",
+        "rocm-native": "需要 AMD GPU"
       },
       "ocrRequirements": {
         "cuda": "需要 NVIDIA GPU",
@@ -2377,7 +2404,8 @@
     "image": {
       "localErasure": "預設原文清除",
       "codex": "Codex 圖像工具",
-      "description": "獨立於翻譯引擎，用於清除原文及產生音效圖像。強烈建議使用 Astra。"
+      "description": "獨立於翻譯引擎，用於清除原文及產生音效圖像。強烈建議使用 Astra。",
+      "review": "圖像檢查"
     },
     "backup": {
       "title": "備份與移轉",
@@ -2398,6 +2426,17 @@
       "cancel": "取消操作",
       "saved": "備份已儲存：{{path}}",
       "restored": "環境已還原。請檢查 API 金鑰、登入、外部資料夾、自訂模型路徑，並重新設定 API 自訂標頭與附加請求本文。"
+    },
+    "claude": {
+      "account": "Claude 帳戶",
+      "login": "登入 Claude",
+      "console": "登入 API 帳戶",
+      "logout": "登出",
+      "refresh": "重新整理",
+      "model": "模型",
+      "effort": "推理等級",
+      "error": "無法連線至 Claude。",
+      "testing": "檢查 Claude Code 連線與模型回應。"
     }
   },
   "pageBlocks": {
@@ -2474,7 +2513,8 @@
         "environment-restore": "環境還原",
         "model-test": "模型檢查",
         "codex-auth": "ChatGPT 帳戶",
-        "sound-effect-translation": "音效翻譯"
+        "sound-effect-translation": "音效翻譯",
+        "claude-auth": "Claude Code"
       },
       "status": {
         "idle": "待命",
@@ -2728,7 +2768,7 @@
     "target": "修整對象",
     "asset": "文字形狀",
     "page": "遮擋邊界",
-    "mode": "畫筆功能",
+    "mode": "修飾工具",
     "hide": "擦除",
     "restore": "復原",
     "shape": "畫筆形狀",
@@ -2737,7 +2777,14 @@
     "size": "大小",
     "softness": "柔和度",
     "showMask": "顯示遮罩",
-    "reset": "重設"
+    "reset": "重設",
+    "move": "局部移動",
+    "selectionShape": "選取形狀",
+    "lasso": "自由選取",
+    "rectangle": "矩形選取",
+    "moveHint": "圈選要移動的筆畫，再拖曳選取範圍內部。方向鍵微調，Shift 加大移動距離，Enter 套用，Esc 取消。",
+    "applyMove": "套用移動",
+    "cancelSelection": "取消選取"
   },
   "codexFonts": {
     "title": "編輯字型",
@@ -3014,5 +3061,83 @@
       "clipboard": "無法複製清單。",
       "save": "無法儲存。"
     }
+  },
+  "chat": {
+    "open": "聊天",
+    "translateInChat": "聊天翻譯",
+    "panelMode": "右側面板",
+    "editor": "編輯",
+    "history": "歷史對話",
+    "new": "新增對話",
+    "compact": "壓縮對話",
+    "model": "模型",
+    "effort": "推理等級",
+    "modelSettings": "模型與推理等級",
+    "effortChip": "推理 {{level}}",
+    "library": "整個書庫",
+    "contextBlocks": "氣泡 {{count}} 個",
+    "loginHint": "需要登入 ChatGPT 帳戶。",
+    "login": "登入 ChatGPT",
+    "loading": "正在載入對話…",
+    "older": "查看較早的訊息",
+    "openPage": "開啟頁面",
+    "undo": "檢查是否可復原",
+    "undoRequest": "請檢查 {{tool}} 的復原記錄，只在仍可復原時撤銷這次變更，不要覆蓋後續編輯。結果：{{result}}",
+    "removeImage": "移除圖片",
+    "message": "訊息",
+    "placeholder": "輸入請求",
+    "attach": "新增圖片",
+    "enterHint": "Enter 傳送 · Shift+Enter 換行",
+    "stop": "停止",
+    "steer": "追加指示",
+    "send": "傳送",
+    "answer": "傳送回答",
+    "roles": {
+      "user": "我",
+      "assistant": "Codex",
+      "status": "進度"
+    },
+    "operation": {
+      "running": "處理中…",
+      "completed": "結果",
+      "failed": "失敗"
+    },
+    "toolGroup": "工具 {{count}} 個",
+    "state": {
+      "idle": "就緒",
+      "running": "處理中…",
+      "compacting": "正在壓縮對話…",
+      "needs-input": "等待回答",
+      "paused": "已暫停 · 傳送訊息以繼續",
+      "failed": "連線中斷 · 傳送訊息以重新連線"
+    },
+    "tools": {
+      "font": "比較字型",
+      "image": "處理圖片",
+      "library": "查看書庫",
+      "sound": "處理音效",
+      "erase": "修復原畫",
+      "review": "品質檢查",
+      "edit": "編輯頁面",
+      "context": "查看上下文",
+      "inspect": "檢查頁面"
+    },
+    "quality": {
+      "observation": "本次檢查時的品質記錄",
+      "incomplete": "仍需檢查或修正",
+      "accepted-at-current-revisions": "通過精細檢查",
+      "accepted-with-font-substitutions": "通過檢查，含字型替代",
+      "chapter": "整話 · 後續編輯需要重新檢查",
+      "selection": "僅選定頁面",
+      "substitutions": "{{count}} 項字型替代",
+      "details": "未驗收原因",
+      "pages": "{{count}} 頁"
+    },
+    "redo": "檢查能否重新套用",
+    "redoRequest": "請檢查 {{tool}} 的復原記錄和目前修訂，只在不會覆蓋後續手動編輯且仍可復原時重新套用。結果：{{result}}",
+    "runtime": "AI",
+    "claudeLoginHint": "請登入 Claude 帳戶。",
+    "claudeLogin": "登入 Claude",
+    "moreImages": "再顯示 {{count}} 張圖片"
   }
 }

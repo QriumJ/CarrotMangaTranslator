@@ -4,6 +4,30 @@ import { tMain } from "./localization";
 
 type EmitJobEvent = (event: JobEvent) => void;
 
+export function emitInpaintingMaskPreparation(
+  id: string,
+  emit: EmitJobEvent,
+  page: MangaPage,
+  index: number,
+  total: number,
+  kind: JobEvent["kind"] = "inpainting",
+): void {
+  emit({
+    id,
+    kind,
+    status: "running",
+    phase: "inpainting_preparing",
+    progressText: tMain("translation.progress.pageRunning", {
+      page: page.name,
+    }),
+    detail: `${index + 1} / ${total}`,
+    progressCurrent: index,
+    progressTotal: total,
+    pageIndex: index + 1,
+    pageTotal: total,
+  });
+}
+
 export type InpaintingProgressTarget = {
   targetType: "drawn" | "source";
   drawnPatternMode: boolean;

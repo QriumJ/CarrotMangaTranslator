@@ -13,6 +13,172 @@ import type { MangaPage } from "../src/shared/libraryTypes";
 import type { TranslationBlock } from "../src/shared/textTypes";
 
 describe("pattern page text masks", () => {
+  it("does not confine artwork SFX to a neighboring detected balloon", () => {
+    const block = {
+      ...createBlock("effect", 100, { y: 100, w: 200, h: 400 }),
+      textRole: "sound" as const,
+    };
+    const options = {
+      page: createPage(100, 100, [block]),
+      width: 100,
+      height: 100,
+      bitmap: Buffer.alloc(100 * 100 * 4, 255),
+      mode: "flux-region" as const,
+      bubbleLayoutConstraintBlockIds: [block.id],
+      sourceEraseConstraintsByBlock: {
+        effect: {
+          bounds: { x: 25, y: 45, w: 40, h: 40 },
+          data: new Uint8Array(1600).fill(1),
+        },
+      },
+    };
+    const result = buildPatternPageMask(options);
+    const mask = expandWindowMaskToPage(
+      result.inpaintCompositeMasks[0],
+      100,
+      100,
+    );
+    expect(mask[20 * 100 + 20]).toBe(1);
+    expect(result.inpaintSpeechBubbleWindows).toEqual([false]);
+    const inside = buildPatternPageMask({
+      ...options,
+      sourceEraseConstraintsByBlock: {
+        effect: {
+          bounds: { x: 5, y: 5, w: 50, h: 60 },
+          data: new Uint8Array(3000).fill(1),
+        },
+      },
+    });
+    expect(inside.inpaintSpeechBubbleWindows).toEqual([true]);
+    const manual = buildPatternPageMask({
+      ...options,
+      page: createPage(100, 100, [
+        {
+          ...block,
+          bubbleLayout: {
+            version: 1,
+            direction: "horizontal",
+            confidence: 1,
+            origin: "manual",
+            insetRatio: 0,
+            regions: [
+              {
+                spans: [
+                  { blockStart: 0, blockEnd: 1, inlineStart: 0, inlineEnd: 1 },
+                ],
+              },
+            ],
+          },
+        },
+      ]),
+    });
+    expect(manual.inpaintSpeechBubbleWindows).toEqual([true]);
+  });
+  it.each(
+    [
+      { blockId: "left" },
+      { blockIds: ["left"] },
+      { excludedBlockIds: ["right"] },
+    ].flatMap((selection) =>
+      [true, false].map((detectedBubble) => ({ ...selection, detectedBubble })),
+    ),
+  )(
+    "protects unselected source ink even when detector ownership crosses it: %j",
+    ({ detectedBubble, ...selection }) => {
+      const width = 100,
+        height = 100;
+      const blocks = [
+        createBlock("left", 200, { y: 200, w: 300, h: 300 }),
+        createBlock("right", 450, { y: 350, w: 300, h: 300 }),
+        createBlock("far", 980, { y: 980, w: 10, h: 10 }),
+        createBlock("invalid", NaN),
+        {
+          ...createBlock("overlay", 200, { y: 200, w: 300, h: 300 }),
+          inpaintExcluded: true,
+        },
+      ];
+      const raster = {
+        bounds: { x: 10, y: 10, w: 80, h: 80 },
+        data: new Uint8Array(6400).fill(1),
+      };
+      const options = {
+        page: createPage(width, height, blocks),
+        width,
+        height,
+        bitmap: Buffer.alloc(width * height * 4, 255),
+        mode: "flux-region" as const,
+        bubbleLayoutConstraintBlockIds: detectedBubble ? ["left", "right"] : [],
+        sourceEraseConstraintsByBlock: { left: raster, right: raster },
+        sharedInpaintGroupIdsByBlock: { left: ["shared"], right: ["shared"] },
+      };
+      const partial = buildPatternPageMask({ ...options, ...selection });
+      for (const masks of [
+        partial.inpaintCompositeMasks,
+        partial.inpaintWindowConstraints,
+      ]) {
+        const mask = masks[0];
+        if (!mask) throw new Error("Expected a protected write mask");
+        const pixels = expandWindowMaskToPage(mask, width, height);
+        for (let y = 33; y < 67; y++)
+          for (let x = 43; x < 77; x++) expect(pixels[y * width + x]).toBe(0);
+        expect(pixels[25 * width + 25]).toBe(1);
+      }
+      // Conditioning keeps its original shape; only the final write is clipped.
+      expect(partial.pageMask[40 * width + 50]).toBe(1);
+      expect(raster.data.every(Boolean)).toBe(true);
+      const full = buildPatternPageMask({
+        ...options,
+        blockIds: ["left", "right"],
+      });
+      expect(full.pageMask[40 * width + 50]).toBe(1);
+    },
+  );
+
+  it("joins exact curved ownership rasters without expanding outside them or selecting neighbors", () => {
+    const width = 100,
+      height = 100;
+    const blocks = [createBlock("left", 100), createBlock("right", 550)];
+    const page = createPage(width, height, blocks);
+    const bounds = { x: 20, y: 20, w: 60, h: 60 };
+    const sourceEraseConstraintsByBlock = Object.fromEntries(
+      blocks.map((block, i) => [
+        block.id,
+        {
+          bounds,
+          data: Uint8Array.from({ length: 3600 }, (_, n) =>
+            Number(n % 60 < Math.floor(n / 60) === (i === 0)),
+          ),
+        },
+      ]),
+    );
+    const options = {
+      page,
+      width,
+      height,
+      bitmap: Buffer.alloc(width * height * 4, 255),
+      mode: "flux-region" as const,
+      bubbleLayoutConstraintBlockIds: blocks.map((block) => block.id),
+      sourceEraseConstraintsByBlock,
+      sharedInpaintGroupIdsByBlock: { left: ["shared-1"], right: ["shared-1"] },
+    };
+    const all = buildPatternPageMask(options);
+    const single = buildPatternPageMask({ ...options, blockId: "left" });
+    expect(all.inpaintWindows).toHaveLength(1);
+    for (let y = 0; y < height; y++)
+      for (let x = 0; x < width; x++) {
+        const inside = x >= 20 && x < 80 && y >= 20 && y < 80;
+        expect(all.pageMask[y * width + x]).toBe(Number(inside));
+        expect(single.pageMask[y * width + x]).toBe(Number(inside && x < y));
+      }
+    expect(() =>
+      buildPatternPageMask({
+        ...options,
+        sourceEraseConstraintsByBlock: {
+          left: { bounds: { ...bounds, x: NaN }, data: new Uint8Array(3600) },
+        },
+      }),
+    ).toThrow("Invalid block-owned inpainting mask");
+  });
   it("rejects array evidence rebound to a different block-keyed mask", () => {
     const page = createPage(32, 32, [
       createBlock("block-1", 100, { y: 100, w: 300, h: 300 }),
@@ -561,8 +727,21 @@ describe("pattern page text masks", () => {
     expect(context.inpaintWindowMasks).toHaveLength(1);
     expect(context.inpaintWindowConstraints).toHaveLength(1);
     expect(context.inpaintWindowGroupIds).toEqual([["shared-1"]]);
+    expect(context.inpaintSpeechBubbleWindows).toEqual([true]);
     expect(context.pageMask[40 * width + 20]).toBe(1);
     expect(context.pageMask[40 * width + 80]).toBe(1);
+
+    // Persisted layout alone must not imply a speech bubble. The live prepass
+    // authorizes left only, so the other window remains an artwork edit.
+    const mixed = buildPatternPageMask({
+      page,
+      bitmap: Buffer.alloc(width * height * 4, 255),
+      width,
+      height,
+      mode: "flux-region",
+      bubbleLayoutConstraintBlockIds: [left.id],
+    });
+    expect(mixed.inpaintSpeechBubbleWindows).toEqual([true, false]);
   });
 
   it("erases detected source glyphs across a shared bubble split without filling unrelated space", () => {

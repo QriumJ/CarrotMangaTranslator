@@ -1,3 +1,4 @@
+import { DEFAULT_GEMMA_SAMPLING } from "../../shared/gemmaSamplingSettings";
 import {
   DEFAULT_CODEX_MODEL,
   DEFAULT_CODEX_REASONING_EFFORT,
@@ -60,7 +61,15 @@ export function resolveDefaultAppSettings(
     translation: resolveDefaultTranslationLanguageSettings(env),
     gemma,
     codex,
-    internetResearch,
+    claude: { model: "default", effort: "high" },
+    imageReview: {
+      provider: "codex",
+      claude: { model: "default", effort: "high" },
+    },
+    internetResearch: {
+      ...internetResearch,
+      claude: { model: "default", effort: "high" },
+    },
     api,
     ocr: resolveDefaultOcrSettings(env, hardwareDefaults),
     ui: resolveDefaultUiSettings(env),
@@ -149,6 +158,7 @@ function resolveDefaultGemmaSettings(
       defaultGemmaPreset.mmprojFile,
     vramMode,
     ...memoryDefaults,
+    ...DEFAULT_GEMMA_SAMPLING,
     llamaRuntimeProfile,
     ...(llamaRocmTarget ? { llamaRocmTarget } : {}),
     ...(resolveUnsafeUnifiedMemoryOverride(

@@ -79,15 +79,14 @@ export async function typographyBatchAppFixture(
       assertAuthorized: guard,
       execute: (context) => analysis.run(target, context),
     });
-    await vi.waitFor(
-      () => {
-        const status = operations.status(receipt.jobId, principal);
-        if (status.error) throw new Error(JSON.stringify(status.error));
-        if (status.status !== "completed")
-          throw new Error("Analysis still pending");
-      },
-      { timeout: 5000 },
+    const status = await operations.waitForCompletion(
+      receipt.jobId,
+      principal,
+      new AbortController().signal,
     );
+    if (status.error) throw new Error(JSON.stringify(status.error));
+    if (status.status !== "completed")
+      throw new Error(`Analysis ended with status: ${status.status}`);
     const saved = await f.library.readWorkContextForEdit("chapter");
     return {
       chapterId: "chapter",
@@ -118,12 +117,13 @@ export async function typographyBatchAppFixture(
   const inspect = (batchId: string) =>
     invoke("carrot_get_typography_batch", { batchId });
   const done = async (batchId: string) => {
-    await vi.waitFor(
-      async () => {
-        if ((await inspect(batchId)).status === "running")
-          throw new Error("Batch still running");
-      },
-      { timeout: 5000 },
+    const current = await inspect(batchId);
+    if (!current.activeRequestId) throw new Error("Batch has no action");
+    await session.waitForAction(
+      owner,
+      batchId,
+      current.activeRequestId,
+      new AbortController().signal,
     );
     return inspect(batchId);
   };

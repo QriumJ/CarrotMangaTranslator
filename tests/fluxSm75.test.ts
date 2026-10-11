@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   isFluxRtx20Sm75Hardware,
@@ -13,31 +11,15 @@ import {
 } from "../src/main/inpainting/fluxAssets/constants";
 
 describe("experimental Flux SM75 routing", () => {
-  it("builds the SM75 runner with an FP32 transformer and FP16 VAE", () => {
-    const source = readFileSync(
-      resolve("scripts/prepare-flux-klein-runner.cjs"),
-      "utf8",
-    );
-    const patch = /const sm75DtypePatch = `([\s\S]*?)`;/u.exec(source)?.[1];
-    const transformer =
-      /fn transformer_dtype[\s\S]*?(?=\n\nfn vae_dtype)/u.exec(
-        patch ?? "",
-      )?.[0];
-    const vae = /fn vae_dtype[\s\S]*$/u.exec(patch ?? "")?.[0];
-
-    expect(transformer).toContain("if sm75_fp16_enabled()");
-    expect(transformer).toContain("DType::F32");
-    expect(transformer).not.toContain("DType::F16");
-    expect(vae).toContain("if sm75_fp16_enabled()");
-    expect(vae).toContain("DType::F16");
-  });
-
-  it("pins the fixed SM75 archive from the immutable r3 asset release", () => {
+  it("uses the same immutable native runner for Turing and newer CUDA devices", () => {
     expect(FLUX_NVIDIA_RUNNER_BASE_URL).toMatch(
-      /\/flux-runners-cuda12\.9-r3$/u,
+      /\/diffusion-master-929-cpu-win-x64-r1$/u,
+    );
+    expect(FLUX_NVIDIA_RUNNER_ASSETS["75"]).toEqual(
+      FLUX_NVIDIA_RUNNER_ASSETS["86"],
     );
     expect(FLUX_NVIDIA_RUNNER_ASSETS["75"].sha256).toBe(
-      "2ea7520e65e165cbc6d1b68f078621cbf850d231ff0295b8355a97c3884d132c",
+      "cab50e3825737c5f8550538efa66d686c2facc6b75752933390b2c3b537bf60b",
     );
   });
 

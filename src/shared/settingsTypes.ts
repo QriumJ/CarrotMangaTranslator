@@ -29,16 +29,12 @@ export type {
 export type { CodexReasoningEffort } from "./codexSettings";
 export type { LanguageCode } from "./translationLanguages";
 export type { UiLocale } from "./uiLocales";
-export type ModelProvider = "gemma" | "openai-codex" | "openai-api";
+export type ModelProvider =
+  "gemma" | "openai-codex" | "openai-api" | "claude-code";
 export type ModelSource = "huggingface" | "local";
 export type GemmaVramMode = "minimum12b" | "economy26b" | "full31b";
 export type ApiReasoningEffort =
-  | "none"
-  | "minimal"
-  | "low"
-  | "medium"
-  | "high"
-  | "xhigh";
+  "none" | "minimal" | "low" | "medium" | "high" | "xhigh";
 export type OcrDevice = "cpu" | "gpu";
 export type OcrGpuBackend = "cuda" | "rocm-transformers";
 export type OcrQualityMode = "economy" | "full";
@@ -51,11 +47,7 @@ export type OcrPipeline = "hayai" | "paddle-legacy";
 export type TranslationWorkflowMode = "standard" | "cumulative";
 export type CumulativeContextDetail = "detailed" | "balanced" | "essential";
 export type LlamaRuntimeProfile =
-  | "cuda12"
-  | "rtx50"
-  | "rocm"
-  | "vulkan"
-  | "metal";
+  "cuda12" | "rtx50" | "rocm" | "vulkan" | "metal";
 export type AmdRocmTarget =
   | "gfx908"
   | "gfx90a"
@@ -93,6 +85,9 @@ type GemmaSettings = {
   mmprojFile?: string;
   localModelPath?: string;
   localMmprojPath?: string;
+  temperature?: number;
+  topP?: number;
+  topK?: number;
   vramMode: GemmaVramMode;
   /** VRAM llama.cpp's automatic GPU fitting should leave available. */
   fitTargetMb?: number;
@@ -136,9 +131,18 @@ export type ApiProviderProfileSettings = {
   reasoningEffort?: ApiReasoningEffort | null;
   extraBodyJson?: string;
   customHeadersJson?: string;
+  sessionHeaderEnabled?: boolean;
+  sessionHeaderName?: string;
+};
+
+export type CustomApiProfile = ApiProviderProfileSettings & {
+  name: string;
+  generationLimits?: GenerationLimitSettings;
 };
 
 type ApiSettings = ApiProviderProfileSettings & {
+  customProfiles?: Record<string, CustomApiProfile>;
+  activeCustomProfileId?: string;
   /** Provider profile currently projected onto the top-level API fields. */
   provider?: ApiProviderPresetId;
   /** Connection, credential, model, and request settings isolated by provider. */
@@ -159,6 +163,7 @@ export type GenerationLimitSettings = {
 export type GenerationLimitProfiles = {
   gemma: GenerationLimitSettings;
   codex: GenerationLimitSettings;
+  claude?: GenerationLimitSettings;
   api: Partial<Record<ApiProviderPresetId, GenerationLimitSettings>>;
 };
 
@@ -235,6 +240,11 @@ export type AppSettings = {
   translation?: TranslationLanguageSettings;
   gemma: GemmaSettings;
   codex: CodexSettings;
+  claude?: import("./claudeTypes").ClaudePreferences;
+  imageReview?: {
+    provider: "codex" | "claude";
+    claude: import("./claudeTypes").ClaudePreferences;
+  };
   internetResearch: InternetResearchSettings;
   api: ApiSettings;
   ocr: OcrSettings;

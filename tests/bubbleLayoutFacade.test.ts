@@ -43,6 +43,65 @@ afterEach(async () => {
 });
 
 describe("production bubble layout failure fallback", () => {
+  it("preserves mask and final layout results across the disk preparation boundary without reinference", async () => {
+    const files = await createPageFiles();
+    const page = makePage(files.original, files.cleaned);
+    bubbleRuntimeMocks.ensureKoharuLayoutAssets.mockResolvedValue({
+      modelPath: join(files.root, "model.onnx"),
+    });
+    bubbleRuntimeMocks.detectKoharuPageLayout.mockResolvedValue({
+      imageWidth: 4,
+      imageHeight: 4,
+      detections: [
+        {
+          labelId: 2,
+          label: "bubble",
+          box: [0, 0, 4, 4],
+          score: 0.9,
+          mask: {
+            width: 4,
+            height: 4,
+            logits: new Float32Array(16).fill(2.125),
+          },
+        },
+      ],
+    });
+    const { createProductionBubbleLayoutRunner } =
+      await import("../src/main/bubbleLayout/bubbleLayoutFacade");
+    const runner = createProductionBubbleLayoutRunner({ dataRoot: files.root });
+    const signal = new AbortController().signal;
+    const requests = [0, 0.12].map((paddingRatio) => ({
+      page,
+      signal,
+      paddingRatio,
+      imagePath: files.cleaned,
+      policy: "balanced" as const,
+      failureMode: "best-effort" as const,
+      sourceEraseMask: paddingRatio === 0,
+      includeTypographySegmentation: true,
+    }));
+    const before = await Promise.all(
+      requests.map((request) => runner.runPage(request)),
+    );
+    try {
+      await runner.preparePages?.([page], signal);
+      expect(
+        await Promise.all(requests.map((request) => runner.runPage(request))),
+      ).toEqual(before);
+      expect(bubbleRuntimeMocks.detectKoharuPageLayout).toHaveBeenCalledTimes(
+        2,
+      );
+      await writeFile(files.original, "source changed");
+      await expect(runner.runPage(requests[0])).rejects.toMatchObject({
+        nonRetriable: true,
+      });
+      expect(bubbleRuntimeMocks.detectKoharuPageLayout).toHaveBeenCalledTimes(
+        2,
+      );
+    } finally {
+      await runner.dispose?.();
+    }
+  });
   it.each(["changed-source", "oversized-result"])(
     "does not reuse %s detections",
     async (mode) => {

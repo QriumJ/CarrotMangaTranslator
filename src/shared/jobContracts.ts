@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+export const JOB_PROGRESS_TEXT_LIMIT = 1000;
+export const JOB_DETAIL_TEXT_LIMIT = 4000;
+export const JOB_INSTALL_LOG_LINES_LIMIT = 500;
+
 const JOB_KIND_VALUES = [
   "gemma-analysis",
   "sound-effect-translation",

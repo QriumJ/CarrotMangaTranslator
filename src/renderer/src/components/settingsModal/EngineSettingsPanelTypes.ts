@@ -1,3 +1,5 @@
+import type { GemmaSamplingSettings } from "../../../../shared/gemmaSamplingSettings";
+import type { AppSettings } from "../../../../shared/settingsTypes";
 import type { CodexImageGenerationModel } from "../../../../shared/codexSettings";
 import type React from "react";
 import type {
@@ -13,6 +15,10 @@ import type { ApiProviderPresetId } from "../../../../shared/apiProviderPresets"
 import type { ModelPresetId } from "../settingsOptions";
 
 export type EngineSettingsPanelProps = {
+  apiSessionHeaderEnabled?: boolean;
+  apiSessionHeaderName?: string;
+  setApiSessionHeaderEnabled?: React.Dispatch<React.SetStateAction<boolean>>;
+  setApiSessionHeaderName?: React.Dispatch<React.SetStateAction<string>>;
   apiBaseUrl: string;
   apiProvider: ApiProviderPresetId;
   apiKey: string;
@@ -30,6 +36,16 @@ export type EngineSettingsPanelProps = {
   apiExtraBodyJson: string;
   apiCustomHeadersJson: string;
   clearTestState: () => void;
+  imageReview?: AppSettings["imageReview"];
+  setImageReview?: React.Dispatch<
+    React.SetStateAction<NonNullable<AppSettings["imageReview"]>>
+  >;
+  claudeModel?: string;
+  claudeEffort?: import("../../../../shared/claudeTypes").ClaudeEffort;
+  setClaudeModel?: React.Dispatch<React.SetStateAction<string>>;
+  setClaudeEffort?: React.Dispatch<
+    React.SetStateAction<import("../../../../shared/claudeTypes").ClaudeEffort>
+  >;
   codexModel: string;
   codexReasoningEffort: CodexReasoningEffort;
   codexImageReasoningEffort?: CodexReasoningEffort;
@@ -48,6 +64,8 @@ export type EngineSettingsPanelProps = {
   gpuMemoryMb: number | null;
   customModelFile: string;
   customModelRepo: string;
+  gemmaSampling: GemmaSamplingSettings;
+  setGemmaSampling: React.Dispatch<React.SetStateAction<GemmaSamplingSettings>>;
   gemmaFitTargetMb: number;
   gemmaMmprojOffload: boolean;
   isLlamaRuntimeOptionDisabled: (profile: LlamaRuntimeProfile) => boolean;

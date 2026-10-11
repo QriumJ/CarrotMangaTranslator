@@ -11,6 +11,7 @@ export type FluxInpaintRunOptions = {
   maskPaddingPx?: number;
   maxPixels?: number;
   windowMasks?: InpaintingWindowMask[];
+  speechBubbleWindows?: boolean[];
   compositeMasks?: InpaintingWindowMask[];
   compositeFeatherPx?: number[];
   compositeConstraints?: Array<InpaintingWindowMask | null>;
@@ -43,6 +44,7 @@ export type FluxInpaintDiagnostics = {
 
 export type FluxWindowProcessArgs = {
   bitmap: Buffer;
+  sourceBitmap: Buffer;
   getWorker: () => FluxWorker;
   height: number;
   index: number;

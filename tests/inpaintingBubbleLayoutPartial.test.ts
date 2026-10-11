@@ -14,6 +14,8 @@ import {
 import type { BubbleLayout } from "../src/shared/bubbleLayout";
 import type { ChapterSnapshot, MangaPage } from "../src/shared/libraryTypes";
 
+import { runBubbleLayoutMaskPrepass } from "../src/main/jobs/bubbleLayoutJob";
+
 const CHAPTER_ID = "11111111-1111-4111-8111-111111111111";
 const PAGE_ID = "22222222-2222-4222-8222-222222222222";
 const BLOCK_ID = "block-1";
@@ -21,6 +23,117 @@ const SECOND_BLOCK_ID = "block-2";
 const TRANSACTION_ID = "33333333-3333-4333-8333-333333333333";
 
 describe("partial bubble-aware inpainting postprocess", () => {
+  it.each(["disabled", "erase-original"] as const)(
+    "keeps FLUX mask detection when final layout is %s without changing typography",
+    async (mode) => {
+      const page = makePage();
+      page.blocks[0].renderBbox = { x: 90, y: 110, w: 320, h: 300 };
+      page.blocks[0].bubbleLayout = makeBubbleLayout();
+      if (mode === "erase-original")
+        page.translationCompletion = {
+          workflow: "erase-original",
+          status: "pending",
+        };
+      const chapters = new Map([[CHAPTER_ID, makeChapter(page)]]);
+      const runPage = vi.fn<BubbleLayoutRunner["runPage"]>(async () => ({
+        patches: [
+          {
+            blockId: BLOCK_ID,
+            renderBbox: { x: 100, y: 120, w: 300, h: 260 },
+            renderBboxSpace: "normalized_1000",
+            bubbleLayout: makeBubbleLayout(),
+          },
+        ],
+        typographySegmentation: {
+          imageWidth: 1000,
+          imageHeight: 1000,
+          detections: [],
+        },
+      }));
+      const runtime = makeRuntime(chapters, () => ({ runPage }));
+      const settings = resolveDefaultAppSettings();
+      settings.inpainting = { ...settings.inpainting, model: "flux-klein" };
+      runtime.getSettings = vi.fn(async () => settings);
+      const { startInpaintingJob } =
+        await import("../src/main/jobs/inpaintingJobs");
+      const result = await startInpaintingJob(
+        makeContext(),
+        {
+          chapterId: CHAPTER_ID,
+          mode: "page-pattern",
+          pageId: PAGE_ID,
+          ...(mode === "disabled"
+            ? {
+                postprocess: {
+                  bubbleLayout: { enabled: false, policy: "safe" as const },
+                },
+              }
+            : {}),
+        },
+        runtime,
+      );
+      expect(result.status).toBe("completed");
+      expect(runPage).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({
+          sourceEraseMask: true,
+          includeTypographySegmentation: true,
+          paddingRatio: 0,
+        }),
+      );
+      expect(runtime.inpaintPatternPage).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          bubbleLayoutConstraintBlockIds: [BLOCK_ID],
+          typographySegmentation: expect.anything(),
+        }),
+      );
+      expect(result.chapter?.pages[0]?.blocks).toEqual(page.blocks);
+    },
+  );
+
+  it.each([undefined, [BLOCK_ID, SECOND_BLOCK_ID], [BLOCK_ID]])(
+    "keeps gutters only when an owner is outside the explicit selection %j",
+    async (blockIds) => {
+      const runPage = vi.fn<BubbleLayoutRunner["runPage"]>(async () => ({
+        patches: [],
+      }));
+      await runBubbleLayoutMaskPrepass({
+        page: makeTwoBlockPage(),
+        blockIds,
+        config: { policy: "balanced", overwriteManual: false },
+        runner: { runPage },
+        signal: new AbortController().signal,
+      });
+      expect(runPage.mock.calls[0]?.[0].sharedOwnershipGapPx).toBe(
+        blockIds?.length === 1 ? undefined : 0,
+      );
+    },
+  );
+  it("detects erase masks from the original on repeated runs but preserves the cleaned artifact", async () => {
+    const page = {
+      ...makeTwoBlockPage(),
+      inpaintedImagePath: "C:\\library\\partial.png",
+    };
+    const runPage = vi.fn<BubbleLayoutRunner["runPage"]>(async () => ({
+      patches: [],
+    }));
+    const result = await runBubbleLayoutMaskPrepass({
+      page,
+      config: { policy: "balanced", overwriteManual: false },
+      runner: { runPage },
+      signal: new AbortController().signal,
+    });
+    expect(runPage.mock.calls[0]?.[0].imagePath).toBe(page.imagePath);
+    expect(result.page.inpaintedImagePath).toBe(page.inpaintedImagePath);
+    await runBubbleLayoutPostprocess({
+      page,
+      config: { policy: "balanced", overwriteManual: false },
+      runner: { runPage },
+      signal: new AbortController().signal,
+    });
+    expect(runPage.mock.calls[1]?.[0].imagePath).toBe(page.inpaintedImagePath);
+  });
+
   it("does not lay translated text over incomplete blocks", async () => {
     const originalPage = makeTwoBlockPage();
     originalPage.translationCompletion = {

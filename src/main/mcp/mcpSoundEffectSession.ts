@@ -13,6 +13,7 @@ import { createMcpSoundEffectReadTool } from "./mcpSoundEffectReadTool";
 import { createMcpSoundEffectPrepareTools } from "./mcpSoundEffectPrepareTools";
 import { createMcpSoundEffectImageTool } from "./mcpSoundEffectImageTool";
 import { createMcpBatchTool } from "./mcpBatchTool";
+import { createMcpImageBudgetTool } from "./mcpImageBudgetTool";
 
 export function createMcpSoundEffectSession(
   app: InpaintingJobContext,
@@ -51,6 +52,9 @@ export function createMcpSoundEffectSession(
         expiresAt: receipt.expiresAt,
         generationCalls: plan.generationCalls,
         failedItems: plan.failedItems,
+        ...(plan.glyphEvidenceIds
+          ? { glyphEvidenceIds: plan.glyphEvidenceIds }
+          : {}),
       };
     },
     lifetime.signal,
@@ -62,9 +66,10 @@ export function createMcpSoundEffectSession(
       createMcpSoundEffectReadTool(app.appPaths),
       ...(enabled
         ? [
+            createMcpImageBudgetTool(app.appPaths, lifetime.signal),
             ...preparation.tools.filter(
               (tool) =>
-                allowImages || tool.name !== "carrot_generate_sound_effects",
+                allowImages || !tool.requiredScopes?.includes("carrot.images"),
             ),
             ...actionTools(batches),
             ...(allowImages

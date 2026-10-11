@@ -64,6 +64,7 @@ export function createPageWorkflowRuntime(context: PageWorkflowRuntimeContext) {
         context.previousStoryPages =
           await resolvePreviousChapterStoryPages(chapter);
       if (stage === "typography") await typography.prepare(chapter, pageIds);
+      await images.prepareStage(stage, chapter, pageIds);
     },
     execute: async (
       stage: PageWorkflowStage,
@@ -85,7 +86,8 @@ export function createPageWorkflowRuntime(context: PageWorkflowRuntimeContext) {
       if (stage === "layout") return images.layout(page);
       return applyWorkflowRuleStage(context, chapter, page, stage);
     },
-    dispose: () => (disposal ??= disposeWorkflowResources(sessions, context)),
+    dispose: () =>
+      (disposal ??= disposeWorkflowResources(sessions, context, images)),
   };
 }
 
@@ -115,9 +117,11 @@ async function withSessionFailureCleanup(
 async function disposeWorkflowResources(
   sessions: ReturnType<typeof createWorkflowSessions>,
   context: PageWorkflowRuntimeContext,
+  images: ReturnType<typeof createWorkflowImages>,
 ) {
   const results = await Promise.allSettled([
     sessions.dispose(),
+    images.dispose(),
     context.dependencies.fontMatching.pageInference?.dispose?.(),
   ]);
   const errors = results.flatMap((result) =>

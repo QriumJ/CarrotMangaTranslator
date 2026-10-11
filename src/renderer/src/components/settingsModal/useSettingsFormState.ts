@@ -1,14 +1,15 @@
 import React from "react";
+import { snapshotCustomApiProfiles } from "./settingsCustomApiProfiles";
 import type { AppSettings } from "../../../../shared/settingsTypes";
 import {
   createSettingsFormValues,
   type SettingsFormValues,
 } from "./settingsModalFormValues";
 import {
+  readActiveApiProfile,
   createDefaultApiProfileFormValues,
   createDefaultGenerationLimitFormValues,
   createDefaultResearchApiProfileFormValues,
-  type ApiProfileFormValues,
 } from "./settingsModalProfileFormValues";
 import type { ApiProviderPresetId } from "../../../../shared/apiProviderPresets";
 import type { ModelProvider } from "../../../../shared/settingsTypes";
@@ -19,6 +20,8 @@ type FieldSetter<K extends keyof SettingsFormValues> = React.Dispatch<
 
 type MutableSettingsFormField = Exclude<
   keyof SettingsFormValues,
+  | "customApiProfiles"
+  | "activeCustomProfileId"
   | "apiKeyCount"
   | "apiProfiles"
   | "apiProvider"
@@ -28,7 +31,9 @@ type MutableSettingsFormField = Exclude<
 >;
 
 export type SettingsFormSetters = {
-  [K in MutableSettingsFormField as `set${Capitalize<string & K>}`]: FieldSetter<K>;
+  [
+    K in MutableSettingsFormField as `set${Capitalize<string & K>}`
+  ]: FieldSetter<K>;
 } & {
   setApiProvider: FieldSetter<"apiProvider">;
   setModelProvider: FieldSetter<"modelProvider">;
@@ -93,14 +98,7 @@ function useSettingsFormSetters(
       setLocalModelPath: createFormFieldDispatch(setValues, "localModelPath"),
       setLocalMmprojPath: createFormFieldDispatch(setValues, "localMmprojPath"),
       setCustomVramMode: createFormFieldDispatch(setValues, "customVramMode"),
-      setGemmaFitTargetMb: createFormFieldDispatch(
-        setValues,
-        "gemmaFitTargetMb",
-      ),
-      setGemmaMmprojOffload: createFormFieldDispatch(
-        setValues,
-        "gemmaMmprojOffload",
-      ),
+      ...createGemmaFormSetters(setValues),
       setLlamaRuntimeProfile: createFormFieldDispatch(
         setValues,
         "llamaRuntimeProfile",
@@ -109,6 +107,9 @@ function useSettingsFormSetters(
         setValues,
         "allowUnsafeUnifiedMemory",
       ),
+      setImageReview: createFormFieldDispatch(setValues, "imageReview"),
+      setClaudeModel: createFormFieldDispatch(setValues, "claudeModel"),
+      setClaudeEffort: createFormFieldDispatch(setValues, "claudeEffort"),
       setCodexModel: createFormFieldDispatch(setValues, "codexModel"),
       setCodexImageModel: createFormFieldDispatch(setValues, "codexImageModel"),
       setCodexImageGenerationModel: createFormFieldDispatch(
@@ -151,6 +152,19 @@ function useSettingsFormSetters(
   );
 }
 
+function createGemmaFormSetters(
+  setValues: React.Dispatch<React.SetStateAction<SettingsFormValues>>,
+) {
+  return {
+    setGemmaSampling: createFormFieldDispatch(setValues, "gemmaSampling"),
+    setGemmaFitTargetMb: createFormFieldDispatch(setValues, "gemmaFitTargetMb"),
+    setGemmaMmprojOffload: createFormFieldDispatch(
+      setValues,
+      "gemmaMmprojOffload",
+    ),
+  };
+}
+
 function createResearchFormSetters(
   setValues: React.Dispatch<React.SetStateAction<SettingsFormValues>>,
 ) {
@@ -184,6 +198,7 @@ function createResearchFormSetters(
       setValues,
       "researchApiContextTokens",
     ),
+    setResearchClaude: createFormFieldDispatch(setValues, "researchClaude"),
     setResearchCodexModel: createFormFieldDispatch(
       setValues,
       "researchCodexModel",
@@ -212,6 +227,14 @@ function createApiFormSetters(
   setValues: React.Dispatch<React.SetStateAction<SettingsFormValues>>,
 ) {
   return {
+    setApiSessionHeaderEnabled: createFormFieldDispatch(
+      setValues,
+      "apiSessionHeaderEnabled",
+    ),
+    setApiSessionHeaderName: createFormFieldDispatch(
+      setValues,
+      "apiSessionHeaderName",
+    ),
     setApiProvider: createApiProviderDispatch(setValues),
     setApiBaseUrl: createFormFieldDispatch(setValues, "apiBaseUrl"),
     setApiModel: createFormFieldDispatch(setValues, "apiModel"),
@@ -311,6 +334,7 @@ function createApiProviderDispatch(
         ...current,
         ...apiProfile,
         apiProvider: provider,
+        customApiProfiles: snapshotCustomApiProfiles(current),
         apiProfiles,
         generationLimitProfiles,
         researchApiModel: researchProfile.model,
@@ -335,6 +359,8 @@ function snapshotActiveGenerationLimits(
     maxTokens: current.maxTokens,
     contextTokens: current.contextTokens,
   };
+  if (current.modelProvider === "claude-code")
+    return { ...current.generationLimitProfiles, claude: limits };
   if (current.modelProvider === "gemma") {
     return { ...current.generationLimitProfiles, gemma: limits };
   }
@@ -356,34 +382,14 @@ function resolveGenerationLimitsForProvider(
   apiProvider: ApiProviderPresetId,
   current: SettingsFormValues,
 ) {
+  if (provider === "claude-code")
+    return profiles.claude ?? { maxTokens: "32768", contextTokens: "65536" };
   if (provider === "gemma") return profiles.gemma;
   if (provider === "openai-codex") return profiles.codex;
   return (
     profiles.api[apiProvider] ??
     createDefaultGenerationLimitFormValues("openai-api", current.apiModel)
   );
-}
-
-function readActiveApiProfile(
-  values: SettingsFormValues,
-): ApiProfileFormValues {
-  return {
-    apiBaseUrl: values.apiBaseUrl,
-    apiModel: values.apiModel,
-    apiKey: values.apiKey,
-    apiKeyCount: values.apiKeyCount,
-    apiVertexAuthMode: values.apiVertexAuthMode,
-    apiVertexServiceAccountPath: values.apiVertexServiceAccountPath,
-    apiKeyMaxAttempts: values.apiKeyMaxAttempts,
-    apiRetryDelaySeconds: values.apiRetryDelaySeconds,
-    apiRequestIntervalSeconds: values.apiRequestIntervalSeconds,
-    apiTemperature: values.apiTemperature,
-    apiTopP: values.apiTopP,
-    apiTopK: values.apiTopK,
-    apiReasoningEffort: values.apiReasoningEffort,
-    apiExtraBodyJson: values.apiExtraBodyJson,
-    apiCustomHeadersJson: values.apiCustomHeadersJson,
-  };
 }
 
 function resolveStateAction<T>(action: React.SetStateAction<T>, current: T): T {

@@ -17,8 +17,54 @@ vi.mock("../src/main/runtimeSupport/modelDownloads", () => ({
 }));
 
 describe("approved C23 runtime binding", () => {
+  it("selects the matching pinned pack for existing and fresh Windows installations", () => {
+    const oldPython = resolveFontChapterRuntimeManifest(
+      "win32",
+      "x64",
+      "cpython-312",
+    );
+    const newPython = resolveFontChapterRuntimeManifest(
+      "win32",
+      "x64",
+      "cpython-314",
+    );
+    expect(oldPython.url).toContain("/font-chapter-c23-20260909-r2/");
+    expect(oldPython.archive.sha256).toBe(
+      "302b6ab214ea4cadac864eaeb42cbb30c44ca30377434b2327fd0fa7fd9be360",
+    );
+    expect(oldPython.manifest.files.at(-1)?.sha256).toBe(
+      "6f1b97543c45dbb7d8ff411341162fb3a0b07b49b6c071d3e6e80f2ba1a41e3e",
+    );
+    expect(newPython.url).toContain("/font-chapter-c23-20261008-r3/");
+    expect(oldPython.manifest.assetDirectory).not.toBe(
+      newPython.manifest.assetDirectory,
+    );
+    expect(oldPython.manifest.files.slice(0, -1)).toEqual(
+      newPython.manifest.files.slice(0, -1),
+    );
+    expect(oldPython.manifest.runtimeSources).toEqual(
+      newPython.manifest.runtimeSources,
+    );
+  });
+  it.each(["cpython-311", "cpython-313", "cpython-314t", "pypy-312", ""])(
+    "rejects unsupported ABI %s before downloading or running inference",
+    async (pythonAbi) => {
+      download.mockClear();
+      expect(() =>
+        resolveFontChapterRuntimeManifest("win32", "x64", pythonAbi),
+      ).toThrow("Unsupported font matching Python ABI");
+      await expect(
+        prepareFontChapterRuntime({
+          paths: { dataRoot: "unused", runtimeDir: "unused" },
+          pythonAbi,
+        }),
+      ).rejects.toThrow("Unsupported font matching Python ABI");
+      expect(download).not.toHaveBeenCalled();
+    },
+  );
   it("passes the actual release digest, cancellation and progress to the installer", async () => {
     const options = {
+      pythonAbi: process.platform === "win32" ? "cpython-314" : "cpython-312",
       paths: {
         dataRoot: resolve(tmpdir(), `fc23-${randomUUID()}`),
         runtimeDir: resolve("src/main/runtime"),
@@ -50,7 +96,7 @@ describe("approved C23 runtime binding", () => {
     );
     for (const resolved of [windows, mac]) {
       expect(resolved.manifest.files.slice(0, trained.length)).toEqual(trained);
-      expect(resolved.url).toContain("/font-chapter-c23-20260909-r2/");
+      expect(resolved.url).toContain("/font-chapter-c23-20261008-r3/");
       expect(resolved.archive.bytes).toBeGreaterThan(1_000_000);
       expect(resolved.manifest.assetDirectory).not.toBe(
         manifest.assetDirectory,

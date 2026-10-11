@@ -8,6 +8,9 @@ import { openChapter, updatePagesAfterInpainting } from "../library";
 import { getAppSettings } from "../settingsStore";
 import type { ImageDecodeFallback } from "../regionCrop";
 import { throwIfAborted } from "../pipeline/failure";
+import { createProductionBubbleLayoutRunner } from "../bubbleLayout/bubbleLayoutFacade";
+import { applyInpaintingLayoutStates } from "../inpainting/inpaintingLayoutState";
+import { runBubbleLayoutMaskPrepass } from "./bubbleLayoutJob";
 
 export type TargetedSoundEffectInpaintingResult = {
   changedPageIds: string[];
@@ -21,6 +24,7 @@ export type SoundEffectInpaintingDependencies = {
   openChapter: typeof openChapter;
   inpaintPage: typeof inpaintPatternPage;
   updatePages: typeof updatePagesAfterInpainting;
+  createBubbleLayoutRunner: typeof createProductionBubbleLayoutRunner;
 };
 
 const productionDependencies: SoundEffectInpaintingDependencies = {
@@ -30,6 +34,7 @@ const productionDependencies: SoundEffectInpaintingDependencies = {
   openChapter,
   inpaintPage: inpaintPatternPage,
   updatePages: updatePagesAfterInpainting,
+  createBubbleLayoutRunner: createProductionBubbleLayoutRunner,
 };
 
 type InpaintingEngineLease = Awaited<
@@ -56,7 +61,20 @@ export async function inpaintCreatedSoundEffectBlocks(
   if (createdBlocksByPage.length === 0) {
     return { changedPageIds: [], warnings: [] };
   }
-  const prepared = await prepareInpaintingEngine(dependencies, signal);
+  const chapter = await openChapterForInpainting(
+    chapterId,
+    dependencies,
+    signal,
+  );
+  if ("warning" in chapter)
+    return { changedPageIds: [], warnings: [chapter.warning] };
+  const targetIds = new Set(createdBlocksByPage.map((target) => target.pageId));
+  const prepared = await prepareInpaintingEngine(
+    dependencies,
+    signal,
+    decodeFallback,
+    chapter.value.pages.filter((page) => targetIds.has(page.id)),
+  );
   if ("warning" in prepared) {
     return { changedPageIds: [], warnings: [prepared.warning] };
   }
@@ -67,32 +85,59 @@ export async function inpaintCreatedSoundEffectBlocks(
       decodeFallback,
       dependencies,
       engineLease: prepared.lease,
+      pages: new Map(chapter.value.pages.map((page) => [page.id, page])),
+      runner: prepared.runner,
       signal,
     });
   } finally {
-    prepared.lease.release();
+    try {
+      await prepared.lease.release();
+    } finally {
+      await prepared.runner?.dispose?.();
+    }
   }
 }
 
 async function prepareInpaintingEngine(
   dependencies: SoundEffectInpaintingDependencies,
   signal: AbortSignal,
-): Promise<{ lease: InpaintingEngineLease } | { warning: string }> {
+  decodeFallback: ImageDecodeFallback,
+  pages: readonly MangaPage[],
+): Promise<
+  | {
+      lease: InpaintingEngineLease;
+      runner?: ReturnType<typeof createProductionBubbleLayoutRunner>;
+    }
+  | { warning: string }
+> {
+  let runner: ReturnType<typeof createProductionBubbleLayoutRunner> | undefined;
   try {
     const paths = dependencies.getAppPaths();
     const settings = await dependencies.getAppSettings(paths);
+    const inpainting = settings.inpainting ?? {};
+    if ((inpainting.model ?? "flux-klein") === "flux-klein") {
+      runner = dependencies.createBubbleLayoutRunner({
+        dataRoot: paths.dataRoot,
+        decodeFallback,
+        directMl: {
+          ...settings.hardware,
+          computeGpuBackend: settings.ocr.gpuBackend,
+        },
+      });
+      await runner.preparePages?.(pages, signal);
+    }
     const lease = await dependencies.acquireEngine({
       appPaths: paths,
-      model: settings.inpainting?.model ?? "flux-klein",
-      fluxBackend: settings.inpainting?.fluxBackend,
-      koharuBackend: settings.inpainting?.koharuBackend,
+      model: inpainting.model ?? "flux-klein",
+      fluxBackend: inpainting.fluxBackend,
+      koharuBackend: inpainting.koharuBackend,
       computeGpuIndex: settings.hardware?.computeGpuIndex,
-      allowUnsafeLowMemoryFlux:
-        settings.inpainting?.allowUnsafeLowMemoryFlux ?? false,
+      allowUnsafeLowMemoryFlux: inpainting.allowUnsafeLowMemoryFlux ?? false,
       signal,
     });
-    return { lease };
+    return { lease, runner };
   } catch (error) {
+    await runner?.dispose?.();
     throwIfAborted(signal);
     return {
       warning: `효과음 번역은 저장했지만 인페인팅 엔진을 준비하지 못했습니다: ${messageOf(error)}`,
@@ -106,6 +151,8 @@ async function inpaintChapterTargets({
   decodeFallback,
   dependencies,
   engineLease,
+  pages,
+  runner,
   signal,
 }: {
   chapterId: string;
@@ -113,17 +160,10 @@ async function inpaintChapterTargets({
   decodeFallback: ImageDecodeFallback;
   dependencies: SoundEffectInpaintingDependencies;
   engineLease: InpaintingEngineLease;
+  pages: ReadonlyMap<string, MangaPage>;
+  runner?: ReturnType<typeof createProductionBubbleLayoutRunner>;
   signal: AbortSignal;
 }): Promise<TargetedSoundEffectInpaintingResult> {
-  const chapter = await openChapterForInpainting(
-    chapterId,
-    dependencies,
-    signal,
-  );
-  if ("warning" in chapter) {
-    return { changedPageIds: [], warnings: [chapter.warning] };
-  }
-  const pages = new Map(chapter.value.pages.map((page) => [page.id, page]));
   const outcomes: PageInpaintingOutcome[] = [];
   for (const target of createdBlocksByPage) {
     throwIfAborted(signal);
@@ -133,6 +173,7 @@ async function inpaintChapterTargets({
         dependencies,
         engineLease,
         page: pages.get(target.pageId),
+        runner: engineLease.engine.model === "flux-klein" ? runner : undefined,
         signal,
         target,
       }),
@@ -163,6 +204,7 @@ async function inpaintPageTarget({
   dependencies,
   engineLease,
   page,
+  runner,
   signal,
   target,
 }: {
@@ -170,19 +212,17 @@ async function inpaintPageTarget({
   dependencies: SoundEffectInpaintingDependencies;
   engineLease: InpaintingEngineLease;
   page: MangaPage | undefined;
+  runner?: ReturnType<typeof createProductionBubbleLayoutRunner>;
   signal: AbortSignal;
   target: { pageId: string; blockIds: string[] };
 }): Promise<PageInpaintingOutcome> {
-  if (!page) {
+  if (!page)
     return {
       warnings: [`${target.pageId}: 인페인팅 대상 페이지를 찾지 못했습니다.`],
     };
-  }
   const existingIds = new Set(page.blocks.map((block) => block.id));
   const requestedIds = [...new Set(target.blockIds)];
-  const selectedIds = requestedIds.filter((blockId) =>
-    existingIds.has(blockId),
-  );
+  const selectedIds = requestedIds.filter((id) => existingIds.has(id));
   const warnings = requestedIds
     .filter((blockId) => !existingIds.has(blockId))
     .map(
@@ -191,7 +231,22 @@ async function inpaintPageTarget({
     );
   if (selectedIds.length === 0) return { warnings };
   try {
-    const result = await dependencies.inpaintPage(page, {
+    const prepared = runner
+      ? await runBubbleLayoutMaskPrepass({
+          blockIds: selectedIds,
+          config: { policy: "balanced", overwriteManual: false },
+          page,
+          runner,
+          signal,
+        })
+      : undefined;
+    const {
+      page: maskPage = page,
+      restoreLayout,
+      ...maskOptions
+    } = prepared ?? {};
+    const result = await dependencies.inpaintPage(maskPage, {
+      ...maskOptions,
       blockIds: selectedIds,
       signal,
       decodeFallback,
@@ -202,12 +257,16 @@ async function inpaintPageTarget({
     warnings.push(
       ...buildIncompleteInpaintingWarnings(page, selectedIds, erased),
     );
-    return erased.size > 0
-      ? {
-          page: mergeTargetedInpaintingCompletion(result.page, erased),
-          warnings,
-        }
-      : { warnings };
+    if (erased.size === 0) return { warnings };
+    return {
+      page: mergeTargetedInpaintingCompletion(
+        restoreLayout
+          ? applyInpaintingLayoutStates(result.page, restoreLayout)
+          : result.page,
+        erased,
+      ),
+      warnings,
+    };
   } catch (error) {
     throwIfAborted(signal);
     warnings.push(

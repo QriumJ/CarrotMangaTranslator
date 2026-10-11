@@ -6,6 +6,9 @@ import { codexProgressSchema } from "./codexTypesettingProgress";
 import { z } from "zod";
 import { codexTypesettingOptionsSchema } from "./codexTypesettingSchemas";
 import {
+  JOB_PROGRESS_TEXT_LIMIT,
+  JOB_DETAIL_TEXT_LIMIT,
+  JOB_INSTALL_LOG_LINES_LIMIT,
   JobKindSchema,
   JobPhaseSchema,
   JobStatusSchema,
@@ -38,11 +41,11 @@ const JobProgressFieldsSchema = {
   progressBytes: finiteNumber.min(0).optional(),
   progressTotalBytes: finiteNumber.min(0).optional(),
   progressBytesPerSecond: finiteNumber.min(0).optional(),
-  installLogLine: z.string().max(4000).optional(),
+  installLogLine: z.string().max(JOB_DETAIL_TEXT_LIMIT).optional(),
   notification: z
     .object({
       variant: z.enum(["success", "error", "warn", "info"]),
-      message: z.string().min(1).max(1000),
+      message: z.string().min(1).max(JOB_PROGRESS_TEXT_LIMIT),
     })
     .strict()
     .optional(),
@@ -68,10 +71,14 @@ export const JobEventSchema = z
     id: z.string().min(1).max(200),
     kind: JobKindSchema,
     status: JobStatusSchema,
-    progressText: z.string().min(1).max(1000),
-    detail: z.string().max(4000).optional(),
+    origin: z.literal("mcp").optional(),
+    progressText: z.string().min(1).max(JOB_PROGRESS_TEXT_LIMIT),
+    detail: z.string().max(JOB_DETAIL_TEXT_LIMIT).optional(),
     ...JobProgressFieldsSchema,
-    installLogLines: z.array(z.string().max(4000)).max(500).optional(),
+    installLogLines: z
+      .array(z.string().max(JOB_DETAIL_TEXT_LIMIT))
+      .max(JOB_INSTALL_LOG_LINES_LIMIT)
+      .optional(),
     progressCurrent: finiteNumber.min(0).optional(),
     progressTotal: finiteNumber.min(0).optional(),
     pageIndex: finiteNumber.min(0).optional(),
@@ -109,8 +116,8 @@ export const JobEventSchema = z
 export const ModelTestProgressEventSchema = z
   .object({
     id: z.string().min(1).max(200),
-    progressText: z.string().min(1).max(1000),
-    detail: z.string().max(4000).optional(),
+    progressText: z.string().min(1).max(JOB_PROGRESS_TEXT_LIMIT),
+    detail: z.string().max(JOB_DETAIL_TEXT_LIMIT).optional(),
     ...JobProgressFieldsSchema,
   })
   .strict();

@@ -1,8 +1,114 @@
 import { describe, expect, it } from "vitest";
 import { buildBubbleShapeProfile } from "../src/main/bubbleLayout/bubbleShapeProfileBuilder";
 import type { RefinedBubbleRegion } from "../src/main/bubbleLayout/bubbleMaskTypes";
+import { buildBubbleLayoutConstraintMask } from "../src/main/inpainting/bubbleLayoutConstraintMask";
+import type { TranslationBlock } from "../src/shared/textTypes";
 
 describe("bubble shape profile builder", () => {
+  it.each(["horizontal", "vertical"] as const)(
+    "retains every owned pixel at curved seams and split runs for %s erasure",
+    (direction) => {
+      const region = rectangularRegion(10, 15, 210, 220);
+      for (let y = 0; y < region.height; y += 1) {
+        for (let x = 0; x < region.width; x += 1) {
+          // Curved ownership edge plus an exterior notch with two scanline runs.
+          if (
+            x < Math.floor(20 + (y * y) / 1000) ||
+            (y < 120 && x > 90 && x < 120)
+          )
+            region.mask[y * region.width + x] = 0;
+        }
+      }
+      const input = {
+        regions: [region],
+        pageWidth: 260,
+        pageHeight: 260,
+        renderDirection: direction,
+        sourceDirection: direction,
+        confidence: 0.9,
+        modelId: "test",
+        sourceImageRevision: "revision",
+        insetPx: 3,
+        regionGapPx: 0,
+        paddingRatio: 0,
+      };
+      const render = buildBubbleShapeProfile(input);
+      const erase = buildBubbleShapeProfile({
+        ...input,
+        sourceEraseMask: true,
+      });
+      expect(render).not.toHaveProperty("sourceEraseConstraint");
+      expect(erase?.sourceEraseConstraint).toEqual({
+        bounds: region.bounds,
+        data: region.mask,
+      });
+      // Characterize why a layout profile must not be the erasure authority.
+      const simplified = buildBubbleLayoutConstraintMask(
+        render as TranslationBlock,
+        { width: 260, height: 260 },
+        260,
+        260,
+        true,
+      );
+      if (!simplified) throw new Error("Missing render mask");
+      expect(
+        simplified.data.reduce((sum, value) => sum + value, 0),
+      ).toBeLessThan(region.mask.reduce((sum, value) => sum + value, 0));
+    },
+  );
+  it.each(["horizontal", "vertical"] as const)(
+    "preserves the exact detected union for transient %s erasure without render gutters",
+    (direction) => {
+      const regions = [
+        rectangularRegion(5, 20, 42, 44),
+        rectangularRegion(31, 5, 44, 46),
+      ];
+      const profile = buildBubbleShapeProfile({
+        regions,
+        pageWidth: 100,
+        pageHeight: 80,
+        renderDirection: direction,
+        sourceDirection: direction,
+        confidence: 0.9,
+        modelId: "test",
+        sourceImageRevision: "revision",
+        insetPx: 3,
+        regionGapPx: 4,
+        paddingRatio: 0,
+        sourceEraseMask: true,
+      });
+      expect(profile).not.toBeNull();
+      const mask = buildBubbleLayoutConstraintMask(
+        profile as TranslationBlock,
+        { width: 100, height: 80 },
+        100,
+        80,
+        true,
+      );
+      expect(mask).not.toBeNull();
+      if (!mask) throw new Error("Missing inpainting union");
+      for (let y = 0; y < 80; y += 1) {
+        for (let x = 0; x < 100; x += 1) {
+          const expected = regions.some(
+            ({ bounds }) =>
+              x >= bounds.x &&
+              x < bounds.x + bounds.w &&
+              y >= bounds.y &&
+              y < bounds.y + bounds.h,
+          );
+          const localX = x - mask.bounds.x;
+          const localY = y - mask.bounds.y;
+          const actual =
+            localX >= 0 &&
+            localX < mask.bounds.w &&
+            localY >= 0 &&
+            localY < mask.bounds.h &&
+            Boolean(mask.data[localY * mask.bounds.w + localX]);
+          expect(actual, `erase union at ${x},${y}`).toBe(expected);
+        }
+      }
+    },
+  );
   it.each([
     { direction: "horizontal", padding: 0 },
     { direction: "vertical", padding: 0 },

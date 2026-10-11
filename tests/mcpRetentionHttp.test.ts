@@ -106,6 +106,15 @@ async function retainedHttpFixture() {
     render,
     png,
     errors,
+    waitForJob: async (jobId: string) => {
+      const owner = provider.connectionIdFor(`Bearer ${full}`);
+      if (!owner) throw new Error("Missing test connection");
+      await running.manager.waitForCompletion(
+        jobId,
+        owner,
+        new AbortController().signal,
+      );
+    },
     revoke: () => {
       const id = provider.connectionIdFor(`Bearer ${full}`);
       if (!id) throw new Error("Missing test connection");
@@ -261,13 +270,11 @@ async function exportOverHttp(
   const receipt = await f.call("carrot_export_page_png", request);
   expect(receipt.result.isError).toBe(false);
   const jobId = receipt.result.structuredContent.jobId;
-  let id = "";
-  await vi.waitFor(async () => {
-    const job = await f.call("carrot_get_job", { jobId });
-    expect(job.result.structuredContent.status).toBe("completed");
-    id = job.result.structuredContent.result.retainedOutputId;
-    expect(id).toBeTruthy();
-  });
+  await f.waitForJob(jobId);
+  const job = await f.call("carrot_get_job", { jobId });
+  expect(job.result.structuredContent.status).toBe("completed");
+  const id = job.result.structuredContent.result.retainedOutputId;
+  expect(id).toBeTruthy();
   return id;
 }
 
