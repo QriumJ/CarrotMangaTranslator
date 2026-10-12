@@ -71,6 +71,7 @@ export type ChatApi = {
   listChats: () => Promise<ChatSummary[]>;
   createChat: (runtime?: ChatSession["runtime"]) => Promise<ChatSession>;
   readChat: (id: string) => Promise<ChatSession>;
+  deleteChat: (id: string) => Promise<void>;
   sendChat: (request: ChatSendRequest) => Promise<ChatSession>;
   stopChat: (id: string) => Promise<ChatSession>;
   compactChat: (id: string) => Promise<ChatSession>;

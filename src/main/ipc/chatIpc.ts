@@ -18,6 +18,9 @@ export function registerChatIpc(context: IpcContext) {
   trustedHandleContract(context, chatIpcContracts.readChat, (_event, id) =>
     service().read(id),
   );
+  trustedHandleContract(context, chatIpcContracts.deleteChat, (_event, id) =>
+    service().delete(id),
+  );
   trustedHandleContract(context, chatIpcContracts.sendChat, (_event, request) =>
     service().send(request),
   );

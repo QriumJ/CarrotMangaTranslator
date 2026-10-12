@@ -4,6 +4,7 @@ export const chatGateway = createMangaDomainGateway("chat", [
   "listChats",
   "createChat",
   "readChat",
+  "deleteChat",
   "sendChat",
   "stopChat",
   "compactChat",

@@ -16,10 +16,12 @@ export function useChat(enabled: boolean) {
   const selected = useRef<string | null>(null);
   const initialized = useRef(false);
   const requestVersion = useRef(0);
+  const deleted = useRef(new Set<string>());
   const drafts = useRef(
     new Map<string, { text: string; images: ChatImage[] }>(),
   );
   const accept = useCallback((value: ChatSession) => {
+    if (deleted.current.has(value.id)) return;
     // The panel stays mounted while hidden, so chat turns always end the batch.
     noteChatState(value.id, value.state);
     if (selected.current === value.id)
@@ -28,16 +30,9 @@ export function useChat(enabled: boolean) {
           ? current
           : value,
       );
+    const { id, title, state, updatedAt, model, effort, runtime } = value;
     setHistory((current) => [
-      {
-        id: value.id,
-        title: value.title,
-        state: value.state,
-        updatedAt: value.updatedAt,
-        model: value.model,
-        effort: value.effort,
-        runtime: value.runtime,
-      },
+      { id, title, state, updatedAt, model, effort, runtime },
       ...current.filter((item) => item.id !== value.id),
     ]);
   }, []);
@@ -77,6 +72,18 @@ export function useChat(enabled: boolean) {
     busy,
     drafts,
     perform,
+    deleteSession: () =>
+      perform(async () => {
+        if (!session) return;
+        await chatGateway.deleteChat(session.id);
+        deleted.current.add(session.id);
+        drafts.current.delete(session.id);
+        const remaining = history.filter((entry) => entry.id !== session.id);
+        setHistory(remaining);
+        selected.current = null;
+        setSession(null);
+        await select(remaining[0]?.id, session.runtime);
+      }),
     ...actions,
   };
 }

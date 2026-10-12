@@ -7,10 +7,10 @@
   overflow: hidden;
   color: var(--text);
 }
-/* Conversation picker, new conversation, compact: one header row. */
+/* Conversation picker and actions share one header row. */
 .header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   gap: var(--sp-1);
   align-items: center;
   min-width: 0;
@@ -251,47 +251,6 @@
 .previewImage {
   width: 100%;
   height: auto;
-}
-
-/* Quality receipt */
-.quality {
-  display: grid;
-  gap: var(--sp-1);
-  padding: var(--sp-2) var(--sp-3);
-  border-radius: var(--r-md);
-  border-inline-start: 2px solid var(--warning-bd);
-  background: var(--warning-soft);
-  font-size: 12px;
-}
-.quality[data-accepted] {
-  border-inline-start-color: var(--success-bd);
-  background: var(--success-soft);
-}
-.quality small {
-  color: var(--text-muted);
-  font-size: var(--font-xs);
-  line-height: 1.5;
-}
-.qualitySummary {
-  display: flex;
-  gap: var(--sp-2);
-  align-items: baseline;
-  justify-content: space-between;
-}
-.qualityReasons {
-  display: grid;
-  gap: var(--sp-1);
-  margin: 0;
-  padding: 0 0 0 var(--sp-5);
-  color: var(--text-dim);
-  line-height: 1.5;
-  list-style: none;
-  overflow-wrap: anywhere;
-}
-.qualityReasons span {
-  margin-inline-end: var(--sp-2);
-  color: var(--text);
-  font-weight: 600;
 }
 
 /* Activity at the end of the transcript */

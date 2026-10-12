@@ -5,22 +5,22 @@ import type {
   ChatSession,
   ChatSummary,
 } from "../../shared/chatTypes";
-import type { AgentRuntime, AgentRuntimeEvents } from "./chatRuntimePorts";
+import type { RuntimeLease, AgentRuntimeEvents } from "./chatRuntimePorts";
 import type { ChatRepository } from "../chat/chatRepository";
 import { chatMessageInput } from "../chat/chatInstructions";
-import { addChatStatus, reduceChatNotification } from "../chat/chatReducer";
+import {
+  addChatStatus,
+  reduceChatNotification,
+  restoredState,
+  restoreChatSession,
+} from "../chat/chatReducer";
 import { observeChatTool } from "../chat/chatToolObservation";
 import type { McpChatObservation } from "../mcp/mcpLocalHost";
 
-type RuntimeLease = {
-  runtime: AgentRuntime;
-  release: () => void;
-  cancelOperations: (session: ChatSession) => Promise<void>;
-};
 type Ports = {
   repository: Pick<
     ChatRepository,
-    "list" | "read" | "save" | "image" | "addImage"
+    "list" | "read" | "save" | "delete" | "image" | "addImage"
   >;
   runtime: (
     session: ChatSession,
@@ -37,6 +37,7 @@ export class ChatService {
   private sending = new Map<string, Promise<void>>();
   private saves = new Map<string, ReturnType<typeof setTimeout>>();
   private generations = new Map<string, number>();
+  private deleted = new Set<string>();
   private closed = false;
   constructor(private readonly ports: Ports) {}
   async list(): Promise<ChatSummary[]> {
@@ -46,14 +47,15 @@ export class ChatService {
         const current = this.sessions.has(item.id)
           ? await this.get(item.id)
           : item;
+        const { id, title, updatedAt, model, effort, runtime } = current;
         return {
-          id: current.id,
-          title: current.title,
+          id,
+          title,
+          updatedAt,
+          model,
+          effort,
+          runtime,
           state: restoredState(current.state, this.runtimes.has(item.id)),
-          updatedAt: current.updatedAt,
-          model: current.model,
-          effort: current.effort,
-          runtime: current.runtime,
         };
       }),
     );
@@ -86,6 +88,36 @@ export class ChatService {
   async read(id: string) {
     return structuredClone(await this.get(id));
   }
+  async delete(id: string): Promise<void> {
+    this.assertOpen();
+    const session = await this.get(id);
+    this.assertAvailable(id);
+    if (["running", "compacting", "needs-input"].includes(session.state))
+      throw new Error("현재 작업을 중지한 뒤 대화를 삭제해 주세요.");
+    this.deleted.add(id);
+    this.generations.set(id, (this.generations.get(id) ?? 0) + 1);
+    const timer = this.saves.get(id);
+    if (timer) clearTimeout(timer);
+    this.saves.delete(id);
+    try {
+      const lease = await this.runtimes.get(id);
+      if (lease) {
+        try {
+          await lease.runtime.close();
+        } finally {
+          lease.release();
+          this.runtimes.delete(id);
+        }
+      }
+      await this.sending.get(id);
+      await this.ports.repository.delete(id);
+      this.sessions.delete(id);
+      this.sending.delete(id);
+    } catch (error) {
+      this.deleted.delete(id);
+      throw error;
+    }
+  }
   async send(request: ChatSendRequest): Promise<ChatSession> {
     this.assertOpen();
     const session = await this.get(request.sessionId);
@@ -97,6 +129,7 @@ export class ChatService {
     this.assertOpen();
     if (session.items.some((item) => item.id === request.messageId))
       return structuredClone(session);
+    this.assertAvailable(session.id);
     const generation = this.generations.get(session.id) ?? 0;
     session.items.push({
       id: request.messageId,
@@ -136,13 +169,14 @@ export class ChatService {
   }
   async compact(id: string): Promise<ChatSession> {
     const session = await this.get(id);
+    this.assertAvailable(id);
     if (["running", "compacting", "needs-input"].includes(session.state))
       throw new Error("현재 작업이 끝난 뒤 압축할 수 있습니다.");
-    const lease = await this.runtime(session);
-    session.nativeThreadId = await lease.runtime.prepare(session);
     session.state = "compacting";
-    await this.save(session);
     try {
+      const lease = await this.runtime(session);
+      session.nativeThreadId = await lease.runtime.prepare(session);
+      await this.save(session);
       await lease.runtime.compact();
     } catch (error) {
       await this.fail(session, error);
@@ -208,15 +242,10 @@ export class ChatService {
       );
   }
   private get(id: string): Promise<ChatSession> {
+    this.assertAvailable(id);
     let entry = this.sessions.get(id);
     if (!entry) {
-      entry = this.ports.repository.read(id).then((session) => {
-        session.state = restoredState(session.state, false);
-        session.question = null;
-        for (const item of session.items)
-          if (item.state === "running") item.state = "failed";
-        return session;
-      });
+      entry = this.ports.repository.read(id).then(restoreChatSession);
       this.sessions.set(id, entry);
       void entry.catch(() => {
         // error-policy-allow: callers receive the read error; an invalid ID or
@@ -268,19 +297,23 @@ export class ChatService {
         session,
         {
           notification: (value) => {
+            if (this.deleted.has(session.id)) return;
             if (reduceChatNotification(session, value))
               this.scheduleSave(session);
           },
           question: (question) => {
+            if (this.deleted.has(session.id)) return;
             session.question = question;
             session.state = "needs-input";
             this.scheduleSave(session);
           },
           failed: (error) => {
+            if (this.deleted.has(session.id)) return;
             void this.disconnect(session, error).catch(this.ports.reportError);
           },
         },
         async (value) => {
+          if (this.deleted.has(session.id)) return;
           await observeChatTool(session, value, this.ports.repository);
           await this.save(session);
           if (
@@ -301,6 +334,7 @@ export class ChatService {
     return pending;
   }
   private scheduleSave(session: ChatSession) {
+    if (this.deleted.has(session.id)) return;
     if (this.saves.has(session.id)) return;
     this.saves.set(
       session.id,
@@ -324,8 +358,10 @@ export class ChatService {
     }
   }
   private async save(session: ChatSession) {
+    if (this.deleted.has(session.id)) return;
     session.updatedAt = Math.max(Date.now(), session.updatedAt + 1);
     await this.ports.repository.save(session);
+    if (this.deleted.has(session.id)) return;
     this.ports.publish({
       sessionId: session.id,
       session: structuredClone(session),
@@ -356,17 +392,12 @@ export class ChatService {
   private assertOpen() {
     if (this.closed) throw new Error("앱이 종료 중입니다.");
   }
+  private assertAvailable(id: string) {
+    if (this.deleted.has(id)) throw new Error("삭제된 대화입니다.");
+  }
   private shouldStop(session: ChatSession, generation: number) {
     return (
       this.closed || generation !== (this.generations.get(session.id) ?? 0)
     );
   }
-}
-function restoredState(
-  state: ChatSession["state"],
-  live: boolean,
-): ChatSession["state"] {
-  return !live && ["running", "compacting", "needs-input"].includes(state)
-    ? "paused"
-    : state;
 }

@@ -44108,28 +44108,6 @@
         "pct": 66.66
       }
     },
-    "src/renderer/src/features/chat/ChatQualityReceipt.tsx": {
-      "lines": {
-        "covered": 0,
-        "total": 13,
-        "pct": 0
-      },
-      "statements": {
-        "covered": 0,
-        "total": 15,
-        "pct": 0
-      },
-      "functions": {
-        "covered": 0,
-        "total": 4,
-        "pct": 0
-      },
-      "branches": {
-        "covered": 0,
-        "total": 15,
-        "pct": 0
-      }
-    },
     "src/renderer/src/features/chat/ChatQuestionForm.tsx": {
       "lines": {
         "covered": 0,
@@ -44172,28 +44150,6 @@
         "covered": 6,
         "total": 71,
         "pct": 8.45
-      }
-    },
-    "src/renderer/src/features/chat/chatQualityReceiptModel.ts": {
-      "lines": {
-        "covered": 6,
-        "total": 7,
-        "pct": 85.71
-      },
-      "statements": {
-        "covered": 6,
-        "total": 7,
-        "pct": 85.71
-      },
-      "functions": {
-        "covered": 1,
-        "total": 1,
-        "pct": 100
-      },
-      "branches": {
-        "covered": 6,
-        "total": 7,
-        "pct": 85.71
       }
     },
     "src/renderer/src/features/chat/useChat.ts": {

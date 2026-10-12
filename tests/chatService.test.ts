@@ -4,12 +4,107 @@ import { describe, expect, it, vi } from "vitest";
 import { ChatRepository } from "../src/main/chat/chatRepository";
 import { ChatService } from "../src/main/application/chatService";
 import { chatFixture, chatRequest, endChatTurn } from "./helpers/chatFixture";
+import { registerChatIpc } from "../src/main/ipc/chatIpc";
+import type { IpcContext } from "../src/main/ipc/context";
 
+type IpcHandler = (event: unknown, ...args: unknown[]) => Promise<unknown>;
+const boundary = vi.hoisted(() => ({
+  handlers: new Map<string, IpcHandler>(),
+}));
 vi.mock("electron", () => ({
-  app: { isPackaged: false, getPath: () => process.cwd() },
+  app: {
+    isPackaged: false,
+    getPath: () => process.cwd(),
+    getLocale: () => "ko",
+  },
+  ipcMain: {
+    handle: (channel: string, handler: IpcHandler) =>
+      boundary.handlers.set(channel, handler),
+  },
 }));
 
 describe("global chat durable execution", () => {
+  it("deletes through trusted IPC only after validating the sender and session ID", async () => {
+    const f = await chatFixture();
+    try {
+      const context: IpcContext = Object.create(null);
+      context.chat = f.service;
+      context.getMainWindow = () =>
+        ({
+          isDestroyed: () => false,
+          webContents: { id: 1, getURL: () => "http://127.0.0.1:5173/" },
+        }) as ReturnType<IpcContext["getMainWindow"]>;
+      registerChatIpc(context);
+      const handler = boundary.handlers.get("chat:delete");
+      if (!handler) throw new Error("Missing chat deletion IPC handler");
+      const event = {
+        sender: { id: 1 },
+        senderFrame: { url: "http://127.0.0.1:5173/" },
+      };
+      await expect(
+        handler({ ...event, sender: { id: 2 } }, f.session.id),
+      ).rejects.toThrow();
+      await expect(handler(event, "../library")).rejects.toThrow();
+      expect(await f.service.list()).toHaveLength(1);
+      await expect(handler(event, f.session.id)).resolves.toBeUndefined();
+      expect(await f.service.list()).toEqual([]);
+    } finally {
+      await f.cleanup();
+    }
+  });
+  it("deletes only the selected record and cannot resurrect it through late events or shutdown", async () => {
+    const f = await chatFixture();
+    try {
+      const other = await f.service.create("claude");
+      const image = await f.service.attachImage(
+        f.session.id,
+        "original.png",
+        "data:image/png;base64,AA==",
+      );
+      await f.service.send(chatRequest(f.session.id));
+      await vi.waitFor(() => expect(f.runtime.send).toHaveBeenCalledOnce());
+      await expect(f.service.delete(f.session.id)).rejects.toThrow("중지");
+      endChatTurn(f.events());
+      await f.service.delete(f.session.id);
+      f.events().notification({
+        method: "turn/completed",
+        params: { turn: { id: "late", status: "completed" } },
+      });
+      await f.observe({
+        name: "carrot_get_translation_guide",
+        args: {},
+        content: [],
+      });
+      expect(f.runtime.close).toHaveBeenCalledOnce();
+      expect((await f.service.list()).map((entry) => entry.id)).toEqual([
+        other.id,
+      ]);
+      await expect(f.service.read(f.session.id)).rejects.toThrow("삭제된");
+      await f.service.dispose();
+      expect(
+        (await new ChatRepository(f.root).list()).map((entry) => entry.id),
+      ).toEqual([other.id]);
+      expect(await f.repository.image(f.session.id, image.id)).toEqual(image);
+    } finally {
+      await f.cleanup();
+    }
+  });
+  it("keeps the session available when deleting its record fails", async () => {
+    const f = await chatFixture();
+    try {
+      vi.spyOn(f.repository, "delete").mockRejectedValueOnce(
+        new Error("disk failure"),
+      );
+      await expect(f.service.delete(f.session.id)).rejects.toThrow(
+        "disk failure",
+      );
+      expect((await f.service.read(f.session.id)).id).toBe(f.session.id);
+      await f.service.delete(f.session.id);
+      expect(await f.service.list()).toEqual([]);
+    } finally {
+      await f.cleanup();
+    }
+  });
   it("persists native MCP failures and transport errors so a failed tool can explain its warning", async () => {
     const f = await chatFixture();
     try {

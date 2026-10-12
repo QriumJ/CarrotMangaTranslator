@@ -87,6 +87,83 @@ function setup(
   return { session, send, stop, emit: (event: ChatEvent) => emit(event) };
 }
 
+it("deletes the selected session, ignores late events and creates a fresh chat after the last deletion", async () => {
+  const remove = vi.fn<ChatApi["deleteChat"]>(async () => undefined);
+  const create = vi.fn<ChatApi["createChat"]>(async () => ({
+    ...f.session,
+    id: "fresh",
+    title: "새 대화",
+  }));
+  const f = setup(DEFAULT_MODELS, {
+    deleteChat: remove,
+    createChat: create,
+    listChats: async () => [f.session, other],
+    readChat: async (id) => (id === other.id ? other : f.session),
+  });
+  const other = {
+    ...f.session,
+    id: "other",
+    title: "다른 대화",
+    runtime: "claude" as const,
+  };
+  render(<ChatPanel enabled />);
+  await screen.findByRole("combobox", { name: "이전 대화" });
+  await waitFor(() =>
+    expect(
+      screen
+        .getByRole("button", { name: "대화 삭제" })
+        .hasAttribute("disabled"),
+    ).toBe(false),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "대화 삭제" }));
+  await waitFor(() => expect(remove).toHaveBeenCalledWith(f.session.id));
+  await waitFor(() =>
+    expect(screen.getByRole("combobox").textContent).toContain("다른 대화"),
+  );
+  act(() =>
+    f.emit({
+      sessionId: f.session.id,
+      session: { ...f.session, updatedAt: 99 },
+    }),
+  );
+  fireEvent.click(screen.getByRole("combobox"));
+  expect(screen.getAllByRole("option")).toHaveLength(1);
+  fireEvent.keyDown(screen.getByRole("listbox"), { key: "Escape" });
+  fireEvent.click(screen.getByRole("button", { name: "대화 삭제" }));
+  await waitFor(() => expect(create).toHaveBeenCalledWith("claude"));
+  await waitFor(() =>
+    expect(screen.getByRole("combobox").textContent).toContain("새 대화"),
+  );
+});
+
+it("keeps the selected conversation when deletion fails and disables deletion while running", async () => {
+  const f = setup(DEFAULT_MODELS, {
+    deleteChat: async () => {
+      throw new Error("삭제 실패");
+    },
+  });
+  render(<ChatPanel enabled />);
+  await waitFor(() =>
+    expect(
+      screen
+        .getByRole("button", { name: "대화 삭제" })
+        .hasAttribute("disabled"),
+    ).toBe(false),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "대화 삭제" }));
+  expect((await screen.findByRole("alert")).textContent).toBe("삭제 실패");
+  expect(screen.getByRole("combobox").textContent).toContain("대화");
+  act(() =>
+    f.emit({
+      sessionId: f.session.id,
+      session: { ...f.session, state: "running", updatedAt: 2 },
+    }),
+  );
+  expect(
+    screen.getByRole("button", { name: "대화 삭제" }).hasAttribute("disabled"),
+  ).toBe(true);
+});
+
 it("switches runtimes and logs into the chosen account, keeping new conversations in that runtime", async () => {
   const claudeAccount = {
     authenticated: false,
@@ -436,7 +513,7 @@ function chooseRuntime(name: "Codex" | "Claude") {
   fireEvent.click(screen.getByRole("button", { name: /모델·추론 수준/ }));
   fireEvent.click(screen.getByRole("radio", { name }));
 }
-it("folds runs of tool calls into one row with thumbnails, a grouped receipt and live activity", async () => {
+it("folds runs of tool calls into one row with thumbnails and live activity without an automatic quality banner", async () => {
   window.mangaApi = createTestMangaGatewayStub({
     readChatImage: async (_session, id) => ({
       id,
@@ -509,10 +586,8 @@ it("folds runs of tool calls into one row with thumbnails, a grouped receipt and
   expect(screen.getByRole("status").textContent).toBe("작업 중…");
   expect(await screen.findAllByRole("img")).toHaveLength(4);
 
-  fireEvent.click(screen.getByRole("button", { name: "미검수 사유" }));
-  expect(
-    screen.getByText("No retained v2 review covers this page.").textContent,
-  ).toContain("2페이지");
+  expect(screen.queryByText("미검수·해결할 항목 있음")).toBeNull();
+  expect(screen.queryByRole("button", { name: "미검수 사유" })).toBeNull();
 
   fireEvent.click(screen.getByRole("button", { name: "이미지 2개 더 보기" }));
   expect(group.getAttribute("aria-expanded")).toBe("true");

@@ -3069,6 +3069,7 @@
     "editor": "編輯",
     "history": "歷史對話",
     "new": "新增對話",
+    "delete": "刪除對話",
     "compact": "壓縮對話",
     "model": "模型",
     "effort": "推理等級",

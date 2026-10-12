@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, readdir } from "node:fs/promises";
+import { mkdir, readFile, readdir, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
 import { ChatImageSchema, ChatSessionSchema } from "../../shared/chatSchemas";
@@ -52,6 +52,12 @@ export class ChatRepository {
         // error-policy-allow: the original write rejection is returned to the caller.
       });
     return next;
+  }
+  async delete(id: string): Promise<void> {
+    await this.writes.get(id);
+    // Only the conversation record is removed. Source images and app outputs
+    // (including retained chat attachments) are never recursively deleted.
+    await unlink(await this.path(`${checkedId(id)}.json`));
   }
   async addImage(
     sessionId: string,

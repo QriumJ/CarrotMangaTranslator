@@ -33,6 +33,12 @@ export const chatIpcContracts = {
     args: z.tuple([id]),
     result: ChatSessionSchema,
   }),
+  deleteChat: defineIpcContract<[string], void>({
+    apiKey: "deleteChat",
+    channel: "chat:delete",
+    args: z.tuple([id]),
+    result: z.void(),
+  }),
   sendChat: defineIpcContract<[ChatSendRequest], ChatSession>({
     apiKey: "sendChat",
     channel: "chat:send",

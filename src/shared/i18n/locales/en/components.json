@@ -3069,6 +3069,7 @@
     "editor": "Edit",
     "history": "Conversation history",
     "new": "New conversation",
+    "delete": "Delete conversation",
     "compact": "Compact conversation",
     "model": "Model",
     "effort": "Reasoning",

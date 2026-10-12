@@ -19,6 +19,7 @@ export const chatBridgeSource = `
     readChat: async (id) => structuredClone(chatSessions.get(id)),
     sendChat: async (request) => { const value = chatSessions.get(request.sessionId); value.items.push({ id: request.messageId, role: "user", text: request.text, imageIds: request.imageIds, context: request.context, createdAt: Date.now(), state: "completed" }); value.state = "running"; return publishChat(value); },
     stopChat: async (id) => { const value = chatSessions.get(id); value.state = "paused"; return publishChat(value); },
+    deleteChat: async (id) => { chatSessions.delete(id); },
     compactChat: async (id) => { const value = chatSessions.get(id); value.state = "compacting"; return publishChat(value); },
     answerChat: async (id) => publishChat(chatSessions.get(id)),
     attachChatImage: async (_id, name, dataUrl) => { const image = { id: crypto.randomUUID(), name, dataUrl }; chatImages.set(image.id, image); return image; },

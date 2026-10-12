@@ -20,3 +20,9 @@ export type AgentRuntimeEvents = {
   question: (value: ChatQuestion) => void;
   failed: (error: Error) => void;
 };
+
+export type RuntimeLease = {
+  runtime: AgentRuntime;
+  release: () => void;
+  cancelOperations: (session: ChatSession) => Promise<void>;
+};

@@ -244,3 +244,21 @@ function normalizeTextNotification(event: JsonRecord): JsonRecord {
     params: { item: { id: event.id, type: "agentMessage", text: event.text } },
   };
 }
+
+export function restoredState(
+  state: ChatSession["state"],
+  live: boolean,
+): ChatSession["state"] {
+  return !live && ["running", "compacting", "needs-input"].includes(state)
+    ? "paused"
+    : state;
+}
+
+/** Recover an interrupted persisted chat without retaining a live question. */
+export function restoreChatSession(session: ChatSession): ChatSession {
+  session.state = restoredState(session.state, false);
+  session.question = null;
+  for (const item of session.items)
+    if (item.state === "running") item.state = "failed";
+  return session;
+}

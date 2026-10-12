@@ -3069,6 +3069,7 @@
     "editor": "編集",
     "history": "過去の会話",
     "new": "新しい会話",
+    "delete": "会話を削除",
     "compact": "会話を圧縮",
     "model": "モデル",
     "effort": "推論レベル",

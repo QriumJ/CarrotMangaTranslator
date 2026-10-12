@@ -3069,6 +3069,7 @@
     "editor": "编辑",
     "history": "历史对话",
     "new": "新建对话",
+    "delete": "删除对话",
     "compact": "压缩对话",
     "model": "模型",
     "effort": "推理级别",

@@ -552,7 +552,8 @@ describe("production cleanup coverage floor gate", () => {
     // translation instructions and image budget; inherited floors remain unchanged.
     // inherited floors remain unchanged.
     // Gemma sampling adds a production control and its shared default contract.
-    expect(scope.added).toHaveLength(1448);
+    // The unused chat quality banner and its parser were removed.
+    expect(scope.added).toHaveLength(1446);
     expect(scope.deleted).toHaveLength(12);
   });
 });

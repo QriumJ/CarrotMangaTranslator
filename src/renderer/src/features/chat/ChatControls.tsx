@@ -5,6 +5,7 @@ import {
   IconArrowsMinimize,
   IconChevronDown,
   IconFileText,
+  IconTrash,
 } from "@tabler/icons-react";
 import type { CurrentViewContext } from "../../../../shared/chatTypes";
 import { Button } from "../../components/ui/Button";
@@ -41,6 +42,14 @@ export function ChatHistoryControls({
         onValueChange={(id) => void chat.select(id)}
         disabled={chat.busy}
       />
+      <IconButton
+        label={t("chat.delete")}
+        variant="danger"
+        onClick={() => void chat.deleteSession()}
+        disabled={chat.busy || running || !chat.session}
+      >
+        <IconTrash size={18} />
+      </IconButton>
       <IconButton
         label={t("chat.new")}
         onClick={() => void chat.select(undefined, chat.session?.runtime)}

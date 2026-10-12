@@ -10,8 +10,6 @@ import type { ChatItem, ChatSession } from "../../../../shared/chatTypes";
 import { Button } from "../../components/ui/Button";
 import styles from "./ChatPanel.module.css";
 import { ChatMarkdown } from "./ChatMarkdown";
-import { ChatQualityReceipt } from "./ChatQualityReceipt";
-import { parseQualityReceipt } from "./chatQualityReceiptModel";
 import { ChatImages } from "./ChatImages";
 
 type TranscriptEntry =
@@ -185,13 +183,6 @@ function ChatToolGroup({
   const { t } = useTranslation("components");
   const [expanded, setExpanded] = useState(false);
   const bodyId = React.useId();
-  const receipt = [...items]
-    .reverse()
-    .find(
-      (item) =>
-        item.toolName === "carrot_get_translation_guide" &&
-        parseQualityReceipt(item.text) !== null,
-    );
   const images = items.flatMap((item) => item.imageIds ?? []);
   const last = items[items.length - 1];
   const failed = items.filter((item) => item.state === "failed").length;
@@ -199,7 +190,6 @@ function ChatToolGroup({
     return (
       <div className={styles.toolGroup}>
         <ChatTool item={last} onPage={onPage} onUndo={onUndo} />
-        {receipt ? <ChatQualityReceipt text={receipt.text} /> : null}
         <ChatImages sessionId={sessionId} ids={images} />
       </div>
     );
@@ -237,7 +227,6 @@ function ChatToolGroup({
           ))}
         </div>
       ) : null}
-      {receipt ? <ChatQualityReceipt text={receipt.text} /> : null}
       <ChatImages
         sessionId={sessionId}
         ids={images}
