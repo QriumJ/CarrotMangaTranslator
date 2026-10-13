@@ -17,8 +17,8 @@ import {
 } from "./zipSafety";
 
 const MAX_NESTED_IMAGE_FOLDER_DEPTH = 8;
-const MAX_NESTED_IMAGE_FOLDERS = 500;
-const MAX_NESTED_IMAGE_FOLDER_PAGES = 5000;
+export const MAX_NESTED_IMAGE_FOLDERS = 500;
+export const MAX_NESTED_IMAGE_FOLDER_PAGES = 5000;
 
 export function isSupportedArchivePath(filePath: string): boolean {
   return hasSupportedExtension(filePath, SUPPORTED_ARCHIVE_EXTENSIONS);

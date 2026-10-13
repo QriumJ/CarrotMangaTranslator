@@ -46,6 +46,7 @@ export {
 } from "./library/librarySoundEffectFacade";
 export {
   createLibraryImportService,
+  prepareFoldersImportPreview,
   createImport,
   prepareArchiveFolderImportPreview,
   prepareArchiveImportPreview,

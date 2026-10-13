@@ -14,6 +14,7 @@ import type {
 } from "./importShareActionTypes";
 import { finishImportedChapterNavigation } from "./importedChapterNavigation";
 import { handoffActiveModalToWorkCenter } from "../lib/modalWorkCenterHandoff";
+import { toast } from "../lib/toastStore";
 
 // eslint-disable-next-line max-lines-per-function -- draft recovery, commit boundary, refresh, and navigation safety form one transaction
 export function useSubmitImportAction(
@@ -71,7 +72,7 @@ export function useSubmitImportAction(
             saveNow,
             getNavigationKey,
           },
-          payload.translateAddedPages ?? false,
+          payload,
           importPreview.mode,
           result,
           navigationKey,
@@ -106,15 +107,24 @@ export function useSubmitImportAction(
 async function commitImport(
   dirty: boolean,
   preview: ImportPreviewSession,
-  { target, selections, linkedWorkspace }: ImportModalSubmit,
+  {
+    target,
+    selections,
+    linkedWorkspace,
+    skipDuplicateChapterTitles,
+  }: ImportModalSubmit,
   saveNow: () => Promise<void>,
 ): Promise<CreateImportResult> {
   if (dirty) await saveNow();
+  // Renderer-only choices (e.g. opening translation settings) stay here.
   return mangaGateway.createImport({
     previewId: preview.previewId,
     target,
     selections,
     ...(linkedWorkspace ? { linkedWorkspace } : {}),
+    ...(skipDuplicateChapterTitles && target.mode === "existing"
+      ? { skipDuplicateChapterTitles: true }
+      : {}),
   });
 }
 
@@ -151,7 +161,7 @@ async function finishCommittedImport(
     | "saveNow"
     | "getNavigationKey"
   >,
-  translateAddedPages: boolean,
+  payload: ImportModalSubmit,
   mode: ImportPreviewSession["mode"],
   result: CreateImportResult,
   navigationKey: string,
@@ -165,25 +175,70 @@ async function finishCommittedImport(
       formatErrorMessage(error, t("library.refreshAfterJobFailed")),
     );
   }
+  if (isAllSkippedImport(result)) {
+    // Nothing new: stay where the user is and open nothing.
+    const status = t("import.allSkipped", {
+      count: result.skippedChapters?.length,
+    });
+    actions.pushStatus(status);
+    toast.info(status);
+    return;
+  }
   await finishImportedChapterNavigation({
     applyChapter: actions.applyChapter,
     chapter: result.openedChapter,
     getNavigationKey: actions.getNavigationKey,
     navigationKey,
     openTranslateOptions: actions.openTranslateOptions,
-    openWorkTranslation: !result.addedPageIds && mode === "batch",
-    addedPageIds: translateAddedPages ? result.addedPageIds : undefined,
+    openWorkTranslation: shouldOpenWorkTranslation(payload, mode, result),
+    addedPageIds: payload.translateAddedPages ? result.addedPageIds : undefined,
     refreshChapter: Boolean(result.addedPageIds),
     pushStatus: actions.pushStatus,
     resetWorkspaceHistory: actions.resetWorkspaceHistory,
     saveNow: actions.saveNow,
-    status: result.addedPageIds
-      ? t("import.pagesAdded", { count: result.addedPageIds.length })
-      : t("import.added", { count: result.chapterIds.length }),
+    status: resolveImportStatus(result, t),
   });
   if (result.linkedWorkspaceWarning) {
     actions.pushStatus(result.linkedWorkspaceWarning);
   }
+}
+
+function isAllSkippedImport(result: CreateImportResult): boolean {
+  return (
+    !result.addedPageIds &&
+    result.chapterIds.length === 0 &&
+    (result.skippedChapters?.length ?? 0) > 0
+  );
+}
+
+/** Settings open only for imported chapters, and never start a run. */
+function shouldOpenWorkTranslation(
+  payload: ImportModalSubmit,
+  mode: ImportPreviewSession["mode"],
+  result: CreateImportResult,
+): boolean {
+  return (
+    !result.addedPageIds &&
+    mode === "batch" &&
+    result.chapterIds.length > 0 &&
+    (payload.openTranslationAfterImport ?? true)
+  );
+}
+
+function resolveImportStatus(
+  result: CreateImportResult,
+  t: TFunction<"renderer">,
+): string {
+  if (result.addedPageIds) {
+    return t("import.pagesAdded", { count: result.addedPageIds.length });
+  }
+  const skipped = result.skippedChapters?.length ?? 0;
+  return skipped > 0
+    ? t("import.addedWithSkipped", {
+        count: result.chapterIds.length,
+        skipped,
+      })
+    : t("import.added", { count: result.chapterIds.length });
 }
 
 function isAbortLike(error: unknown): boolean {

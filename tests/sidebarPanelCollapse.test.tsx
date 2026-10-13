@@ -10,7 +10,10 @@ import type {
   MangaPage,
 } from "../src/shared/libraryTypes";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  window.localStorage.clear();
+});
 
 describe("sidebar list panel switching", () => {
   it("lets each header hide and restore the opposite panel", () => {
@@ -205,6 +208,48 @@ describe("sidebar list panel switching", () => {
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(false);
+  });
+
+  it("remembers which list panel was hidden across remounts", () => {
+    const props = {
+      currentChapter: CHAPTER,
+      selectedPageId: null,
+      library: LIBRARY,
+      jobActive: false,
+      settingsBusy: false,
+      settingsOpen: false,
+      onOpenTranslationSource: vi.fn(),
+      onOpenBatchImport: vi.fn(),
+      onOpenSettings: vi.fn(),
+      onOpenLibraryFolder: vi.fn(),
+      onOpenShareExport: vi.fn(),
+      onOpenShareImport: vi.fn(),
+      onOpenChapter: vi.fn(),
+      onRenameWork: vi.fn(),
+      onRenameChapter: vi.fn(),
+      onReorderChapter: vi.fn(),
+      onSelectPage: vi.fn(),
+      onRetranslatePage: vi.fn(),
+      onRemovePage: vi.fn(),
+      onReorderPage: vi.fn(),
+    };
+    const first = render(<AppSidebar {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "페이지 접기" }));
+    first.unmount();
+
+    const { container } = render(<AppSidebar {...props} />);
+    expect(
+      container.querySelector(".page-list")?.getAttribute("data-collapsed"),
+    ).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "페이지 펼치기" }));
+    cleanup();
+
+    const restored = render(<AppSidebar {...props} />);
+    expect(
+      restored.container
+        .querySelector(".page-list")
+        ?.getAttribute("data-collapsed"),
+    ).toBe("false");
   });
 
   it("offers chat from the toolbar only while no chapter or chat is open", () => {

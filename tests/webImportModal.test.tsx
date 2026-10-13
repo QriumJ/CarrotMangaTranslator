@@ -17,6 +17,7 @@ import type { WebImportScanResult } from "../src/shared/webImportTypes";
 
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
   window.mangaApi = createTestMangaGatewayStub();
 });
 
@@ -64,6 +65,42 @@ describe("WebImportModal", () => {
       (screen.getByRole("checkbox", { name: /2번 이미지/ }) as HTMLInputElement)
         .checked,
     ).toBe(true);
+  });
+
+  it("keeps the chosen size filter across rescans and the next import", async () => {
+    window.mangaApi = createTestMangaGatewayStub({
+      onWebImportProgress: () => () => undefined,
+      scanWebImport: vi.fn(async () => ({
+        status: "ready" as const,
+        result: RESULT,
+      })),
+      discardWebImportSession: vi.fn(async () => ({ completed: true })),
+    });
+    const scan = async (): Promise<void> => {
+      fireEvent.change(
+        screen.getByRole("textbox", { name: "웹 페이지 링크" }),
+        { target: { value: "https://example.com/gallery" } },
+      );
+      fireEvent.click(screen.getByRole("button", { name: "이미지 불러오기" }));
+      expect(await screen.findByText("1.png")).not.toBeNull();
+    };
+    const first = render(
+      <WebImportModal onCancel={vi.fn()} onPrepared={vi.fn()} />,
+    );
+    await scan();
+    fireEvent.click(screen.getByRole("radio", { name: "전체" }));
+    expect(screen.getByText("2.png")).not.toBeNull();
+
+    await scan();
+    expect(screen.getByText("2.png")).not.toBeNull();
+    expect(
+      screen.getByRole("radio", { name: "전체" }).getAttribute("aria-checked"),
+    ).toBe("true");
+    first.unmount();
+
+    render(<WebImportModal onCancel={vi.fn()} onPrepared={vi.fn()} />);
+    await scan();
+    expect(screen.getByText("2.png")).not.toBeNull();
   });
 
   it("completes a scan when mounted under React StrictMode", async () => {

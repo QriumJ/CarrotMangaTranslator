@@ -15,7 +15,7 @@ export async function withSettingsMutation<T>(
   }
 }
 
-export function preserveCodexPreferences(
+export function preserveIndependentUiPreferences(
   submitted: AppSettings,
   current: AppSettings,
 ): AppSettings {
@@ -26,6 +26,7 @@ export function preserveCodexPreferences(
       codexTypesettingPreferences:
         current.ui?.codexTypesettingPreferences ??
         submitted.ui?.codexTypesettingPreferences,
+      exportPreferences: current.ui?.exportPreferences,
     },
   };
 }

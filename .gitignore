@@ -45,6 +45,7 @@ logs/*
 logs/app.log
 /library/
 /page-workflows/
+/page-workflow-timings/
 /fonts/
 /artifacts/
 /datasets/

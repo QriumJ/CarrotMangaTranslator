@@ -10,6 +10,8 @@ import {
   readPageWorkflowRun,
 } from "../src/main/pageWorkflowRunStore";
 import { createPageWorkflowPlan } from "../src/shared/pageWorkflowTypes";
+import { PageWorkflowTimingRecorder } from "../src/main/pageWorkflow/pageWorkflowTimingRecorder";
+import { makeChapter, makePage } from "./helpers/workspacePointerFixtures";
 
 type Handler = (event: unknown, request: unknown) => Promise<unknown>;
 const boundary = vi.hoisted(() => ({ handlers: new Map<string, Handler>() }));
@@ -30,6 +32,47 @@ afterEach(async () => {
 });
 
 describe("page workflow IPC resume binding", () => {
+  it("returns saved attempt measurements through the real validated chapter query", async () => {
+    const { root, request, run } = await fixture();
+    const chapterId = request.selection[0].chapterId;
+    const page = { ...makePage(), id: request.selection[0].pageIds[0] };
+    const chapter = { ...makeChapter(page), id: chapterId };
+    const recorder = new PageWorkflowTimingRecorder(
+      root,
+      run.id,
+      request,
+      [chapter],
+      () => 0,
+    );
+    await recorder.stage("ocr", async () => {
+      await recorder.startPage("ocr", chapterId, page)();
+    });
+    recorder.skipPage("review", chapterId, page.id);
+    await recorder.finish("partial");
+    await expect(invoke("page-workflow:timings", chapterId)).resolves.toEqual([
+      expect.objectContaining({
+        attemptId: recorder.record.attemptId,
+        runId: run.id,
+        status: "partial",
+        stages: { ocr: 0 },
+        pages: [
+          expect.objectContaining({
+            chapterId,
+            pageId: page.id,
+            stages: { ocr: 0 },
+            skippedStages: ["review"],
+          }),
+        ],
+      }),
+    ]);
+    await expect(
+      invoke("page-workflow:timings", randomUUID()),
+    ).resolves.toEqual([]);
+    await expect(
+      invoke("page-workflow:timings", "../outside"),
+    ).rejects.toThrow();
+  });
+
   it("rejects another chapter or page before opening a persisted resume target", async () => {
     const { root, request, run } = await fixture();
     for (const selection of [

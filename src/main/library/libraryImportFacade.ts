@@ -1,4 +1,5 @@
 import { throwIfAborted } from "../abortSignal";
+import { prepareFoldersImportPreview } from "../libraryStore/importFoldersPreview";
 import type {
   CreateImportFromPreviewRequest,
   CreateImportResult,
@@ -25,6 +26,7 @@ import { libraryStructureResource } from "../../shared/appActivityTypes";
 import { libraryMutationCoordinator } from "../libraryStore/libraryMutationCoordinator";
 
 export {
+  prepareFoldersImportPreview,
   prepareArchiveFolderImportPreview,
   prepareArchiveImportPreview,
   preparePdfImportPreview,
@@ -65,6 +67,29 @@ export function createLibraryImportService(
 ): LibraryImportService {
   return {
     createImport: async (request, signal, publication) => {
+      if (
+        request.skipDuplicateChapterTitles &&
+        request.target.mode === "existing"
+      ) {
+        // This boundary admits a mutation only after ownership is acquired.
+        // A queued duplicate check must not block backup's wait-for-idle.
+        return withLibraryContentEdit(
+          [libraryStructureResource("work", request.target.workId)],
+          () =>
+            createImportFromPreviewUnlocked(
+              request,
+              runtime.image,
+              signal,
+              (publish) =>
+                runtime.runMutation(() => {
+                  throwIfAborted(signal);
+                  return publish();
+                }),
+              publication,
+            ),
+          signal ?? new AbortController().signal,
+        );
+      }
       const pending = libraryMutationCoordinator.begin();
       try {
         return await createImportFromPreviewUnlocked(

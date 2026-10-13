@@ -177,6 +177,7 @@ type OcrSettings = {
 };
 
 export type UiSettings = {
+  exportPreferences?: import("./exportPreferences").ExportPreferences;
   hayaiTranslationUi?: "classic" | "workflow";
   pageWorkflowDefault?: import("./pageWorkflowTypes").PageWorkflowPlan;
   pageWorkflowPresets?: import("./pageWorkflowTypes").PageWorkflowPreset[];

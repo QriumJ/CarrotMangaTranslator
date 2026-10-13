@@ -13,10 +13,15 @@ describe("workspace chrome CSS", () => {
     path.join(ROOT, "src/renderer/src/styles/stage-overlay.css"),
     "utf8",
   );
-  const foundationsCss = fs.readFileSync(
-    path.join(ROOT, "src/renderer/src/styles/foundations.css"),
-    "utf8",
-  );
+  const foundationsCss =
+    fs.readFileSync(
+      path.join(ROOT, "src/renderer/src/styles/palette.css"),
+      "utf8",
+    ) +
+    fs.readFileSync(
+      path.join(ROOT, "src/renderer/src/styles/foundations.css"),
+      "utf8",
+    );
   const panelsCss = fs.readFileSync(
     path.join(ROOT, "src/renderer/src/styles/panels.css"),
     "utf8",
@@ -80,14 +85,14 @@ describe("workspace chrome CSS", () => {
       ),
     ).toContain("background: var(--canvas-rail-divider)");
     expect(foundationsCss).toContain(
-      "--canvas-rail-divider: rgba(151, 163, 179, 0.64)",
+      "--canvas-rail-divider: rgb(from var(--palette-neutral-400) r g b / 64%)",
     );
     expect(
       rule(
         foundationsCss,
         ".stage-toolbar-section + .stage-toolbar-section::before",
       ),
-    ).toContain("background: rgba(151, 163, 179, 0.64)");
+    ).toContain("background: var(--canvas-rail-divider)");
   });
 
   it("keeps the canvas in the first viewport with contextual rail tracks", () => {

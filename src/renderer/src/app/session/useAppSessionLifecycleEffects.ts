@@ -133,7 +133,7 @@ function useAudibleJobCompletion(
     // Aggregate flows reuse synthetic IDs; each invocation owns one sound.
     const key = isAggregateFlowTerminal(job)
       ? `${job.id}:${flowGenerationRef.current}`
-      : job.id;
+      : (job.executionId ?? job.id);
     if (terminalJobIdsRef.current.has(key)) return;
     terminalJobIdsRef.current.add(key);
     if (job.status !== "completed") return;

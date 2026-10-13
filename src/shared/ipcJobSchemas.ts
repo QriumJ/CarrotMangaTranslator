@@ -69,6 +69,7 @@ export const JobEventSchema = z
     soundEffectTextReview: soundEffectTextReviewSchema.optional(),
     imageRedactionReview: imageRedactionReviewSchema.optional(),
     id: z.string().min(1).max(200),
+    executionId: z.string().uuid().optional(),
     kind: JobKindSchema,
     status: JobStatusSchema,
     origin: z.literal("mcp").optional(),

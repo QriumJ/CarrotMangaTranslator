@@ -7,6 +7,7 @@ import { resolveTransformedBlockBounds } from "../../../shared/editableRenderGeo
 import { relocateGeneratedLettering } from "../../../shared/generatedLettering";
 import type { TranslationBlock } from "../../../shared/textTypes";
 import { blockLibraryGateway } from "../api/blockLibraryGateway";
+import { useWorkspacePreference } from "../hooks/useWorkspacePreference";
 
 export type BlockLibrarySource = Pick<
   typeof blockLibraryGateway,
@@ -130,7 +131,7 @@ export function useBlockLibraryController({
     null,
   );
   const [query, setQuery] = React.useState("");
-  const [sort, setSort] = React.useState<BlockLibrarySortMode>("recent");
+  const [sort, setSort] = useWorkspacePreference("blockLibrarySort");
   const [busyId, setBusyId] = React.useState<string | null>(null);
   const [error, setError] = React.useState("");
   const [editEntry, setEditEntry] = React.useState<BlockLibraryEntryV1 | null>(

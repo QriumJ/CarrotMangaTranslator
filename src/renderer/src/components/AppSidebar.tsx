@@ -12,6 +12,8 @@ import type {
   LibraryIndex,
 } from "../../../shared/libraryTypes";
 import { useEventCallback } from "../hooks/useEventCallback";
+import { useWorkspacePreference } from "../hooks/useWorkspacePreference";
+import type { SidebarCollapsedPanel } from "../lib/workspacePreferences";
 import { LibraryTree } from "./LibraryTree";
 import { PageList } from "./PageList";
 import { ActionMenu } from "./ui/ActionMenu";
@@ -139,9 +141,9 @@ function LibrarySidebarContent(props: AppSidebarProps): React.JSX.Element {
           "add-chapter-pages",
           "",
         )}
+        {...currentChapterPages(props.currentChapter)}
         collapsed={collapsedPanel === "pages"}
         otherPanelCollapsed={collapsedPanel === "library"}
-        pages={props.currentChapter?.pages ?? []}
         selectedPageId={props.selectedPageId}
         jobActive={
           props.pageStructureBlocked ??
@@ -161,14 +163,21 @@ function LibrarySidebarContent(props: AppSidebarProps): React.JSX.Element {
   );
 }
 
+function currentChapterPages(chapter: ChapterSnapshot | null): {
+  chapterId: string | null;
+  pages: ChapterSnapshot["pages"];
+} {
+  return { chapterId: chapter?.id ?? null, pages: chapter?.pages ?? [] };
+}
+
 function useSidebarPanelCollapse(): {
-  collapsedPanel: "library" | "pages" | null;
+  collapsedPanel: SidebarCollapsedPanel;
   toggleLibraryContent: () => void;
   togglePageContent: () => void;
 } {
-  const [collapsedPanel, setCollapsedPanel] = React.useState<
-    "library" | "pages" | null
-  >(null);
+  const [collapsedPanel, setCollapsedPanel] = useWorkspacePreference(
+    "sidebarCollapsedPanel",
+  );
   return {
     collapsedPanel,
     toggleLibraryContent: React.useCallback(
@@ -176,12 +185,12 @@ function useSidebarPanelCollapse(): {
         setCollapsedPanel((current) =>
           current === "library" ? null : "library",
         ),
-      [],
+      [setCollapsedPanel],
     ),
     togglePageContent: React.useCallback(
       () =>
         setCollapsedPanel((current) => (current === "pages" ? null : "pages")),
-      [],
+      [setCollapsedPanel],
     ),
   };
 }

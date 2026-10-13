@@ -1,7 +1,7 @@
 import { join } from "node:path";
 import { tMain } from "./localization";
 import type { PageImageExportDependencies } from "./pageImageExportPorts";
-import { sanitizeOutputPathSegment } from "./pageImageExportNaming";
+import { sanitizeOutputPathSegment } from "../../shared/outputPathSegment";
 
 async function createPageImageExportOutputDir(
   parentDir: string,

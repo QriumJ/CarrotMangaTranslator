@@ -81,12 +81,12 @@ export function renderShapePreview(
   preview.dirty = false;
 }
 
-function resolveThemeAccentColor(stage: HTMLElement): string {
-  const accent = window
-    .getComputedStyle(stage)
-    .getPropertyValue("--accent")
-    .trim();
-  return accent || "#a64e36";
+export function resolveThemeAccentColor(
+  stage: HTMLElement,
+  token = "--accent",
+): string {
+  const accent = window.getComputedStyle(stage).getPropertyValue(token).trim();
+  return accent || window.getComputedStyle(stage).color;
 }
 
 function renderRestoreRectangle(
@@ -121,11 +121,17 @@ function renderRestoreRectangle(
     );
   }
   context.globalAlpha = sourceReady ? 0.12 : 0.24;
-  context.fillStyle = "#70b7ff";
+  context.fillStyle = resolveThemeAccentColor(
+    stage,
+    "--canvas-transform-accent",
+  );
   context.fillRect(bounds.left, bounds.top, bounds.width, bounds.height);
   context.globalAlpha = 0.95;
   context.lineWidth = 2;
-  context.strokeStyle = "#70b7ff";
+  context.strokeStyle = resolveThemeAccentColor(
+    stage,
+    "--canvas-transform-accent",
+  );
   context.setLineDash([7, 4]);
   traceRectangle(context, bounds);
   context.stroke();
@@ -178,16 +184,23 @@ export function drawEraserSegment(
       bounds.height,
     );
   } else {
-    context.fillStyle = "rgba(112, 183, 255, 0.24)";
+    context.globalAlpha = 0.24;
+    context.fillStyle = resolveThemeAccentColor(
+      stage,
+      "--canvas-transform-accent",
+    );
     context.fillRect(0, 0, geometry.displayWidth, geometry.displayHeight);
   }
   context.restore();
   context.save();
-  context.globalAlpha = 0.78;
+  context.globalAlpha = 0.78 * 0.9;
   context.lineCap = "round";
   context.lineJoin = "round";
   context.lineWidth = radius * 2;
-  context.strokeStyle = "rgba(112, 183, 255, 0.9)";
+  context.strokeStyle = resolveThemeAccentColor(
+    stage,
+    "--canvas-transform-accent",
+  );
   context.setLineDash([8, 5]);
   context.beginPath();
   context.moveTo(from.x, from.y);

@@ -6,6 +6,7 @@ import { codexTypesettingPreferencesSchema } from "../../shared/codexTypesetting
 import { normalizeUiLocale } from "../../shared/uiLocales";
 import { normalizePageWorkflowUi } from "../../shared/pageWorkflowSettings";
 import { resolveBoolean } from "./appSettingsResolvers";
+import { normalizeExportPreferences } from "../../shared/exportPreferences";
 
 export function normalizeUiSettings(
   ui: Record<string, unknown> | null,
@@ -28,6 +29,7 @@ export function normalizeUiSettings(
     base.cumulativeContextDetailDefault,
   );
   return {
+    exportPreferences: normalizeExportPreferences(data.exportPreferences),
     ...normalizePageWorkflowUi(data),
     ...resolveCodexTypesettingPreferences(data.codexTypesettingPreferences),
     locale: normalizeUiLocale(data.locale, base.locale),

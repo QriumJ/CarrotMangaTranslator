@@ -41,8 +41,9 @@ export async function prepareArchiveFolderImportPreview(
   folderPath: string,
   signal?: AbortSignal,
   onProgress?: (progress: ImportSourceProgress) => void,
+  options: { allowEmpty?: boolean } = {},
 ): Promise<PreparedImportPreview> {
-  const basePreview = await previewZipFolder(folderPath);
+  const basePreview = await previewZipFolder(folderPath, options);
   const preparedRarPreviews: PreparedImportPreview[] = [];
   try {
     for (const rarPath of await listRarFiles(folderPath)) {

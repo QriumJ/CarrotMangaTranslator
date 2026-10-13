@@ -1,10 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { ImportPreviewSession } from "../../../../shared/importTypes";
-import type {
-  WebImportScanResult,
-  WebImportSizeFilter,
-} from "../../../../shared/webImportTypes";
+import type { WebImportScanResult } from "../../../../shared/webImportTypes";
 import { libraryGateway } from "../../api/libraryGateway";
 import { useAsyncErrorState } from "../../hooks/useAsyncErrorState";
 import {
@@ -12,6 +9,7 @@ import {
   setVisibleWebImportSelection,
 } from "../../lib/webImportSelection";
 import { handoffActiveModalToWorkCenter } from "../../lib/modalWorkCenterHandoff";
+import { useWorkspacePreference } from "../../hooks/useWorkspacePreference";
 
 export function useWebImportModalState({
   onCancel,
@@ -22,7 +20,7 @@ export function useWebImportModalState({
 }) {
   const { t } = useTranslation("components");
   const [url, setUrl] = useState("");
-  const [filter, setFilter] = useState<WebImportSizeFilter>("large");
+  const [filter, setFilter] = useWorkspacePreference("webImportSizeFilter");
   const [result, setResult] = useState<WebImportScanResult | null>(null);
   const [excluded, setExcluded] = useState<Set<string>>(() => new Set());
   const { error, setError, report } = useAsyncErrorState(
@@ -49,7 +47,6 @@ export function useWebImportModalState({
     report,
     setError,
     setExcluded,
-    setFilter,
     setResult,
     setScanning,
     setUrl,
@@ -101,7 +98,6 @@ function useWebImportScanAction({
   report,
   setError,
   setExcluded,
-  setFilter,
   setResult,
   setScanning,
   setUrl,
@@ -113,7 +109,6 @@ function useWebImportScanAction({
   report: (error: unknown, message?: string) => void;
   setError: WebImportStateSetter<string>;
   setExcluded: WebImportStateSetter<Set<string>>;
-  setFilter: WebImportStateSetter<WebImportSizeFilter>;
   setResult: WebImportStateSetter<WebImportScanResult | null>;
   setScanning: WebImportStateSetter<boolean>;
   setUrl: WebImportStateSetter<string>;
@@ -147,7 +142,6 @@ function useWebImportScanAction({
         setError(t(`webImport.errors.${response.reason}`));
       } else {
         setResult(response.result);
-        setFilter("large");
         setExcluded(new Set());
       }
     } catch (caught) {
@@ -166,7 +160,6 @@ function useWebImportScanAction({
     report,
     setError,
     setExcluded,
-    setFilter,
     setResult,
     setScanning,
     setUrl,

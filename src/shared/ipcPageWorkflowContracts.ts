@@ -8,6 +8,10 @@ import {
   type PageWorkflowResult,
 } from "./pageWorkflowTypes";
 import { PAGE_WORKFLOW_STAGES } from "./pageWorkflowStages";
+import {
+  PageWorkflowTimingSchema,
+  type PageWorkflowTiming,
+} from "./pageWorkflowTiming";
 
 export const PageWorkflowRequestSchema = z
   .object({
@@ -45,6 +49,12 @@ const IssueSchema = z
   })
   .strict();
 export const pageWorkflowIpcContracts = {
+  getPageWorkflowTimings: defineIpcContract<[string], PageWorkflowTiming[]>({
+    apiKey: "getPageWorkflowTimings",
+    channel: "page-workflow:timings",
+    args: z.tuple([z.string().uuid()]),
+    result: z.array(PageWorkflowTimingSchema),
+  }),
   preflightPageWorkflow: defineIpcContract<
     [PageWorkflowRequest],
     PageWorkflowPreflight

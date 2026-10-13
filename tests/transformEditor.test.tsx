@@ -18,9 +18,26 @@ import {
 } from "../src/shared/blockTransforms";
 import type { TranslationBlock } from "../src/shared/textTypes";
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  window.localStorage.clear();
+});
 
 describe("dense transform editor", () => {
+  it("remembers the aspect-ratio lock for later blocks", () => {
+    const view = renderEditor({ mode: "select" });
+    const lock = screen.getByRole("checkbox", { name: "비율 유지" });
+    expect((lock as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(lock);
+    view.unmount();
+
+    renderEditor({ mode: "select", block: makeBlock({ id: "block-2" }) });
+    expect(
+      (screen.getByRole("checkbox", { name: "비율 유지" }) as HTMLInputElement)
+        .checked,
+    ).toBe(false);
+  });
+
   it.each([
     ["아치 왼쪽", "archLeft"],
     ["아치 오른쪽", "archRight"],

@@ -35,6 +35,8 @@ type JobProgressNotification = {
 
 export type JobState = {
   id: string;
+  /** Distinguishes attempts of a resumable job without changing its receipt ID. */
+  executionId?: string;
   kind: JobKind;
   status: JobStatus;
   progressText: string;

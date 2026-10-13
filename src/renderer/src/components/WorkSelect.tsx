@@ -4,6 +4,7 @@ import type {
   LibraryIndex,
   LibraryWorkSummary,
 } from "../../../shared/libraryTypes";
+import { useWorkspacePreference } from "../hooks/useWorkspacePreference";
 import { Select } from "./ui/Select";
 import type { SelectOption } from "./ui/selectTypes";
 import styles from "./WorkSelect.module.css";
@@ -30,7 +31,7 @@ export function WorkSelect({
   className,
 }: WorkSelectProps): React.JSX.Element {
   const { i18n, t } = useTranslation("components");
-  const [sortMode, setSortMode] = React.useState<WorkSortMode>("library");
+  const [sortMode, setSortMode] = useWorkspacePreference("workPickerSort");
   const works = React.useMemo(
     () => sortWorks(library, sortMode, i18n.resolvedLanguage ?? i18n.language),
     [i18n.language, i18n.resolvedLanguage, library, sortMode],

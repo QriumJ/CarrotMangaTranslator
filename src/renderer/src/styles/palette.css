@@ -1,0 +1,464 @@
+:root {
+  /* Single palette. Component roles below may reference these or semantic roles only.
+     Terracotta selection/actions; blue progress, green completion, amber warning, red error. */
+  --palette-ink: #000000;
+  --palette-paper: #ffffff;
+  --palette-neutral-950: #101113;
+  --palette-neutral-900: #17181b;
+  --palette-neutral-850: #1d1f22;
+  --palette-neutral-800: #25272b;
+  --palette-neutral-750: #303237;
+  --palette-neutral-700: #3d4046;
+  --palette-neutral-600: #555960;
+  --palette-neutral-500: #777b82;
+  --palette-neutral-400: #9da0a6;
+  --palette-neutral-300: #bfc1c5;
+  --palette-neutral-100: #e8e9eb;
+  --palette-accent-600: #a64e36;
+  --palette-accent-550: #b05239;
+  --palette-accent-500: #cf7152;
+  --palette-accent-300: #e7b39e;
+  --palette-info-500: #6f96db;
+  --palette-info-300: #c4d7ff;
+  --palette-success-500: #4f9468;
+  --palette-success-300: #97caaa;
+  --palette-warning-500: #b08b57;
+  --palette-warning-300: #d4b88c;
+  --palette-danger-700: #713b3e;
+  --palette-danger-500: #bd6f73;
+  --palette-danger-300: #e2a5a8;
+
+  /* Component and canvas roles. Artwork and user-selected paint colours are data. */
+  --canvas-transform-accent: var(--info);
+  --canvas-transform-handle-light: var(--info-text);
+  --canvas-curve-accent: var(--warning-text);
+  --canvas-contrast-light: var(--palette-paper);
+  --action-danger-text: var(--danger-text);
+  --review-warning-text: var(--warning-text);
+  --job-error-accent: var(--danger-text);
+  --save-complete-text: var(--success-text);
+  --status-muted-surface: var(--palette-neutral-900);
+  --status-muted-border: var(--palette-neutral-750);
+  --task-title-text: var(--palette-neutral-100);
+  --value-emphasis-text: var(--palette-neutral-100);
+  --canvas-control-text: var(--palette-neutral-300);
+  --canvas-control-text-hover: var(--palette-paper);
+  --canvas-view-panel-surface: rgb(from var(--palette-neutral-900) r g b / 96%);
+  --canvas-view-panel-text: var(--palette-neutral-100);
+  --canvas-rail-divider: rgb(from var(--palette-neutral-400) r g b / 64%);
+  --pattern-action-surface: var(--accent);
+  --pattern-action-text: var(--accent-text);
+  --pattern-action-border-hover: var(--accent-bd);
+  --pattern-action-surface-hover: var(--accent-hover);
+  --inpainting-panel-border: var(--palette-neutral-700);
+  --gather-toolbar-surface: var(--palette-neutral-900);
+  --preview-grid-line: rgb(from var(--palette-paper) r g b / 1.8%);
+  --sound-control-thumb-shadow: rgb(from var(--palette-ink) r g b / 42%);
+  --block-library-modals-preview-background-start: rgb(
+    from var(--palette-paper) r g b / 3%
+  );
+  --block-library-modals-preview-background-end: rgb(
+    from var(--palette-paper) r g b / 3%
+  );
+  --block-library-modals-editor-font-warning-color: var(--warning-text);
+  --block-library-modals-warning-color: var(--warning-text);
+  --block-library-modals-error-color: var(--danger-text);
+  --conditional-batch-editor-scheme-bar-z-index: 30;
+  --conditional-batch-editor-scheme-menu-popover-z-index: 40;
+  --conditional-batch-editor-pattern-menu-z-index: 20;
+  --error-report-dialog-privacy-notice-border: var(--warning-bd);
+  --error-report-dialog-privacy-notice-background: var(--warning-soft);
+  --error-report-dialog-load-error-background: var(--danger-soft);
+  --error-report-dialog-action-error-background: var(--danger-soft);
+  --error-report-dialog-action-error-color: var(--danger-text);
+  --shadow-ink-28: rgb(from var(--palette-ink) r g b / 28%);
+  --bubble-layout-guide-filter-start: rgb(
+    from var(--palette-neutral-950) r g b / 92%
+  );
+  --bubble-layout-guide-filter-end: rgb(
+    from var(--palette-accent-500) r g b / 24%
+  );
+  --bubble-layout-guide-polygon-stroke: var(--success-text);
+  --bubble-layout-guide-manual-polygon-stroke: var(--warning-text);
+  --transform-guide-filter: rgb(from var(--palette-neutral-950) r g b / 92%);
+  --curve-controls-curve-control-line-stroke: rgb(
+    from var(--palette-paper) r g b / 64%
+  );
+  --rotation-stem-box-shadow: var(--palette-neutral-950);
+  --curve-controls-curve-control-after-background: var(--palette-accent-300);
+  --warp-controls-warp-grid-line-stroke: var(--info);
+  --warp-controls-warp-grid-line-hover-stroke: var(--info-text);
+  --warp-controls-warp-selection-rect-fill: rgb(
+    from var(--palette-accent-300) r g b / 14%
+  );
+  --warp-controls-warp-selection-rect-stroke: var(--info-text);
+  --warp-controls-warp-point-selected-after-background: var(--warning-text);
+  --stage-drag-hud-invalid-border-color: var(--danger-bd);
+  --stage-drag-hud-invalid-background: var(--danger-soft);
+  --stage-drag-hud-invalid-color: var(--danger-text);
+  --vertex-service-account-guide-modal-role-box-code-background: var(
+    --palette-neutral-900
+  );
+  --sound-effect-translation-modal-creation-box-z-index: 4;
+  --editor-overflow-menu-background: var(--palette-neutral-850);
+  --inline-toggle-color: var(--palette-neutral-300);
+  --block-type-preview-border: var(--palette-neutral-700);
+  --block-type-preview-background: var(--palette-neutral-900);
+  --block-type-preview-color: var(--palette-neutral-100);
+  --shadow-ink-16: rgb(from var(--palette-ink) r g b / 16%);
+  --color-picker-button-hover-border-color: var(--border-hover);
+  --color-picker-button-hover-background: var(--palette-neutral-900);
+  --color-swatch-border: rgb(from var(--palette-paper) r g b / 36%);
+  --shadow-ink-26: rgb(from var(--palette-ink) r g b / 26%);
+  --progress-card-border: var(--palette-neutral-750);
+  --job-completed-card-border-start: var(--success-bd);
+  --job-completed-card-border-end: var(--palette-neutral-750);
+  --job-completed-card-background-start: var(--success-soft);
+  --job-completed-card-color: var(--text);
+  --job-completed-heading-span-color: var(--success-text);
+  --job-completed-card-p-color: var(--text-dim);
+  --chapter-save-status-error-color: var(--danger-text);
+  --progress-meta-color: var(--palette-neutral-300);
+  --job-pill-background: var(--palette-neutral-800);
+  --job-pill-color: var(--palette-neutral-100);
+  --job-pill-running-background: var(--info-soft);
+  --job-pill-failed-background: var(--danger-soft);
+  --job-pill-partial-background: var(--warning-soft);
+  --job-pill-completed-background: var(--success-soft);
+  --job-pill-cancelled-background: var(--palette-neutral-700);
+  --gather-direct-editor-body-background: var(--palette-neutral-850);
+  --gather-direct-preview-background: var(--palette-neutral-950);
+  --gather-direct-preview-head-background: var(--palette-neutral-900);
+  --preview-stage-glow: rgb(from var(--palette-paper) r g b / 3.5%);
+  --gather-direct-preview-badge-background: rgb(
+    from var(--palette-neutral-950) r g b / 82%
+  );
+  --gather-direct-pill-toggle-aria-pressed-true-span-box-shadow: rgb(
+    from var(--palette-accent-500) r g b / 16%
+  );
+  --gather-direct-color-swatch-border: rgb(
+    from var(--palette-paper) r g b / 38%
+  );
+  --shadow-ink-22: rgb(from var(--palette-ink) r g b / 22%);
+  --gather-review-warnings-background: var(--warning-soft);
+  --gather-text-page-title-background: var(--palette-neutral-800);
+  --gather-text-block-clickable-hover-background: var(--palette-neutral-850);
+  --gather-text-mark-background: rgb(
+    from var(--palette-accent-500) r g b / 45%
+  );
+  --preview-select-background: var(--palette-neutral-800);
+  --preview-select-color: var(--palette-neutral-100);
+  --page-status-badge-border: var(--palette-neutral-700);
+  --page-status-badge-background: var(--palette-neutral-850);
+  --page-status-badge-color: var(--palette-neutral-300);
+  --page-remove-color: var(--danger-text);
+  --page-remove-border-color: var(--danger-bd);
+  --page-remove-background: var(--danger-soft);
+  --panel-empty-color: var(--palette-neutral-400);
+  --markup-hint-code-background: rgb(from var(--palette-paper) r g b / 7%);
+  --area-translate-progress-card-background: rgb(
+    from var(--palette-neutral-950) r g b / 72%
+  );
+  --area-translate-progress-card-failed-border-color: var(--danger-bd);
+  --area-translate-progress-card-failed-background: var(--danger-soft);
+  --inpainting-run-card-background: var(--palette-neutral-900);
+  --inpainting-run-card-pattern-border-color: rgb(
+    from var(--palette-accent-500) r g b / 55%
+  );
+  --inpainting-run-card-pattern-background: rgb(
+    from var(--palette-accent-600) r g b / 18%
+  );
+  --peek-button-border-color: var(--palette-neutral-700);
+  --peek-button-color: var(--palette-neutral-100);
+  --inpainting-progress-card-background: var(--palette-neutral-900);
+  --inpainting-progress-card-partial-border-color: var(--warning-bd);
+  --inpainting-progress-card-partial-background: var(--warning-soft);
+  --inpainting-progress-card-small-color: var(--palette-neutral-300);
+  --drawn-mask-panel-border-color: rgb(
+    from var(--palette-accent-500) r g b / 35%
+  );
+  --drawn-mask-panel-panel-header-small-color: var(--palette-accent-300);
+  --brush-swatch-border: rgb(from var(--palette-paper) r g b / 72%);
+  --shadow-ink-45: rgb(from var(--palette-ink) r g b / 45%);
+  --retouch-color-picker-border: rgb(from var(--palette-paper) r g b / 28%);
+  --shadow-ink-32: rgb(from var(--palette-ink) r g b / 32%);
+  --type-stat-review-border-color: var(--success-bd);
+  --type-stat-review-background: var(--success-soft);
+  --type-stat-review-color: var(--success-text);
+  --inpainting-actions-button-border-color: var(--palette-neutral-700);
+  --linked-workspace-status-badge-idle-border-color: var(--success-bd);
+  --shortcut-binding-label-color: var(--palette-neutral-100);
+  --shortcut-binding-conflict-color: var(--danger-text);
+  --toast-warn-border-left-color: var(--warning-bd);
+  --toast-success-toast-icon-color: var(--success-text);
+  --toast-warn-toast-icon-color: var(--warning-text);
+  --inpainting-guide-content-background: var(--palette-neutral-900);
+  --inpainting-guide-content-p-color: var(--palette-neutral-300);
+  --inpainting-guide-content-ol-color: var(--palette-neutral-100);
+  --guide-hide-check-color: var(--palette-neutral-300);
+  --share-warning-strip-border-color: var(--warning-bd);
+  --share-warning-strip-background: var(--warning-soft);
+  --share-final-item-box-shadow: rgb(from var(--palette-paper) r g b / 2.5%);
+  --shadow-ink-42: rgb(from var(--palette-ink) r g b / 42%);
+  --share-merge-item-border: var(--palette-neutral-750);
+  --share-merge-item-background: var(--palette-neutral-850);
+  --share-merge-item-existing-border-color: var(--palette-neutral-700);
+  --share-merge-item-incoming-border-color: var(--success-bd);
+  --share-merge-item-incoming-background: var(--success-soft);
+  --block-style-preset-menu-background: var(--palette-neutral-900);
+  --page-block-list-panel-header-background: var(--palette-neutral-900);
+  --page-block-badge-sound-color: var(--text-dim);
+  --page-block-badge-excluded-color: var(--text-muted);
+  --style-preset-application-groups-background: var(--palette-neutral-850);
+  --style-preset-manager-screen-background: var(--palette-neutral-800);
+  --chapter-save-badge-dirty-color: var(--warning-text);
+  --chapter-save-badge-saving-color: var(--info-text);
+  --editor-state-badge-border: rgb(from var(--palette-accent-300) r g b / 38%);
+  --editor-state-badge-background: rgb(
+    from var(--palette-accent-300) r g b / 8%
+  );
+  --transform-status-chip-suspended-border-color: var(--warning-bd);
+  --transform-status-chip-suspended-background: var(--warning-soft);
+  --transform-overflow-warning-border: var(--warning-bd);
+  --transform-overflow-warning-background: var(--warning-soft);
+  --library-search-input-placeholder-color: var(--palette-neutral-400);
+  --sortable-item-dragging-box-shadow: rgb(
+    from var(--palette-accent-300) r g b / 28%
+  );
+  --sortable-scroll-drag-active-sortable-item-not-dragging-border-color: var(
+    --palette-accent-600
+  );
+  --drag-handle-color: var(--palette-neutral-400);
+  --drag-handle-hover-not-disabled-color: var(--palette-neutral-100);
+  --settings-api-status-border: var(--success-bd);
+  --settings-api-status-background: var(--success-soft);
+  --settings-api-status-error-background: var(--danger-soft);
+  --shadow-ink-40: rgb(from var(--palette-ink) r g b / 40%);
+  --mac-alpha-badge-border: var(--warning-bd);
+  --mac-alpha-badge-color: var(--warning-text);
+  --mac-alpha-badge-background: var(--warning-soft);
+  --mac-alpha-badge-span-last-child-color: var(--warning-text);
+  --mac-alpha-badge-dot-background: var(--warning-soft);
+  --mac-alpha-badge-dot-box-shadow: var(--warning-bd);
+  --control-tooltip-bubble-border: var(--palette-neutral-700);
+  --control-tooltip-bubble-background: rgb(
+    from var(--palette-neutral-850) r g b / 98%
+  );
+  --control-tooltip-bubble-color: var(--palette-paper);
+  --library-drop-overlay-background: rgb(
+    from var(--palette-neutral-950) r g b / 68%
+  );
+  --retouch-cursor-border: var(--palette-neutral-950);
+  --retouch-cursor-background: var(--palette-neutral-950);
+  --retouch-cursor-outer-ring: rgb(from var(--palette-paper) r g b / 95%);
+  --shadow-ink-35: rgb(from var(--palette-ink) r g b / 35%);
+  --retouch-cursor-inner-ring: rgb(from var(--palette-paper) r g b / 72%);
+  --retouch-preview-brush-path-filter-start: rgb(
+    from var(--palette-paper) r g b / 65%
+  );
+  --shadow-ink-55: rgb(from var(--palette-ink) r g b / 55%);
+  --retouch-preview-mask-path-stroke: var(--warning-text);
+  --retouch-preview-mask-path-filter-start: rgb(
+    from var(--palette-paper) r g b / 65%
+  );
+  --retouch-preview-committed-mask-path-stroke: var(--warning-text);
+  --retouch-preview-outline-stroke: var(--info);
+  --retouch-preview-outline-filter: rgb(from var(--palette-paper) r g b / 75%);
+  --retouch-cursor-span-border: rgb(from var(--palette-paper) r g b / 95%);
+  --retouch-cursor-span-background: rgb(from var(--palette-ink) r g b / 72%);
+  --retouch-cursor-eraser-background: rgb(
+    from var(--palette-accent-300) r g b / 16%
+  );
+  --retouch-cursor-mask-background: rgb(
+    from var(--palette-accent-500) r g b / 18%
+  );
+  --page-image-placeholder-border: var(--palette-neutral-750);
+  --page-image-placeholder-background: var(--palette-neutral-900);
+  --page-image-placeholder-color: var(--palette-neutral-400);
+  --page-image-loading-overlay-background: rgb(
+    from var(--palette-neutral-950) r g b / 12%
+  );
+  --page-image-loading-spinner-border: rgb(
+    from var(--palette-paper) r g b / 30%
+  );
+  --page-image-loading-spinner-background: rgb(
+    from var(--palette-neutral-950) r g b / 38%
+  );
+  --page-image-loading-spinner-box-shadow-start: rgb(
+    from var(--palette-neutral-950) r g b / 32%
+  );
+  --overlay-block-chrome-border: rgb(
+    from var(--palette-neutral-750) r g b / 32%
+  );
+  --shadow-ink-12: rgb(from var(--palette-ink) r g b / 12%);
+  --overlay-excluded-badge-background: var(--palette-neutral-900);
+  --shadow-ink-48: rgb(from var(--palette-ink) r g b / 48%);
+  --overlay-block-pattern-pending-border-color: var(--danger-bd);
+  --pattern-pending-marker-before-background: var(--danger-soft);
+  --pattern-pending-marker-before-box-shadow: var(--danger-bd);
+  --pattern-pending-marker-span-color: var(--danger-text);
+  --region-selection-box-box-shadow-start: rgb(
+    from var(--palette-neutral-950) r g b / 72%
+  );
+  --region-selection-box-box-shadow-end: rgb(
+    from var(--palette-ink) r g b / 18%
+  );
+  --sound-effect-review-box-border: rgb(
+    from var(--palette-accent-500) r g b / 96%
+  );
+  --sound-effect-review-box-background: rgb(
+    from var(--palette-accent-500) r g b / 7%
+  );
+  --sound-effect-review-box-box-shadow-start: rgb(
+    from var(--palette-neutral-950) r g b / 80%
+  );
+  --sound-effect-review-box-box-shadow-end: rgb(
+    from var(--palette-accent-500) r g b / 16%
+  );
+  --sound-effect-review-box-hover-background: rgb(
+    from var(--palette-accent-500) r g b / 15%
+  );
+  --sound-effect-review-box-hover-box-shadow-start: rgb(
+    from var(--palette-neutral-100) r g b / 94%
+  );
+  --sound-effect-review-box-hover-box-shadow-end: rgb(
+    from var(--palette-accent-500) r g b / 32%
+  );
+  --sound-effect-review-box-focus-visible-outline: rgb(
+    from var(--palette-paper) r g b / 98%
+  );
+  --sound-effect-review-box-span-background: var(--palette-accent-500);
+  --sound-effect-review-box-span-box-shadow: rgb(
+    from var(--palette-ink) r g b / 42%
+  );
+  --sound-effect-review-actions-border: rgb(
+    from var(--palette-accent-500) r g b / 80%
+  );
+  --sound-effect-review-actions-color: var(--palette-paper);
+  --sound-effect-review-actions-background: rgb(
+    from var(--palette-neutral-900) r g b / 97%
+  );
+  --shadow-ink-50: rgb(from var(--palette-ink) r g b / 50%);
+  --sound-effect-review-actions-strong-color: var(--palette-accent-300);
+  --sound-effect-review-actions-span-not-sound-effect-review-reading-color: var(
+    --palette-neutral-300
+  );
+  --sound-effect-review-action-button-border: rgb(
+    from var(--palette-paper) r g b / 16%
+  );
+  --sound-effect-review-action-button-color: var(--palette-paper);
+  --sound-effect-review-action-button-is-primary-border-color: rgb(
+    from var(--palette-accent-500) r g b / 95%
+  );
+  --sound-effect-review-action-button-is-primary-background: var(
+    --palette-accent-500
+  );
+  --sound-effect-review-action-button-is-dismiss-color: var(
+    --palette-neutral-300
+  );
+  --bubble-layout-draft-layer-filter-start: rgb(
+    from var(--palette-neutral-950) r g b / 95%
+  );
+  --bubble-layout-draft-layer-filter-end: rgb(
+    from var(--palette-accent-500) r g b / 28%
+  );
+  --bubble-layout-draft-fill-fill: rgb(
+    from var(--palette-accent-500) r g b / 14%
+  );
+  --bubble-layout-draft-fill-stroke: rgb(
+    from var(--palette-accent-300) r g b / 96%
+  );
+  --bubble-layout-draft-shape-polygon-fill: rgb(
+    from var(--palette-accent-500) r g b / 17%
+  );
+  --bubble-layout-draft-shape-polygon-stroke: rgb(
+    from var(--palette-accent-300) r g b / 98%
+  );
+  --bubble-layout-draft-shape-add-polygon-fill: rgb(
+    from var(--palette-accent-500) r g b / 16%
+  );
+  --bubble-layout-draft-shape-add-polygon-stroke: var(--success-text);
+  --bubble-layout-draft-shape-subtract-polygon-fill: var(--danger-text);
+  --bubble-layout-draft-shape-subtract-polygon-stroke: var(--danger-text);
+  --bubble-layout-draft-line-stroke: var(--palette-accent-300);
+  --bubble-layout-brush-stroke-stroke: var(--success-text);
+  --bubble-layout-brush-stroke-subtract-stroke: var(--danger-text);
+  --bubble-layout-draft-layer-circle-fill: var(--palette-paper);
+  --bubble-layout-draft-layer-circle-stroke: var(--palette-accent-500);
+  --bubble-layout-draft-layer-circle-first-fill: var(--palette-accent-500);
+  --bubble-layout-draft-layer-circle-first-stroke: var(--palette-accent-300);
+  --bubble-layout-context-bar-border-bottom: rgb(
+    from var(--palette-accent-300) r g b / 58%
+  );
+  --bubble-layout-context-bar-background: var(--palette-neutral-900);
+  --bubble-layout-context-bar-box-shadow: rgb(
+    from var(--palette-accent-300) r g b / 5%
+  );
+  --bubble-layout-context-info-strong-color: var(--info-text);
+  --bubble-layout-context-hint-bubble-layout-editor-notice-color: var(
+    --palette-accent-300
+  );
+  --bubble-layout-context-actions-button-primary-border-color: rgb(
+    from var(--palette-accent-300) r g b / 64%
+  );
+  --bubble-layout-context-actions-button-primary-background: rgb(
+    from var(--palette-accent-500) r g b / 36%
+  );
+  --bubble-layout-context-actions-button-primary-color: var(
+    --palette-accent-300
+  );
+  --stage-drag-hud-background: rgb(from var(--palette-neutral-950) r g b / 82%);
+  --style-guide-budget-warning-color: var(--warning-text);
+  --translation-overwrite-warning-border: var(--warning-bd);
+  --translation-overwrite-warning-background: var(--warning-soft);
+  --translation-overwrite-warning-color: var(--warning-text);
+  --translation-overwrite-warning-strong-color: var(--warning-text);
+  --translation-overwrite-warning-span-color: var(--warning-text);
+  --web-import-progress-track-background: rgb(
+    from var(--palette-paper) r g b / 12%
+  );
+  --web-import-card-image-background-start: var(--palette-neutral-900);
+  --web-import-card-image-background-end: var(--palette-neutral-900);
+  --web-import-card-index-background: rgb(
+    from var(--palette-neutral-950) r g b / 82%
+  );
+  --web-import-card-check-background: rgb(
+    from var(--palette-neutral-950) r g b / 82%
+  );
+  --status-dock-button-unread-status-dock-indicator-background: var(--info-bd);
+  --status-dock-button-running-status-dock-indicator-border: rgb(
+    from var(--info-bd) r g b / 28%
+  );
+  --status-dock-button-running-status-dock-bell-color: var(--info-text);
+  --status-dock-button-partial-status-dock-indicator-background: var(
+    --warning-bd
+  );
+  --status-popover-background: rgb(from var(--palette-neutral-900) r g b / 98%);
+  --status-dock-button-running-status-dock-indicator-border-color: rgb(
+    from var(--info-bd) r g b / 28%
+  );
+  --status-sound-popover-background-end: rgb(
+    from var(--palette-neutral-950) r g b / 99%
+  );
+  --status-sound-popover-box-shadow-start: rgb(
+    from var(--palette-ink) r g b / 46%
+  );
+  --status-sound-popover-before-background: rgb(
+    from var(--palette-neutral-850) r g b / 99%
+  );
+  --status-sound-category-row-background: rgb(
+    from var(--palette-paper) r g b / 2.5%
+  );
+  --status-sound-category-row-hover-background: rgb(
+    from var(--palette-paper) r g b / 6%
+  );
+  --status-sound-category-row-aria-pressed-true-background: rgb(
+    from var(--palette-paper) r g b / 1.5%
+  );
+  --status-sound-category-icon-background: rgb(
+    from var(--palette-paper) r g b / 6%
+  );
+  --status-sound-category-row-aria-pressed-true-status-sound-category-icon-background: rgb(
+    from var(--palette-paper) r g b / 5%
+  );
+}

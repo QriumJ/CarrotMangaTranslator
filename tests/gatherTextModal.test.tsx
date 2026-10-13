@@ -18,12 +18,38 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
   window.mangaApi = createTestMangaGatewayStub();
   vi.restoreAllMocks();
   gatewayMocks.importReviewText.mockReset();
 });
 
 describe("gather text modal", () => {
+  it("reopens with the last text field and header choice", () => {
+    const view = render(
+      <GatherTextModal chapter={CHAPTER} page={PAGE} onClose={vi.fn()} />,
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "번역문만" }));
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: "페이지 머리말 제외" }),
+    );
+    view.unmount();
+
+    render(<GatherTextModal chapter={CHAPTER} page={PAGE} onClose={vi.fn()} />);
+    expect(
+      screen
+        .getByRole("radio", { name: "번역문만" })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
+    expect(
+      (
+        screen.getByRole("checkbox", {
+          name: "페이지 머리말 제외",
+        }) as HTMLInputElement
+      ).checked,
+    ).toBe(true);
+  });
+
   it("shows only the gathered-text workflow without search-and-replace tabs", () => {
     const onOpenBatchEdit = vi.fn();
     render(

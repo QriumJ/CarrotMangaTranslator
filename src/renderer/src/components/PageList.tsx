@@ -24,7 +24,7 @@ import {
   type SortablePageItemProps,
 } from "./pageList/pageListMemo";
 import { usePageThumbnailObserver } from "./pageThumbnails";
-import { PageTimingDialogPortal } from "./pageList/PageTimingDialogPortal";
+import { usePageTimingDialog } from "./pageList/PageTimingDialogPortal";
 import { usePageListWindow } from "./pageList/usePageListWindow";
 import windowStyles from "./pageList/PageListWindow.module.css";
 import { Button } from "./ui/Button";
@@ -33,6 +33,8 @@ type PageListProps = {
   onAddPages?: () => void;
   onEditPages?: () => void;
   addPagesLabel?: string;
+  /** Chapter whose page-task timing history the timing dialog reads. */
+  chapterId?: string | null;
   collapsed: boolean;
   otherPanelCollapsed: boolean;
   pages: MangaPage[];
@@ -53,6 +55,7 @@ function PageListView({
   onAddPages,
   onEditPages,
   addPagesLabel,
+  chapterId = null,
   collapsed,
   otherPanelCollapsed,
   pages,
@@ -68,7 +71,7 @@ function PageListView({
   onReorder,
   onToggleOtherPanel,
 }: PageListProps): React.JSX.Element {
-  const [timingOpen, setTimingOpen] = React.useState(false);
+  const timing = usePageTimingDialog({ chapterId, pages, selectedPageId });
   const state = usePageListState({
     jobActive,
     onReorder,
@@ -95,7 +98,7 @@ function PageListView({
         statusMode={statusMode}
         visibleCount={state.visiblePages.length}
         onFilterChange={state.setFilter}
-        onOpenTiming={() => setTimingOpen(true)}
+        onOpenTiming={timing.open}
         onToggleOtherPanel={onToggleOtherPanel}
       />
       <PageListContent
@@ -120,11 +123,7 @@ function PageListView({
         setActivePageId={state.setActivePageId}
         statusMode={statusMode}
       />
-      <PageTimingDialogPortal
-        open={timingOpen}
-        pages={pages}
-        onClose={() => setTimingOpen(false)}
-      />
+      {timing.dialog}
     </section>
   );
 }

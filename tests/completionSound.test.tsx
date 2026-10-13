@@ -19,6 +19,92 @@ afterEach(() => {
 });
 
 describe("completion sound", () => {
+  it("queues consecutive sounds without cutting playback and drops muted pending categories", async () => {
+    const instances: AudioMock[] = [];
+    class AudioMock {
+      currentTime = 0;
+      volume = 1;
+      preload = "none";
+      onended: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      play = vi.fn().mockResolvedValue(undefined);
+      pause = vi.fn();
+      constructor() {
+        instances.push(this);
+      }
+    }
+    vi.stubGlobal("Audio", AudioMock);
+    const sound = renderHook(() => useCompletionSoundController());
+    act(() =>
+      sound.result.current.setPreferences({ muted: false, volume: 0.5 }),
+    );
+    act(() => {
+      sound.result.current.playCompletionSound("translation");
+      sound.result.current.playCompletionSound("research");
+      sound.result.current.playCompletionSound("source-erasing");
+    });
+    const audio = instances[0];
+    expect(audio.play).toHaveBeenCalledTimes(1);
+    audio.currentTime = 0.3;
+    act(() =>
+      sound.result.current.setPreferences({
+        muted: false,
+        volume: 0.4,
+        researchMuted: true,
+      }),
+    );
+    expect(audio.currentTime).toBe(0.3);
+    act(() => audio.onended?.());
+    expect(audio.play).toHaveBeenCalledTimes(2);
+    expect(audio.volume).toBe(0.4);
+    act(() => audio.onended?.());
+    expect(audio.play).toHaveBeenCalledTimes(2);
+    act(() => sound.result.current.playCompletionSound("translation"));
+    const staleEnded = audio.onended;
+    act(() =>
+      sound.result.current.setPreferences({ muted: true, volume: 0.4 }),
+    );
+    expect(audio.pause).toHaveBeenCalledOnce();
+    act(() => staleEnded?.());
+    act(() =>
+      sound.result.current.setPreferences({ muted: false, volume: 0.4 }),
+    );
+    expect(audio.play).toHaveBeenCalledTimes(3);
+    sound.unmount();
+    expect(audio.onended).toBeNull();
+  });
+
+  it("continues the queue after a rejected playback and ignores its stale callback", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    let audio!: AudioMock;
+    class AudioMock {
+      currentTime = 0;
+      volume = 1;
+      preload = "";
+      onended: (() => void) | null = null;
+      onerror: (() => void) | null = null;
+      play = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("device unavailable"))
+        .mockResolvedValue(undefined);
+      pause = vi.fn();
+      constructor() {
+        audio = this;
+      }
+    }
+    vi.stubGlobal("Audio", AudioMock);
+    const sound = renderHook(() => useCompletionSoundController());
+    act(() =>
+      sound.result.current.setPreferences({ muted: false, volume: 0.5 }),
+    );
+    await act(async () => {
+      sound.result.current.playCompletionSound("translation");
+      sound.result.current.playCompletionSound("research");
+    });
+    expect(audio.play).toHaveBeenCalledTimes(2);
+    expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
+  });
   it("defaults to muted and persists the user's volume preference", () => {
     const play = vi.fn().mockResolvedValue(undefined);
     const pause = vi.fn();

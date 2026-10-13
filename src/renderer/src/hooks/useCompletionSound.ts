@@ -33,17 +33,19 @@ export function useCompletionSoundController() {
   const [preferences, setStoredPreferences] = React.useState(
     readCompletionSoundPreferences,
   );
-  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+  const playerRef = React.useRef<ReturnType<
+    typeof createCompletionPlayback
+  > | null>(null);
 
   React.useEffect(() => {
     writeCompletionSoundPreferences(preferences);
-    if (audioRef.current) audioRef.current.volume = preferences.volume;
+    playerRef.current?.update(preferences);
   }, [preferences]);
 
   React.useEffect(
     () => () => {
-      audioRef.current?.pause();
-      audioRef.current = null;
+      playerRef.current?.dispose();
+      playerRef.current = null;
     },
     [],
   );
@@ -65,17 +67,11 @@ export function useCompletionSoundController() {
         return;
       }
       try {
-        const audio = audioRef.current ?? new Audio(completionSoundUrl);
-        audioRef.current = audio;
-        audio.preload = "auto";
-        audio.volume = preferences.volume;
-        audio.currentTime = 0;
-        const playback = audio.play();
-        if (playback) {
-          void playback.catch((error) => {
-            console.warn("Could not play the completion sound.", error);
-          });
-        }
+        const player =
+          playerRef.current ?? createCompletionPlayback(preferences);
+        playerRef.current = player;
+        player.update(preferences);
+        player.enqueue(category);
       } catch (error) {
         console.warn("Could not prepare the completion sound.", error);
       }
@@ -87,6 +83,75 @@ export function useCompletionSoundController() {
     ...preferences,
     playCompletionSound,
     setPreferences,
+  };
+}
+
+function createCompletionPlayback(initial: ResolvedCompletionSoundPreferences) {
+  const audio = new Audio(completionSoundUrl);
+  audio.preload = "auto";
+  let preferences = initial;
+  let queue: CompletionSoundCategory[] = [];
+  let active: CompletionSoundCategory | null = null;
+  let generation = 0;
+  let disposed = false;
+  const accepts = (category: CompletionSoundCategory) =>
+    !preferences.muted &&
+    preferences.volume > 0 &&
+    !isCategoryMuted(preferences, category);
+  const next = () => {
+    if (disposed || active) return;
+    const category = queue.shift();
+    if (!category) return;
+    active = category;
+    const current = ++generation;
+    const done = () => {
+      if (current !== generation || disposed) return;
+      active = null;
+      next();
+    };
+    audio.onended = done;
+    audio.onerror = () => {
+      console.warn("Could not play the completion sound.", audio.error);
+      done();
+    };
+    audio.volume = preferences.volume;
+    audio.currentTime = 0;
+    try {
+      const playback = audio.play();
+      void playback?.catch((error: unknown) => {
+        console.warn("Could not play the completion sound.", error);
+        done();
+      });
+    } catch (error) {
+      console.warn("Could not play the completion sound.", error);
+      done();
+    }
+  };
+  return {
+    enqueue(category: CompletionSoundCategory) {
+      if (disposed || !accepts(category)) return;
+      queue.push(category);
+      next();
+    },
+    update(value: ResolvedCompletionSoundPreferences) {
+      preferences = value;
+      audio.volume = value.volume;
+      queue = queue.filter(accepts);
+      if (active && !accepts(active)) {
+        generation += 1;
+        audio.pause();
+        active = null;
+        next();
+      }
+    },
+    dispose() {
+      disposed = true;
+      queue = [];
+      generation += 1;
+      audio.onended = null;
+      audio.onerror = null;
+      audio.pause();
+    },
   };
 }
 

@@ -1,5 +1,6 @@
 import {
   createImport,
+  prepareFoldersImportPreview,
   prepareArchiveFolderImportPreview,
   prepareArchiveImportPreview,
   preparePdfImportPreview,
@@ -11,6 +12,7 @@ import {
 import { classifyDroppedImportPaths } from "../library/libraryImportDrop";
 
 export type ImportPreviewIpcService = {
+  prepareFoldersImportPreview?: typeof prepareFoldersImportPreview;
   classifyDroppedImportPaths: typeof classifyDroppedImportPaths;
   createImport: typeof createImport;
   previewFolder: typeof previewFolder;
@@ -23,6 +25,7 @@ export type ImportPreviewIpcService = {
 };
 
 export const productionImportPreviewIpcService: ImportPreviewIpcService = {
+  prepareFoldersImportPreview,
   classifyDroppedImportPaths,
   createImport,
   previewFolder,

@@ -1,4 +1,5 @@
 import { DEFAULT_GEMMA_SAMPLING } from "../../shared/gemmaSamplingSettings";
+import { DEFAULT_EXPORT_PREFERENCES } from "../../shared/exportPreferences";
 import {
   DEFAULT_CODEX_MODEL,
   DEFAULT_CODEX_REASONING_EFFORT,
@@ -290,6 +291,7 @@ function resolveDefaultUiSettings(
     wheelZoomSensitivityPercent: 1,
     hayaiTranslationUi: "workflow",
     blockReadingSize: 15,
+    exportPreferences: { ...DEFAULT_EXPORT_PREFERENCES },
   };
 }
 

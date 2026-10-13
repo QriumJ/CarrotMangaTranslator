@@ -1,4 +1,5 @@
 import { BrowserWindow } from "electron";
+import { saveExportPreferences } from "../settings/exportPreferencesStore";
 import { registerClaudeAccountIpc } from "./claudeAccountIpc";
 import { AppSettingsSchema, parseIpcPayload } from "../../shared/ipcSchemas";
 import {
@@ -89,6 +90,12 @@ function registerTavilyUsageIpc(
 }
 
 function registerSettingsReadWriteIpc(context: IpcContext): void {
+  trustedHandleContract(
+    context,
+    settingsIpcContracts.saveExportPreferences,
+    async (_event, preferences) =>
+      saveExportPreferences(preferences, context.appPaths),
+  );
   trustedHandleContract(context, settingsIpcContracts.getSettings, async () =>
     maskAppSettingsSecrets(await getAppSettings()),
   );

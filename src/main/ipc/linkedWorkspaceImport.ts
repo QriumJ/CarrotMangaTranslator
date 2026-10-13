@@ -16,6 +16,7 @@ export async function connectImportedChapters(
 > {
   if (command.target.mode === "chapter")
     return refreshImportedChapter(context, command.target.chapterId);
+  if (result.chapterIds.length === 0) return {};
   const options = command.linkedWorkspace;
   if (!options?.enabled) return {};
   const service = context.linkedWorkspaceSync;

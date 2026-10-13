@@ -1,5 +1,9 @@
 # UI 설계 규칙
 
+앱 전체의 통일성이 최우선이다. 변경 전 공통 규칙과 전체 사용처를 확인하고,
+변경 후 가져오기·출력·사이드바·편집 도구·설정·작업 상태를 함께 검증한다.
+화면별 임의 팔레트나 선택 표시 예외를 추가하지 않는다.
+
 ## 2026-09-29 컨트롤과 색상 정리
 
 일반 컨트롤 188곳은 공용 primitive를 직접 사용한다. `Button variant="bare"`는 버튼 하나와
@@ -7,11 +11,16 @@
 선택, validation, controlled/uncontrolled 동작을 유지하며 레이블과 레이아웃은 기존 소유자가
 담당한다. 파일 단위 wrapper나 별도 barrel로 정책 검사를 우회하지 않는다.
 
-색상·z-index 420개 사용은 기존 값 그대로 `foundations.css`의 역할별 토큰을 사용한다.
-23개 stylesheet의 변경된 선언 391개를 토큰 전개 전후 비교했다. 캔버스의 마스크·윤곽·변형
-표시도 같은 색과 paint order를 유지한다. 사용자 지정 출력색과 artwork stylesheet는 기존
-출력 데이터 계약을 유지한다. 그림자 ink의 숫자 접미사는 기존 알파 백분율이며 elevation
-전체를 바꾸는 토큰이 아니다. component 역할 토큰은 팔레트를 가까운 색으로 대체하지 않는다.
+2026-10-13 사용자 요청으로 기존 화면별 색상 모음을 단일 팔레트로 통합했다.
+`styles/palette.css`의 `--palette-*`만 색상 원시값을 정의한다. 중립 회색 계열,
+당근색 선택·활성·주요 동작, 진행·정보용 청색, 완료용 녹색, 주의용 황갈색과
+오류용 적색을 사용한다. 같은 역할은 모든 화면에서 동일한 semantic token과
+강조 방식으로 표시한다. 선택·활성·포커스의 색을 제거하지 않는다. 불필요한 카드
+외피를 제거하는 것과 선택 상태의 시인성을 낮추는 것은 구분한다. `foundations.css`의 공통 역할과 palette의 component
+역할은 이 팔레트를 참조한다. 새 화면별 색상 값을 추가하지 않는다.
+`check:css-structure`가 원시 색상 정의 위치를 검사하며 기존 maintainability 검사는
+feature와 primitive에서 색상 리터럴 추가를 막는다. 사용자 지정 그림·출력색은
+데이터이므로 UI 팔레트로 치환하지 않는다. 캔버스 보조 표시도 팔레트 토큰을 사용한다.
 
 유지하는 raw native 입력은 다음 여섯 JSX 위치뿐이다. 주석 속 `<input>` 예제는 AST 기반
 검사에서 컨트롤로 세지 않는다. 각 입력의 OS 기능을 wrapper로 숨겨 숫자를 줄이지 않는다.
@@ -88,7 +97,7 @@
 ## CSS 소유권
 
 - 전역 CSS는 foundations, app shell, 캔버스 paint order처럼 여러 component가 공유하는 경계만 소유한다. feature 스타일은 CSS Module을 사용한다.
-- UI chrome의 색상, 그림자, z-index는 `foundations.css`의 semantic token을 사용한다. 캔버스 표시색, 이미지 출력색, 네이티브 특수 입력만 명시적 허용 목록으로 분리한다.
+- UI chrome의 색상, 그림자, z-index는 `foundations.css`·`palette.css`의 semantic token을 사용한다. 캔버스 표시색, 이미지 출력색, 네이티브 특수 입력만 명시적 허용 목록으로 분리한다.
 - feature 전용 selector가 전역으로 누출되거나 다른 feature의 DOM 구조에 의존하지 않는다.
 - 기존 허용 목록은 제거 대상이지 새 코드의 예시가 아니다. `npm run check:maintainability`는 raw control, 색상/z-index, cross-feature selector, 파일 단위 lint disable의 신규 증가를 실패시킨다.
 
@@ -121,3 +130,22 @@
 3. 한국어·영어·일본어, 긴 텍스트, 200% zoom, popup/modal, focus-visible, disabled 상태 중 변경 범위에 해당하는 것을 검증한다.
 4. `documentElement`/`body`의 외부 overflow, 잘림, 겹침, 가로 overflow, 불필요한 중첩 표면이 없어야 한다.
 5. focused test, architecture/duplicate/UI policy gate, `npm run check`, build를 통과한다.
+6. 회전 표시의 고리와 회전 호는 서로 구분되어야 한다. 팔레트를 변경할 때 두 색을 같은 토큰으로 합치지 않는다. 애니메이션은 정적 캡처뿐 아니라 실제 production element의 시간 경과에 따른 회전값과 재생 상태도 확인한다.
+
+## 큰 UI 변경 전 기준 확인
+
+2026-10-13에 다음 공식 문서를 읽고 적용 기준을 확인했다. 타 제품의 외관을 복제하지 않고
+이 앱의 기존 당근색 강조, 정보 밀도, 작업 흐름에 원칙을 적용한다.
+
+- [Fluent tokens](https://fluent2.microsoft.design/design-tokens): 원시 팔레트와 의미별 alias를 분리한다.
+- [Fluent color](https://fluent2.microsoft.design/color): 상태색은 의미 전달에만 쓰고 같은 의미는 같은 색으로 표시한다.
+- [Carbon color/states](https://www.carbondesignsystem.com/building-blocks/foundations/color/overview): 기본·hover·선택·focus·disabled 역할을 분리하고 모든 사용처가 공유한다.
+- [Spectrum color](https://spectrum.adobe.com/page/using-color/): 화면별 임의 색을 만들지 않고 색의 의미를 레이블/아이콘과 함께 전달한다.
+- [Spectrum component spacing](https://spectrum.adobe.com/foundations/layout-and-structure/spacing/component-spacing): 같은 구조의 컴포넌트는 공통 밀도와 내부 간격 기준을 사용한다.
+- [Fluent layout](https://fluent2.microsoft.design/layout): 숫자만 일괄 적용하지 않고 정렬과 요소 간 관계가 일관되는지 확인한다.
+- [W3C non-text contrast](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html): 선택·포커스·체크 등 필수 표시가 인접 배경과 충분히 구분되어야 한다.
+- [Carbon tooltip](https://www.carbondesignsystem.com/building-blocks/core/components/tooltip/guidelines): 보조 설명을 툴팁에 두되 오류와 작업에 필수적인 정보는 짧게 보이게 한다.
+
+검증은 개별 스크린샷 하나로 끝내지 않는다. 공통 팔레트의 참조/순환 검사, 대비 측정,
+같은 역할의 공통 token 사용 확인과 함께 실제 production component를 사용한 넓은/좁은
+가져오기·출력·사이드바/편집 도구·설정·작업 기록을 확인한다.

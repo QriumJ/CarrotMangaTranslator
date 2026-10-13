@@ -8,10 +8,6 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
 import type {
   LibraryChapterSummary,
   LibraryIndex,
@@ -20,17 +16,28 @@ import { useStandardDndSensors } from "../lib/dnd";
 import { filterLibraryIndex } from "../lib/libraryFilter";
 import { sortLibraryIndex, type LibrarySort } from "../lib/librarySort";
 import { useStoredLibrarySort } from "../hooks/useStoredLibrarySort";
-import { ChapterDragPreview, SortableChapterItem } from "./libraryTreeItems";
+import {
+  ChapterDragPreview,
+  LibraryBulkDisclosureButtons,
+  LibraryWorkGroup,
+} from "./libraryTreeItems";
 import { LibrarySortMenu } from "./LibrarySortMenu";
-import { IconButton } from "./ui/IconButton";
-import { EditIcon } from "./ui/icons";
 import { SidebarSectionCollapseButton } from "./SidebarSectionCollapseButton";
 import { Input } from "./ui/Field";
+import {
+  useLibraryWorkDisclosure,
+  type LibraryWorkDisclosure,
+} from "./useLibraryWorkDisclosure";
 
 type LibraryTreeProps = {
   collapsed: boolean;
   otherPanelCollapsed: boolean;
   library: LibraryIndex;
+  /**
+   * Set only when `library` is a successful full read. Until then stored
+   * collapse state is never pruned, so a loading or failed read keeps it.
+   */
+  libraryComplete?: boolean;
   currentChapterId: string | null;
   jobActive: boolean;
   onOpenChapter: (chapterId: string) => void;
@@ -62,6 +69,7 @@ function LibraryTreeView({
   collapsed,
   otherPanelCollapsed,
   library,
+  libraryComplete = false,
   currentChapterId,
   jobActive,
   onOpenChapter,
@@ -70,30 +78,22 @@ function LibraryTreeView({
   onReorderChapter,
   onToggleOtherPanel,
 }: LibraryTreeProps): React.JSX.Element {
-  const { i18n } = useTranslation("components");
   const [searchQuery, setSearchQuery] = React.useState("");
   const contentId = React.useId();
-  const deferredSearchQuery = React.useDeferredValue(searchQuery);
   const [sort, handleSortChange] = useStoredLibrarySort();
-  const filteredLibrary = React.useMemo(
-    () => filterLibraryIndex(library, deferredSearchQuery),
-    [deferredSearchQuery, library],
-  );
-  const visibleLibrary = React.useMemo(
-    () =>
-      sortLibraryIndex(
-        filteredLibrary,
-        sort,
-        i18n.resolvedLanguage ?? i18n.language,
-      ),
-    [filteredLibrary, i18n.language, i18n.resolvedLanguage, sort],
-  );
+  const visibleLibrary = useVisibleLibrary(library, searchQuery, sort);
   const searchActive = searchQuery.trim().length > 0;
   const drag = useChapterDragController({
     jobActive,
     onReorderChapter,
     searchActive,
     visibleLibrary,
+  });
+  const disclosure = useLibraryWorkDisclosure({
+    currentChapterId,
+    library,
+    libraryComplete,
+    searchActive,
   });
 
   return (
@@ -104,6 +104,12 @@ function LibraryTreeView({
     >
       <LibraryPanelHeader
         collapsed={collapsed}
+        disclosureActions={
+          <LibraryBulkDisclosureButtons
+            disclosure={disclosure}
+            hasWorks={library.works.length > 0}
+          />
+        }
         otherPanelCollapsed={otherPanelCollapsed}
         onSearchChange={setSearchQuery}
         onSortChange={handleSortChange}
@@ -122,6 +128,7 @@ function LibraryTreeView({
           <LibraryWorksList
             activeDrag={drag.activeDrag}
             currentChapterId={currentChapterId}
+            disclosure={disclosure}
             dragEnabled={drag.dragEnabled}
             jobActive={jobActive}
             onOpenChapter={onOpenChapter}
@@ -141,6 +148,28 @@ function LibraryTreeView({
 }
 
 export const LibraryTree = React.memo(LibraryTreeView);
+
+function useVisibleLibrary(
+  library: LibraryIndex,
+  searchQuery: string,
+  sort: LibrarySort,
+): LibraryIndex {
+  const { i18n } = useTranslation("components");
+  const deferredSearchQuery = React.useDeferredValue(searchQuery);
+  const filteredLibrary = React.useMemo(
+    () => filterLibraryIndex(library, deferredSearchQuery),
+    [deferredSearchQuery, library],
+  );
+  return React.useMemo(
+    () =>
+      sortLibraryIndex(
+        filteredLibrary,
+        sort,
+        i18n.resolvedLanguage ?? i18n.language,
+      ),
+    [filteredLibrary, i18n.language, i18n.resolvedLanguage, sort],
+  );
+}
 
 function useChapterDragController({
   jobActive,
@@ -207,6 +236,7 @@ function useChapterDragController({
 
 function LibraryPanelHeader({
   collapsed,
+  disclosureActions,
   otherPanelCollapsed,
   onSearchChange,
   onSortChange,
@@ -215,6 +245,7 @@ function LibraryPanelHeader({
   sort,
 }: {
   collapsed: boolean;
+  disclosureActions: React.ReactNode;
   otherPanelCollapsed: boolean;
   onSearchChange: (query: string) => void;
   onSortChange: (sort: LibrarySort) => void;
@@ -244,6 +275,7 @@ function LibraryPanelHeader({
             />
           </label>
           <LibrarySortMenu value={sort} onChange={onSortChange} />
+          {disclosureActions}
         </>
       ) : null}
       <SidebarSectionCollapseButton
@@ -260,6 +292,7 @@ function LibraryPanelHeader({
 function LibraryWorksList({
   activeDrag,
   currentChapterId,
+  disclosure,
   dragEnabled,
   jobActive,
   onOpenChapter,
@@ -270,6 +303,7 @@ function LibraryWorksList({
 }: {
   activeDrag: ActiveChapterDrag | null;
   currentChapterId: string | null;
+  disclosure: LibraryWorkDisclosure;
   dragEnabled: boolean;
   jobActive: boolean;
   onOpenChapter: LibraryTreeProps["onOpenChapter"];
@@ -289,10 +323,12 @@ function LibraryWorksList({
             key={work.id}
             currentChapterId={currentChapterId}
             dragEnabled={dragEnabled}
+            expanded={disclosure.isExpanded(work.id)}
             jobActive={jobActive}
             onOpenChapter={onOpenChapter}
             onRenameChapter={onRenameChapter}
             onRenameWork={onRenameWork}
+            onToggleExpanded={disclosure.toggleWork}
             work={work}
           />
         ))
@@ -301,61 +337,6 @@ function LibraryWorksList({
           {t(searchActive ? "library.noSearchResults" : "library.empty")}
         </p>
       )}
-    </div>
-  );
-}
-
-function LibraryWorkGroup({
-  currentChapterId,
-  dragEnabled,
-  jobActive,
-  onOpenChapter,
-  onRenameChapter,
-  onRenameWork,
-  work,
-}: {
-  currentChapterId: string | null;
-  dragEnabled: boolean;
-  jobActive: boolean;
-  onOpenChapter: LibraryTreeProps["onOpenChapter"];
-  onRenameChapter: LibraryTreeProps["onRenameChapter"];
-  onRenameWork: LibraryTreeProps["onRenameWork"];
-  work: LibraryIndex["works"][number];
-}): React.JSX.Element {
-  const { t } = useTranslation("components");
-  return (
-    <div className="work-group">
-      <div className="work-row">
-        <strong title={work.title}>{work.title}</strong>
-        <IconButton
-          size="sm"
-          label={t("library.renameItem", { title: work.title })}
-          title={t("common.rename")}
-          onClick={() => onRenameWork(work.id)}
-          disabled={jobActive}
-        >
-          <EditIcon size={14} />
-        </IconButton>
-      </div>
-      <SortableContext
-        items={work.chapters.map((chapter) => chapter.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <div className="chapter-list">
-          {work.chapters.map((chapter) => (
-            <SortableChapterItem
-              key={chapter.id}
-              workId={work.id}
-              chapter={chapter}
-              active={chapter.id === currentChapterId}
-              disabled={!dragEnabled}
-              jobActive={jobActive}
-              onOpenChapter={onOpenChapter}
-              onRenameChapter={onRenameChapter}
-            />
-          ))}
-        </div>
-      </SortableContext>
     </div>
   );
 }

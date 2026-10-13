@@ -209,6 +209,12 @@
       "label": "作業を書き出す",
       "keywords": "work share export 作業 共有 書き出し"
     },
+    "exportResults": {
+      "keywords": "export output png jpg webp 結果 出力 書き出し 画像"
+    },
+    "exportPsd": {
+      "keywords": "export output psd layer 出力 書き出し レイヤー フォトショップ"
+    },
     "openSettings": {
       "label": "設定を開く",
       "keywords": "settings 設定"
@@ -525,7 +531,8 @@
     "saveFailed": "設定を保存できませんでした。",
     "reset": "設定をデフォルトに戻しました。",
     "defaultsLoaded": "デフォルト値を下書きに読み込みました。適用するには保存してください。",
-    "resetFailed": "デフォルト設定に戻せませんでした。"
+    "resetFailed": "デフォルト設定に戻せませんでした。",
+    "exportPreferencesSaveFailed": "出力設定を保存できませんでした。"
   },
   "statusDock": {
     "concurrentTasks": "実行中の作業",
@@ -617,7 +624,10 @@
       "pdfNoPages": "このPDFには読み込めるページが見つかりませんでした。",
       "readFailed": "ドロップした原稿を読み込めませんでした。"
     },
-    "pagesAdded": "{{count}}ページを追加しました。"
+    "pagesAdded": "{{count}}ページを追加しました。",
+    "untitled": "タイトルなし",
+    "allSkipped": "重複{{count}}件をスキップ",
+    "addedWithSkipped": "{{count}}件追加 · 重複{{skipped}}件をスキップ"
   },
   "share": {
     "exportSuccess": "「{{title}}」の共有ファイルを保存しました。{{chapters}}話、{{pages}}ページ",

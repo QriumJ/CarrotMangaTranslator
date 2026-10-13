@@ -22,6 +22,7 @@ type UseAppSessionCommandControllerArgs = {
   runAnalysis: (runMode: "pending" | "all") => void;
   runCurrentPageInpainting: () => void;
   setShareExportOpen: Dispatch<SetStateAction<boolean>>;
+  openExportOptions: (kind: "raster" | "psd") => void;
   setShortcutHelpOpen: Dispatch<SetStateAction<boolean>>;
   openTextView: () => void;
   openPageEditor?: () => void;
@@ -50,6 +51,7 @@ export function useAppSessionCommandController({
   runAnalysis,
   runCurrentPageInpainting,
   setShareExportOpen,
+  openExportOptions,
   setShortcutHelpOpen,
   openTextView,
   openPageEditor,
@@ -77,6 +79,7 @@ export function useAppSessionCommandController({
     openErrorReport,
     openSettings,
     openShareExport: () => setShareExportOpen(true),
+    openExportOptions,
     openShareImportPreview,
     openShortcutHelp: () => setShortcutHelpOpen(true),
     openTextView,

@@ -685,7 +685,8 @@
       }
     },
     "workUnavailable": "作品情報を読み込めませんでした。現在のページだけを出力します。",
-    "startFailed": "出力を開始できませんでした。もう一度お試しください。"
+    "startFailed": "出力を開始できませんでした。もう一度お試しください。",
+    "preferencesSaveFailed": "出力設定を保存できませんでした。"
   },
   "autoInpaintingOptions": {
     "title": "消去するページを選択",
@@ -897,7 +898,20 @@
     "afterPage": "ページの後",
     "anchorPage": "基準ページ",
     "pagesToAdd": "追加するページ",
-    "translateAddedPages": "追加したページのみ翻訳"
+    "translateAddedPages": "追加したページのみ翻訳",
+    "selectedChapters": "{{total}}話中 {{selected}}話を選択",
+    "duplicateTitle": "重複",
+    "sourcePathExample": "保持されるパス: {{path}}",
+    "batchOptions": {
+      "title": "取り込みオプション",
+      "openTranslation": "取り込み後に翻訳設定を開く",
+      "openTranslationHint": "翻訳は自動では始まりません。設定を確認してから開始してください。",
+      "skipDuplicates": "同じタイトルの話はスキップ",
+      "skipDuplicatesHint": "前後の空白を除いたタイトルが、この作品の既存の話と大文字・小文字まで完全に一致する場合は取り込みません。選択した話同士でタイトルが同じ場合は、一覧で先にある話だけを取り込みます。",
+      "noDuplicates": "重複なし",
+      "allDuplicates": "{{count}}件すべてスキップ",
+      "duplicateCounts": "{{skipped}}件スキップ · {{remaining}}件追加"
+    }
   },
   "linkedWorkspaceFolders": {
     "label": "自動保存フォルダーの役割",
@@ -963,6 +977,10 @@
     "renameItem": "{{title}}の名前を変更",
     "moveItem": "{{title}}を移動",
     "moveDisabled": "検索中または処理中は移動できません。",
+    "collapseAllWorks": "すべての作品を折りたたむ",
+    "expandAllWorks": "すべての作品を展開",
+    "collapseAllWorksDuringSearch": "すべての作品を折りたたむ · 検索をクリアすると使えます",
+    "expandAllWorksDuringSearch": "すべての作品を展開 · 検索をクリアすると使えます",
     "sort": {
       "trigger": "並べ替え: {{criterion}} {{direction}}",
       "criteriaLabel": "並べ替え基準",
@@ -1007,6 +1025,60 @@
         "hours": "{{hours}}時間 {{minutes}}分 {{seconds}}秒",
         "minutes": "{{minutes}}分 {{seconds}}秒",
         "seconds": "{{seconds}}秒"
+      },
+      "workflow": {
+        "loading": "実行履歴を読み込み中…",
+        "loadFailed": "実行履歴を読み込めませんでした。",
+        "retry": "再試行",
+        "refresh": "更新",
+        "refreshFailed": "更新できませんでした。",
+        "emptyTitle": "記録はありません。",
+        "attemptsLabel": "実行履歴",
+        "resumed": "再開した実行",
+        "status": "状態",
+        "runTotal": "実行全体の時間",
+        "elapsedSoFar": "これまでの経過時間",
+        "started": "開始",
+        "finished": "終了",
+        "notFinished": "未終了",
+        "coverage": "実行範囲",
+        "coverageValue": "{{chapters}}チャプター · {{pages}}ページ",
+        "runningNote": "実行中です。最後に保存された時点の時間で、このウィンドウを開いている間は更新されます。",
+        "interruptedNote": "実行が終わる前にアプリが終了しました。それまでに保存された時間のみ表示します。",
+        "multiChapterNote": "この実行には他のチャプターも含まれます。実行全体の列はすべてのチャプターを含み、ページの列はこのチャプターのページを表示します。",
+        "pageSelect": "このチャプターのページ",
+        "noChapterPages": "この実行には、このチャプターのページ記録がありません。",
+        "stage": "工程",
+        "wholeRun": "実行全体",
+        "selectedPage": "選択したページ",
+        "cleanup": "実行後の後片付け",
+        "skipped": "スキップ",
+        "notMeasured": "未計測",
+        "legend": "「—」は時間が記録されていないことを示します。「スキップ」はそのページでその工程が不要だったことを示します。",
+        "statuses": {
+          "running": "進行中",
+          "completed": "完了",
+          "partial": "一部完了",
+          "failed": "失敗",
+          "cancelled": "キャンセル",
+          "interrupted": "中断"
+        },
+        "stages": {
+          "detect": "ブロック検出",
+          "ocr": "原文読み取り · OCR",
+          "source-rules": "原文の一括編集",
+          "translate": "翻訳",
+          "translation-rules": "訳文の一括編集",
+          "typography": "自動書式",
+          "format-rules": "最終一括編集",
+          "erase": "原文除去",
+          "layout": "吹き出し・行配置",
+          "review": "自動レビュー",
+          "preparing": "準備・モデル読込"
+        },
+        "measuredTotal": "記録された工程の合計",
+        "recorded": "記録日時",
+        "pageTotal": "ページ合計"
       }
     },
     "visibleCount": "{{visible}} / {{total}}",
@@ -1045,6 +1117,7 @@
     "chapterTools": "話のツール",
     "currentPage": "現在のページ",
     "pageActions": "ページ操作",
+    "outputActions": "話の出力",
     "showInspector": "確認・編集パネルを表示",
     "hideInspector": "確認・編集パネルを隠す"
   },
@@ -2490,7 +2563,6 @@
     "recentJobs": "最近の処理",
     "statusHistory": "状態履歴",
     "reviewResults": "結果を確認",
-    "exportResults": "書き出す",
     "research": {
       "title": "調査の進行状況",
       "credits": "クレジット {{used}} / {{limit}}"

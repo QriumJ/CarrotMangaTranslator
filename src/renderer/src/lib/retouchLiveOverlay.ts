@@ -10,6 +10,7 @@ import {
   getCanvasContext,
   prepareCanvas,
   renderShapePreview,
+  resolveThemeAccentColor,
   type ShapePreviewFrame,
 } from "./retouchLivePreviewDrawing";
 
@@ -309,7 +310,10 @@ function drawPreviewSegment(
   context.lineCap = "round";
   context.lineJoin = "round";
   context.lineWidth = radius * 2;
-  context.strokeStyle = style.mode === "mask" ? "#ff9f1c" : style.color;
+  context.strokeStyle =
+    style.mode === "mask"
+      ? resolveThemeAccentColor(stage, "--canvas-curve-accent")
+      : style.color;
   context.fillStyle = context.strokeStyle;
   if (pointsMatch(from, to)) {
     context.beginPath();

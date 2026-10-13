@@ -131,6 +131,12 @@ const droppedImportPreviewResponseSchema = z.discriminatedUnion("status", [
 ]);
 const createImportResultSchema = z
   .object({
+    skippedChapters: z
+      .array(
+        z.object({ draftId: z.string().uuid(), title: titleString }).strict(),
+      )
+      .max(500)
+      .optional(),
     workId: stringArg,
     addedPageIds: stringListArg.optional(),
     chapterIds: stringListArg,

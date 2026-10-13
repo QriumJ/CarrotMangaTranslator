@@ -1,6 +1,11 @@
 // F14 moved every session branch into the application service. Enforce the
 // historical branch floor on its actual owner, not by adding fake facade branches.
 const EXTRACTED_BRANCH_OWNERS = new Map([
+  // Issue #149 consolidated both timing views into the workflow presentation.
+  [
+    "src/renderer/src/components/pageList/PageTimingDialog.tsx",
+    "src/renderer/src/components/pageList/PageWorkflowTimingView.tsx",
+  ],
   [
     "src/renderer/src/api/codexConnection.ts",
     "src/renderer/src/api/accountConnection.ts",

@@ -1,5 +1,6 @@
 /* eslint-disable max-lines -- the preload-facing API type intentionally enumerates the complete renderer contract */
 import type { EditPageOrganizationRequest } from "./pageOrganization";
+import type { ExportPreferences } from "./exportPreferences";
 import type {
   McpEditorState,
   McpPageChangedEvent,
@@ -227,6 +228,9 @@ export interface MangaApi extends McpApi, ChatApi, ClaudeApi {
   getPageWorkflowRun: (
     runId: string,
   ) => Promise<import("./pageWorkflowTypes").PageWorkflowRequest>;
+  getPageWorkflowTimings: (
+    chapterId: string,
+  ) => Promise<import("./pageWorkflowTiming").PageWorkflowTiming[]>;
   restoreSoundEffectReview: (
     request: import("./analysisTypes").RestoreSoundEffectReviewRequest,
   ) => Promise<ChapterSnapshot>;
@@ -434,6 +438,9 @@ export interface MangaApi extends McpApi, ChatApi, ClaudeApi {
     value: import("./codexTypesettingTypes").CodexTypesettingPreferences,
   ) => Promise<import("./codexTypesettingTypes").CodexTypesettingPreferences>;
   saveSettings: (settings: AppSettings) => Promise<AppSettings>;
+  saveExportPreferences: (
+    preferences: ExportPreferences,
+  ) => Promise<ExportPreferences>;
   resetSettings: () => Promise<AppSettings>;
   pickLocalModelFile: () => Promise<LocalModelPickResult | null>;
   pickLocalMmprojFile: () => Promise<string | null>;

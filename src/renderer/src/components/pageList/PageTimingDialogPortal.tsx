@@ -3,19 +3,30 @@ import { createPortal } from "react-dom";
 import type { MangaPage } from "../../../../shared/libraryTypes";
 import { PageTimingDialog } from "./PageTimingDialog";
 
-export function PageTimingDialogPortal({
-  onClose,
-  open,
+/** Owns the page timing dialog's open state and its body-level portal. */
+export function usePageTimingDialog({
+  chapterId,
   pages,
+  selectedPageId,
 }: {
-  onClose: () => void;
-  open: boolean;
+  chapterId: string | null;
   pages: MangaPage[];
-}): React.ReactPortal | null {
-  return open
-    ? createPortal(
-        <PageTimingDialog pages={pages} onClose={onClose} />,
-        document.body,
-      )
-    : null;
+  selectedPageId: string | null;
+}): { dialog: React.ReactPortal | null; open: () => void } {
+  const [isOpen, setOpen] = React.useState(false);
+  const open = React.useCallback(() => setOpen(true), []);
+  return {
+    open,
+    dialog: isOpen
+      ? createPortal(
+          <PageTimingDialog
+            chapterId={chapterId}
+            pages={pages}
+            selectedPageId={selectedPageId}
+            onClose={() => setOpen(false)}
+          />,
+          document.body,
+        )
+      : null,
+  };
 }

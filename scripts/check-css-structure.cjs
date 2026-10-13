@@ -14,6 +14,7 @@ const sharedUiDirectory = join(dirname(rootStylesheet), "components", "ui");
 const maxDomainLines = 1_200;
 const expectedImports = [
   "fonts.css",
+  "palette.css",
   "foundations.css",
   "shell-workspace.css",
   "work-center.css",
@@ -63,7 +64,23 @@ function inspectCssStructure() {
     inspectDomainStylesheet(fileName, violations);
   }
   inspectSharedUiPalette(violations);
+  inspectPaletteAuthority(violations);
   return violations;
+}
+
+/** @param {string[]} violations */
+function inspectPaletteAuthority(violations) {
+  for (const name of ["palette.css", "foundations.css"]) {
+    const source = stripComments(
+      readFileSync(join(domainDirectory, name), "utf8"),
+    );
+    const roles = source.replace(/--palette-[\w-]+:\s*#[0-9a-f]{6};/gi, "");
+    if (/#[0-9a-f]{3,8}\b|\b(?:rgb|rgba|hsl|hsla)\(\s*[-.\d]/i.test(roles)) {
+      violations.push(
+        `${name}: colour literals belong only in --palette-* definitions`,
+      );
+    }
+  }
 }
 
 /**

@@ -12,6 +12,8 @@ export const BACKUP_UI_KEYS = [
   "editor.richText.mode",
   "carrot-manga-translator.completion-sound.v1",
   "conditionalBatch.favoriteSchemeIds.v1",
+  "workspace.preferences.v1",
+  "library.collapsedWorkIds.v1",
 ] as const;
 export const backupUiSchema = z.partialRecord(
   z.enum(BACKUP_UI_KEYS),

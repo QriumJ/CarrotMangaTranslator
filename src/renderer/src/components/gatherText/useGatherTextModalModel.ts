@@ -7,6 +7,7 @@ import {
   type GatherScope,
 } from "../../../../shared/gatherText";
 import { useGatherTextSearch } from "../../hooks/useGatherTextSearch";
+import { useWorkspacePreference } from "../../hooks/useWorkspacePreference";
 import type { GatherTextModalProps } from "./gatherTextTypes";
 import {
   buildDefaultName,
@@ -39,8 +40,11 @@ export function useGatherTextModalModel({
   readingDirection = "rtl",
 }: GatherTextModalModelProps) {
   const [scope, setScope] = React.useState<GatherScope>("page");
-  const [field, setField] = React.useState<GatherField>("both");
-  const [excludeHeaders, setExcludeHeaders] = React.useState(false);
+  // Scope stays per opening; the text view choices are remembered.
+  const [field, setField] = useWorkspacePreference("gatherTextField");
+  const [excludeHeaders, setExcludeHeaders] = useWorkspacePreference(
+    "gatherTextExcludeHeaders",
+  );
   const [reviewWarnings, setReviewWarnings] = React.useState<string[]>([]);
   const [reviewBusy, setReviewBusy] = React.useState(false);
   const reviewFileInputRef = React.useRef<HTMLInputElement | null>(null);

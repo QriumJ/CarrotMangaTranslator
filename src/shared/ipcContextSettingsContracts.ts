@@ -1,4 +1,8 @@
 import { codexTypesettingPreferencesSchema } from "./codexTypesettingSchemas";
+import {
+  ExportPreferencesSchema,
+  type ExportPreferences,
+} from "./exportPreferences";
 import type { CodexTypesettingPreferences } from "./codexTypesettingTypes";
 import { z } from "zod";
 import type {
@@ -292,6 +296,15 @@ const optionalModelTestArgsSchema = z.union([
   z.tuple([AppSettingsSchema, z.unknown()]),
 ]);
 export const settingsIpcContracts = {
+  saveExportPreferences: defineIpcContract<
+    [ExportPreferences],
+    ExportPreferences
+  >({
+    apiKey: "saveExportPreferences",
+    channel: "settings:save-export-preferences",
+    args: z.tuple([ExportPreferencesSchema]),
+    result: ExportPreferencesSchema,
+  }),
   saveCodexTypesettingPreferences: defineIpcContract<
     [CodexTypesettingPreferences],
     CodexTypesettingPreferences

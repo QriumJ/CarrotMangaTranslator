@@ -209,6 +209,12 @@
       "label": "导出项目",
       "keywords": "work share export 项目 共享 导出"
     },
+    "exportResults": {
+      "keywords": "export output png jpg webp 结果 导出 图片"
+    },
+    "exportPsd": {
+      "keywords": "export output psd layer 导出 图层"
+    },
     "openSettings": {
       "label": "打开设置",
       "keywords": "settings 设置"
@@ -525,7 +531,8 @@
     "saveFailed": "无法保存设置。",
     "reset": "设置已恢复为默认值。",
     "defaultsLoaded": "默认值已载入草稿，保存后才会应用。",
-    "resetFailed": "无法恢复默认设置。"
+    "resetFailed": "无法恢复默认设置。",
+    "exportPreferencesSaveFailed": "无法保存导出设置。"
   },
   "statusDock": {
     "concurrentTasks": "正在运行的任务",
@@ -617,7 +624,10 @@
       "pdfNoPages": "此 PDF 中未找到可导入的页面。",
       "readFailed": "无法读取拖放的原稿。"
     },
-    "pagesAdded": "已添加{{count}}页。"
+    "pagesAdded": "已添加{{count}}页。",
+    "untitled": "无标题",
+    "allSkipped": "已跳过 {{count}} 项重复内容",
+    "addedWithSkipped": "已添加 {{count}} 项 · 跳过 {{skipped}} 项重复内容"
   },
   "share": {
     "exportSuccess": "已保存“{{title}}”的共享文件：{{chapters}}章，{{pages}}页",

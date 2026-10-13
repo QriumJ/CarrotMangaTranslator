@@ -209,6 +209,25 @@ describe("production cleanup coverage floor gate", () => {
     );
   });
 
+  it("keeps the consolidated timing dialog branch floor on the shared view", () => {
+    const fixture = createFixture(
+      "src/renderer/src/components/pageList/PageWorkflowTimingView.tsx",
+      "src/renderer/src/components/pageList/PageTimingDialog.tsx",
+    );
+    fixture.coverage[fixture.existingFileAbsolute].branches = coverageMetric(
+      0,
+      0,
+    );
+    fixture.writeCoverage();
+    expect(() => runGate(fixture, "win32")).not.toThrow();
+    fixture.coverage[fixture.addedFileAbsolute].branches = coverageMetric(79);
+    fixture.writeCoverage();
+    expect(() => runGate(fixture, "win32")).toThrow(/below exact baseline/u);
+    fixture.coverage[fixture.addedFileAbsolute].branches = coverageMetric(0, 0);
+    fixture.writeCoverage();
+    expect(() => runGate(fixture, "win32")).toThrow(/below exact baseline/u);
+  });
+
   it("keeps extracted session branch floors on their service without waiving either file's coverage", () => {
     const fixture = createFixture(
       "src/main/application/redactionWorkspaceService.ts",
@@ -547,13 +566,14 @@ describe("production cleanup coverage floor gate", () => {
     expect(Object.keys(manifest.floors)).toEqual(scope.existing);
     expect(Object.keys(manifest.introducedFloors)).toEqual(scope.added);
     expect(manifest.deletedFiles).toEqual(scope.deleted);
-    expect(scope.existing).toHaveLength(842);
+    expect(scope.existing).toHaveLength(843);
     // Includes global chat, shared actions, OpenCode help, MCP event streams, shared
     // translation instructions and image budget; inherited floors remain unchanged.
     // inherited floors remain unchanged.
     // Gemma sampling adds a production control and its shared default contract.
     // The unused chat quality banner and its parser were removed.
-    expect(scope.added).toHaveLength(1446);
+    // Issue #149 introduces timing, multi-folder import and preference/disclosure owners.
+    expect(scope.added).toHaveLength(1465);
     expect(scope.deleted).toHaveLength(12);
   });
 });

@@ -5,7 +5,8 @@ import type { LibraryIndex } from "../../../../shared/libraryTypes";
 import type { LinkedWorkspaceStatus } from "../../../../shared/linkedWorkspaceTypes";
 import { LibrarySortMenu } from "../LibrarySortMenu";
 import { filterLibraryIndex } from "../../lib/libraryFilter";
-import { sortLibraryIndex, type LibrarySort } from "../../lib/librarySort";
+import { useWorkspacePreference } from "../../hooks/useWorkspacePreference";
+import { sortLibraryIndex } from "../../lib/librarySort";
 import { useLinkedWorkspaceSettingsOperations } from "../../hooks/useLinkedWorkspaceSettingsOperations";
 import { useLinkedWorkspaceStatuses } from "../../hooks/useLinkedWorkspaceStatuses";
 import { LinkedWorkspaceChapterRow } from "./LinkedWorkspaceChapterRow";
@@ -20,10 +21,7 @@ export function LinkedWorkspaceSettingsPanel({
   const { i18n, t } = useTranslation("components");
   const [searchQuery, setSearchQuery] = React.useState("");
   const deferredSearchQuery = React.useDeferredValue(searchQuery);
-  const [sort, setSort] = React.useState<LibrarySort>({
-    key: "updated",
-    direction: "desc",
-  });
+  const [sort, setSort] = useWorkspacePreference("linkedWorkspaceSort");
   const chapterIds = React.useMemo(
     () => library.works.flatMap((work) => work.chapterOrder),
     [library.works],

@@ -62,6 +62,30 @@ function harness(
 }
 
 describe("Hayai page workflow commits", () => {
+  it("closes failed page timings and marks receipt-skipped stages without executing them again", async () => {
+    const h = harness(["ocr"]);
+    const finish = vi.fn(async () => {});
+    h.port.startPageTiming = vi.fn(() => finish);
+    h.port.skipPageTiming = vi.fn();
+    await executePageWorkflow(h.input, h.port);
+    expect(finish).toHaveBeenCalledOnce();
+    await executePageWorkflow(h.input, h.port);
+    expect(h.port.startPageTiming).toHaveBeenCalledOnce();
+    expect(h.port.skipPageTiming).toHaveBeenCalledWith(
+      "ocr",
+      "chapter-1",
+      "page-1",
+    );
+    const failed = harness(["ocr"], async () => {
+      throw new Error("failed OCR");
+    });
+    const failedFinish = vi.fn(async () => {});
+    failed.port.startPageTiming = () => failedFinish;
+    expect((await executePageWorkflow(failed.input, failed.port)).status).toBe(
+      "partial",
+    );
+    expect(failedFinish).toHaveBeenCalledOnce();
+  });
   it("fails a missing target before stage preparation and releases all ownership", async () => {
     const h = harness(["ocr"]);
     h.input.selection[0].pageIds.push("deleted-during-handoff");

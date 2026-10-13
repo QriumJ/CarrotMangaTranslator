@@ -215,7 +215,7 @@ function createEditAndGlobalShortcutHandlers(
     "open-export-options": () =>
       uiState.exportOptionsOpen
         ? uiState.setExportOptionsOpen(false)
-        : uiState.openExportOptions("raster"),
+        : inpainting.commandRegistry.byId["open-export-options"].run(),
     "history-undo": () => void workspaceHistory.undo(),
     "history-redo": () => void workspaceHistory.redo(),
     "delete-block": () => blockEditingActions.deleteSelectedBlock(),

@@ -676,7 +676,7 @@ describe("status dock", () => {
     expect(screen.queryByRole("region", { name: "작업 센터" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "작업 센터 열기" }));
-    fireEvent.click(screen.getByRole("button", { name: "내보내기" }));
+    fireEvent.click(screen.getByRole("button", { name: "결과물 출력" }));
     expect(onOpenExport).toHaveBeenCalledOnce();
   });
 

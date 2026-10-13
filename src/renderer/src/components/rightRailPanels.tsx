@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import type { CurrentViewContext } from "../../../shared/chatTypes";
 import type { ChapterSnapshot, MangaPage } from "../../../shared/libraryTypes";
 import type { JobState } from "../../../shared/jobTypes";
@@ -17,9 +18,14 @@ import type { LinkedWorkspaceStatus } from "../../../shared/linkedWorkspaceTypes
 import type { CompletionSoundPreferences } from "../hooks/useCompletionSound";
 import type { AppOperationActivityEvent } from "../../../shared/appOperationTypes";
 import type { StatusLogEntry } from "../hooks/useStatusLog";
+import {
+  resolveAppCommandLabel,
+  type AppCommandLabels,
+} from "../lib/appCommandTypes";
 
 export type UnifiedRightRailProps = {
   chatOpen?: boolean;
+  commandLabels?: AppCommandLabels;
   onOpenChat?: () => void;
   onCloseChat?: () => void;
   chatContext?: CurrentViewContext;
@@ -109,6 +115,7 @@ export type UnifiedRightRailProps = {
 export function UnifiedRightRail(
   props: UnifiedRightRailProps,
 ): React.JSX.Element {
+  const { t } = useTranslation("components");
   return (
     <>
       {props.currentChapter ? (
@@ -118,6 +125,16 @@ export function UnifiedRightRail(
           hasSelectedPage={Boolean(props.selectedPage)}
           flowActive={props.flowActive}
           jobActive={props.jobActive}
+          exportLabel={resolveAppCommandLabel(
+            props.commandLabels,
+            "open-export-options",
+            t("inpainting.export.resultAction"),
+          )}
+          psdExportLabel={resolveAppCommandLabel(
+            props.commandLabels,
+            "open-psd-export-options",
+            t("inpainting.export.psdAction"),
+          )}
           onOpenExport={props.onOpenExport}
           onOpenPsdExport={props.onOpenPsdExport ?? NOOP}
           onOpenTranslateOptions={props.onOpenTranslateOptions}

@@ -1,5 +1,6 @@
 /* eslint-disable max-lines -- import staging and publication sequencing stay co-located for transaction auditability */
 import { randomUUID } from "node:crypto";
+import { findDuplicateImportChapters } from "../../shared/importDuplicatePolicy";
 import { ImportSourceIdentitySchema } from "../../shared/importSourceIdentity";
 import { mkdir } from "node:fs/promises";
 import { basename, extname, join, relative } from "node:path";
@@ -134,6 +135,7 @@ export async function previewZip(
 }
 export async function previewZipFolder(
   folderPath: string,
+  options: { allowEmpty?: boolean } = {},
 ): Promise<ImportPreviewResult> {
   const zipPaths = await listZipFiles(folderPath);
   const imageFolderPaths = await listNestedImageFolders(folderPath);
@@ -194,7 +196,7 @@ export async function previewZipFolder(
   const excludedPages = imageFolderChapters.flatMap(
     (item) => item.excludedPages,
   );
-  assertBatchPreviewUsable(chapters, excludedPages);
+  if (!options.allowEmpty) assertBatchPreviewUsable(chapters, excludedPages);
   return {
     mode: "batch",
     sourceKind: "zip-folder",
@@ -439,6 +441,18 @@ async function importIntoExistingWork(
 ): Promise<CreateImportResult> {
   await ensureExistingWork(workId);
   const usedTitles = await collectUsedChapterTitles(workId);
+  const skippedChapters = request.skipDuplicateChapterTitles
+    ? findDuplicateImportChapters(
+        selectedDrafts,
+        request.selections,
+        [...usedTitles],
+        tMain("import.untitled"),
+      )
+    : [];
+  selectedDrafts = removeSkippedDrafts(selectedDrafts, skippedChapters);
+  if (selectedDrafts.length === 0 && skippedChapters.length > 0) {
+    return { workId, chapterIds: [], skippedChapters };
+  }
   throwIfAborted(signal);
   const createdChapters = await materializeSelectedDrafts({
     workId,
@@ -449,20 +463,8 @@ async function importIntoExistingWork(
     observePage,
     observeMetadata,
     usedTitles,
-    prepareChapterDirectories: async (chapterId) => {
-      const finalDirectory = join(
-        getWorksRoot(),
-        workId,
-        "chapters",
-        chapterId,
-      );
-      const published =
-        await transaction.createPublishedDirectory(finalDirectory);
-      return {
-        writeChapterDirectory: published.stagingDirectory,
-        publishedChapterDirectory: published.finalDirectory,
-      };
-    },
+    prepareChapterDirectories: (chapterId) =>
+      prepareImportedChapterDirectory(transaction, workId, chapterId),
   });
   if (createdChapters.length === 0) {
     throw new Error(tMain("import.errors.noChapterToCreate"));
@@ -492,13 +494,31 @@ async function importIntoExistingWork(
   });
   throwIfAborted(signal);
   const openedChapter = createdChapters[0];
-  if (!openedChapter) {
-    throw new Error(tMain("import.errors.createdChapterOpen"));
-  }
   return {
     workId,
     chapterIds: createdChapters.map((chapter) => chapter.id),
     openedChapter: hydrateChapter(openedChapter),
+    ...(skippedChapters.length ? { skippedChapters } : {}),
+  };
+}
+function removeSkippedDrafts(
+  drafts: ImportChapterDraft[],
+  skipped: NonNullable<CreateImportResult["skippedChapters"]>,
+) {
+  const ids = new Set(skipped.map((item) => item.draftId));
+  return drafts.filter((draft) => !ids.has(draft.draftId));
+}
+async function prepareImportedChapterDirectory(
+  transaction: LibraryTransaction,
+  workId: string,
+  chapterId: string,
+) {
+  const published = await transaction.createPublishedDirectory(
+    join(getWorksRoot(), workId, "chapters", chapterId),
+  );
+  return {
+    writeChapterDirectory: published.stagingDirectory,
+    publishedChapterDirectory: published.finalDirectory,
   };
 }
 type ChapterDirectoryTarget = {

@@ -9,10 +9,13 @@ import type { TranslationOptionsInitialScope } from "../../lib/translationSelect
 import { clampOriginalImageOpacity } from "../../lib/originalImageOpacity";
 import { useSoundEffectReviewUiState } from "./useSoundEffectReviewUiState";
 import { useWorkspaceZoomControls } from "./useWorkspaceZoomControls";
+import { useWorkspacePreference } from "../../hooks/useWorkspacePreference";
 
 import type { RedactionPreparationRequest } from "../../lib/redactionPreparation";
 
 export type RightRailMode = "page-blocks" | "block-editor";
+
+const PREFERENCE_SETTLE = { commitDelayMs: 250 } as const;
 
 // eslint-disable-next-line max-lines-per-function -- this top-level hook only aggregates independently scoped UI state and reset handles
 export function useAppSessionUiState() {
@@ -37,18 +40,20 @@ export function useAppSessionUiState() {
   const [styleGuideBackgrounded, setStyleGuideBackgrounded] = useState(false);
   const translateModals = useTranslateModalUiState();
   const jobFlow = useJobFlowState();
-  const [editorFloating, setEditorFloating] = useState(false);
+  const [editorFloating, setEditorFloating] =
+    useWorkspacePreference("editorFloating");
   const editorTextTab = useEditorTextTabRequest();
   const [rightRailMode, setRightRailMode] =
     useState<RightRailMode>("page-blocks");
-  const [stageToolbarHidden, setStageToolbarHidden] = useState(false);
+  const [stageToolbarHidden, setStageToolbarHidden] =
+    useWorkspacePreference("stageToolbarHidden");
   const soundEffectReview = useSoundEffectReviewUiState();
   const zoom = useWorkspaceZoomControls();
   const originalImageOpacity = useOriginalImageOpacityState();
 
   const toggleEditorFloat = useCallback(
     () => setEditorFloating((floating) => !floating),
-    [],
+    [setEditorFloating],
   );
   const openTextView = useCallback(() => setTextViewOpen(true), []);
 
@@ -214,8 +219,11 @@ function useInpaintingUiState() {
     setExportOptionsKind(kind);
     setExportOptionsOpen(true);
   }, []);
-  const [inpaintingBrushRadius, setInpaintingBrushRadius] = useState(28);
-  const [inpaintingPaintColor, setInpaintingPaintColor] = useState("#ffffff");
+  // Slider drags, canvas radius drags and picker moves settle before writing.
+  const [inpaintingBrushRadius, setInpaintingBrushRadius] =
+    useWorkspacePreference("inpaintingBrushRadius", PREFERENCE_SETTLE);
+  const [inpaintingPaintColor, setInpaintingPaintColor] =
+    useWorkspacePreference("inpaintingPaintColor", PREFERENCE_SETTLE);
   const [peekOriginal, setPeekOriginal] = useState(false);
   const [patternMaskStrokesByPage, setPatternMaskStrokesByPage] = useState<
     Record<string, InpaintingMaskStroke[]>

@@ -1,4 +1,6 @@
 import { saveCodexTypesettingPreferences } from "../src/main/settings/codexPreferencesStore";
+import { saveExportPreferences } from "../src/main/settings/exportPreferencesStore";
+import { DEFAULT_EXPORT_PREFERENCES } from "../src/shared/exportPreferences";
 import { createCodexTypesettingPreferences } from "../src/shared/codexTypesettingDefaults";
 import { existsSync } from "node:fs";
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
@@ -42,6 +44,68 @@ vi.mock("electron", () => ({
 const tempDirs: string[] = [];
 
 describe("settings store", () => {
+  it.each([true, false])(
+    "preserves export defaults across stale general settings saves (export first=%s)",
+    async (exportFirst) => {
+      const paths = makeAppPaths(await createTempDir());
+      const initial = await saveAppSettings(
+        resolveDefaultAppSettings({}),
+        paths,
+        {},
+        async () => null,
+      );
+      const preferences = {
+        ...DEFAULT_EXPORT_PREFERENCES,
+        outputFormat: "webp" as const,
+        webpQuality: 71,
+      };
+      const exportWrite = () =>
+        saveExportPreferences(preferences, paths, {}, async () => null);
+      const generalWrite = () =>
+        saveAppSettings(
+          { ...initial, ui: { ...initial.ui, locale: "ja" } },
+          paths,
+          {},
+          async () => null,
+        );
+      await Promise.all(
+        exportFirst
+          ? [exportWrite(), generalWrite()]
+          : [generalWrite(), exportWrite()],
+      );
+      const reopened = await getAppSettings(paths, {}, async () => null);
+      expect(reopened.ui?.locale).toBe("ja");
+      expect(reopened.ui?.exportPreferences).toEqual(preferences);
+    },
+  );
+
+  it("serializes export choices, rejects unsafe fields, and allows an explicit reset", async () => {
+    const paths = makeAppPaths(await createTempDir());
+    const save = (outputFormat: "jpeg" | "webp" | "png") =>
+      saveExportPreferences(
+        { ...DEFAULT_EXPORT_PREFERENCES, outputFormat },
+        paths,
+        {},
+        async () => null,
+      );
+    await Promise.all([save("jpeg"), save("webp"), save("png")]);
+    await expect(
+      saveExportPreferences(
+        { ...DEFAULT_EXPORT_PREFERENCES, collisionPolicy: "replace" } as never,
+        paths,
+        {},
+        async () => null,
+      ),
+    ).rejects.toThrow();
+    expect(
+      (await getAppSettings(paths, {}, async () => null)).ui?.exportPreferences
+        ?.outputFormat,
+    ).toBe("png");
+    await resetAppSettings(paths, {}, async () => null);
+    expect(
+      (await getAppSettings(paths, {}, async () => null)).ui?.exportPreferences,
+    ).toEqual(DEFAULT_EXPORT_PREFERENCES);
+  });
   it("round-trips separate custom credentials through encrypted restart and deletion", async () => {
     const paths = makeAppPaths(await createTempDir());
     const settings = resolveDefaultAppSettings({});

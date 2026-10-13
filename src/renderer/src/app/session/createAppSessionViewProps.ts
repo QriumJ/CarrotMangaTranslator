@@ -11,6 +11,7 @@ import { createGatherTextProps } from "./createGatherTextProps";
 import {
   createBlockLibraryProps,
   createCommandPaletteProps,
+  createExportOptionsProps,
   createShortcutHelpProps,
 } from "./createAppOverlayProps";
 import { createPanelBlockActions } from "./createPanelBlockActions";
@@ -49,7 +50,11 @@ export function createAppSessionViewProps(model: AppSessionViewModel) {
     panelSessionValue: createPanelSessionValue(model),
     rightRailProps: {
       ...createRightRailProps(model),
+      commandLabels: model.commandRegistry.labels,
       onOpenChat: model.commandRegistry.byId["open-chat"].run,
+      onOpenExport: model.commandRegistry.byId["open-export-options"].run,
+      onOpenPsdExport:
+        model.commandRegistry.byId["open-psd-export-options"].run,
       onChatPage: (chapterId: string, pageId: string) => {
         void (async () => {
           if (model.core.currentChapter?.id !== chapterId)
@@ -103,41 +108,6 @@ function createAutoInpaintingOptionsProps({
             postprocess,
           );
         },
-      }
-    : null;
-}
-
-function createExportOptionsProps({
-  core,
-  derivedState,
-  inpaintingActions,
-  libraryActions,
-  uiState,
-}: AppSessionViewModel): AppSessionViewProps["exportOptionsProps"] {
-  return uiState.exportOptionsOpen &&
-    core.currentChapter &&
-    derivedState.selectedPage
-    ? {
-        chapter: core.currentChapter,
-        currentPageId: derivedState.selectedPage.id,
-        jobActive: false,
-        kind: uiState.exportOptionsKind,
-        library: core.library,
-        onClose: () => uiState.setExportOptionsOpen(false),
-        onNavigateToIssue: (chapterId, pageId) => {
-          void (async () => {
-            if (core.currentChapter?.id !== chapterId) {
-              await libraryActions.openChapter(chapterId);
-            }
-            core.setSelectedPageId(pageId);
-            core.setSelectedBlockId(null);
-            uiState.setExportOptionsOpen(false);
-          })();
-        },
-        onStart:
-          uiState.exportOptionsKind === "psd"
-            ? inpaintingActions.exportPagePsd
-            : inpaintingActions.exportPageImages,
       }
     : null;
 }

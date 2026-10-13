@@ -685,7 +685,8 @@
       }
     },
     "workUnavailable": "작품 정보를 불러오지 못했습니다. 현재 페이지만 출력합니다.",
-    "startFailed": "출력을 시작하지 못했습니다. 다시 시도해 주세요."
+    "startFailed": "출력을 시작하지 못했습니다. 다시 시도해 주세요.",
+    "preferencesSaveFailed": "출력 설정을 저장하지 못했습니다."
   },
   "autoInpaintingOptions": {
     "title": "지울 페이지 선택",
@@ -897,7 +898,20 @@
     "afterPage": "페이지 뒤",
     "anchorPage": "기준 페이지",
     "pagesToAdd": "추가할 페이지",
-    "translateAddedPages": "추가한 페이지만 번역"
+    "translateAddedPages": "추가한 페이지만 번역",
+    "selectedChapters": "{{total}}개 중 {{selected}}개 화 선택",
+    "duplicateTitle": "중복",
+    "sourcePathExample": "유지되는 경로: {{path}}",
+    "batchOptions": {
+      "title": "가져오기 옵션",
+      "openTranslation": "가져온 뒤 번역 설정 열기",
+      "openTranslationHint": "번역은 자동으로 시작되지 않습니다. 설정을 확인한 뒤 직접 시작합니다.",
+      "skipDuplicates": "이미 있는 제목의 화는 건너뛰기",
+      "skipDuplicatesHint": "앞뒤 공백을 뺀 제목이 이 작품의 기존 화와 대소문자까지 정확히 같으면 가져오지 않습니다. 선택한 화끼리 제목이 같으면 목록에서 앞선 화만 가져옵니다.",
+      "noDuplicates": "중복 없음",
+      "allDuplicates": "{{count}}개 모두 건너뜀",
+      "duplicateCounts": "{{skipped}}개 건너뜀 · {{remaining}}개 가져오기"
+    }
   },
   "linkedWorkspaceFolders": {
     "label": "자동 저장 폴더 역할",
@@ -963,6 +977,10 @@
     "renameItem": "{{title}} 이름 변경",
     "moveItem": "{{title}} 순서 이동",
     "moveDisabled": "검색 중이거나 작업 중에는 이동할 수 없습니다.",
+    "collapseAllWorks": "모든 작품 접기",
+    "expandAllWorks": "모든 작품 펼치기",
+    "collapseAllWorksDuringSearch": "모든 작품 접기 · 검색어를 지우면 사용할 수 있습니다",
+    "expandAllWorksDuringSearch": "모든 작품 펼치기 · 검색어를 지우면 사용할 수 있습니다",
     "sort": {
       "trigger": "정렬: {{criterion}} {{direction}}",
       "criteriaLabel": "정렬 기준",
@@ -1007,6 +1025,60 @@
         "hours": "{{hours}}시간 {{minutes}}분 {{seconds}}초",
         "minutes": "{{minutes}}분 {{seconds}}초",
         "seconds": "{{seconds}}초"
+      },
+      "workflow": {
+        "loading": "작업 기록을 불러오는 중…",
+        "loadFailed": "작업 기록을 불러오지 못했습니다.",
+        "retry": "다시 시도",
+        "refresh": "새로고침",
+        "refreshFailed": "갱신하지 못했습니다.",
+        "emptyTitle": "기록이 없습니다.",
+        "attemptsLabel": "작업 실행 기록",
+        "resumed": "이어서 실행",
+        "status": "상태",
+        "runTotal": "실행 전체 시간",
+        "elapsedSoFar": "지금까지 경과",
+        "started": "시작",
+        "finished": "종료",
+        "notFinished": "종료 전",
+        "coverage": "실행 범위",
+        "coverageValue": "챕터 {{chapters}}개 · 페이지 {{pages}}개",
+        "runningNote": "아직 실행 중입니다. 마지막으로 저장된 시점의 시간이며, 이 창이 열려 있는 동안 갱신됩니다.",
+        "interruptedNote": "실행이 끝나기 전에 앱이 종료되었습니다. 그때까지 저장된 시간만 표시합니다.",
+        "multiChapterNote": "이 실행에는 다른 챕터도 포함되었습니다. 실행 전체 열은 모든 챕터를 포함하고, 페이지 열은 이 챕터의 페이지를 보여 줍니다.",
+        "pageSelect": "이 챕터의 페이지",
+        "noChapterPages": "이 실행에는 이 챕터의 페이지 기록이 없습니다.",
+        "stage": "단계",
+        "wholeRun": "실행 전체",
+        "selectedPage": "선택한 페이지",
+        "cleanup": "실행 후 정리",
+        "skipped": "건너뜀",
+        "notMeasured": "측정 안 됨",
+        "legend": "“—”는 기록된 시간이 없다는 뜻입니다. “건너뜀”은 해당 페이지에 그 단계가 필요하지 않았다는 뜻입니다.",
+        "statuses": {
+          "running": "진행 중",
+          "completed": "완료",
+          "partial": "일부 완료",
+          "failed": "실패",
+          "cancelled": "취소됨",
+          "interrupted": "중단됨"
+        },
+        "stages": {
+          "detect": "블록 검출",
+          "ocr": "원문 읽기 · OCR",
+          "source-rules": "원문 일괄 편집",
+          "translate": "번역",
+          "translation-rules": "번역문 일괄 편집",
+          "typography": "자동 서식",
+          "format-rules": "최종 일괄 편집",
+          "erase": "원문 제거",
+          "layout": "말풍선·줄 배치",
+          "review": "자동 검수",
+          "preparing": "준비·모델 로드"
+        },
+        "measuredTotal": "기록된 단계 합계",
+        "recorded": "기록 시각",
+        "pageTotal": "페이지 합계"
       }
     },
     "visibleCount": "{{visible}} / {{total}}",
@@ -1045,6 +1117,7 @@
     "chapterTools": "챕터 도구",
     "currentPage": "현재 페이지",
     "pageActions": "페이지 작업",
+    "outputActions": "화 결과물 출력",
     "showInspector": "검수·편집 패널 펼치기",
     "hideInspector": "검수·편집 패널 접기"
   },
@@ -2490,7 +2563,6 @@
     "recentJobs": "최근 작업",
     "statusHistory": "상태 기록",
     "reviewResults": "결과 검토",
-    "exportResults": "내보내기",
     "research": {
       "title": "조사 진행 상황",
       "credits": "크레딧 {{used}} / {{limit}}"

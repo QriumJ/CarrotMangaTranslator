@@ -17,8 +17,8 @@ import type { PageExportRenderSession } from "../pageExport";
 import {
   formatPageImageExportOrder,
   sanitizeOutputBaseName,
-  sanitizeOutputPathSegment,
 } from "./pageImageExportNaming";
+import { sanitizeOutputPathSegment } from "../../shared/outputPathSegment";
 import { assertPageExportPngBuffer } from "../pageExportRasterSafety";
 import { isAbortError } from "./jobEvents";
 import type { InpaintingJobContext } from "./inpaintingJobTypes";

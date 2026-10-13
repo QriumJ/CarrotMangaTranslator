@@ -623,7 +623,7 @@ describe("workspace pointer interactions", () => {
     expect(brushCursor?.style.width).toBe("12px");
     expect(brushCursor?.style.height).toBe("12px");
     expect(brushCursor?.style.getPropertyValue("--retouch-cursor-color")).toBe(
-      "#78f2c5",
+      "var(--bubble-layout-brush-stroke-stroke)",
     );
     expect(brushCursor?.querySelector("span")).not.toBeNull();
 

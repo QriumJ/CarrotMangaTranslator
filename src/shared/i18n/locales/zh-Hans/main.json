@@ -29,7 +29,7 @@
     "openImageFolder": "打开图片文件夹",
     "openArchive": "打开压缩文件",
     "openPdf": "打开 PDF",
-    "batchImport": "批量翻译作品",
+    "batchImport": "选择章节文件夹（可多选）",
     "saveShare": "保存共享文件",
     "openShare": "导入共享文件",
     "registerFont": "注册字体文件（TTF/OTF）",

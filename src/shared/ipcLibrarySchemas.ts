@@ -262,6 +262,7 @@ export const LibraryIndexSchema = z
 
 export const CreateImportRequestSchema = z
   .object({
+    skipDuplicateChapterTitles: z.boolean().optional(),
     previewId: uuid,
     target: z.discriminatedUnion("mode", [
       z.object({ mode: z.literal("new"), title }).strict(),

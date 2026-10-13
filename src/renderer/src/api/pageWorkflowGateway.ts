@@ -3,4 +3,5 @@ export const pageWorkflowGateway = createMangaDomainGateway("PageWorkflow", [
   "preflightPageWorkflow",
   "startPageWorkflow",
   "getPageWorkflowRun",
+  "getPageWorkflowTimings",
 ]);

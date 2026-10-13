@@ -1,0 +1,64 @@
+.options {
+  gap: var(--sp-2);
+}
+.option {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-5);
+}
+.counts {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  font-variant-numeric: tabular-nums;
+}
+.bulkBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+}
+.bulkCount {
+  color: var(--text-dim);
+  font-size: var(--font-sm);
+  font-variant-numeric: tabular-nums;
+}
+.bulkActions {
+  display: flex;
+  gap: var(--sp-2);
+}
+.draftList {
+  display: grid;
+  gap: var(--sp-1);
+}
+.draftRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 90px;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+.draftRow > span {
+  min-width: 0;
+}
+.draftRow input:not([type="checkbox"]) {
+  min-height: var(--ctl-h-sm);
+  height: var(--ctl-h-sm);
+  padding-block: var(--sp-1);
+}
+.draftMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  font-variant-numeric: tabular-nums;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+.duplicate {
+  color: var(--text-dim);
+  font-size: var(--font-xs);
+}

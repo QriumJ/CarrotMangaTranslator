@@ -8,15 +8,22 @@ import type {
 } from "../../../shared/importTypes";
 
 import {
+  setAllSelectionsEnabled,
   updateSelectionEnabled,
   updateSelectionTitle,
 } from "./importModalHelpers";
+
+import { Button } from "./ui/Button";
 
 import { CheckboxField } from "./ui/CheckboxField";
 
 import { Input } from "./ui/Field";
 
-import { SelectionSurface } from "./ui/SelectionCard";
+import { ControlTooltip } from "./ui/ControlTooltip";
+
+import styles from "./ImportBatchOptions.module.css";
+
+const NO_SKIPPED_DRAFTS: ReadonlySet<string> = new Set();
 
 export function ImportDraftSection({
   busy,
@@ -24,26 +31,37 @@ export function ImportDraftSection({
   selections,
   setSelections,
   pagesOnly = false,
+  skippedDraftIds = NO_SKIPPED_DRAFTS,
 }: {
   busy: boolean;
   preview: ImportPreviewResult;
   selections: ImportCreateSelection[];
   setSelections: React.Dispatch<React.SetStateAction<ImportCreateSelection[]>>;
   pagesOnly?: boolean;
+  /** Chapters an existing-work import will leave out for a duplicate title. */
+  skippedDraftIds?: ReadonlySet<string>;
 }): React.JSX.Element {
   const { t } = useTranslation("components");
+  const batch = preview.mode === "batch";
   return (
     <section className="modal-section">
       <h3>
         {t(
           pagesOnly
             ? "import.pagesToAdd"
-            : preview.mode === "batch"
+            : batch
               ? "import.chaptersToCreate"
               : "import.chapterTitle",
         )}
       </h3>
-      <div className="draft-list">
+      {batch ? (
+        <ImportDraftBulkBar
+          busy={busy}
+          selections={selections}
+          setSelections={setSelections}
+        />
+      ) : null}
+      <div className={styles.draftList}>
         {preview.chapters.map((chapter) => {
           const selection = selections.find(
             (item) => item.draftId === chapter.draftId,
@@ -53,6 +71,7 @@ export function ImportDraftSection({
               key={chapter.draftId}
               busy={busy}
               chapter={chapter}
+              duplicate={skippedDraftIds.has(chapter.draftId)}
               previewMode={preview.mode}
               selection={selection}
               setSelections={setSelections}
@@ -65,9 +84,51 @@ export function ImportDraftSection({
   );
 }
 
+function ImportDraftBulkBar({
+  busy,
+  selections,
+  setSelections,
+}: {
+  busy: boolean;
+  selections: ImportCreateSelection[];
+  setSelections: React.Dispatch<React.SetStateAction<ImportCreateSelection[]>>;
+}): React.JSX.Element {
+  const { t } = useTranslation("components");
+  const selected = selections.filter((item) => item.enabled).length;
+  return (
+    <div className={styles.bulkBar}>
+      <span className={styles.bulkCount} role="status">
+        {t("import.selectedChapters", {
+          selected,
+          total: selections.length,
+        })}
+      </span>
+      <div className={styles.bulkActions}>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={busy || selected === selections.length}
+          onClick={() => setAllSelectionsEnabled(setSelections, true)}
+        >
+          {t("common.selectAll")}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={busy || selected === 0}
+          onClick={() => setAllSelectionsEnabled(setSelections, false)}
+        >
+          {t("common.clearAll")}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function ImportDraftItem({
   busy,
   chapter,
+  duplicate,
   previewMode,
   selection,
   setSelections,
@@ -75,19 +136,16 @@ function ImportDraftItem({
 }: {
   busy: boolean;
   chapter: ImportPreviewResult["chapters"][number];
+  duplicate: boolean;
   previewMode: ImportPreviewResult["mode"];
   selection: ImportCreateSelection;
   setSelections: React.Dispatch<React.SetStateAction<ImportCreateSelection[]>>;
   pagesOnly: boolean;
 }): React.JSX.Element {
   const { t } = useTranslation("components");
+  const sourcePath = chapter.pages[0]?.sourceRelativePath;
   return (
-    <SelectionSurface
-      className="draft-item selection-field-row"
-      variant="row"
-      selected={previewMode === "batch" ? selection.enabled : true}
-      disabled={busy}
-    >
+    <div className={styles.draftRow}>
       {previewMode === "batch" ? (
         <ImportDraftBatchToggle
           busy={busy}
@@ -103,19 +161,30 @@ function ImportDraftItem({
       {pagesOnly ? (
         <span>{chapter.title}</span>
       ) : (
-        <Input
-          value={selection.title}
-          disabled={busy || (previewMode === "batch" && !selection.enabled)}
-          onChange={(event) =>
-            updateSelectionTitle(
-              setSelections,
-              chapter.draftId,
-              event.target.value,
-            )
-          }
-        />
+        <ControlTooltip floating content={sourcePath ?? selection.title}>
+          <Input
+            aria-label={t("import.chapterTitle")}
+            value={selection.title}
+            disabled={busy || (previewMode === "batch" && !selection.enabled)}
+            onChange={(event) =>
+              updateSelectionTitle(
+                setSelections,
+                chapter.draftId,
+                event.target.value,
+              )
+            }
+          />
+        </ControlTooltip>
       )}
-    </SelectionSurface>
+      <span className={styles.draftMeta}>
+        {previewMode === "batch"
+          ? t("common.pageCount", { count: chapter.pages.length })
+          : null}
+        {duplicate ? (
+          <span className={styles.duplicate}>{t("import.duplicateTitle")}</span>
+        ) : null}
+      </span>
+    </div>
   );
 }
 
@@ -133,9 +202,7 @@ function ImportDraftBatchToggle({
   const { t } = useTranslation("components");
   return (
     <CheckboxField
-      className="checkbox-row"
       ariaLabel={`${selection.title} · ${t("common.pageCount", { count: chapter.pages.length })}`}
-      label={t("common.pageCount", { count: chapter.pages.length })}
       checked={selection.enabled}
       disabled={busy}
       onCheckedChange={(checked) =>

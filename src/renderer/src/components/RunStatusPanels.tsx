@@ -1,15 +1,10 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import {
-  IconDownload,
-  IconEraser,
-  IconFolderOpen,
-  IconLayersSelected,
-  IconWand,
-} from "@tabler/icons-react";
+import { IconEraser, IconWand } from "@tabler/icons-react";
 import type { AutoInpaintingEntryScope } from "../lib/autoInpaintingSelection";
 import { Button } from "./ui/Button";
 import { ControlTooltip } from "./ui/ControlTooltip";
+import { ChapterOutputActions } from "./ChapterOutputActions";
 import { areChapterTaskHubPropsEqual } from "./chapterTaskHubMemo";
 import type { ChapterTaskHubProps } from "./chapterTaskHubTypes";
 
@@ -55,18 +50,23 @@ export const ChapterTaskHub = React.memo(function ChapterTaskHub(
             {t("chat.translateInChat")}
           </Button>
         </div>
+        <ChapterOutputActions
+          available={Boolean(props.currentChapter?.pages.length)}
+          exportLabel={props.exportLabel}
+          linkedWorkspaceStatus={props.linkedWorkspaceStatus}
+          linkedWorkspaceViewBusy={props.linkedWorkspaceViewBusy}
+          onOpenExport={props.onOpenExport}
+          onOpenPsdExport={props.onOpenPsdExport}
+          onViewLinkedResults={props.onViewLinkedResults}
+          psdExportLabel={props.psdExportLabel}
+        />
         {props.currentChapter && props.hasSelectedPage ? (
           <CurrentPageActionsSection
             actionsDisabled={actionsDisabled}
             canRunBubbleLayout={props.canRunBubbleLayout}
             hasSelectedPage={props.hasSelectedPage}
             onOpenAutoInpaintingOptions={props.onOpenAutoInpaintingOptions}
-            onOpenExport={props.onOpenExport}
-            onOpenPsdExport={props.onOpenPsdExport}
             onRunBubbleLayout={props.onRunBubbleLayout}
-            linkedWorkspaceStatus={props.linkedWorkspaceStatus}
-            linkedWorkspaceViewBusy={props.linkedWorkspaceViewBusy}
-            onViewLinkedResults={props.onViewLinkedResults}
           />
         ) : null}
       </div>
@@ -79,23 +79,13 @@ function CurrentPageActionsSection({
   canRunBubbleLayout,
   hasSelectedPage,
   onOpenAutoInpaintingOptions,
-  onOpenExport,
-  onOpenPsdExport,
   onRunBubbleLayout,
-  linkedWorkspaceStatus,
-  linkedWorkspaceViewBusy,
-  onViewLinkedResults,
 }: {
   actionsDisabled: boolean;
   canRunBubbleLayout: boolean;
   hasSelectedPage: boolean;
   onOpenAutoInpaintingOptions: (scope: AutoInpaintingEntryScope) => void;
-  onOpenExport: () => void;
-  onOpenPsdExport: () => void;
   onRunBubbleLayout: () => void;
-  linkedWorkspaceStatus: ChapterTaskHubProps["linkedWorkspaceStatus"];
-  linkedWorkspaceViewBusy: boolean;
-  onViewLinkedResults: () => void;
 }): React.JSX.Element {
   const { t } = useTranslation("components");
   return (
@@ -113,103 +103,9 @@ function CurrentPageActionsSection({
           disabled={actionsDisabled || !canRunBubbleLayout}
           onRun={onRunBubbleLayout}
         />
-        <ResultExportActions
-          actionsDisabled={false}
-          linkedWorkspaceStatus={linkedWorkspaceStatus}
-          linkedWorkspaceViewBusy={linkedWorkspaceViewBusy}
-          onOpenExport={onOpenExport}
-          onOpenPsdExport={onOpenPsdExport}
-          onViewLinkedResults={onViewLinkedResults}
-        />
       </div>
-      {linkedWorkspaceStatus?.connectionId ? (
-        <small
-          className={`linked-workspace-inline-status ${linkedWorkspaceStatus.state}`}
-        >
-          {formatLinkedWorkspaceStatus(linkedWorkspaceStatus, t)}
-        </small>
-      ) : null}
     </div>
   );
-}
-
-function ResultExportActions({
-  actionsDisabled,
-  linkedWorkspaceStatus,
-  linkedWorkspaceViewBusy,
-  onOpenExport,
-  onOpenPsdExport,
-  onViewLinkedResults,
-}: {
-  actionsDisabled: boolean;
-  linkedWorkspaceStatus: ChapterTaskHubProps["linkedWorkspaceStatus"];
-  linkedWorkspaceViewBusy: boolean;
-  onOpenExport: () => void;
-  onOpenPsdExport: () => void;
-  onViewLinkedResults: () => void;
-}): React.JSX.Element {
-  const { t } = useTranslation("components");
-  const viewResults = canViewLinkedResults(linkedWorkspaceStatus);
-  const resultLabel = t(
-    viewResults
-      ? "inpainting.export.viewResults"
-      : "inpainting.export.resultAction",
-  );
-  return (
-    <>
-      <Button
-        aria-label={resultLabel}
-        className="current-page-export-action"
-        disabled={actionsDisabled}
-        fullWidth
-        iconLeft={
-          viewResults ? (
-            <IconFolderOpen size={16} stroke={2.1} />
-          ) : (
-            <IconDownload size={16} stroke={2.1} />
-          )
-        }
-        onClick={viewResults ? onViewLinkedResults : onOpenExport}
-        size="sm"
-      >
-        {linkedWorkspaceViewBusy
-          ? t("inpainting.export.preparingResults")
-          : resultLabel}
-      </Button>
-      <Button
-        aria-label={t("inpainting.export.psdAction")}
-        className="current-page-psd-export-action"
-        disabled={actionsDisabled}
-        fullWidth
-        iconLeft={<IconLayersSelected size={16} stroke={2.1} />}
-        onClick={onOpenPsdExport}
-        size="sm"
-      >
-        {t("inpainting.export.psdAction")}
-      </Button>
-    </>
-  );
-}
-
-function canViewLinkedResults(
-  status: ChapterTaskHubProps["linkedWorkspaceStatus"],
-): boolean {
-  return Boolean(
-    status?.connectionId && !["disabled", "unlinked"].includes(status.state),
-  );
-}
-
-function formatLinkedWorkspaceStatus(
-  status: NonNullable<ChapterTaskHubProps["linkedWorkspaceStatus"]>,
-  t: ReturnType<typeof useTranslation>["t"],
-): string {
-  if (status.state === "syncing") return t("inpainting.export.syncing");
-  if (status.state === "pending") {
-    return t("inpainting.export.pendingSync", { count: status.pendingCount });
-  }
-  if (status.state === "failed") return t("inpainting.export.syncFailed");
-  if (status.state === "disabled") return t("inpainting.export.syncDisabled");
-  return t("inpainting.export.synced");
 }
 
 function BubbleLayoutAction({

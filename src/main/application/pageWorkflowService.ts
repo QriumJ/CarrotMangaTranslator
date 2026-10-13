@@ -17,6 +17,16 @@ import {
 } from "../../shared/pageWorkflowStages";
 
 export type PageWorkflowExecutionPort = {
+  startPageTiming?: (
+    stage: PageWorkflowStage,
+    chapterId: string,
+    page: MangaPage,
+  ) => () => Promise<void>;
+  skipPageTiming?: (
+    stage: PageWorkflowStage,
+    chapterId: string,
+    pageId: string,
+  ) => void;
   group?: <T>(stage: PageWorkflowStage, run: () => Promise<T>) => Promise<T>;
   restoreCompletedStage?: (
     stage: PageWorkflowStage,
@@ -167,7 +177,11 @@ function reportCompletedStage(
       input.configurationKeys?.[stage],
     ),
   );
-  if (complete) pages.forEach((page) => port.progress(stage, page));
+  if (complete)
+    pages.forEach((page) => {
+      port.progress(stage, page);
+      port.skipPageTiming?.(stage, chapter.id, page.id);
+    });
   return complete;
 }
 
@@ -212,9 +226,35 @@ async function executeWorkflowPage(
       input.configurationKeys?.[stage],
     )
   ) {
+    port.skipPageTiming?.(stage, chapter.id, pageId);
     await port.restoreCompletedStage?.(stage, before);
     return;
   }
+  const finishTiming = port.startPageTiming?.(stage, chapter.id, before);
+  try {
+    return await executeAndSaveWorkflowPage(
+      input,
+      port,
+      chapter.id,
+      current,
+      before,
+      stage,
+      receipt,
+    );
+  } finally {
+    await finishTiming?.();
+  }
+}
+
+async function executeAndSaveWorkflowPage(
+  input: PageWorkflowExecution,
+  port: PageWorkflowExecutionPort,
+  chapterId: string,
+  current: ChapterSnapshot,
+  before: MangaPage,
+  stage: PageWorkflowStage,
+  receipt: ReturnType<typeof workflowReceipt>,
+): Promise<PageWorkflowIssue | undefined> {
   let after: MangaPage;
   try {
     after = await port.execute(stage, current, before);
@@ -225,14 +265,14 @@ async function executeWorkflowPage(
     const partial =
       error instanceof PageWorkflowPartialFailure ? error.page : before;
     await port.save(
-      chapter.id,
+      chapterId,
       before,
       failWorkflowReceipt(receipt, before, partial, stage, message),
     );
-    return { chapterId: chapter.id, pageId, stage, message };
+    return { chapterId, pageId: before.id, stage, message };
   }
   await port.save(
-    chapter.id,
+    chapterId,
     before,
     completeWorkflowReceipt(
       receipt,

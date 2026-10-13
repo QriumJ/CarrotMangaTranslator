@@ -311,6 +311,31 @@ describe("UI locale settings form", () => {
       wheelZoomSensitivityPercent: 10,
     });
   });
+
+  it("keeps remembered export choices when general settings are saved", () => {
+    const initialSettings = resolveDefaultAppSettings({});
+    const exportPreferences = {
+      outputFormat: "jpeg" as const,
+      jpegQuality: 72,
+      webpQuality: 90,
+      preserveSourceNames: false,
+      destinationMode: "fixed" as const,
+    };
+    initialSettings.ui = { ...initialSettings.ui, exportPreferences };
+    const values = {
+      ...createSettingsFormValues(initialSettings),
+      wheelZoomSensitivityPercent: 12,
+    };
+    const result = buildSettingsFromDraft({
+      draft: resolveSettingsDraft(values),
+      initialSettings,
+      keybindings: initialSettings.keybindings ?? {},
+      blockFormatDefaults:
+        initialSettings.blockFormatDefaults ?? DEFAULT_BLOCK_FORMAT_DEFAULTS,
+      values,
+    });
+    expect(result.ui?.exportPreferences).toEqual(exportPreferences);
+  });
 });
 
 describe("Vertex service-account settings form", () => {

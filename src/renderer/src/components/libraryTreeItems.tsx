@@ -1,12 +1,146 @@
 import React from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import { useSortable } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { LibraryChapterSummary } from "../../../shared/libraryTypes";
+import { IconArrowsVertical, IconFold } from "@tabler/icons-react";
+import type {
+  LibraryChapterSummary,
+  LibraryIndex,
+} from "../../../shared/libraryTypes";
 import { IconButton } from "./ui/IconButton";
-import { EditIcon } from "./ui/icons";
+import { ChevronDownIcon, EditIcon } from "./ui/icons";
 import { Button } from "./ui/Button";
+import type { LibraryWorkDisclosure } from "./useLibraryWorkDisclosure";
+import styles from "./LibraryTree.module.css";
+
+/** Saved-layout bulk actions; search keeps folding transient, so it disables them. */
+export function LibraryBulkDisclosureButtons({
+  disclosure,
+  hasWorks,
+}: {
+  disclosure: LibraryWorkDisclosure;
+  hasWorks: boolean;
+}): React.JSX.Element {
+  const { t } = useTranslation("components");
+  const searching = disclosure.bulkActionsDisabled;
+  const collapseLabel = t(
+    searching
+      ? "library.collapseAllWorksDuringSearch"
+      : "library.collapseAllWorks",
+  );
+  const expandLabel = t(
+    searching ? "library.expandAllWorksDuringSearch" : "library.expandAllWorks",
+  );
+  return (
+    <span className={styles.bulkDisclosure}>
+      <IconButton
+        size="sm"
+        label={collapseLabel}
+        onClick={disclosure.collapseAll}
+        disabled={searching || !hasWorks || disclosure.allCollapsed}
+      >
+        <IconFold size={16} stroke={2} aria-hidden="true" />
+      </IconButton>
+      <IconButton
+        size="sm"
+        label={expandLabel}
+        onClick={disclosure.expandAll}
+        disabled={searching || !hasWorks || disclosure.noneCollapsed}
+      >
+        <IconArrowsVertical size={16} stroke={2} aria-hidden="true" />
+      </IconButton>
+    </span>
+  );
+}
+
+type LibraryWorkGroupProps = {
+  currentChapterId: string | null;
+  dragEnabled: boolean;
+  expanded: boolean;
+  jobActive: boolean;
+  onOpenChapter: (chapterId: string) => void;
+  onRenameChapter: (chapterId: string) => void;
+  onRenameWork: (workId: string) => void;
+  onToggleExpanded: (workId: string) => void;
+  work: LibraryIndex["works"][number];
+};
+
+/** A work heading that discloses its chapters; reorder stays within a work. */
+export function LibraryWorkGroup({
+  currentChapterId,
+  dragEnabled,
+  expanded,
+  jobActive,
+  onOpenChapter,
+  onRenameChapter,
+  onRenameWork,
+  onToggleExpanded,
+  work,
+}: LibraryWorkGroupProps): React.JSX.Element {
+  const { t } = useTranslation("components");
+  const listId = `library-work-${React.useId()}`;
+  return (
+    <div className="work-group" data-expanded={expanded}>
+      <div className="work-row">
+        <Button
+          variant="bare"
+          className={styles.workDisclosure}
+          aria-expanded={expanded}
+          aria-controls={expanded ? listId : undefined}
+          onClick={() => onToggleExpanded(work.id)}
+          title={work.title}
+          type="button"
+        >
+          <ChevronDownIcon
+            size={14}
+            className={expanded ? styles.chevron : styles.chevronCollapsed}
+          />
+          <strong>{work.title}</strong>
+          {expanded ? null : (
+            <small className={styles.collapsedCount}>
+              {t("common.chapterCount", { count: work.chapters.length })}
+            </small>
+          )}
+        </Button>
+        <IconButton
+          size="sm"
+          label={t("library.renameItem", { title: work.title })}
+          title={t("common.rename")}
+          onClick={() => onRenameWork(work.id)}
+          disabled={jobActive}
+        >
+          <EditIcon size={14} />
+        </IconButton>
+      </div>
+      {expanded ? (
+        <SortableContext
+          items={work.chapters.map((chapter) => chapter.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="chapter-list" id={listId}>
+            {work.chapters.map((chapter) => (
+              <SortableChapterItem
+                key={chapter.id}
+                workId={work.id}
+                chapter={chapter}
+                active={chapter.id === currentChapterId}
+                disabled={!dragEnabled}
+                jobActive={jobActive}
+                onOpenChapter={onOpenChapter}
+                onRenameChapter={onRenameChapter}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      ) : null}
+    </div>
+  );
+}
 
 type SortableChapterItemProps = {
   workId: string;
@@ -18,7 +152,7 @@ type SortableChapterItemProps = {
   onRenameChapter: (chapterId: string) => void;
 };
 
-export function SortableChapterItem({
+function SortableChapterItem({
   workId,
   chapter,
   active,

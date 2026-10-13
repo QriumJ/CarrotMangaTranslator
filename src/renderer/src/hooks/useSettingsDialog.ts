@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { normalizeUiLocale } from "../../../shared/uiLocales";
 import { appI18n } from "../appI18n";
 import type { AppSettings } from "../../../shared/settingsTypes";
+import type { ExportPreferences } from "../../../shared/exportPreferences";
 import { settingsGateway as mangaGateway } from "../api/settingsGateway";
 import { formatErrorMessage } from "../lib/errorPresentation";
 import { toast } from "../lib/toastStore";
@@ -23,6 +24,8 @@ type UseSettingsDialogResult = {
   saveSettingsQuietly: (
     nextSettings: AppSettings,
   ) => Promise<AppSettings | null>;
+  /** Resolves false when the newest choice could not be stored. */
+  saveExportPreferences: (preferences: ExportPreferences) => Promise<boolean>;
 };
 
 type SettingsOpenTarget = "general" | "style-presets";
@@ -34,7 +37,12 @@ export type SettingsOpenRequest = {
 export function useSettingsDialog(
   pushStatus: (line: string) => void,
 ): UseSettingsDialogResult {
-  const [settings, setSettings] = React.useState<AppSettings | null>(null);
+  const { settings, setSettings, pendingExportRef } = useSettingsState();
+  const saveExportPreferences = useExportPreferencesSaveAction(
+    setSettings,
+    pendingExportRef,
+    pushStatus,
+  );
   const [settingsOpen, setSettingsOpen] = React.useState(false);
   const [settingsBusy, setSettingsBusy] = React.useState(false);
   const [openRequest, setOpenRequest] = React.useState<SettingsOpenRequest>({
@@ -71,7 +79,7 @@ export function useSettingsDialog(
       );
       return saved;
     },
-    [],
+    [setSettings],
   );
   const resetSettings = useResetSettingsAction({
     pushStatus,
@@ -95,7 +103,75 @@ export function useSettingsDialog(
     submitSettings,
     resetSettings,
     saveSettingsQuietly,
+    saveExportPreferences,
   };
+}
+
+function useSettingsState() {
+  const [settings, setLoadedSettings] = React.useState<AppSettings | null>(
+    null,
+  );
+  // Full-settings replies may predate even an already acknowledged output choice.
+  const pendingExportRef = React.useRef<ExportPreferences | null>(null);
+  const setSettings = React.useCallback<
+    React.Dispatch<React.SetStateAction<AppSettings | null>>
+  >((action) => {
+    setLoadedSettings((current) => {
+      const next = typeof action === "function" ? action(current) : action;
+      const pending = pendingExportRef.current;
+      return next && pending ? withExportPreferences(next, pending) : next;
+    });
+  }, []);
+  return { settings, setSettings, pendingExportRef };
+}
+
+function withExportPreferences(
+  settings: AppSettings,
+  exportPreferences: ExportPreferences,
+): AppSettings {
+  return { ...settings, ui: { ...settings.ui, exportPreferences } };
+}
+
+/**
+ * Remembers repeatable output choices. Each committed choice is shown at once
+ * (so a reopened modal restores it) and sent immediately; the main process
+ * applies saves in arrival order, so the newest choice is written last. Only
+ * the newest request may settle the in-memory value or report a failure.
+ */
+function useExportPreferencesSaveAction(
+  setSettings: React.Dispatch<React.SetStateAction<AppSettings | null>>,
+  pendingRef: React.RefObject<ExportPreferences | null>,
+  pushStatus: (line: string) => void,
+): (preferences: ExportPreferences) => Promise<boolean> {
+  const { t } = useTranslation("renderer");
+  const latestRef = React.useRef(0);
+  return React.useCallback(
+    async (preferences) => {
+      const request = ++latestRef.current;
+      pendingRef.current = preferences;
+      setSettings((current) =>
+        current ? withExportPreferences(current, preferences) : current,
+      );
+      try {
+        const saved = await mangaGateway.saveExportPreferences(preferences);
+        if (request === latestRef.current) {
+          pendingRef.current = saved;
+          setSettings((current) =>
+            current ? withExportPreferences(current, saved) : current,
+          );
+        }
+        return true;
+      } catch (error) {
+        if (request !== latestRef.current) return false;
+        pendingRef.current = null;
+        pushStatus(
+          formatErrorMessage(error, t("settings.exportPreferencesSaveFailed")),
+        );
+        return false;
+      }
+    },
+    [pendingRef, pushStatus, setSettings, t],
+  );
 }
 
 function useSettingsRefresh(

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ExportPreferencesSchema } from "./exportPreferences";
 import {
   PageWorkflowPlanSchema,
   PageWorkflowPresetSchema,
@@ -8,6 +9,7 @@ import { SUPPORTED_UI_LOCALES } from "./uiLocales";
 import { codexTypesettingPreferencesSchema } from "./codexTypesettingSchemas";
 export const UiSettingsSchema = z
   .object({
+    exportPreferences: ExportPreferencesSchema.optional(),
     locale: z.enum(SUPPORTED_UI_LOCALES).optional(),
     hayaiTranslationUi: z.enum(["classic", "workflow"]).optional(),
     pageWorkflowDefault: PageWorkflowPlanSchema.optional(),

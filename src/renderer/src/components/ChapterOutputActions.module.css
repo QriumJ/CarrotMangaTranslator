@@ -1,0 +1,38 @@
+.outputActions {
+  display: grid;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.exportRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.exportRow > button,
+.linkedRow > button {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.exportRow > button > span:last-child,
+.linkedRow > button > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Sync status reads first; viewing the synced folder is a quiet trailing action. */
+.linkedRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.linkedRow > button {
+  max-width: 100%;
+}

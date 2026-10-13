@@ -685,7 +685,8 @@
       }
     },
     "workUnavailable": "無法載入作品資訊。將只匯出目前頁面。",
-    "startFailed": "無法開始匯出，請再試一次。"
+    "startFailed": "無法開始匯出，請再試一次。",
+    "preferencesSaveFailed": "無法儲存匯出設定。"
   },
   "autoInpaintingOptions": {
     "title": "選擇要清除的頁面",
@@ -897,7 +898,20 @@
     "afterPage": "頁面之後",
     "anchorPage": "參考頁面",
     "pagesToAdd": "要新增的頁面",
-    "translateAddedPages": "僅翻譯新增頁面"
+    "translateAddedPages": "僅翻譯新增頁面",
+    "selectedChapters": "已選擇 {{selected}} / {{total}} 個章節",
+    "duplicateTitle": "重複",
+    "sourcePathExample": "保留的路徑：{{path}}",
+    "batchOptions": {
+      "title": "匯入選項",
+      "openTranslation": "匯入後開啟翻譯設定",
+      "openTranslationHint": "翻譯不會自動開始。請確認設定後手動開始。",
+      "skipDuplicates": "略過標題已存在的章節",
+      "skipDuplicatesHint": "去除前後空白後的標題與此作品現有章節完全相同（包括大小寫）時不匯入。所選章節之間標題相同時，只匯入清單中較前面的章節。",
+      "noDuplicates": "無重複",
+      "allDuplicates": "略過全部 {{count}} 項",
+      "duplicateCounts": "略過 {{skipped}} 項 · 匯入 {{remaining}} 項"
+    }
   },
   "linkedWorkspaceFolders": {
     "label": "自動儲存資料夾用途",
@@ -963,6 +977,10 @@
     "renameItem": "重新命名{{title}}",
     "moveItem": "移動{{title}}",
     "moveDisabled": "搜尋或工作進行中時無法移動。",
+    "collapseAllWorks": "摺疊全部作品",
+    "expandAllWorks": "展開全部作品",
+    "collapseAllWorksDuringSearch": "摺疊全部作品 · 清除搜尋後可用",
+    "expandAllWorksDuringSearch": "展開全部作品 · 清除搜尋後可用",
     "sort": {
       "trigger": "排序：{{criterion}} {{direction}}",
       "criteriaLabel": "排序依據",
@@ -1007,6 +1025,60 @@
         "hours": "{{hours}}小時 {{minutes}}分 {{seconds}}秒",
         "minutes": "{{minutes}}分 {{seconds}}秒",
         "seconds": "{{seconds}}秒"
+      },
+      "workflow": {
+        "loading": "正在載入執行記錄…",
+        "loadFailed": "無法載入執行記錄。",
+        "retry": "重試",
+        "refresh": "重新整理",
+        "refreshFailed": "重新整理失敗。",
+        "emptyTitle": "尚無記錄。",
+        "attemptsLabel": "執行記錄",
+        "resumed": "繼續執行",
+        "status": "狀態",
+        "runTotal": "執行總耗時",
+        "elapsedSoFar": "目前已用時間",
+        "started": "開始",
+        "finished": "結束",
+        "notFinished": "尚未結束",
+        "coverage": "執行範圍",
+        "coverageValue": "{{chapters}} 個章節 · {{pages}} 頁",
+        "runningNote": "仍在執行。顯示的是最後儲存時的耗時，此視窗開啟期間會自動更新。",
+        "interruptedNote": "執行結束前應用程式已關閉。僅顯示先前儲存的耗時。",
+        "multiChapterNote": "此次執行還包含其他章節。「整個執行」欄包含所有章節，頁面欄顯示本章節的頁面。",
+        "pageSelect": "本章節頁面",
+        "noChapterPages": "此次執行中沒有本章節的頁面記錄。",
+        "stage": "階段",
+        "wholeRun": "整個執行",
+        "selectedPage": "所選頁面",
+        "cleanup": "執行後清理",
+        "skipped": "已略過",
+        "notMeasured": "未測量",
+        "legend": "「—」表示沒有記錄耗時。「已略過」表示該頁面不需要此階段。",
+        "statuses": {
+          "running": "進行中",
+          "completed": "已完成",
+          "partial": "部分完成",
+          "failed": "失敗",
+          "cancelled": "已取消",
+          "interrupted": "已中斷"
+        },
+        "stages": {
+          "detect": "區塊偵測",
+          "ocr": "原文辨識 · OCR",
+          "source-rules": "原文批次編輯",
+          "translate": "翻譯",
+          "translation-rules": "譯文批次編輯",
+          "typography": "自動格式",
+          "format-rules": "最終批次編輯",
+          "erase": "原文去除",
+          "layout": "對話框與換行配置",
+          "review": "自動檢查",
+          "preparing": "準備與模型載入"
+        },
+        "measuredTotal": "已記錄階段總計",
+        "recorded": "記錄時間",
+        "pageTotal": "頁面合計"
       }
     },
     "visibleCount": "{{visible}} / {{total}}",
@@ -1045,6 +1117,7 @@
     "chapterTools": "章節工具",
     "currentPage": "目前頁面",
     "pageActions": "頁面操作",
+    "outputActions": "本話輸出",
     "showInspector": "展開檢查與編輯面板",
     "hideInspector": "收合檢查與編輯面板"
   },
@@ -2490,7 +2563,6 @@
     "recentJobs": "最近工作",
     "statusHistory": "狀態記錄",
     "reviewResults": "檢查結果",
-    "exportResults": "匯出",
     "research": {
       "title": "研究進度",
       "credits": "額度 {{used}} / {{limit}}"

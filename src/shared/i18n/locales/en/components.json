@@ -685,7 +685,8 @@
       }
     },
     "workUnavailable": "Could not load work information. Only the current page will be exported.",
-    "startFailed": "Could not start the export. Please try again."
+    "startFailed": "Could not start the export. Please try again.",
+    "preferencesSaveFailed": "Could not save export settings."
   },
   "autoInpaintingOptions": {
     "title": "Choose pages to erase",
@@ -897,7 +898,20 @@
     "afterPage": "After a page",
     "anchorPage": "Reference page",
     "pagesToAdd": "Pages to add",
-    "translateAddedPages": "Translate only added pages"
+    "translateAddedPages": "Translate only added pages",
+    "selectedChapters": "{{selected}} of {{total}} chapters selected",
+    "duplicateTitle": "Duplicate",
+    "sourcePathExample": "Kept path: {{path}}",
+    "batchOptions": {
+      "title": "Import options",
+      "openTranslation": "Open translation settings after import",
+      "openTranslationHint": "Translation does not start on its own. Review the settings and start it yourself.",
+      "skipDuplicates": "Skip chapters whose title already exists",
+      "skipDuplicatesHint": "A chapter is skipped when its title, ignoring leading and trailing spaces, exactly matches an existing chapter in this work, including letter case. If selected chapters share a title, only the first one in the list is imported.",
+      "noDuplicates": "No duplicates",
+      "allDuplicates": "Skip all {{count}}",
+      "duplicateCounts": "Skip {{skipped}} · Import {{remaining}}"
+    }
   },
   "linkedWorkspaceFolders": {
     "label": "Automatic-save folder roles",
@@ -963,6 +977,10 @@
     "renameItem": "Rename {{title}}",
     "moveItem": "Move {{title}}",
     "moveDisabled": "Items cannot be moved while searching or running a job.",
+    "collapseAllWorks": "Collapse all works",
+    "expandAllWorks": "Expand all works",
+    "collapseAllWorksDuringSearch": "Collapse all works · available after clearing the search",
+    "expandAllWorksDuringSearch": "Expand all works · available after clearing the search",
     "sort": {
       "trigger": "Sort: {{criterion}} {{direction}}",
       "criteriaLabel": "Sort criterion",
@@ -1007,6 +1025,60 @@
         "hours": "{{hours}}h {{minutes}}m {{seconds}}s",
         "minutes": "{{minutes}}m {{seconds}}s",
         "seconds": "{{seconds}}s"
+      },
+      "workflow": {
+        "loading": "Loading run history…",
+        "loadFailed": "Could not load run history.",
+        "retry": "Try again",
+        "refresh": "Refresh",
+        "refreshFailed": "Could not refresh.",
+        "emptyTitle": "No records yet.",
+        "attemptsLabel": "Run history",
+        "resumed": "Resumed run",
+        "status": "Status",
+        "runTotal": "Run total",
+        "elapsedSoFar": "Elapsed so far",
+        "started": "Started",
+        "finished": "Finished",
+        "notFinished": "Not finished",
+        "coverage": "Run covers",
+        "coverageValue": "{{chapters}} chapters · {{pages}} pages",
+        "runningNote": "Still running. Times are from the last saved point and refresh while this window is open.",
+        "interruptedNote": "The app closed before this run finished. Only the times saved until then are shown.",
+        "multiChapterNote": "This run also covered other chapters. The whole-run column includes all of them; the page column shows a page from this chapter.",
+        "pageSelect": "Page in this chapter",
+        "noChapterPages": "No page from this chapter was recorded in this run.",
+        "stage": "Stage",
+        "wholeRun": "Whole run",
+        "selectedPage": "Selected page",
+        "cleanup": "Cleanup after the run",
+        "skipped": "Skipped",
+        "notMeasured": "Not measured",
+        "legend": "“—” means no time was recorded. “Skipped” means the stage was not needed for that page.",
+        "statuses": {
+          "running": "Running",
+          "completed": "Completed",
+          "partial": "Partly completed",
+          "failed": "Failed",
+          "cancelled": "Cancelled",
+          "interrupted": "Interrupted"
+        },
+        "stages": {
+          "detect": "Block detection",
+          "ocr": "Source reading · OCR",
+          "source-rules": "Source batch edits",
+          "translate": "Translation",
+          "translation-rules": "Translation batch edits",
+          "typography": "Auto formatting",
+          "format-rules": "Final batch edits",
+          "erase": "Source text removal",
+          "layout": "Bubble & line layout",
+          "review": "Automatic review",
+          "preparing": "Setup & model load"
+        },
+        "measuredTotal": "Recorded stage total",
+        "recorded": "Recorded",
+        "pageTotal": "Page total"
       }
     },
     "visibleCount": "{{visible}} / {{total}}",
@@ -1045,6 +1117,7 @@
     "chapterTools": "Chapter tools",
     "currentPage": "Current page",
     "pageActions": "Page actions",
+    "outputActions": "Chapter output",
     "showInspector": "Show review and editing panel",
     "hideInspector": "Hide review and editing panel"
   },
@@ -2490,7 +2563,6 @@
     "recentJobs": "Recent jobs",
     "statusHistory": "Status history",
     "reviewResults": "Review results",
-    "exportResults": "Export",
     "research": {
       "title": "Research progress",
       "credits": "Credits {{used}} / {{limit}}"

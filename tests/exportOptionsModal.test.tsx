@@ -21,6 +21,8 @@ import type {
   PageImageExportPreflightResult,
   PageExportSelectionRequest,
 } from "../src/shared/pageImageExportTypes";
+import type { ExportPreferences } from "../src/shared/exportPreferences";
+import { chooseCustomSelectOption } from "./testUtils/customSelect";
 
 const openChapter = vi.fn<(chapterId: string) => Promise<ChapterSnapshot>>();
 const getChapterPageMetadata =
@@ -64,7 +66,8 @@ const DEFAULT_RASTER_OPTIONS = {
   webpQuality: 90,
   preserveSourceNames: true,
   destinationMode: "timestamped",
-  collisionPolicy: "replace",
+  // Every opening starts from the non-destructive collision choice.
+  collisionPolicy: "cancel",
 } as const;
 
 function makePage(id: string): MangaPage {
@@ -509,5 +512,121 @@ describe("ExportOptionsModal", () => {
       "disabled",
       true,
     );
+  });
+});
+
+describe("remembered export choices", () => {
+  async function renderWithPreferences(
+    savedPreferences: unknown,
+    onPersistPreferences = vi.fn<
+      (value: ExportPreferences) => Promise<boolean>
+    >(async () => true),
+  ) {
+    const onStart = vi.fn().mockResolvedValue(false);
+    const view = render(
+      <ExportOptionsModal
+        chapter={makeChapter()}
+        currentPageId="p2"
+        jobActive={false}
+        library={makeLibrary()}
+        savedPreferences={savedPreferences}
+        onPersistPreferences={onPersistPreferences}
+        onStart={onStart}
+        onClose={vi.fn()}
+      />,
+    );
+    await screen.findByText("출력 가능");
+    return { onPersistPreferences, onStart, view };
+  }
+
+  it("restores the safe choices but always reopens without overwrite or textless output", async () => {
+    const { onPersistPreferences, onStart } = await renderWithPreferences({
+      outputFormat: "webp",
+      jpegQuality: 80,
+      webpQuality: 70,
+      preserveSourceNames: false,
+      destinationMode: "fixed",
+      collisionPolicy: "replace",
+      omitText: true,
+    });
+
+    expect(
+      screen.getByRole("combobox", { name: "파일 형식" }).textContent,
+    ).toBe("WebP");
+    expect(
+      screen.getByRole("combobox", { name: "저장 위치 방식" }).textContent,
+    ).toBe("선택한 폴더에 바로 저장");
+    expect(
+      screen.getByRole("combobox", { name: "같은 이름의 파일" }).textContent,
+    ).toBe("출력 취소");
+    expect(
+      screen
+        .getByRole("switch", { name: "글자 없이 출력" })
+        .getAttribute("aria-checked"),
+    ).toBe("false");
+
+    fireEvent.click(screen.getByRole("button", { name: "결과물 출력" }));
+    await waitFor(() =>
+      expect(onStart).toHaveBeenCalledWith(expect.any(Array), [], {
+        outputFormat: "webp",
+        jpegQuality: 80,
+        webpQuality: 70,
+        preserveSourceNames: false,
+        destinationMode: "fixed",
+        collisionPolicy: "cancel",
+      }),
+    );
+    expect(onPersistPreferences).not.toHaveBeenCalled();
+  });
+
+  it("saves one consolidated snapshot without per-run choices", async () => {
+    const { onPersistPreferences } = await renderWithPreferences(undefined);
+
+    chooseCustomSelectOption("파일 형식", "JPEG");
+    await waitFor(() => expect(onPersistPreferences).toHaveBeenCalledTimes(1));
+    expect(onPersistPreferences).toHaveBeenLastCalledWith({
+      outputFormat: "jpeg",
+      jpegQuality: 95,
+      webpQuality: 90,
+      preserveSourceNames: true,
+      destinationMode: "timestamped",
+    });
+
+    chooseCustomSelectOption("같은 이름의 파일", "교체");
+    fireEvent.click(screen.getByRole("switch", { name: "글자 없이 출력" }));
+    await act(async () => undefined);
+    expect(onPersistPreferences).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends every committed choice in order and ignores an older failure", async () => {
+    const pending: Array<(saved: boolean) => void> = [];
+    const persist = vi.fn<(value: ExportPreferences) => Promise<boolean>>(
+      () => new Promise<boolean>((resolve) => pending.push(resolve)),
+    );
+    await renderWithPreferences(undefined, persist);
+
+    chooseCustomSelectOption("파일 형식", "PNG");
+    chooseCustomSelectOption("파일 형식", "JPEG");
+    chooseCustomSelectOption("파일 형식", "WebP");
+    expect(persist.mock.calls.map(([value]) => value.outputFormat)).toEqual([
+      "png",
+      "jpeg",
+      "webp",
+    ]);
+
+    await act(async () => pending[2]?.(true));
+    await act(async () => pending[0]?.(false));
+    expect(screen.queryByText(/출력 설정을 저장하지 못했습니다/)).toBeNull();
+  });
+
+  it("tells the user when a choice could not be remembered", async () => {
+    await renderWithPreferences(
+      undefined,
+      vi.fn(async () => false),
+    );
+    chooseCustomSelectOption("저장 위치 방식", "선택한 폴더에 바로 저장");
+    expect(
+      await screen.findByText(/출력 설정을 저장하지 못했습니다/),
+    ).toBeTruthy();
   });
 });

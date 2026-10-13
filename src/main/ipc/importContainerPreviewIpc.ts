@@ -135,7 +135,7 @@ function registerArchiveFolderImportPreviewIpc(
           context.appPaths.dataRoot,
           recentDialogPathKeys.archiveFolderImport,
         ),
-        properties: ["openDirectory"],
+        properties: ["openDirectory", "multiSelections"],
       } satisfies Electron.OpenDialogOptions;
       const result = await showOpenDialog(context, options);
       if (result.canceled || !result.filePaths[0]) {
@@ -147,12 +147,18 @@ function registerArchiveFolderImportPreviewIpc(
         "zip-folder",
         "import-source-converting",
         (signal, onProgress) =>
-          prepareArchiveFolderWithService(
-            service,
-            folderPath,
-            signal,
-            onProgress,
-          ),
+          service.prepareFoldersImportPreview
+            ? service.prepareFoldersImportPreview(
+                result.filePaths,
+                signal,
+                onProgress,
+              )
+            : prepareArchiveFolderWithService(
+                service,
+                folderPath,
+                signal,
+                onProgress,
+              ),
         {
           key: recentDialogPathKeys.archiveFolderImport,
           kind: "directory",

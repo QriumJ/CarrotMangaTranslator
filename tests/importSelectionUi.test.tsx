@@ -90,7 +90,7 @@ describe("ImportModal selection surfaces", () => {
       }),
     );
   });
-  it("keeps target cards and editable chapter rows visually selected", () => {
+  it("keeps compact mode selection and title editing independent from chapter selection", () => {
     render(
       <ImportModal
         library={LIBRARY}
@@ -102,26 +102,17 @@ describe("ImportModal selection surfaces", () => {
     );
 
     const newTarget = screen.getByRole("radio", { name: "새 작품 만들기" });
-    expect(
-      (newTarget.closest(".selection-surface") as HTMLElement | null)?.dataset
-        .selected,
-    ).toBe("true");
+    expect(newTarget.getAttribute("aria-checked")).toBe("true");
 
     const titleInput = screen.getByDisplayValue("2화");
     const chapterToggle = screen.getByRole("checkbox", {
       name: "2화 · 1페이지",
     });
-    const chapterRow = titleInput.closest(
-      ".selection-field-row",
-    ) as HTMLElement | null;
-    expect(chapterRow?.dataset.selected).toBe("true");
-
     fireEvent.click(titleInput);
     expect((chapterToggle as HTMLInputElement).checked).toBe(true);
 
     fireEvent.click(chapterToggle);
     expect((chapterToggle as HTMLInputElement).checked).toBe(false);
-    expect(chapterRow?.dataset.selected).toBe("false");
     expect((titleInput as HTMLInputElement).disabled).toBe(true);
   });
 
@@ -138,20 +129,20 @@ describe("ImportModal selection surfaces", () => {
     );
 
     expect(
-      (
-        screen.getByRole("radio", {
+      screen
+        .getByRole("radio", {
           name: /현재 작품에 새 화 추가/,
-        }) as HTMLInputElement
-      ).checked,
-    ).toBe(true);
+        })
+        .getAttribute("aria-checked"),
+    ).toBe("true");
     expect(
-      (
-        screen.getByRole("radio", {
+      screen
+        .getByRole("radio", {
           name: "새 작품 만들기",
-        }) as HTMLInputElement
-      ).checked,
-    ).toBe(false);
-    expect(screen.getByText(/새 화로 추가됩니다/)).not.toBeNull();
+        })
+        .getAttribute("aria-checked"),
+    ).toBe("false");
+    expect(screen.queryByText(/새 화로 추가됩니다/)).toBeNull();
     expect(
       (
         screen.getByRole("combobox", {
@@ -271,7 +262,11 @@ describe("ImportModal selection surfaces", () => {
     ).toBe("false");
 
     fireEvent.click(screen.getByRole("button", { name: "추가 후 번역" }));
-    expect(onSubmit).toHaveBeenCalledWith(initialDraft);
+    // The remembered batch choice travels with the draft, not the IPC request.
+    expect(onSubmit).toHaveBeenCalledWith({
+      ...initialDraft,
+      openTranslationAfterImport: true,
+    });
   });
 
   it("preserves edited titles and chapter choices while switching the target work", () => {

@@ -19,6 +19,7 @@ import {
 import type { InpaintingJobState } from "./inpaintingJobPageTypes";
 import type { InpaintingJobContext } from "./inpaintingJobTypes";
 import { pageTimingSessionManager } from "./pageTimingSessionManager";
+import { createJobLifetimeCleanupBoundary } from "./jobLifetimeCleanup";
 import {
   productionInpaintingJobRuntime,
   type InpaintingJobRuntime,
@@ -38,7 +39,7 @@ export async function startInpaintingJob(
 
   const id = randomUUID();
   const abortController = new AbortController();
-  const completion = createInpaintingJobCompletion();
+  const completion = createJobLifetimeCleanupBoundary();
   const state = createInpaintingJobState(context, request);
   const resources = inpaintingActivityResources(
     context.executionSettings,
@@ -49,15 +50,38 @@ export async function startInpaintingJob(
     kind: "inpainting",
     resources,
     abortController,
-    cleanup: () => completion.promise,
+    cleanup: completion.cleanup,
   });
-  const emit = (event: JobEvent) =>
+  let pendingCompletion: JobEvent | undefined;
+  const dispatch = (event: JobEvent) =>
     runtime.emitEvent(context.jobs, context.getMainWindow(), {
       ...event,
       ...(state.targetSnapshots.length > 0
         ? { targets: state.targetSnapshots }
         : {}),
     });
+  const emit = (event: JobEvent) => {
+    if (event.status === "completed") pendingCompletion = event;
+    else {
+      if (["failed", "cancelled", "partial"].includes(event.status))
+        pendingCompletion = undefined;
+      dispatch(event);
+    }
+  };
+  const finishCompletion = (failure?: { error: unknown }) => {
+    if (pendingCompletion)
+      dispatch(
+        failure
+          ? {
+              ...pendingCompletion,
+              status: "failed",
+              phase: "failed",
+              progressText: tMain("inpainting.failed"),
+              detail: String(failure.error),
+            }
+          : pendingCompletion,
+      );
+  };
 
   return context.jobs.run(
     id,
@@ -123,8 +147,9 @@ export async function startInpaintingJob(
           request,
           state,
           id,
-          completion.resolve,
+          completion.finish,
           runtime,
+          finishCompletion,
         );
       }
     },
@@ -169,13 +194,22 @@ async function finishTimedInpaintingJob(
   id: string,
   resolveCompletion: () => void,
   runtime: InpaintingJobRuntime,
+  finishCompletion: (failure?: { error: unknown }) => void,
 ): Promise<void> {
   try {
-    if (request.timingSession) {
-      await pageTimingSessionManager.checkpoint(request.timingSession.id);
+    try {
+      if (request.timingSession)
+        await pageTimingSessionManager.checkpoint(request.timingSession.id);
+    } finally {
+      await finishInpaintingJob(context, state, id, runtime);
     }
+    finishCompletion();
+  } catch (error) {
+    finishCompletion({ error });
+    throw error;
   } finally {
-    await finishInpaintingJob(context, state, id, resolveCompletion, runtime);
+    context.jobs.clearIfCurrent(id);
+    resolveCompletion();
   }
 }
 
@@ -207,12 +241,10 @@ function resolveRequestedCompletionWorkflow(
   if (
     request.mode === "page-bubble-layout" ||
     request.postprocess?.bubbleLayout?.enabled === true
-  ) {
+  )
     return { requestedCompletionWorkflow: "bubble-layout" };
-  }
-  if (request.postprocess?.bubbleLayout?.enabled === false) {
+  if (request.postprocess?.bubbleLayout?.enabled === false)
     return { requestedCompletionWorkflow: "erase-original" };
-  }
   return {};
 }
 
@@ -273,22 +305,10 @@ function recordInpaintingTargetPages(
   }
 }
 
-function createInpaintingJobCompletion(): {
-  promise: Promise<void>;
-  resolve: () => void;
-} {
-  let resolveCompletion!: () => void;
-  const promise = new Promise<void>((resolve) => {
-    resolveCompletion = resolve;
-  });
-  return { promise, resolve: resolveCompletion };
-}
-
 async function finishInpaintingJob(
   context: InpaintingJobContext,
   state: InpaintingJobState,
   id: string,
-  resolveCompletion: () => void,
   runtime: InpaintingJobRuntime,
 ): Promise<void> {
   try {
@@ -301,16 +321,11 @@ async function finishInpaintingJob(
     try {
       await state.inpaintingEngineLease?.release();
     } finally {
-      try {
-        await disposeBubbleLayoutSessions(
-          runtime,
-          context.jobs.get(id)?.resources,
-          state.bubbleLayoutRunner,
-        );
-      } finally {
-        context.jobs.clearIfCurrent(id);
-        resolveCompletion();
-      }
+      await disposeBubbleLayoutSessions(
+        runtime,
+        context.jobs.get(id)?.resources,
+        state.bubbleLayoutRunner,
+      );
     }
   }
 }
@@ -380,12 +395,10 @@ function resolveSelectedChapterPages(
   chapter: ChapterSnapshot,
   selection: AutoInpaintingChapterSelection,
 ): InpaintingJobPage[] {
-  if (selection.mode === "all") {
+  if (selection.mode === "all")
     return chapter.pages.map((page) => ({ chapterId: chapter.id, page }));
-  }
-  if (selection.pageIds.length === 0) {
+  if (selection.pageIds.length === 0)
     throw new Error("At least one page selection is required.");
-  }
 
   const selectedPageIds = new Set<string>();
   for (const pageId of selection.pageIds) {

@@ -11,7 +11,7 @@ import {
 } from "../lib/workspaceInteractionPreview";
 import { CircularBrushCursor } from "./CircularBrushCursor";
 
-const BUBBLE_BRUSH_CURSOR_COLOR = "#78f2c5";
+const BUBBLE_BRUSH_CURSOR_COLOR = "var(--bubble-layout-brush-stroke-stroke)";
 
 export function BubbleLayoutDraftLayer({
   imageDataUrl,

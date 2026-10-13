@@ -35,6 +35,8 @@ function isSamePageTaskState(
 ): boolean {
   return (
     previous.canRunBubbleLayout === next.canRunBubbleLayout &&
+    previous.exportLabel === next.exportLabel &&
+    previous.psdExportLabel === next.psdExportLabel &&
     previous.flowActive === next.flowActive &&
     previous.hasSelectedPage === next.hasSelectedPage &&
     previous.jobActive === next.jobActive &&

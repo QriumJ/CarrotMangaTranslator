@@ -8,6 +8,9 @@ export type ChapterTaskHubProps = {
   flowActive: boolean;
   linkedWorkspaceStatus: LinkedWorkspaceStatus | null;
   linkedWorkspaceViewBusy: boolean;
+  /** Display names owned by the shared output commands. */
+  exportLabel: string;
+  psdExportLabel: string;
   onOpenExport: () => void;
   onOpenPsdExport: () => void;
   onViewLinkedResults: () => void;

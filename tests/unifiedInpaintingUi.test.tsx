@@ -874,12 +874,7 @@ describe("unified right rail", () => {
           ".current-page-actions button",
         ),
       ).map((button) => button.getAttribute("aria-label")),
-    ).toEqual([
-      "원문 지우기",
-      "현재 페이지 말풍선 자동 감지",
-      "결과물 출력",
-      "PSD 출력",
-    ]);
+    ).toEqual(["원문 지우기", "현재 페이지 말풍선 자동 감지"]);
 
     view.rerender(<AppRightRail {...props} canRunBubbleLayout={false} />);
     const disabledBubbleLayout = screen.getByRole("button", {

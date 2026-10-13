@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import type {
@@ -13,9 +13,11 @@ import type {
 import type { ImportModalSubmit } from "../lib/importFlowTypes";
 import { libraryGateway } from "../api/libraryGateway";
 import { formatErrorMessage } from "../lib/errorPresentation";
+import { useWorkspacePreference } from "../hooks/useWorkspacePreference";
 import {
   buildImportSubmitPayload,
   isImportSubmittable,
+  resolveImportDuplicateSummary,
   resolveImportModalInitialState,
 } from "./importModalHelpers";
 
@@ -72,12 +74,18 @@ export function useImportModalState(options: ImportModalStateOptions) {
             loaded.chapter.pages.some((page) => page.id === position.pageId)),
         )
       : chapterState.submittable;
+  const batchOptions = useBatchImportOptions(
+    options,
+    chapterState,
+    t("import.untitled"),
+  );
   const submitPayload: ImportModalSubmit =
     mode === "pages"
       ? { target: pageTarget, selections, translateAddedPages }
-      : chapterState.submitPayload;
+      : { ...chapterState.submitPayload, ...batchOptions.payload };
   return {
     ...chapterState,
+    batchOptions,
     mode,
     setMode,
     pageTarget,
@@ -136,6 +144,61 @@ function useChapterImportState({
       selections,
       linkedWorkspace,
     ),
+  };
+}
+
+/**
+ * Remembered batch choices. Opening translation settings is renderer-only;
+ * duplicate skipping is only sent when chapters go into an existing work.
+ */
+function useBatchImportOptions(
+  { library, preview }: ImportModalStateOptions,
+  chapterState: ReturnType<typeof useChapterImportState>,
+  fallbackTitle: string,
+) {
+  const [openTranslationAfterImport, setOpenTranslationAfterImport] =
+    useWorkspacePreference("openTranslationAfterImport");
+  const [skipDuplicateChapterTitles, setSkipDuplicateChapterTitles] =
+    useWorkspacePreference("skipDuplicateChapterTitles");
+  const batch = preview.mode === "batch";
+  const skipActive =
+    batch &&
+    chapterState.targetMode === "existing" &&
+    skipDuplicateChapterTitles;
+  const duplicates = useMemo(
+    () =>
+      resolveImportDuplicateSummary({
+        active: skipActive,
+        existingWorkId: chapterState.existingWorkId,
+        fallbackTitle,
+        library,
+        preview,
+        selections: chapterState.selections,
+      }),
+    [
+      chapterState.existingWorkId,
+      chapterState.selections,
+      fallbackTitle,
+      library,
+      preview,
+      skipActive,
+    ],
+  );
+  const payload: Partial<ImportModalSubmit> = batch
+    ? {
+        openTranslationAfterImport,
+        ...(skipActive ? { skipDuplicateChapterTitles: true } : {}),
+      }
+    : {};
+  return {
+    batch,
+    duplicates,
+    openTranslationAfterImport,
+    payload,
+    setOpenTranslationAfterImport,
+    setSkipDuplicateChapterTitles,
+    skipActive,
+    skipDuplicateChapterTitles,
   };
 }
 

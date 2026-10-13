@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createShortcutHandlers,
   useAppSessionShortcuts,
@@ -13,6 +13,9 @@ import { SHORTCUT_ACTION_IDS } from "../src/shared/shortcutSettings";
 import type { ChapterSnapshot, MangaPage } from "../src/shared/libraryTypes";
 import type { TranslationBlock } from "../src/shared/textTypes";
 import type { WorkspaceZoomController } from "../src/renderer/src/lib/workspaceZoom";
+
+// Toolbar visibility is a persisted workspace preference.
+afterEach(() => window.localStorage.clear());
 
 describe("app-session shortcut handlers", () => {
   it("blocks workspace undo while the region modal is open and restores it after closing", () => {

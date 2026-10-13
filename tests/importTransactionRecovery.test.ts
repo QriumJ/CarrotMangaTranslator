@@ -14,6 +14,7 @@ import type {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { libraryStructureResource } from "../src/shared/appActivityTypes";
 import type { ImportImageRuntime } from "../src/main/libraryStore/importImageRuntime";
 import type { LibraryTransactionCrashPoint } from "../src/main/libraryStore/libraryTransaction";
 
@@ -31,6 +32,170 @@ afterEach(async () => {
 });
 
 describe("general import transaction recovery", () => {
+  it("does not count a duplicate-check import as a write while waiting for work ownership", async () => {
+    const fixture = await createImportFixture();
+    const { service, library, gate, coordinator } = await loadLibrary(
+      fixture.root,
+    );
+    const first = await service.createImport(makeRequest(fixture.imagePath));
+    const before = await library.listLibrary();
+    const blocker = gate.acquire({
+      id: "test-work-owner",
+      category: "operation",
+      kind: "page-edit",
+      resources: [libraryStructureResource("work", first.workId)],
+      mutatesLibrary: true,
+      blocksQuit: true,
+    });
+    const controller = new AbortController();
+    const waiting = service.createImport(
+      {
+        ...makeRequest(fixture.imagePath, {
+          mode: "existing",
+          workId: first.workId,
+        }),
+        skipDuplicateChapterTitles: true,
+      },
+      controller.signal,
+    );
+    const rejected = expect(waiting).rejects.toMatchObject({
+      name: "AbortError",
+    });
+    try {
+      // Backup waits for this counter to drain while owning the library gate.
+      // Counting queued work here can prevent the backup from ever releasing it.
+      expect(coordinator.getActiveCountForTests()).toBe(0);
+    } finally {
+      controller.abort();
+      await rejected;
+      blocker.release();
+    }
+    expect(coordinator.getActiveCountForTests()).toBe(0);
+    expect(await library.listLibrary()).toEqual(before);
+  });
+
+  it("preserves distinct multi-root paths through real import and raster output", async () => {
+    const fixture = await createImportFixture();
+    const { service, library } = await loadLibrary(fixture.root);
+    const left = join(fixture.root, "sources", "a", "26");
+    const right = join(fixture.root, "sources", "b", "26");
+    for (const [index, directory] of [left, right].entries()) {
+      await mkdir(directory, { recursive: true });
+      await writeFile(
+        join(directory, "0001.png"),
+        makePngHeader(16 + index, 16),
+      );
+    }
+    const prepared = await library.prepareFoldersImportPreview([right, left]);
+    try {
+      const imported = await service.createImport({
+        preview: prepared.preview,
+        target: { mode: "new", title: "Multiple roots" },
+        selections: prepared.preview.chapters.map(({ draftId, title }) => ({
+          draftId,
+          title,
+          enabled: true,
+        })),
+      });
+      const { exportPageImages } =
+        await import("../src/main/jobs/pageImageExportJobs");
+      const { productionPageImageExportDependencies: production } =
+        await import("../src/main/jobs/pageImageExportPorts");
+      const { getAppPaths } = await import("../src/main/appPaths");
+      const { ActiveJobStore } = await import("../src/main/jobs/activeJob");
+      const output = join(fixture.root, "output");
+      const result = await exportPageImages(
+        {
+          appPaths: getAppPaths(),
+          jobs: new ActiveJobStore(),
+          getMainWindow: () => null,
+          decodeImage: async () => null,
+        },
+        {
+          workId: imported.workId,
+          selections: imported.chapterIds.map((chapterId) => ({
+            chapterId,
+            mode: "all",
+          })),
+          outputFormat: "png",
+          preserveSourceNames: true,
+          destinationMode: "fixed",
+          collisionPolicy: "cancel",
+        },
+        output,
+        {
+          ...production,
+          repository: library,
+          // Only the raster renderer boundary is substituted; storage, path
+          // planning, collision checks and output writes are production code.
+          renderer: {
+            createSession: async () => ({
+              renderPage: async (page) => readFile(page.imagePath),
+              close: () => undefined,
+            }),
+          },
+          runtime: { ...production.runtime, openDirectory: async () => "" },
+        },
+      );
+      expect(result).toMatchObject({ status: "completed", pageCount: 2 });
+      for (const [directory, original] of [
+        ["26", left],
+        ["26 (2)", right],
+      ]) {
+        expect(await readFile(join(output, directory, "0001.png"))).toEqual(
+          await readFile(join(original, "0001.png")),
+        );
+      }
+      expect((await library.listLibrary()).works[0].chapterOrder).toHaveLength(
+        2,
+      );
+    } finally {
+      await prepared.cleanup?.();
+    }
+  });
+
+  it("optionally skips exact duplicate chapter titles without publishing any content", async () => {
+    const fixture = await createImportFixture();
+    const { service, library } = await loadLibrary(fixture.root);
+    const first = await service.createImport(makeRequest(fixture.imagePath));
+    const before = await library.listLibrary();
+    const request = makeRequest(fixture.imagePath, {
+      mode: "existing",
+      workId: first.workId,
+    });
+    request.selections[0].title = " 1화 ";
+    const skipped = await service.createImport({
+      ...request,
+      skipDuplicateChapterTitles: true,
+    });
+    expect(skipped).toMatchObject({
+      workId: first.workId,
+      chapterIds: [],
+      skippedChapters: [{ title: "1화" }],
+    });
+    expect(skipped.openedChapter).toBeUndefined();
+    expect(await library.listLibrary()).toEqual(before);
+    const ordinary = await service.createImport(request);
+    expect(ordinary.chapterIds).toHaveLength(1);
+    expect(requireChapter(ordinary).title).toBe("1화 (1)");
+  });
+
+  it("serializes duplicate checks for concurrent imports to the same work", async () => {
+    const fixture = await createImportFixture();
+    const { service, library } = await loadLibrary(fixture.root);
+    const first = await service.createImport(makeRequest(fixture.imagePath));
+    const request = makeRequest(fixture.imagePath, {
+      mode: "existing",
+      workId: first.workId,
+    });
+    request.selections[0].title = "2화";
+    const results = await Promise.all([
+      service.createImport({ ...request, skipDuplicateChapterTitles: true }),
+      service.createImport({ ...request, skipDuplicateChapterTitles: true }),
+    ]);
+    expect(results.map((r) => r.chapterIds.length).sort()).toEqual([0, 1]);
+    expect((await library.listLibrary()).works[0].chapterOrder).toHaveLength(2);
+  });
   it.each(["end", "before", "after"] as const)(
     "adds distinct pages at %s while preserving existing page data and memory",
     async (kind) => {
@@ -287,6 +452,11 @@ async function loadLibrary(root: string) {
     await import("../src/main/libraryStore/libraryTransaction");
   const recovery =
     await import("../src/main/libraryStore/libraryTransactionRecovery");
+  const { AppActivityGate } = await import("../src/main/appActivityGate");
+  const { libraryMutationCoordinator } =
+    await import("../src/main/libraryStore/libraryMutationCoordinator");
+  const gate = new AppActivityGate();
+  libraryMutationCoordinator.configureActivityGate(gate);
   const image: ImportImageRuntime = {
     validateImageFile: vi.fn(async () => undefined),
     convertWebpToPngFile: vi.fn(async () => {
@@ -297,7 +467,14 @@ async function loadLibrary(root: string) {
     image,
     runMutation: (operation) => operation(),
   });
-  return { service, library, transaction, recovery };
+  return {
+    service,
+    library,
+    transaction,
+    recovery,
+    gate,
+    coordinator: libraryMutationCoordinator,
+  };
 }
 
 function crashOnceAt(

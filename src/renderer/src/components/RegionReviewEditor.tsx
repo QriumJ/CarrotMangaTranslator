@@ -3,6 +3,8 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { normalizedRegionToPixelRect } from "../../../shared/region";
 
+import { useWorkspacePreference } from "../hooks/useWorkspacePreference";
+import { REGION_REVIEW_BRUSH_SIZE_RANGE } from "../lib/workspacePreferences";
 import type { RegionReviewInput } from "../lib/regionReviewTypes";
 import { Button } from "./ui/Button";
 
@@ -33,8 +35,11 @@ export function RegionReviewEditor({
   const fit = useContainedPageSize(viewport, { width: crop.w, height: crop.h });
   const [zoom, setZoom] = React.useState(0);
   const [tool, setTool] = React.useState<RegionReviewTool>("bounds");
-  const [shape, setShape] = React.useState<"circle" | "square">("circle");
-  const [size, setSize] = React.useState(24);
+  const [shape, setShape] = useWorkspacePreference("regionReviewBrushShape");
+  // Bracket keys and scrubbing change the size quickly; store once it settles.
+  const [size, setSize] = useWorkspacePreference("regionReviewBrushSize", {
+    commitDelayMs: 400,
+  });
   const disabled = props.busy || form.preparing;
   const actualZoom = zoom || (fit.width * 100) / crop.w;
   const navigation = useRegionReviewNavigation({
@@ -121,8 +126,8 @@ function ReviewTools(props: ReviewToolsProps) {
             className={styles.number}
             variant="framed"
             ariaLabel={t("letteringBrush.size")}
-            min={1}
-            max={400}
+            min={REGION_REVIEW_BRUSH_SIZE_RANGE.min}
+            max={REGION_REVIEW_BRUSH_SIZE_RANGE.max}
             value={size}
             onValueChange={setSize}
             unit="px"

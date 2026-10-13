@@ -46,7 +46,10 @@ function reduceJobState(
   ) {
     return current;
   }
-  const sameJob = current.id === event.id;
+  const sameJob =
+    current.id === event.id &&
+    (event.executionId === undefined ||
+      current.executionId === event.executionId);
   if (!sameJob && ["running", "cancelling"].includes(current.status))
     return current;
   if (sameJob && isTerminalJobStatus(current.status)) {
@@ -71,6 +74,11 @@ function buildNextJobState({
 }: NextJobStateOptions): JobState {
   return {
     id: event.id,
+    executionId: keepOrEvent(
+      preserveCurrentStatus,
+      current.executionId,
+      event.executionId,
+    ),
     kind: preserveCurrentStatus ? current.kind : event.kind,
     status: preserveCurrentStatus ? current.status : event.status,
     progressText: preserveCurrentStatus

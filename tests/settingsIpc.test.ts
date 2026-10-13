@@ -1,4 +1,5 @@
 import { createCodexTypesettingPreferences } from "../src/shared/codexTypesettingDefaults";
+import { DEFAULT_EXPORT_PREFERENCES } from "../src/shared/exportPreferences";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -66,6 +67,23 @@ vi.mock("electron", () => ({
 import { registerSettingsIpc } from "../src/main/ipc/settingsIpc";
 
 const tempDirs: string[] = [];
+
+it("validates and persists only safe export preferences through the narrow IPC", async () => {
+  const handler = registerAndGetCodexAccountHandler(
+    "settings:save-export-preferences",
+    createCodexAccountRuntime(createCodexAccountClient().client),
+  );
+  const preferences = {
+    ...DEFAULT_EXPORT_PREFERENCES,
+    outputFormat: "png" as const,
+  };
+  await expect(handler(trustedEvent(), preferences)).resolves.toEqual(
+    preferences,
+  );
+  await expect(
+    handler(trustedEvent(), { ...preferences, collisionPolicy: "replace" }),
+  ).rejects.toThrow();
+});
 
 beforeEach(() => {
   electronMock.handlers.clear();

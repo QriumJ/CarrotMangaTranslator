@@ -209,6 +209,12 @@
       "label": "Export work",
       "keywords": "work share export"
     },
+    "exportResults": {
+      "keywords": "export output results png jpg webp image"
+    },
+    "exportPsd": {
+      "keywords": "export output psd layers photoshop"
+    },
     "openSettings": {
       "label": "Open settings",
       "keywords": "settings preferences"
@@ -525,7 +531,8 @@
     "saveFailed": "Could not save settings.",
     "reset": "Settings restored to defaults.",
     "defaultsLoaded": "Defaults loaded into the draft. Save to apply them.",
-    "resetFailed": "Could not restore default settings."
+    "resetFailed": "Could not restore default settings.",
+    "exportPreferencesSaveFailed": "Could not save export settings."
   },
   "statusDock": {
     "concurrentTasks": "Running tasks",
@@ -617,7 +624,10 @@
       "pdfNoPages": "No importable pages were found in this PDF.",
       "readFailed": "Could not read the dropped source."
     },
-    "pagesAdded": "Added {{count}} pages."
+    "pagesAdded": "Added {{count}} pages.",
+    "untitled": "Untitled",
+    "allSkipped": "Skipped {{count}} duplicates",
+    "addedWithSkipped": "Added {{count}} · Skipped {{skipped}} duplicates"
   },
   "share": {
     "exportSuccess": "Saved the shared file for {{title}} · Chapters: {{chapters}} · Pages: {{pages}}",

@@ -1,7 +1,7 @@
 import { resolveCustomApiProfiles } from "../shared/customApiProfiles";
 import {
   withSettingsMutation,
-  preserveCodexPreferences,
+  preserveIndependentUiPreferences,
   isMissingFileError,
   isJsonParseError,
 } from "./settings/settingsMutationQueue";
@@ -121,7 +121,7 @@ export async function saveAppSettings(
   detectGpu: GpuInfoProvider = detectBestGpuInfo,
 ): Promise<AppSettings> {
   return updateAppSettings(
-    (current) => preserveCodexPreferences(settings, current),
+    (current) => preserveIndependentUiPreferences(settings, current),
     paths,
     env,
     detectGpu,

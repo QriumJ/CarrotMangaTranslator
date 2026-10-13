@@ -3,6 +3,7 @@ import type {
   ImportCreateSelection,
   ImportPreviewResult,
 } from "../../../shared/importTypes";
+import { findDuplicateImportChapters } from "../../../shared/importDuplicatePolicy";
 import type { LibraryIndex } from "../../../shared/libraryTypes";
 import type { LinkedWorkspaceImportOptions } from "../../../shared/linkedWorkspaceTypes";
 import type { ImportModalSubmit } from "../lib/importFlowTypes";
@@ -33,6 +34,57 @@ export function updateSelectionTitle(
       item.draftId === draftId ? { ...item, title } : item,
     ),
   );
+}
+
+export function setAllSelectionsEnabled(
+  setSelections: SelectionSetter,
+  enabled: boolean,
+): void {
+  setSelections((current) =>
+    current.every((item) => item.enabled === enabled)
+      ? current
+      : current.map((item) => ({ ...item, enabled })),
+  );
+}
+
+export type ImportDuplicateSummary = {
+  selectedCount: number;
+  /** Chapters the existing-work import will leave out, in preview order. */
+  skippedDraftIds: ReadonlySet<string>;
+};
+
+/**
+ * Preview of the existing-work duplicate rule using the edited titles. The
+ * import itself re-checks against the library at commit time.
+ */
+export function resolveImportDuplicateSummary({
+  active,
+  existingWorkId,
+  fallbackTitle,
+  library,
+  preview,
+  selections,
+}: {
+  active: boolean;
+  existingWorkId: string;
+  fallbackTitle: string;
+  library: LibraryIndex;
+  preview: ImportPreviewResult;
+  selections: readonly ImportCreateSelection[];
+}): ImportDuplicateSummary {
+  const selectedCount = selections.filter((item) => item.enabled).length;
+  const work = library.works.find((item) => item.id === existingWorkId);
+  if (!active || !work) return { selectedCount, skippedDraftIds: new Set() };
+  const skipped = findDuplicateImportChapters(
+    preview.chapters,
+    selections,
+    work.chapters.map((chapter) => chapter.title),
+    fallbackTitle,
+  );
+  return {
+    selectedCount,
+    skippedDraftIds: new Set(skipped.map((item) => item.draftId)),
+  };
 }
 
 export function buildImportSubmitPayload(

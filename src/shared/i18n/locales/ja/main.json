@@ -29,7 +29,7 @@
     "openImageFolder": "画像フォルダーを開く",
     "openArchive": "圧縮ファイルを開く",
     "openPdf": "PDFを開く",
-    "batchImport": "作品を一括翻訳",
+    "batchImport": "話のフォルダーを選択（複数選択可）",
     "saveShare": "共有ファイルを保存",
     "openShare": "共有ファイルを読み込む",
     "registerFont": "フォントファイルを登録（TTF/OTF）",

@@ -10,10 +10,15 @@ const stageStylesheet = readFileSync(
   resolve(process.cwd(), "src/renderer/src/styles/stage-overlay.css"),
   "utf8",
 );
-const foundationStylesheet = readFileSync(
-  resolve(process.cwd(), "src/renderer/src/styles/foundations.css"),
-  "utf8",
-);
+const foundationStylesheet =
+  readFileSync(
+    resolve(process.cwd(), "src/renderer/src/styles/palette.css"),
+    "utf8",
+  ) +
+  readFileSync(
+    resolve(process.cwd(), "src/renderer/src/styles/foundations.css"),
+    "utf8",
+  );
 
 describe("transform handle presentation", () => {
   it("keeps a 24px pointer target around a viewport-responsive marker", () => {
@@ -95,7 +100,7 @@ describe("transform handle presentation", () => {
       /outline:\s*1px solid var\(--canvas-transform-accent\);/,
     );
     expect(resolveRootTokens(transformSelection)).toMatch(
-      /outline:\s*1px solid #58b9ff;/,
+      /outline:\s*1px solid var\(--info\);/,
     );
     expect(transformSelection).toMatch(/outline-offset:\s*0;/);
   });

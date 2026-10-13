@@ -3,6 +3,7 @@ import type {
   PageWorkflowResult,
 } from "../../shared/pageWorkflowTypes";
 import { createPageWorkflowProgress } from "./pageWorkflowProgress";
+import { PageWorkflowTimingRecorder } from "../pageWorkflow/pageWorkflowTimingRecorder";
 import {
   pageWorkflowNeedsExclusiveModel,
   preflightPageWorkflow,
@@ -32,6 +33,32 @@ import type { AppPaths } from "../appPaths";
 type PageWorkflowJobContext = TranslationJobContext & { appPaths: AppPaths };
 import type { AppSettings } from "../../shared/settingsTypes";
 import type { JobEvent } from "../../shared/jobTypes";
+import type { AppActivityResource } from "../../shared/appActivityTypes";
+
+function workflowResources(
+  request: PageWorkflowRequest,
+  settings: AppSettings,
+): AppActivityResource[] {
+  return [
+    {
+      kind: "model-runtime",
+      scope: "*",
+      access: pageWorkflowNeedsExclusiveModel(request, settings)
+        ? "write"
+        : "read",
+    },
+    ...(request.plan.stages.includes("translate") &&
+    settings.modelProvider === "claude-code"
+      ? [{ kind: "claude-auth" as const, scope: "*", access: "read" as const }]
+      : []),
+    ...((request.plan.stages.includes("translate") &&
+      settings.modelProvider === "openai-codex") ||
+    (request.plan.stages.includes("erase") &&
+      request.plan.erasureEngine === "codex")
+      ? [{ kind: "codex-auth" as const, scope: "*", access: "read" as const }]
+      : []),
+  ];
+}
 
 export async function startPageWorkflowJob(
   context: PageWorkflowJobContext,
@@ -66,35 +93,19 @@ export async function startPageWorkflowJob(
     kind: "gemma-analysis",
     abortController,
     cleanup: lifetime.cleanup,
-    resources: [
-      {
-        kind: "model-runtime",
-        scope: "*",
-        // Local Gemma or local erasure keeps the runtime; other plans share it.
-        access: pageWorkflowNeedsExclusiveModel(run.request, settings)
-          ? "write"
-          : "read",
-      },
-      ...(run.request.plan.stages.includes("translate") &&
-      settings.modelProvider === "claude-code"
-        ? [
-            {
-              kind: "claude-auth" as const,
-              scope: "*",
-              access: "read" as const,
-            },
-          ]
-        : []),
-      ...((run.request.plan.stages.includes("translate") &&
-        settings.modelProvider === "openai-codex") ||
-      (run.request.plan.stages.includes("erase") &&
-        run.request.plan.erasureEngine === "codex")
-        ? [{ kind: "codex-auth" as const, scope: "*", access: "read" as const }]
-        : []),
-    ],
+    resources: workflowResources(run.request, settings),
   });
+  const timing = new PageWorkflowTimingRecorder(
+    context.appPaths.dataRoot,
+    run.id,
+    run.request,
+    chapters,
+  );
   const emit = (event: JobEvent) =>
-    emitJobEvent(context.jobs, context.getMainWindow(), event);
+    emitJobEvent(context.jobs, context.getMainWindow(), {
+      ...event,
+      executionId: timing.record.attemptId,
+    });
   return context.jobs.run(
     run.id,
     () =>
@@ -107,6 +118,7 @@ export async function startPageWorkflowJob(
         emit,
         chapters,
         preflight,
+        timing,
       }),
     settings,
   );
@@ -122,6 +134,7 @@ async function runWorkflowJob({
   emit,
   chapters,
   preflight,
+  timing,
 }: {
   context: PageWorkflowJobContext;
   run: WorkflowRun;
@@ -131,6 +144,7 @@ async function runWorkflowJob({
   emit: (event: JobEvent) => void;
   chapters: Awaited<ReturnType<typeof openChapter>>[];
   preflight: ReturnType<typeof preflightPageWorkflow>;
+  timing: PageWorkflowTimingRecorder;
 }) {
   const dependencies = workflowDependencies(context.appPaths, settings);
   const total = preflight.pageCount * run.request.plan.stages.length;
@@ -150,23 +164,7 @@ async function runWorkflowJob({
   });
   lifetime.registerResourceCleanup(runtime.dispose);
   try {
-    for (const chapter of chapters)
-      assertJobPagesAvailable(
-        context.jobs,
-        run.id,
-        chapter.id,
-        run.request.selection.find((s) => s.chapterId === chapter.id)
-          ?.pageIds ?? [],
-      );
-    for (const chapter of chapters)
-      reserveJobChapter(
-        context.jobs,
-        run.id,
-        chapter,
-        run.request.selection.find((s) => s.chapterId === chapter.id)
-          ?.pageIds ?? [],
-        [{ kind: "work-context", scope: chapter.workId, access: "write" }],
-      );
+    reserveWorkflowChapters(context, run, chapters);
     const result = await executePageWorkflow(
       {
         runId: run.id,
@@ -176,6 +174,12 @@ async function runWorkflowJob({
       },
       {
         ...runtime,
+        group: (stage, execute) =>
+          timing.stage(stage, () => runtime.group(stage, execute)),
+        startPageTiming: (stage, chapterId, page) =>
+          timing.startPage(stage, chapterId, page),
+        skipPageTiming: (stage, chapterId, pageId) =>
+          timing.skipPage(stage, chapterId, pageId),
         readChapter: openChapter,
         acquirePage: (chapterId, pageId) =>
           acquireJobPageOwnership(context.jobs, run.id, chapterId, pageId),
@@ -185,11 +189,30 @@ async function runWorkflowJob({
         progress: progress.begin,
       },
     );
-    emitWorkflowCompletion(emit, run.id, result, total);
     return result;
   } finally {
-    await runtime.dispose();
+    await timing.cleanup(runtime.dispose);
   }
+}
+
+function reserveWorkflowChapters(
+  context: PageWorkflowJobContext,
+  run: WorkflowRun,
+  chapters: Awaited<ReturnType<typeof openChapter>>[],
+) {
+  const pageIds = (chapterId: string) =>
+    run.request.selection.find((s) => s.chapterId === chapterId)?.pageIds ?? [];
+  for (const chapter of chapters)
+    assertJobPagesAvailable(
+      context.jobs,
+      run.id,
+      chapter.id,
+      pageIds(chapter.id),
+    );
+  for (const chapter of chapters)
+    reserveJobChapter(context.jobs, run.id, chapter, pageIds(chapter.id), [
+      { kind: "work-context", scope: chapter.workId, access: "write" },
+    ]);
 }
 
 function emitWorkflowCompletion(
@@ -201,7 +224,7 @@ function emitWorkflowCompletion(
   emit({
     id,
     kind: "gemma-analysis",
-    status: result.status === "partial" ? "failed" : result.status,
+    status: result.status,
     phase: "done",
     progressText: result.issues[0]?.message ?? "페이지 작업 완료",
     progressCurrent: total,
@@ -213,8 +236,20 @@ async function runWorkflowJobSafely(
   input: Parameters<typeof runWorkflowJob>[0],
 ) {
   try {
-    return await runWorkflowJob(input);
+    await input.timing.checkpoint();
+    const result = await runWorkflowJob(input);
+    await input.timing.finish(result.status);
+    emitWorkflowCompletion(
+      input.emit,
+      input.run.id,
+      result,
+      input.preflight.pageCount * input.run.request.plan.stages.length,
+    );
+    return result;
   } catch (error) {
+    await input.timing.finish(
+      input.abortController.signal.aborted ? "cancelled" : "failed",
+    );
     input.emit({
       id: input.run.id,
       kind: "gemma-analysis",

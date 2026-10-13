@@ -91,6 +91,7 @@ function useSessionCommands(
       chapter.uiState.setAutoInpaintingOptionsOpen(true);
     },
     setShareExportOpen: chapter.importShareModal.setShareExportOpen,
+    openExportOptions: chapter.uiState.openExportOptions,
     setShortcutHelpOpen: chapter.uiState.setShortcutHelpOpen,
     openTextView: () => chapter.uiState.openTextView(),
     openPageEditor: chapter.libraryActions.openPageEditor,

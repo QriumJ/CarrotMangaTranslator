@@ -11,11 +11,18 @@ import { openChapter } from "../library";
 import { getAppSettings } from "../settingsStore";
 import { ConditionalBatchSchemeStore } from "../conditionalBatchSchemeStore";
 import { readPageWorkflowRun } from "../pageWorkflowRunStore";
+import { readPageWorkflowTimings } from "../pageWorkflow/pageWorkflowTimingStore";
 import { startPageWorkflowJob } from "../jobs/pageWorkflowJob";
 import { trustedHandleContract } from "./trustedIpc";
 import type { IpcContext } from "./context";
 
 export function registerPageWorkflowIpc(context: IpcContext): void {
+  trustedHandleContract(
+    context,
+    pageWorkflowIpcContracts.getPageWorkflowTimings,
+    async (_event, chapterId) =>
+      readPageWorkflowTimings(context.appPaths.dataRoot, chapterId),
+  );
   trustedHandleContract(
     context,
     pageWorkflowIpcContracts.preflightPageWorkflow,

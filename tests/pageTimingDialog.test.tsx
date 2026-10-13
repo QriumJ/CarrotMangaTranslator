@@ -41,30 +41,28 @@ describe("page timing dialog", () => {
 
     fireEvent.click(timer);
     const dialog = screen.getByRole("dialog", { name: "페이지별 소요 시간" });
-    expect(
-      within(dialog).getAllByText("전체 총 소요 시간").length,
-    ).toBeGreaterThan(0);
-    expect(within(dialog).getAllByText("9.00초").length).toBeGreaterThan(0);
+    expect(within(dialog).queryByRole("tab")).toBeNull();
+    expect(within(dialog).getByText("기록된 단계 합계")).not.toBeNull();
+    expect(within(dialog).getAllByText("5.00초").length).toBeGreaterThan(0);
     expect(within(dialog).getByText("001.jpg")).not.toBeNull();
-    expect(within(dialog).getByText("002.jpg")).not.toBeNull();
     expect(
-      within(dialog).getByRole("columnheader", { name: "OCR" }),
+      within(dialog).getByRole("rowheader", { name: "원문 읽기 · OCR" }),
     ).not.toBeNull();
     expect(
-      within(dialog).getByRole("columnheader", { name: "AI 번역" }),
+      within(dialog).getByRole("rowheader", { name: "번역" }),
     ).not.toBeNull();
     expect(
-      within(dialog).getByRole("columnheader", { name: "인페인팅" }),
+      within(dialog).getByRole("rowheader", { name: "원문 제거" }),
     ).not.toBeNull();
     expect(within(dialog).queryByText("결과 정리")).toBeNull();
     expect(within(dialog).queryByText("말풍선")).toBeNull();
-    const helpButton = within(dialog).getByRole("button", {
-      name: /실행 전 저장, 설정·출력 준비/,
+    // v1 snapshots have no session identity: keep both accessible independently.
+    const history = within(dialog).getByRole("navigation", {
+      name: "작업 실행 기록",
     });
-    expect(helpButton.getAttribute("title")).toBeNull();
-    expect(within(dialog).getByRole("tooltip").textContent).toContain(
-      "실행 전 저장, 설정·출력 준비",
-    );
+    fireEvent.click(within(history).getAllByRole("button")[1]);
+    expect(within(dialog).getByText("002.jpg")).not.toBeNull();
+    expect(within(dialog).getAllByText("4.00초").length).toBeGreaterThan(0);
 
     fireEvent.click(within(dialog).getByRole("button", { name: "닫기" }));
     expect(
@@ -92,7 +90,7 @@ describe("page timing dialog", () => {
     expect(within(dialog).getAllByText("17분 40.23초").length).toBeGreaterThan(
       0,
     );
-    expect(within(dialog).getByText("중단됨")).not.toBeNull();
+    expect(within(dialog).getAllByText("중단됨")).toHaveLength(2);
   });
 });
 

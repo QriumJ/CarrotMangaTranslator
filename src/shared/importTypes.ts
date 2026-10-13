@@ -95,6 +95,7 @@ export type ImportCreateSelection = {
 };
 
 export type CreateImportRequest = {
+  skipDuplicateChapterTitles?: boolean;
   previewId: string;
   target: ImportTarget;
   selections: ImportCreateSelection[];
@@ -102,12 +103,14 @@ export type CreateImportRequest = {
 };
 
 export type CreateImportFromPreviewRequest = {
+  skipDuplicateChapterTitles?: boolean;
   preview: ImportPreviewResult;
   target: ImportTarget;
   selections: ImportCreateSelection[];
 };
 
 export type CreateImportResult = {
+  skippedChapters?: Array<{ draftId: string; title: string }>;
   workId: string;
   addedPageIds?: string[];
   chapterIds: string[];

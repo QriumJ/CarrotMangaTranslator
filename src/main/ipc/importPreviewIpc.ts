@@ -361,6 +361,7 @@ function registerCreateImportIpc(
               preview: session.preview,
               target: command.target,
               selections: command.selections,
+              skipDuplicateChapterTitles: command.skipDuplicateChapterTitles,
             },
             signal,
           );

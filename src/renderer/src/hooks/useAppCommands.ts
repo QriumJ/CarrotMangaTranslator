@@ -34,6 +34,7 @@ type UseAppCommandsOptions = {
   openAddChapterPages?: () => void;
   openPageEditor?: () => void;
   openShareExport: () => void;
+  openExportOptions?: (kind: "raster" | "psd") => void;
   openShortcutHelp: () => void;
   openTextView: () => void;
   toggleBlockChrome: () => void;
@@ -61,6 +62,7 @@ export function useAppCommands(
         openLogFolder: options.openLogFolder,
         openSettings: options.openSettings,
         openShareExport: options.openShareExport,
+        openExportOptions: options.openExportOptions,
         openShareImportPreview: options.openShareImportPreview,
         openShortcutHelp: options.openShortcutHelp,
         openTextView: options.openTextView,
@@ -89,6 +91,7 @@ export function useAppCommands(
       options.openLogFolder,
       options.openSettings,
       options.openShareExport,
+      options.openExportOptions,
       options.openShareImportPreview,
       options.openShortcutHelp,
       options.openTextView,
@@ -124,6 +127,7 @@ function buildAppCommandRegistry(
     ...buildInpaintingCommands(options),
     ...buildJobCommands(options),
     ...buildChapterCommands(options),
+    ...buildOutputCommands(options),
     ...buildGlobalCommands(options),
     ...buildRedactionPreparationCommands(
       options.currentChapter,
@@ -287,6 +291,38 @@ function buildChapterCommands({
       keywords: t("commands.gatherText.keywords"),
       paletteVisible,
       run: openTextView,
+    },
+  };
+}
+
+type OutputCommandId = "open-export-options" | "open-psd-export-options";
+
+function buildOutputCommands({
+  currentChapter,
+  componentText,
+  openExportOptions,
+  t,
+}: LocalizedCommandOptions): Pick<AppCommandMap, OutputCommandId> {
+  // Export covers the whole chapter, so it needs pages but no selected page,
+  // and like the completion-card entry it stays open beside running jobs.
+  const available = Boolean(currentChapter?.pages.length && openExportOptions);
+  const open = (kind: "raster" | "psd") => () => {
+    if (available) openExportOptions?.(kind);
+  };
+  return {
+    "open-export-options": {
+      id: "open-export-options",
+      label: componentText("inpainting.export.resultAction"),
+      keywords: t("commands.exportResults.keywords"),
+      paletteVisible: available,
+      run: open("raster"),
+    },
+    "open-psd-export-options": {
+      id: "open-psd-export-options",
+      label: componentText("inpainting.export.psdAction"),
+      keywords: t("commands.exportPsd.keywords"),
+      paletteVisible: available,
+      run: open("psd"),
     },
   };
 }

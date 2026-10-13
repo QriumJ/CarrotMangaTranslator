@@ -22,16 +22,17 @@ import { Modal } from "./ui/Modal";
 
 import { ModalActionBar } from "./ui/ModalActionBar";
 
-import { ImportLinkedWorkspaceSection } from "./ImportLinkedWorkspaceSection";
-
 import { InlineMessage } from "./ui/InlineMessage";
 
 import type { ImportModalFeedback } from "../lib/importFlowTypes";
 
 import { SegmentedControl } from "./ui/SegmentedControl";
-import { CheckboxField } from "./ui/CheckboxField";
 
 import { ImportDraftSection } from "./ImportDraftSection";
+import {
+  ImportBatchOptions,
+  ImportFollowUpOptions,
+} from "./ImportBatchOptions";
 
 type ImportModalProps = {
   library: LibraryIndex;
@@ -86,6 +87,7 @@ export function ImportModal({
           previewMode={preview.mode}
           submittable={state.submittable}
           pagesOnly={state.mode === "pages"}
+          opensTranslation={state.batchOptions.openTranslationAfterImport}
         />
       }
     >
@@ -127,7 +129,6 @@ function ImportModalContent({
   state: ReturnType<typeof useImportModalState>;
   feedback: ImportModalFeedback | null;
 }): React.JSX.Element {
-  const { t } = useTranslation("components");
   const pagesOnly = state.mode === "pages";
   return (
     <>
@@ -150,27 +151,18 @@ function ImportModalContent({
           targetMode={state.targetMode}
         />
       )}
+      <ImportBatchOptions busy={busy} state={state} />
       <ImportDraftSection
         busy={busy}
         preview={preview}
         selections={state.selections}
         setSelections={state.setSelections}
         pagesOnly={pagesOnly}
+        skippedDraftIds={
+          pagesOnly ? undefined : state.batchOptions.duplicates.skippedDraftIds
+        }
       />
-      {pagesOnly ? (
-        <CheckboxField
-          checked={state.translateAddedPages}
-          disabled={busy}
-          onCheckedChange={state.setTranslateAddedPages}
-          label={t("import.translateAddedPages")}
-        />
-      ) : (
-        <ImportLinkedWorkspaceSection
-          busy={busy}
-          options={state.linkedWorkspace}
-          onChange={state.setLinkedWorkspace}
-        />
-      )}
+      <ImportFollowUpOptions busy={busy} state={state} />
     </>
   );
 }
@@ -189,6 +181,7 @@ function ImportModalFooter({
   previewMode,
   submittable,
   pagesOnly,
+  opensTranslation,
 }: {
   busy: boolean;
   onCancel: () => void;
@@ -196,6 +189,7 @@ function ImportModalFooter({
   previewMode: ImportPreviewResult["mode"];
   submittable: boolean;
   pagesOnly: boolean;
+  opensTranslation: boolean;
 }): React.JSX.Element {
   const { t } = useTranslation("components");
   return (
@@ -213,7 +207,7 @@ function ImportModalFooter({
             {t(
               pagesOnly
                 ? "import.addPages"
-                : previewMode === "batch"
+                : previewMode === "batch" && opensTranslation
                   ? "import.createAndTranslate"
                   : "import.addToLibrary",
             )}

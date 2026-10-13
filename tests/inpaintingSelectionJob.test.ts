@@ -51,6 +51,51 @@ describe("single-chapter automatic inpainting jobs", () => {
     harness = createInpaintingRuntimeHarness(chapters);
   });
 
+  it("emits success only after resource cleanup and emits failure if cleanup rejects", async () => {
+    const { startInpaintingJob } =
+      await import("../src/main/jobs/inpaintingJobs");
+    const entered = createDeferred<void>();
+    const released = createDeferred<void>();
+    harness.runtime.disposeBubbleLayoutSessions = async () => {
+      entered.resolve();
+      await released.promise;
+      return true;
+    };
+    const context = makeContext(send);
+    const pending = startInpaintingJob(
+      context,
+      { mode: "page-pattern", chapterId: chapterAId, pageId: pageA1Id },
+      harness.runtime,
+    );
+    await entered.promise;
+    expect(
+      send.mock.calls.some(([, event]) => event.status === "completed"),
+    ).toBe(false);
+    expect(context.jobs.hasActive).toBe(true);
+    released.resolve();
+    expect((await pending).status).toBe("completed");
+    expect(
+      send.mock.calls.filter(([, event]) => event.status === "completed"),
+    ).toHaveLength(1);
+    send.mockClear();
+    harness.runtime.disposeBubbleLayoutSessions = async () => {
+      throw new Error("cleanup failed");
+    };
+    await expect(
+      startInpaintingJob(
+        makeContext(send),
+        { mode: "page-pattern", chapterId: chapterAId, pageId: pageA2Id },
+        harness.runtime,
+      ),
+    ).rejects.toThrow("cleanup failed");
+    expect(
+      send.mock.calls.some(([, event]) => event.status === "completed"),
+    ).toBe(false);
+    expect(send.mock.calls.some(([, event]) => event.status === "failed")).toBe(
+      true,
+    );
+  });
+
   it.each([true, false])(
     "carries a validated per-run Codex engine through the job, saves its pages and keeps normal layout=%s",
     async (bubbleLayout) => {

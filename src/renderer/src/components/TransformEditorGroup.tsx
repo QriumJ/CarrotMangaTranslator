@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import type { TransformEditorMode } from "../../../shared/panelBridgeTypes";
 import type { TranslationBlock } from "../../../shared/textTypes";
+import { useWorkspacePreference } from "../hooks/useWorkspacePreference";
 import { normalizeRotationDeg } from "../lib/blockFormatGeometry";
 import {
   bboxFieldMinimumPixels,
@@ -156,7 +157,8 @@ function GeneralTransformControls({
   onUpdate: (patch: Partial<TranslationBlock>) => void;
 }): React.JSX.Element {
   const { t } = useTranslation("components");
-  const [lockRatio, setLockRatio] = React.useState(true);
+  const [lockRatio, setLockRatio] =
+    useWorkspacePreference("transformLockRatio");
   const bbox = resolveTransformBbox(block, pageSize);
   const updateField = (field: BboxField, value: number): void => {
     const next = constrainTransformBbox(

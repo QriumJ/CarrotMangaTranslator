@@ -60,6 +60,41 @@ afterEach(async () => {
 });
 
 describe("library import managed operation lifecycle", () => {
+  it("passes every native-selected batch folder into one owned preview session", async () => {
+    const dataRoot = await makeTempDir();
+    const { context } = createContext(dataRoot);
+    const folders = [join(dataRoot, "26"), join(dataRoot, "27")];
+    const preview = {
+      ...makeImagePreview([join(folders[0], "001.png")]),
+      mode: "batch" as const,
+      sourceKind: "zip-folder" as const,
+    };
+    const prepare = vi.fn().mockResolvedValue({ preview });
+    const service = { ...makeService(), prepareFoldersImportPreview: prepare };
+    electronBoundary.showOpenDialog.mockResolvedValueOnce({
+      canceled: false,
+      filePaths: folders,
+    });
+    registerImportPreviewIpc(context, service);
+    const result = (await getHandler("import:preview-zip-folder")(
+      trustedEvent(),
+    )) as ImportPreviewSession;
+    expect(result.previewId).toBeTruthy();
+    expect(prepare).toHaveBeenCalledWith(
+      folders,
+      expect.any(AbortSignal),
+      expect.any(Function),
+    );
+    expect(electronBoundary.showOpenDialog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        webContents: expect.objectContaining({ id: 1 }),
+      }),
+      expect.objectContaining({
+        properties: ["openDirectory", "multiSelections"],
+      }),
+    );
+    expect(context.operations.current).toBeNull();
+  });
   it("shows image-picker preparation and validation as one managed activity", async () => {
     const dataRoot = await makeTempDir();
     const { context } = createContext(dataRoot);

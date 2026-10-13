@@ -393,11 +393,12 @@
 
 .modal-section h3 {
   margin: 0;
+  font-size: var(--font-md);
 }
 
 .modal-section {
   display: grid;
-  gap: 10px;
+  gap: var(--sp-4);
 }
 
 .modal-subheader,
@@ -486,20 +487,6 @@
   .source-choice-grid {
     grid-template-columns: minmax(0, 1fr);
   }
-}
-
-.import-current-target-note {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: var(--font-xs);
-  line-height: 1.5;
-}
-
-.import-current-target-note {
-  padding: var(--sp-2) var(--sp-3);
-  border-left: 3px solid var(--accent);
-  border-radius: var(--r-sm);
-  background: color-mix(in srgb, var(--accent-soft) 34%, transparent);
 }
 
 .share-target-section {

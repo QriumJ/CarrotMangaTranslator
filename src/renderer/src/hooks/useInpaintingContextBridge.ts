@@ -96,9 +96,9 @@ const RETOUCH_CURSOR_COLORS: Record<
   Extract<RetouchCursorMode, "eraser" | "eraser-rectangle" | "mask">,
   string
 > = {
-  eraser: "#70b7ff",
-  "eraser-rectangle": "#70b7ff",
-  mask: "#ff9f1c",
+  eraser: "var(--canvas-transform-accent)",
+  "eraser-rectangle": "var(--canvas-transform-accent)",
+  mask: "var(--canvas-curve-accent)",
 };
 
 function isRetouchCursorMode(tool: InpaintingTool): tool is RetouchCursorMode {

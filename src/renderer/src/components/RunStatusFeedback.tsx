@@ -106,7 +106,7 @@ function CompletedJobCard({
               iconLeft={<IconDownload size={16} stroke={2.1} />}
               onClick={onOpenExport}
             >
-              {t("statusDock.exportResults")}
+              {t("inpainting.export.resultAction")}
             </Button>
           ) : null}
         </div>

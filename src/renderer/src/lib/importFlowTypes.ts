@@ -13,6 +13,10 @@ export type ImportModalFeedback = {
 
 export type ImportModalSubmit = {
   translateAddedPages?: boolean;
+  /** Renderer-only: open translation settings after a batch import. */
+  openTranslationAfterImport?: boolean;
+  /** Sent only for an existing-work target. */
+  skipDuplicateChapterTitles?: boolean;
   target: ImportTarget;
   selections: ImportCreateSelection[];
   linkedWorkspace?: LinkedWorkspaceImportOptions;

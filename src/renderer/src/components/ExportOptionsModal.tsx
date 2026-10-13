@@ -29,6 +29,11 @@ import {
 } from "./ExportPreflightPanel";
 import { Modal } from "./ui/Modal";
 import { handoffActiveModalToWorkCenter } from "../lib/modalWorkCenterHandoff";
+import {
+  createInitialRasterOptions,
+  useExportPreferencePersistence,
+  type PersistExportPreferences,
+} from "./exportPreferencePersistence";
 
 export type ExportOptionsModalProps = {
   chapter: ChapterSnapshot;
@@ -43,15 +48,9 @@ export type ExportOptionsModalProps = {
   ) => Promise<boolean>;
   onNavigateToIssue?: ExportIssueNavigationHandler;
   onClose: () => void;
-};
-
-const DEFAULT_RASTER_OPTIONS: ManualRasterExportOptions = {
-  outputFormat: "source",
-  jpegQuality: 95,
-  webpQuality: 90,
-  preserveSourceNames: true,
-  destinationMode: "timestamped",
-  collisionPolicy: "replace",
+  /** Remembered image output choices restored on every opening. */
+  savedPreferences?: unknown;
+  onPersistPreferences?: PersistExportPreferences;
 };
 
 const DEFAULT_PSD_OPTIONS: ManualPsdExportOptions = {
@@ -68,6 +67,8 @@ export function ExportOptionsModal({
   onStart,
   onClose,
   onNavigateToIssue,
+  onPersistPreferences,
+  savedPreferences,
 }: ExportOptionsModalProps): React.JSX.Element {
   const { t } = useTranslation("components");
   const work = useExportWork(library, chapter.workId);
@@ -76,7 +77,16 @@ export function ExportOptionsModal({
   );
   const [options, setOptions] = React.useState<
     ManualRasterExportOptions | ManualPsdExportOptions
-  >(() => (kind === "psd" ? DEFAULT_PSD_OPTIONS : DEFAULT_RASTER_OPTIONS));
+  >(() =>
+    kind === "psd"
+      ? DEFAULT_PSD_OPTIONS
+      : createInitialRasterOptions(savedPreferences),
+  );
+  const preferenceSave = useExportPreferencePersistence({
+    enabled: kind === "raster",
+    options,
+    persist: onPersistPreferences,
+  });
   const chapterOrder = React.useMemo(
     () => work?.chapterOrder ?? [chapter.id],
     [chapter.id, work],
@@ -141,6 +151,11 @@ export function ExportOptionsModal({
         setSelection={setSelection}
         work={work}
       />
+      {preferenceSave.saveFailed ? (
+        <p className="translate-options-hint" role="status">
+          {t("exportOptions.preferencesSaveFailed")}
+        </p>
+      ) : null}
       {start.failed ? (
         <p className="translate-options-hint" role="alert">
           {t("exportOptions.startFailed")}

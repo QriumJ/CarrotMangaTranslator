@@ -38,7 +38,12 @@ beforeEach(() => {
       currentTime = 0;
       preload = "";
       volume = 1;
-      play = play;
+      onended: (() => void) | null = null;
+      play = () => {
+        const result = play();
+        this.onended?.();
+        return result;
+      };
       pause = noop;
     },
   );
@@ -123,6 +128,28 @@ function harness() {
 }
 
 describe("completion sound event integration", () => {
+  it("covers all four audible job categories and excludes export/context jobs", () => {
+    const h = harness();
+    h.emit(event("translation", "completed", "gemma-analysis"));
+    h.emit(event("sfx", "completed", "sound-effect-translation"));
+    h.emit(event("erase", "completed", "inpainting"));
+    h.emit(event("research", "completed", "internet-research"));
+    h.emit(event("export", "completed", "page-export"));
+    h.emit(event("work-context-analysis", "completed", "gemma-analysis"));
+    flushFrames();
+    expect(play).toHaveBeenCalledTimes(4);
+  });
+  it("announces each successful resume attempt once even when it reuses the same run id", () => {
+    const h = harness();
+    h.emit({ ...event("resumed-run", "completed"), executionId: "attempt-1" });
+    flushFrames();
+    h.emit({ ...event("resumed-run", "completed"), executionId: "attempt-1" });
+    h.emit({ ...event("resumed-run", "running"), executionId: "attempt-2" });
+    flushFrames();
+    h.emit({ ...event("resumed-run", "completed"), executionId: "attempt-2" });
+    flushFrames();
+    expect(play).toHaveBeenCalledTimes(2);
+  });
   it("plays once for a successful job despite duplicate IPC and foreground updates", () => {
     const h = harness();
     h.emit(event("standalone", "running"));

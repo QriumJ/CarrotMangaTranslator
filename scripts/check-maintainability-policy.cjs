@@ -27,6 +27,10 @@ const baselinePath = join(__dirname, "maintainability-policy-baseline.json");
 
 const literalColorExemptions = new Map([
   [
+    "src/renderer/src/styles/palette.css",
+    "single palette and component colour roles",
+  ],
+  [
     "src/renderer/src/styles/foundations.css",
     "semantic design-token authority",
   ],

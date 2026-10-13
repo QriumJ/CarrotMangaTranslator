@@ -4,6 +4,11 @@ import { useTranslation } from "react-i18next";
 import type { RetouchTool } from "../../lib/stageTool";
 import { Button } from "../ui/Button";
 import { RangeInput } from "../ui/Field";
+import { useWorkspacePreference } from "../../hooks/useWorkspacePreference";
+import {
+  MASK_ADJUSTMENT_RADIUS_RANGE,
+  RETOUCH_BRUSH_RADIUS_RANGE,
+} from "../../lib/workspacePreferences";
 
 type RetouchInpaintingStepProps = {
   aiUnavailable?: boolean;
@@ -79,8 +84,8 @@ function RetouchToolSettings({
         <label className="brush-size-control">
           <span className="brush-size-label">{t("format.size")}</span>
           <RangeInput
-            min={4}
-            max={90}
+            min={RETOUCH_BRUSH_RADIUS_RANGE.min}
+            max={RETOUCH_BRUSH_RADIUS_RANGE.max}
             value={brushRadius}
             disabled={false}
             onChange={(event) =>
@@ -148,7 +153,6 @@ function DrawnMaskActionGroup({
   onRunDrawnPattern,
 }: RetouchInpaintingStepProps): React.JSX.Element {
   const { t } = useTranslation("components");
-  const [adjustmentRadius, setAdjustmentRadius] = React.useState(4);
   const noMask = !hasSelectedPage || maskStrokeCount === 0;
   const disabled = jobActive || noMask;
   const codexDisabled = (codexErasureBusy ?? jobActive) || noMask;
@@ -158,39 +162,10 @@ function DrawnMaskActionGroup({
         <h3>{t("inpainting.retouch.eraseDrawn")}</h3>
         <small>{resolveMaskStrokeLabel(maskStrokeCount, t)}</small>
       </div>
-      <div className="mask-adjust-row">
-        <label className="brush-size-control">
-          <span className="brush-size-label">
-            {t("inpainting.retouch.maskRadius")}
-          </span>
-          <RangeInput
-            min={1}
-            max={32}
-            value={adjustmentRadius}
-            disabled={maskStrokeCount === 0}
-            onChange={(event) =>
-              setAdjustmentRadius(Number(event.target.value))
-            }
-          />
-          <strong>{adjustmentRadius}px</strong>
-        </label>
-        <div className="mask-adjust-buttons">
-          <Button
-            size="sm"
-            disabled={maskStrokeCount === 0}
-            onClick={() => onAdjustPatternMask(-adjustmentRadius)}
-          >
-            {t("inpainting.retouch.shrinkMask")}
-          </Button>
-          <Button
-            size="sm"
-            disabled={maskStrokeCount === 0}
-            onClick={() => onAdjustPatternMask(adjustmentRadius)}
-          >
-            {t("inpainting.retouch.expandMask")}
-          </Button>
-        </div>
-      </div>
+      <MaskAdjustRow
+        disabled={maskStrokeCount === 0}
+        onAdjustPatternMask={onAdjustPatternMask}
+      />
       <div className="mask-action-row">
         <Button
           size="sm"
@@ -213,6 +188,55 @@ function DrawnMaskActionGroup({
         disabled={codexDisabled}
         onRun={onRunDrawnPattern}
       />
+    </div>
+  );
+}
+
+/** The grow/shrink step is a remembered tool setting, saved on release. */
+function MaskAdjustRow({
+  disabled,
+  onAdjustPatternMask,
+}: {
+  disabled: boolean;
+  onAdjustPatternMask: (deltaPx: number) => void;
+}): React.JSX.Element {
+  const { t } = useTranslation("components");
+  const [adjustmentRadius, setAdjustmentRadius, commitAdjustmentRadius] =
+    useWorkspacePreference("maskAdjustmentRadius", { commitDelayMs: 250 });
+  return (
+    <div className="mask-adjust-row">
+      <label className="brush-size-control">
+        <span className="brush-size-label">
+          {t("inpainting.retouch.maskRadius")}
+        </span>
+        <RangeInput
+          min={MASK_ADJUSTMENT_RADIUS_RANGE.min}
+          max={MASK_ADJUSTMENT_RADIUS_RANGE.max}
+          value={adjustmentRadius}
+          disabled={disabled}
+          onChange={(event) => setAdjustmentRadius(Number(event.target.value))}
+          onPointerUp={commitAdjustmentRadius}
+          onKeyUp={commitAdjustmentRadius}
+          onBlur={commitAdjustmentRadius}
+        />
+        <strong>{adjustmentRadius}px</strong>
+      </label>
+      <div className="mask-adjust-buttons">
+        <Button
+          size="sm"
+          disabled={disabled}
+          onClick={() => onAdjustPatternMask(-adjustmentRadius)}
+        >
+          {t("inpainting.retouch.shrinkMask")}
+        </Button>
+        <Button
+          size="sm"
+          disabled={disabled}
+          onClick={() => onAdjustPatternMask(adjustmentRadius)}
+        >
+          {t("inpainting.retouch.expandMask")}
+        </Button>
+      </div>
     </div>
   );
 }

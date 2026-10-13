@@ -699,3 +699,30 @@ it("blocks generation if the displayed image cannot be decoded", async () => {
   expect(input.onClose).toHaveBeenCalledOnce();
   expect(input.onRun).not.toHaveBeenCalled();
 });
+
+it("reopens region review with the last brush shape and size", async () => {
+  try {
+    const view = render(<RegionTranslationModal {...reviewProps()} />);
+    await screen.findByRole("button", { name: "번역문 1" });
+    fireEvent.click(screen.getByRole("radio", { name: /^제외/ }));
+    fireEvent.click(screen.getByRole("radio", { name: "사각" }));
+    const size = screen.getByRole("spinbutton", { name: "크기" });
+    fireEvent.focus(size);
+    fireEvent.change(size, { target: { value: "60" } });
+    fireEvent.blur(size);
+    view.unmount();
+
+    render(<RegionTranslationModal {...reviewProps()} />);
+    await screen.findByRole("button", { name: "번역문 1" });
+    fireEvent.click(screen.getByRole("radio", { name: /^제외/ }));
+    expect(
+      screen.getByRole("radio", { name: "사각" }).getAttribute("aria-checked"),
+    ).toBe("true");
+    expect(
+      (screen.getByRole("spinbutton", { name: "크기" }) as HTMLInputElement)
+        .value,
+    ).toBe("60");
+  } finally {
+    window.localStorage.clear();
+  }
+});

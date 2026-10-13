@@ -11,6 +11,8 @@ export const APP_COMMAND_IDS = [
   "toggle-block-chrome",
   "toggle-text-blocks",
   "gather-text",
+  "open-export-options",
+  "open-psd-export-options",
   "open-translate-source",
   "open-batch",
   "open-share-import",
