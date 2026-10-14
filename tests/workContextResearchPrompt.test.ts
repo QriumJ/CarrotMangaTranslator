@@ -1,3 +1,4 @@
+import { resolveLanguagePair } from "../src/shared/translationLanguages";
 import { describe, expect, it } from "vitest";
 import {
   buildCodexWebResearchPrompt,
@@ -947,6 +948,10 @@ function makeInput() {
     updatedAt: timestamp,
   };
   return {
+    languagePair: resolveLanguagePair({
+      sourceLanguage: "ja",
+      targetLanguage: "ko",
+    }),
     workTitle: "Sample Work",
     guide,
     selection: {

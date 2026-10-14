@@ -35,7 +35,8 @@ function buildSoundEffectTranslationPrompt(options, imageVariants = []) {
       "Use the marker to locate the target in the scene. Read the original glyphs from Image 1, not the tinted context image. Ignore unrelated text in the crop margin and elsewhere on the page.",
       "Candidate identity and geometry are fixed. Never add, merge, split, move, or delete a candidate.",
       "Read all glyphs forming this target, including repeated and prolonged lettering. OCR is only a fallible reference; the visible source in Image 1 takes precedence over missing, incomplete or conflicting OCR.",
-      "Use the scene, nearby dialogue, glossary and story memory to understand the meaning and tone. For sounds, preserve rhythm, repetition, duration and intensity in natural Korean comic lettering; for an expressive phrase, preserve its meaning rather than forcing it into an onomatopoeia. Do not mechanically transliterate kana or add an explanation of the scene.",
+      "Use the scene, nearby dialogue, glossary and story memory to understand the meaning and tone. For sounds, preserve rhythm, repetition, duration and intensity in natural Korean comic lettering; for an expressive phrase, preserve its meaning rather than forcing it into an onomatopoeia.",
+      "Do not mechanically transliterate kana or add an explanation of the scene.",
       `Visual-reading attempt=${attempt}.`,
       ...(attempt > 1 && retryFeedback
         ? [
@@ -134,15 +135,10 @@ function readFiniteNumber(value) {
 /** @param {string} value */
 function formatOcrHint(value) {
   if (!value) return "NONE (read the image yourself)";
-  if (!containsJapanese(value)) {
-    return `${JSON.stringify(value)} (IGNORE: no Japanese script; read Image 1 yourself)`;
+  if (!/[\p{L}\p{N}]/u.test(value)) {
+    return `${JSON.stringify(value)} (IGNORE: no readable source text; read Image 1 yourself)`;
   }
   return `${JSON.stringify(value)} (independent reading; reconcile with Image 1 and preserve supported repetition)`;
-}
-
-/** @param {string} value */
-function containsJapanese(value) {
-  return /[\u3040-\u30ff\u3400-\u9fff]/u.test(value);
 }
 
 /** @param {unknown} value */

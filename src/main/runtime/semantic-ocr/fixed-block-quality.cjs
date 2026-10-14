@@ -149,11 +149,13 @@ function findFixedBlockTargetLanguageViolations(items, options) {
   const profile = resolvePromptLanguageProfile(options);
   if (profile.sourceBaseCode === profile.targetBaseCode) return [];
   const families =
-    SOURCE_SCRIPT_FAMILIES[
-      /** @type {keyof typeof SOURCE_SCRIPT_FAMILIES} */ (
-        profile.sourceBaseCode
-      )
-    ] ?? [];
+    profile.sourceBaseCode === "auto"
+      ? Object.values(SOURCE_SCRIPT_FAMILIES).flat()
+      : (SOURCE_SCRIPT_FAMILIES[
+          /** @type {keyof typeof SOURCE_SCRIPT_FAMILIES} */ (
+            profile.sourceBaseCode
+          )
+        ] ?? []);
   const forbidden = families
     .filter((family) => !family.targetCodes.has(profile.targetBaseCode))
     .map((family) => family.pattern);

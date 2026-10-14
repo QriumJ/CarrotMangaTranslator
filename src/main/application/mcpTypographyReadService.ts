@@ -1,9 +1,9 @@
 import { hashStableValue } from "../../shared/blockFingerprint";
 import { createPageRevision } from "../../shared/pageRevision";
 import {
-  isJapaneseLanguageCode,
-  isKoreanLanguageCode,
-} from "../../shared/translationLanguages";
+  supportsChapterFontLanguagePair,
+  supportsChapterFontSource,
+} from "../../shared/fontChapterSourcePolicy";
 import type { ChapterSnapshot, MangaPage } from "../../shared/libraryTypes";
 import type { TranslationBlock } from "../../shared/textTypes";
 import {
@@ -163,18 +163,28 @@ function hasSourceMeasurement(block: TranslationBlock): boolean {
   );
 }
 
-function projectBlock(
-  block: TranslationBlock,
-  request: McpTypographyPreflight,
-) {
-  const common = block.generatedLettering
+function commonTypographyExclusion(block: TranslationBlock) {
+  return block.generatedLettering
     ? "generated_lettering"
     : !block.sourceText.trim()
       ? "empty_source"
       : block.textRole === "sound" || block.fontRole?.startsWith("sfx_")
         ? "sound_effect_out_of_scope"
         : null;
-  const fontExclusion = request.mode === "size" ? "not_requested" : common;
+}
+
+function projectBlock(
+  block: TranslationBlock,
+  request: McpTypographyPreflight,
+) {
+  const common = commonTypographyExclusion(block);
+  const fontExclusion =
+    request.mode === "size"
+      ? "not_requested"
+      : (common ??
+        (supportsChapterFontSource(request.sourceLanguage, block.sourceText)
+          ? null
+          : "unsupported_source_script"));
   const sizeExclusion =
     request.mode === "font"
       ? "not_requested"
@@ -222,9 +232,9 @@ function projectPreflight(
     blockers.push("font_analysis_requires_explicit_ocr_permission");
   if (
     wantsFont &&
-    !(
-      isJapaneseLanguageCode(request.sourceLanguage) &&
-      isKoreanLanguageCode(request.targetLanguage)
+    !supportsChapterFontLanguagePair(
+      request.sourceLanguage,
+      request.targetLanguage,
     )
   )
     blockers.push("c23_font_analysis_supports_ja_to_ko_only");

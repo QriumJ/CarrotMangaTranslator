@@ -614,7 +614,7 @@ describeWindows("app settings helpers: defaults and stored values", () => {
     );
 
     expect(gpu.translation).toEqual({
-      sourceLanguage: "ja",
+      sourceLanguage: "auto",
       targetLanguage: "ko",
     });
     expect(gpu.keybindings).toEqual({});
@@ -743,16 +743,16 @@ describeWindows("app settings helpers: defaults and stored values", () => {
     });
   });
 
-  it("defaults the translation language pair to Japanese -> Korean", () => {
+  it("defaults the translation language pair to automatic source -> Korean", () => {
     const defaults = resolveDefaultAppSettings();
 
     expect(defaults.translation).toEqual({
-      sourceLanguage: "ja",
+      sourceLanguage: "auto",
       targetLanguage: "ko",
     });
-    // 기존 사용자의 저장 설정에는 translation이 없으므로 항상 ja→ko로 채운다.
+    // 기존 사용자의 저장 설정에는 translation이 없으므로 자동 원문→한국어로 채운다.
     expect(parseStoredAppSettings("{}", defaults).translation).toEqual({
-      sourceLanguage: "ja",
+      sourceLanguage: "auto",
       targetLanguage: "ko",
     });
   });
@@ -782,7 +782,7 @@ describeWindows("app settings helpers: defaults and stored values", () => {
         }),
         defaults,
       ).translation,
-    ).toEqual({ sourceLanguage: "ja", targetLanguage: "fr" });
+    ).toEqual({ sourceLanguage: "auto", targetLanguage: "fr" });
   });
 
   it("passes the translation language pair into base translation options", () => {

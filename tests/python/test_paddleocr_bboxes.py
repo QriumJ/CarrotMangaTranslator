@@ -100,7 +100,7 @@ class CommandLineBehaviorTests(unittest.TestCase):
         with patch.dict(os.environ, {}, clear=True):
             args = OCR.build_argument_parser().parse_args([])
 
-        self.assertEqual(args.source_language, "ja")
+        self.assertEqual(args.source_language, "auto")
         self.assertEqual(args.bbox_mode, "ocr")
         self.assertEqual(args.merge_mode, "semantic")
         self.assertEqual(args.engine, "paddle")
@@ -123,6 +123,17 @@ class CommandLineBehaviorTests(unittest.TestCase):
 
 
 class LanguageAdapterBehaviorTests(unittest.TestCase):
+    def test_auto_uses_multilingual_recognition_without_a_forced_source_script(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            self.assertEqual(OCR.resolve_source_language(), "auto")
+            self.assertEqual(OCR.resolve_paddle_ocr_lang("auto"), "ch")
+            self.assertEqual(OCR.resolve_paddle_ocr_version("auto", None), "PP-OCRv6")
+            self.assertEqual(OCR.resolve_source_script("auto"), "auto")
+            args = argparse.Namespace(source_language="auto", text_recognition_model_name="PP-OCRv6_tiny_rec")
+            for text in ("Hello", "你好", "안녕", "こんにちは"):
+                self.assertEqual(OCR.filter_candidate_ocr_text(text, 0.95, args), text)
+            self.assertEqual(OCR.filter_candidate_ocr_text("noise", 0.1, args), "")
+
     def test_source_languages_resolve_to_paddle_language_profiles(self) -> None:
         self.assertEqual(OCR.resolve_paddle_ocr_lang("ja-JP"), "japan")
         self.assertEqual(OCR.resolve_paddle_ocr_lang("zh-Hans"), "ch")

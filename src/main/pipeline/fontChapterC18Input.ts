@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import type { OverlayItem } from "./types";
 import type { FontChapterC18Page } from "./fontChapterC18Types";
 import { estimatePageSourceFontSizes } from "./sourceFontSizeEstimator";
+import { supportsChapterFontSource } from "../../shared/fontChapterSourcePolicy";
 
 export function fontChapterItemIdentity(item: OverlayItem): string {
   return JSON.stringify([
@@ -22,7 +23,15 @@ export async function buildFontChapterC18Input(
   for (const [index, entry] of entries.entries()) {
     signal.throwIfAborted();
     const pageId = `P${String(index + 1).padStart(6, "0")}`;
-    const items = entry.items.filter(isSourceDialogue);
+    const items = entry.items.filter(
+      (item) =>
+        isSourceDialogue(item) &&
+        supportsChapterFontSource(
+          entry.pageOptions.sourceLanguage,
+          item.sourceText ?? item.jp ?? "",
+        ),
+    );
+    if (!items.length) continue;
     const estimates = await estimatePageSourceFontSizes({
       enabled: true,
       items,

@@ -147,3 +147,20 @@ describe("Paddle OCR model failure classification", () => {
     ).toEqual(["PP-OCRv6_medium_det"]);
   });
 });
+
+it.each(["auto", "", " "])(
+  "repairs multilingual models for automatic or missing source %j",
+  (sourceLanguage) => {
+    expect(
+      resolvePaddleOcrModelNamesForRepair("", {
+        ocrEngine: "transformers",
+        ocrDevice: "gpu",
+        ocrGpuBackend: "cuda",
+        sourceLanguage,
+      }),
+    ).toEqual([
+      "PP-OCRv6_medium_det_safetensors",
+      "PP-OCRv6_medium_rec_safetensors",
+    ]);
+  },
+);

@@ -1,3 +1,4 @@
+import { isJapaneseLanguageCode } from "../../shared/translationLanguages";
 import type { MangaPage } from "../../shared/libraryTypes";
 import type { SoundEffectReviewRegion } from "../../shared/soundEffectReview";
 import type { TranslationBlock } from "../../shared/textTypes";
@@ -25,6 +26,7 @@ export function validateSoundEffectTranslationResponse(
   payload: unknown,
   regions: readonly SoundEffectReviewRegion[],
   targetLanguage: string,
+  sourceLanguage?: string,
 ): SoundEffectTranslationValidation {
   const expected = new Map(regions.map((region) => [region.id, region]));
   const seen = new Set<string>();
@@ -46,7 +48,7 @@ export function validateSoundEffectTranslationResponse(
     seen.add(item.regionId);
     const region = expected.get(item.regionId);
     if (!region) continue;
-    const reason = validateItem(item, targetLanguage);
+    const reason = validateItem(item, targetLanguage, sourceLanguage);
     if (reason) {
       invalid.add(item.regionId);
       warnings.push(`${item.regionId}: ${reason}`);
@@ -157,22 +159,31 @@ function readItem(value: unknown): ParsedItem | null {
   };
 }
 
-function validateItem(item: ParsedItem, targetLanguage: string): string | null {
+function validateItem(
+  item: ParsedItem,
+  targetLanguage: string,
+  sourceLanguage?: string,
+): string | null {
   if (item.confidence < 0 || item.confidence > 1) {
     return "confidence가 0~1 범위를 벗어났습니다.";
   }
   if (item.verdict === "uncertain") {
     return item.translation ? "불확실 판정에 번역문이 포함됐습니다." : null;
   }
-  return validateCertainItem(item, targetLanguage);
+  return validateCertainItem(item, targetLanguage, sourceLanguage);
 }
 
 function validateCertainItem(
   item: ParsedItem,
   targetLanguage: string,
+  sourceLanguage?: string,
 ): string | null {
-  if (!item.confirmedSource || !containsJapanese(item.confirmedSource)) {
-    return "확인한 일본어 원문이 없습니다.";
+  if (
+    !/[\p{L}\p{N}]/u.test(item.confirmedSource) ||
+    (isJapaneseLanguageCode(sourceLanguage) &&
+      !containsJapanese(item.confirmedSource))
+  ) {
+    return "확인한 원문이 없습니다.";
   }
   if (!item.translation || item.translation.length > 120) {
     return "번역문이 비어 있거나 지나치게 깁니다.";
@@ -180,7 +191,10 @@ function validateCertainItem(
   const japaneseResiduePattern = /^zh(?:-|$)/iu.test(targetLanguage.trim())
     ? /[\u3040-\u30ff]/u
     : /[\u3040-\u30ff\u3400-\u9fff]/u;
-  if (japaneseResiduePattern.test(item.translation)) {
+  if (
+    !/^ja(?:-|$)/iu.test(targetLanguage.trim()) &&
+    japaneseResiduePattern.test(item.translation)
+  ) {
     return "번역문에 일본어가 남아 있습니다.";
   }
   if (isInvalidKoreanTranslation(item.translation, targetLanguage)) {

@@ -29,7 +29,7 @@ const target = z.discriminatedUnion("kind", [
 export const McpSelectionOcrSchema = z
   .object({
     ...base,
-    sourceLanguage: language.optional(),
+    sourceLanguage: z.union([z.literal("auto"), language]).optional(),
     allowAssetDownloads: z.boolean().default(false),
     pages: z
       .array(
@@ -49,7 +49,7 @@ export const McpSelectionTranslationSchema = z
   .object({
     ...base,
     contextMode: z.enum(["none", "saved"]).default("saved"),
-    sourceLanguage: language.optional(),
+    sourceLanguage: z.union([z.literal("auto"), language]).optional(),
     targetLanguage: language.optional(),
     expectedEngine: z.enum([
       "gemma",

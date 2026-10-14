@@ -143,7 +143,7 @@ function resolveDefaultTransformersModelNames(options) {
   const sourceLanguage = String(
     runtimeOverrideEnv("MANGA_TRANSLATOR_OCR_SOURCE_LANGUAGE", options) ??
       options.sourceLanguage ??
-      "ja",
+      "auto",
   );
   const lang = resolvePaddleOcrLanguage(sourceLanguage);
   const requestedVersion = String(
@@ -170,11 +170,13 @@ function resolveDefaultTransformersModelNames(options) {
 
 /** @param {string} sourceLanguage @returns {string} */
 function resolvePaddleOcrLanguage(sourceLanguage) {
-  const subtags = String(sourceLanguage || "ja")
+  const subtags = String(sourceLanguage || "auto")
     .trim()
     .toLowerCase()
     .split("-");
-  const base = subtags[0] || "ja";
+  const base = subtags[0] || "auto";
+  // ch selects the shared multilingual recognition model, not a Chinese-only recognizer.
+  if (base === "auto") return "ch";
   if (base === "zh") {
     const traditional =
       subtags.includes("hant") ||

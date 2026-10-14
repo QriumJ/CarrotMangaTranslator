@@ -40,11 +40,28 @@ type FixedBlockPlan = {
 };
 
 const baseOptions = {
-  sourceLanguage: "Japanese",
-  targetLanguage: "Korean",
+  sourceLanguage: "ja",
+  targetLanguage: "ko",
 };
 
 describe("fixed-block partial recovery", () => {
+  it("repairs leaked source script in automatic mode without discarding valid neighbors", () => {
+    const result = fixed.parseFixedBlockTranslationPartialResponse(
+      JSON.stringify({
+        items: [
+          { blockId: "B001", ko: "待って" },
+          { blockId: "B002", ko: "기다려" },
+        ],
+      }),
+      singletonPlan(2),
+      { sourceLanguage: "auto", targetLanguage: "ko" },
+    );
+    expect(result).toMatchObject({
+      translations: { items: [{ blockId: "B002", ko: "기다려" }] },
+      retryBlockIds: ["B001"],
+    });
+  });
+
   it("retries an absent numeric translation without discarding valid neighbors", () => {
     const plan = singletonPlan(2);
     Object.assign(plan.blocks[0], { jp: "123456", ordinaryOnly: true });
@@ -185,30 +202,33 @@ describe("fixed-block partial recovery", () => {
     });
   });
 
-  it("keeps Korean-safe elongation without accepting Japanese words", () => {
-    const partial = fixed.parseFixedBlockTranslationPartialResponse(
-      JSON.stringify({
-        items: [
-          { blockId: "B001", ko: "무리예요ーー!!" },
-          { blockId: "B002", ko: "원작에서는 瘴気の 항체약" },
-        ],
-      }),
-      singletonPlan(2),
-      baseOptions,
-    );
+  it.each(["ja", "auto"])(
+    "keeps Korean-safe elongation without accepting Japanese words for %s",
+    (sourceLanguage) => {
+      const partial = fixed.parseFixedBlockTranslationPartialResponse(
+        JSON.stringify({
+          items: [
+            { blockId: "B001", ko: "무리예요ーー!!" },
+            { blockId: "B002", ko: "원작에서는 瘴気の 항체약" },
+          ],
+        }),
+        singletonPlan(2),
+        { ...baseOptions, sourceLanguage },
+      );
 
-    expect(partial).toMatchObject({
-      translations: { items: [] },
-      retryBlockIds: ["B001", "B002"],
-      retryReasons: {
-        B001: ["fixed-block-translation-source-script-leak"],
-        B002: ["fixed-block-translation-source-script-leak"],
-      },
-      targetTypographyFallbackTranslations: {
-        items: [{ blockId: "B001", ko: "무리예요~~!!" }],
-      },
-    });
-  });
+      expect(partial).toMatchObject({
+        translations: { items: [] },
+        retryBlockIds: ["B001", "B002"],
+        retryReasons: {
+          B001: ["fixed-block-translation-source-script-leak"],
+          B002: ["fixed-block-translation-source-script-leak"],
+        },
+        targetTypographyFallbackTranslations: {
+          items: [{ blockId: "B001", ko: "무리예요~~!!" }],
+        },
+      });
+    },
+  );
 
   it("keeps an inspectable placeholder when even immutable source text is empty", () => {
     const emptyFallbacks = Object.fromEntries(

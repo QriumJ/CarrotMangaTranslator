@@ -1,7 +1,11 @@
+import { AppSettingsSchema } from "../src/shared/ipcSettingsSchemas";
+import { McpSelectionTranslationSchema } from "../src/shared/mcpSelectionAnalysis";
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_TRANSLATION_LANGUAGE_SETTINGS,
   isValidLanguageCodeInput,
+  isValidSourceLanguageInput,
+  normalizeSourceLanguageCode,
   KNOWN_TRANSLATION_LANGUAGES,
   normalizeLanguageCode,
   PRIMARY_TRANSLATION_LANGUAGE_CODES,
@@ -127,7 +131,7 @@ describe("translation language domain", () => {
   });
 
   it("marks only ja -> ko as the default Japanese to Korean pair", () => {
-    expect(resolveLanguagePair(null).isDefaultJapaneseToKorean).toBe(true);
+    expect(resolveLanguagePair(null).isDefaultJapaneseToKorean).toBe(false);
     expect(
       resolveLanguagePair({ sourceLanguage: "ja", targetLanguage: "ko" })
         .isDefaultJapaneseToKorean,
@@ -151,7 +155,9 @@ describe("translation language domain", () => {
 
 describe("runtime prompt language profile", () => {
   it("uses jp/ko record keys only for the default pair", () => {
-    const defaultProfile = languageProfile.resolvePromptLanguageProfile({});
+    const defaultProfile = languageProfile.resolvePromptLanguageProfile({
+      sourceLanguage: "ja",
+    });
     expect(defaultProfile.isDefaultJapaneseToKorean).toBe(true);
     expect(defaultProfile.sourceKey).toBe("jp");
     expect(defaultProfile.targetKey).toBe("ko");
@@ -177,7 +183,7 @@ describe("runtime prompt language profile", () => {
       sourceLanguage: "en-aaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-cc-dd",
       targetLanguage: "fr",
     });
-    expect(overlong.sourceCode).toBe("ja");
+    expect(overlong.sourceCode).toBe("auto");
   });
 
   it("keeps the runtime prompt-name map in sync with the shared presets", () => {
@@ -193,7 +199,7 @@ describe("runtime prompt language profile", () => {
   });
 
   it("allows the OCR no-text skip only for Japanese source pages", () => {
-    expect(languageProfile.allowOcrNoTextDetectedSkip({})).toBe(true);
+    expect(languageProfile.allowOcrNoTextDetectedSkip({})).toBe(false);
     expect(
       languageProfile.allowOcrNoTextDetectedSkip({ sourceLanguage: "ja" }),
     ).toBe(true);
@@ -210,14 +216,17 @@ describe("runtime prompt language profile", () => {
 });
 
 describe("OCR source language plumbing", () => {
-  it("omits the --source-language argument for the default Japanese source", () => {
-    expect(ocrCommands.buildOcrSourceLanguageArgs({})).toEqual([]);
+  it("passes the selected or automatic source explicitly to the adapter", () => {
+    expect(ocrCommands.buildOcrSourceLanguageArgs({})).toEqual([
+      "--source-language",
+      "auto",
+    ]);
     expect(
       ocrCommands.buildOcrSourceLanguageArgs({ sourceLanguage: "ja" }),
-    ).toEqual([]);
+    ).toEqual(["--source-language", "ja"]);
     expect(
       ocrCommands.buildOcrSourceLanguageArgs({ sourceLanguage: "ja-JP" }),
-    ).toEqual([]);
+    ).toEqual(["--source-language", "ja-JP"]);
   });
 
   it("passes non-default source languages to the Python adapter", () => {
@@ -343,3 +352,96 @@ describe("OCR source language plumbing", () => {
     expect(kept.prepassNoTextPages).toHaveLength(0);
   });
 });
+
+describe("automatic source language", () => {
+  it("defaults missing sources to auto and preserves explicit saved choices", () => {
+    expect(resolveTranslationLanguageSettings({})).toEqual({
+      sourceLanguage: "auto",
+      targetLanguage: "ko",
+    });
+    expect(
+      resolveTranslationLanguageSettings({ sourceLanguage: "ja" })
+        .sourceLanguage,
+    ).toBe("ja");
+    expect(
+      resolveTranslationLanguageSettings({ sourceLanguage: "en" })
+        .sourceLanguage,
+    ).toBe("en");
+    expect(normalizeSourceLanguageCode(" AUTO ", "ja")).toBe("auto");
+    expect(normalizeSourceLanguageCode(undefined, "ja")).toBe("ja");
+    expect(isValidSourceLanguageInput("auto")).toBe(true);
+    expect(isValidLanguageCodeInput("auto")).toBe(false);
+    expect(
+      resolveTranslationLanguageSettings({ targetLanguage: "auto" })
+        .targetLanguage,
+    ).toBe("ko");
+    expect(resolveLanguage("auto").labelKo).toBe("자동");
+  });
+  it("keeps runtime profiles aligned and never skips unread auto-language pages", () => {
+    const pair = resolveLanguagePair({ sourceLanguage: "auto" });
+    const runtime = languageProfile.resolvePromptLanguageProfile({});
+    expect(runtime.sourceCode).toBe(pair.source.code);
+    expect(runtime.sourceName).toBe(pair.source.promptName);
+    expect(runtime.sourceKey).toBe("source");
+    expect(runtime.isDefaultJapaneseToKorean).toBe(false);
+    expect(
+      languageProfile.allowOcrNoTextDetectedSkip({ sourceLanguage: "auto" }),
+    ).toBe(false);
+  });
+  it("asks vision models to detect mixed source languages without a fixed reading direction", () => {
+    const prompts = require("../src/main/runtime/simple-page-prompts.cjs");
+    for (const prompt of [
+      prompts.buildSystemPrompt({}),
+      prompts.getOverlayPrompt({}),
+    ]) {
+      expect(prompt).toContain("Automatically identify the source language");
+      expect(prompt).not.toContain("Only output real Japanese");
+      expect(prompt).not.toContain("from top to bottom and left to right");
+    }
+    const explicit = prompts.getOverlayPrompt({
+      sourceLanguage: "ja",
+      targetLanguage: "ko",
+    });
+    expect(explicit).toContain("Only output real Japanese");
+    expect(explicit).not.toContain(
+      "Automatically identify the source language",
+    );
+  });
+});
+
+it("accepts automatic source at settings and MCP boundaries but never as a target", () => {
+  const translation = AppSettingsSchema.shape.translation.unwrap();
+  expect(
+    translation.safeParse({ sourceLanguage: "auto", targetLanguage: "ko" })
+      .success,
+  ).toBe(true);
+  expect(
+    translation.safeParse({ sourceLanguage: "ja", targetLanguage: "auto" })
+      .success,
+  ).toBe(false);
+  expect(
+    McpSelectionTranslationSchema.shape.sourceLanguage.safeParse("auto")
+      .success,
+  ).toBe(true);
+  expect(
+    McpSelectionTranslationSchema.shape.targetLanguage.safeParse("auto")
+      .success,
+  ).toBe(false);
+});
+
+it.each(["zh-TW", "zh-CN", "zh-Latn-HK", "en-US", "xx"])(
+  "keeps explicit source %s identical in shared and runtime language resolution",
+  (sourceLanguage) => {
+    const shared = resolveLanguagePair({
+      sourceLanguage,
+      targetLanguage: "fr",
+    });
+    const runtime = languageProfile.resolvePromptLanguageProfile({
+      sourceLanguage,
+      targetLanguage: "fr",
+    });
+    expect(runtime.sourceCode).toBe(shared.source.code);
+    expect(runtime.sourceName).toBe(shared.source.promptName);
+    expect(runtime.targetName).toBe(shared.target.promptName);
+  },
+);

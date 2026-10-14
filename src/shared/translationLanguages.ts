@@ -140,6 +140,26 @@ export function isValidLanguageCodeInput(value: unknown): boolean {
   );
 }
 
+/** Auto detection is a source-only choice, never a target language. */
+export function isValidSourceLanguageInput(value: unknown): boolean {
+  return (
+    String(value ?? "")
+      .trim()
+      .toLowerCase() === "auto" || isValidLanguageCodeInput(value)
+  );
+}
+
+export function normalizeSourceLanguageCode(
+  value: unknown,
+  fallback: LanguageCode = DEFAULT_SOURCE_LANGUAGE,
+): LanguageCode {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase() === "auto"
+    ? "auto"
+    : normalizeLanguageCode(value, fallback);
+}
+
 export function normalizeLanguageCode(
   value: unknown,
   fallback: LanguageCode,
@@ -181,7 +201,7 @@ export function resolveTranslationLanguageSettings(
   const record =
     raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   return {
-    sourceLanguage: normalizeLanguageCode(
+    sourceLanguage: normalizeSourceLanguageCode(
       record.sourceLanguage,
       defaults.sourceLanguage,
     ),
@@ -194,7 +214,7 @@ export function resolveTranslationLanguageSettings(
 
 /** 지역/스크립트 변형을 제외한 최상위 언어 코드(en-US -> en). */
 function getBaseLanguageCode(code: unknown): string {
-  return normalizeLanguageCode(code, DEFAULT_SOURCE_LANGUAGE)
+  return normalizeSourceLanguageCode(code, DEFAULT_SOURCE_LANGUAGE)
     .split("-", 1)[0]
     .toLowerCase();
 }
@@ -218,7 +238,14 @@ export function resolveSourceReadingDirection(code: unknown): "ltr" | "rtl" {
 }
 
 export function resolveLanguage(code: LanguageCode): ResolvedLanguage {
-  const normalized = normalizeLanguageCode(code, DEFAULT_SOURCE_LANGUAGE);
+  const normalized = normalizeSourceLanguageCode(code, DEFAULT_SOURCE_LANGUAGE);
+  if (normalized === "auto") {
+    return {
+      code: "auto",
+      labelKo: "자동",
+      promptName: "automatically detected source-language",
+    };
+  }
   const aliasedCode = resolveKnownLanguageAlias(normalized);
   const baseCode = getBaseLanguageCode(normalized);
   const known = KNOWN_TRANSLATION_LANGUAGES.find((language) => {
@@ -262,7 +289,7 @@ export function resolveLanguagePair(
     | null
     | undefined,
 ): ResolvedLanguagePair {
-  const sourceCode = normalizeLanguageCode(
+  const sourceCode = normalizeSourceLanguageCode(
     settings?.sourceLanguage,
     DEFAULT_SOURCE_LANGUAGE,
   );

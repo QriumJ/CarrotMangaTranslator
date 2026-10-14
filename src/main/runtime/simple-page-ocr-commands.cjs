@@ -13,9 +13,6 @@ const {
   resolveOcrGpuBackend,
 } = require("./simple-page-ocr-runtime-config.cjs");
 const { runtimeOverrideEnv } = require("./simple-page-child-env.cjs");
-const {
-  isJapaneseLanguageCode,
-} = require("./simple-page-language-profile.cjs");
 
 const EXTERNAL_COMMAND_ENV = "MANGA_TRANSLATOR_OCR_BBOX_CMD";
 const ALLOWED_EXTERNAL_COMMAND_KEYS = new Set(["executable", "args"]);
@@ -312,9 +309,7 @@ function crossPlatformBasename(value) {
  */
 function buildOcrSourceLanguageArgs(options = {}) {
   const sourceLanguage = resolveOcrSourceLanguage(options);
-  return !sourceLanguage || isJapaneseLanguageCode(sourceLanguage)
-    ? []
-    : ["--source-language", sourceLanguage];
+  return ["--source-language", sourceLanguage];
 }
 
 /** @param {RuntimeOptions} [options] @returns {string} */
@@ -322,7 +317,7 @@ function resolveOcrSourceLanguage(options = {}) {
   return (
     runtimeOverrideEnv("MANGA_TRANSLATOR_OCR_SOURCE_LANGUAGE", options) ||
     readOptionString(options.sourceLanguage) ||
-    "ja"
+    "auto"
   );
 }
 

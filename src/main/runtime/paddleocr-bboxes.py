@@ -55,7 +55,7 @@ def build_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument("--device", default=None, help="Optional Paddle device, e.g. gpu:0 or cpu.")
     parser.add_argument(
         "--source-language",
-        default=os.environ.get("MANGA_TRANSLATOR_OCR_SOURCE_LANGUAGE", "ja"),
+        default=os.environ.get("MANGA_TRANSLATOR_OCR_SOURCE_LANGUAGE", "auto"),
         help="Translation source language code, e.g. ja, en, zh-Hans, fr.",
     )
     parser.add_argument("--bbox-mode", default="ocr", choices=["ocr"])
@@ -784,13 +784,16 @@ def resolve_source_language(args: argparse.Namespace | None = None) -> str:
       value = str(getattr(args, "source_language", "") or "").strip()
     if not value:
       value = os.environ.get("MANGA_TRANSLATOR_OCR_SOURCE_LANGUAGE", "").strip()
-    return (value or "ja").lower()
+    return (value or "auto").lower()
 
 
 def resolve_paddle_ocr_lang(source_language: str) -> str:
-    normalized = str(source_language or "ja").strip().lower()
+    normalized = str(source_language or "auto").strip().lower()
     subtags = normalized.split("-")
     base = subtags[0]
+    if base == "auto":
+      # Select the multilingual recognizer instead of falling back to English.
+      return "ch"
     if base == "zh":
       traditional = "hant" in subtags or any(region in subtags for region in ("tw", "hk", "mo"))
       return "chinese_cht" if traditional else "ch"
@@ -823,7 +826,9 @@ def should_use_configured_model_names(
 
 
 def resolve_source_script(source_language: str) -> str:
-    base = str(source_language or "ja").strip().lower().split("-", 1)[0]
+    base = str(source_language or "auto").strip().lower().split("-", 1)[0]
+    if base == "auto":
+      return "auto"
     if base == "ja":
       return "japanese"
     if base == "ko":
@@ -1194,7 +1199,7 @@ def merge_textline_candidates(
     width: int,
     height: int,
     mode: str = "semantic",
-    source_language: str = "ja",
+    source_language: str = "auto",
 ) -> list[dict]:
     """Merge low-level OCR text lines into cleaner geometry hints.
 
@@ -1308,7 +1313,7 @@ def partition_textline_candidates_heuristic(
     candidates: list[dict],
     width: int,
     height: int,
-    source_language: str = "ja",
+    source_language: str = "auto",
 ) -> dict:
     """Build high-precision OCR text clusters without a vision-model call.
 

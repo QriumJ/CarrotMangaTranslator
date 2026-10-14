@@ -2045,12 +2045,13 @@
       }
     },
     "translation": {
+      "auto": "Auto",
       "title": "Translation language settings",
       "source": "Source language",
       "target": "Target language",
       "swapTitle": "Swap source and target languages",
       "swapAria": "Swap source and target languages",
-      "description": "The default remains Japanese → Korean. Enter a language code for languages not in the list. Quality varies by language pair and OCR support.",
+      "description": "The source language is detected automatically and translated into Korean by default. You can enter languages not listed here. Quality varies with the language pair and OCR support.",
       "primaryLanguages": "Primary languages",
       "otherLanguages": "Other languages",
       "custom": "Custom…",

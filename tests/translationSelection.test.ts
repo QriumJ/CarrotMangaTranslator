@@ -105,7 +105,7 @@ describe("translation selection", () => {
     const page = withCheckpoint(makePage("checkpoint", "idle"));
     const initial = createPendingChapterSelection([page], {
       blockMode: "auto",
-      sourceLanguage: "ja",
+      sourceLanguage: "auto",
       targetLanguage: "ko",
     });
     expect(initial).toBeDefined();
@@ -198,7 +198,7 @@ describe("translation selection", () => {
       resumableFirst.id,
       resumableLast.id,
       rangePages,
-      { blockMode: "auto", sourceLanguage: "ja", targetLanguage: "ko" },
+      { blockMode: "auto", sourceLanguage: "auto", targetLanguage: "ko" },
     );
 
     expect(pageRunIntent(next.get("c1"), resumableFirst)).toBe("resume");
@@ -214,7 +214,7 @@ describe("translation selection", () => {
     expect(
       createPendingChapterSelection([checkpoint, untreated, completed], {
         blockMode: "auto",
-        sourceLanguage: "ja",
+        sourceLanguage: "auto",
         targetLanguage: "ko",
       }),
     ).toEqual({
@@ -225,7 +225,7 @@ describe("translation selection", () => {
     expect(
       createPendingChapterSelection([completed], {
         blockMode: "auto",
-        sourceLanguage: "ja",
+        sourceLanguage: "auto",
         targetLanguage: "ko",
       }),
     ).toBeUndefined();
@@ -309,7 +309,7 @@ describe("translation selection", () => {
     };
     const context = {
       blockMode: "auto" as const,
-      sourceLanguage: "ja",
+      sourceLanguage: "auto",
       targetLanguage: "ko",
       completionWorkflow: "bubble-layout" as const,
     };
@@ -341,10 +341,28 @@ function withCheckpoint(page: MangaPage): MangaPage {
       sha256: "a".repeat(64),
       byteSize: 100,
       inputRevision: createPageRevision(page),
-      sourceLanguage: "ja",
+      sourceLanguage: "auto",
       targetLanguage: "ko",
       blockMode: "auto",
       savedAt: "2026-01-01T00:00:00.000Z",
     },
   };
 }
+
+it("does not resume a Japanese checkpoint with the automatic source default", () => {
+  const page = withCheckpoint(makePage("old-japanese", "idle"));
+  if (!page.translationCheckpoint)
+    throw new Error("missing checkpoint fixture");
+  page.translationCheckpoint = {
+    ...page.translationCheckpoint,
+    sourceLanguage: "ja",
+  };
+  expect(pageRunIntent({ kind: "pending" }, page)).toBe("restart");
+  expect(
+    pageRunIntent({ kind: "pending" }, page, {
+      blockMode: "auto",
+      sourceLanguage: "ja",
+      targetLanguage: "ko",
+    }),
+  ).toBe("resume");
+});

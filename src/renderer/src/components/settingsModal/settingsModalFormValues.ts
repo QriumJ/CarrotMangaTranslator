@@ -26,7 +26,10 @@ import type {
   TavilyAnalysisProvider,
 } from "../../../../shared/internetResearchTypes";
 import type { GraphicsGpuPreference } from "../../../../shared/gpuSettings";
-import { normalizeLanguageCode } from "../../../../shared/translationLanguages";
+import {
+  normalizeLanguageCode,
+  normalizeSourceLanguageCode,
+} from "../../../../shared/translationLanguages";
 import {
   DEFAULT_SOURCE_LANGUAGE,
   DEFAULT_TARGET_LANGUAGE,
@@ -206,7 +209,7 @@ function resolveGeneralFormValues(
     uiLocale: normalizeUiLocale(settings.ui?.locale, DEFAULT_UI_LOCALE),
     wheelZoomSensitivityPercent: settings.ui?.wheelZoomSensitivityPercent ?? 1,
     modelProvider: settings.modelProvider,
-    sourceLanguage: normalizeLanguageCode(
+    sourceLanguage: normalizeSourceLanguageCode(
       settings.translation?.sourceLanguage,
       DEFAULT_SOURCE_LANGUAGE,
     ),

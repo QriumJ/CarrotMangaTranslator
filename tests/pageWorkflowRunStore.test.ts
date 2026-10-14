@@ -248,7 +248,10 @@ describe("durable page workflow plans", () => {
     settings.api.apiKey = "changed-credential";
     settings.ui = { blockReadingSize: 24 };
     expect(workflowConfigurationKeys(settings)).toEqual(before);
-    settings.translation = { sourceLanguage: "ja", targetLanguage: "en" };
+    settings.translation = {
+      sourceLanguage: settings.translation?.sourceLanguage ?? "auto",
+      targetLanguage: "en",
+    };
     const after = workflowConfigurationKeys(settings);
     expect(after.erase).toBe(before.erase);
     expect(after.ocr).toBe(before.ocr);

@@ -346,6 +346,11 @@ function buildFixedBlockTranslationPrompt(plan, options = {}) {
     isKeepBlocksSourceMode(options) || isHayaiLockedRegionMode(options);
   return [
     `Translate every supplied fixed ${profile.sourceName} manga block into natural ${profile.targetName}.`,
+    ...(profile.sourceCode === "auto"
+      ? [
+          "Identify the source language from each block's visible lettering or supplied source text; mixed-language blocks are allowed. Do not assume Japanese or discard text because it uses another script.",
+        ]
+      : []),
     ...buildFixedBlockSourceLines(options),
     options.autoFontMatching
       ? "Each item requires blockId, textRole, layoutIntent, fontRole, fontRoleConfidence, and ko, and may additionally include visualClusterId. Never output jp, candidateIds, coordinates, bbox, type, confidence, action, or commentary."

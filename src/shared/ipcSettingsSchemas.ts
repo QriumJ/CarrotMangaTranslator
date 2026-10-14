@@ -199,7 +199,7 @@ export const AppSettingsSchema = z
     ]),
     translation: z
       .object({
-        sourceLanguage: LanguageCodeSchema,
+        sourceLanguage: z.union([z.literal("auto"), LanguageCodeSchema]),
         targetLanguage: LanguageCodeSchema,
       })
       .strict()

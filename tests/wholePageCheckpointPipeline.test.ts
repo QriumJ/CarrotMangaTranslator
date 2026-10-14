@@ -46,14 +46,26 @@ describe("whole page translation checkpoints", () => {
     checkpoint.blockMode = "keep";
     checkpoint.prepared.soundDroppedCount = 1;
     expect(
-      resolveCheckpointCompatibility({ checkpoint, page, blockMode: "keep" }),
+      resolveCheckpointCompatibility({
+        checkpoint,
+        page,
+        blockMode: "keep",
+        sourceLanguage: checkpoint.sourceLanguage,
+        targetLanguage: checkpoint.targetLanguage,
+      }),
     ).toEqual({
       reusable: false,
       reason: "kept-sound-translations-dropped",
     });
     checkpoint.prepared.soundDroppedCount = 0;
     expect(
-      resolveCheckpointCompatibility({ checkpoint, page, blockMode: "keep" }),
+      resolveCheckpointCompatibility({
+        checkpoint,
+        page,
+        blockMode: "keep",
+        sourceLanguage: checkpoint.sourceLanguage,
+        targetLanguage: checkpoint.targetLanguage,
+      }),
     ).toEqual({ reusable: true });
   });
 

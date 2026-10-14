@@ -2045,12 +2045,13 @@
       }
     },
     "translation": {
+      "auto": "自動",
       "title": "翻譯語言設定",
       "source": "原文語言",
       "target": "目標語言",
       "swapTitle": "交換原文語言和目標語言",
       "swapAria": "交換原文語言和目標語言",
-      "description": "預設值仍為日語 → 韓語。清單中沒有的語言可直接輸入語言代碼。品質會因語言組合和 OCR 支援情況而異。",
+      "description": "預設自動辨識原文語言並翻譯為韓文。可直接輸入清單中沒有的語言，品質取決於語言組合和OCR支援情況。",
       "primaryLanguages": "主要語言",
       "otherLanguages": "其他語言",
       "custom": "自訂…",

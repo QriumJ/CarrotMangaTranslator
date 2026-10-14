@@ -363,7 +363,10 @@ function readNeutralFontIntentFallbackTranslation(
  */
 function buildTargetTypographyFallbackItems(candidates, options) {
   const profile = resolvePromptLanguageProfile(options);
-  if (profile.sourceBaseCode !== "ja" || profile.targetBaseCode !== "ko") {
+  if (
+    !["ja", "auto"].includes(profile.sourceBaseCode) ||
+    profile.targetBaseCode !== "ko"
+  ) {
     return [];
   }
   const recoveredById = new Map();

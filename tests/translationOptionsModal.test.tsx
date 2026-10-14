@@ -132,7 +132,7 @@ function makeCheckpointChapter(): ChapterSnapshot {
         sha256: "a".repeat(64),
         byteSize: 100,
         inputRevision: createPageRevision(page),
-        sourceLanguage: "ja",
+        sourceLanguage: "auto",
         targetLanguage: "ko",
         blockMode: "auto" as const,
         savedAt: TS,

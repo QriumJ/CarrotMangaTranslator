@@ -178,7 +178,7 @@ function buildOcrDeviceEnv(options, context) {
     MANGA_TRANSLATOR_OCR_GPU_BACKEND: context.ocrGpuBackend,
     MANGA_TRANSLATOR_OCR_SOURCE_LANGUAGE:
       runtimeOverrideEnv("MANGA_TRANSLATOR_OCR_SOURCE_LANGUAGE", options) ||
-      String(options.sourceLanguage || "ja"),
+      String(options.sourceLanguage || "auto"),
     MANGA_TRANSLATOR_OCR_GPU_CUDA_TAG: resolveOcrGpuCudaTag(options),
     MANGA_TRANSLATOR_OCR_DLL_DIRS: context.dllSearchDirs.join(path.delimiter),
   };

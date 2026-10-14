@@ -229,6 +229,7 @@ describe("dedicated sound-effect translation contract", () => {
       },
     };
     const options = {
+      sourceLanguage: "ja",
       targetLanguage: "ko",
       workContext,
       soundEffectTranslationRegions: [
@@ -274,6 +275,7 @@ describe("dedicated sound-effect translation contract", () => {
 
   it("keeps non-Korean guidance neutral and marks missing or invalid OCR as optional", () => {
     const baseOptions = {
+      sourceLanguage: "ja",
       targetLanguage: "en",
       soundEffectTranslationRegions: [
         {
@@ -304,7 +306,7 @@ describe("dedicated sound-effect translation contract", () => {
     expect(emptyOcrPrompt).not.toContain("Korean");
     expect(emptyOcrPrompt).toContain("NONE (read the image yourself)");
     expect(emptyOcrPrompt).toContain("detectorConfidence=0");
-    expect(punctuationOcrPrompt).toContain("IGNORE: no Japanese script");
+    expect(punctuationOcrPrompt).toContain("IGNORE: no readable source text");
   });
 
   it("uses one marked context plus one target crop even when ordinary OCR is empty", async () => {

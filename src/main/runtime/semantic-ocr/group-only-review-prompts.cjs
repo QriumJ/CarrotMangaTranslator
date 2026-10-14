@@ -10,7 +10,7 @@ const ROLES = ["body", "ruby"];
 
 function buildGroupOnlyReviewSystemPrompt() {
   return [
-    "You conservatively group already-detected Japanese manga OCR candidates.",
+    "You conservatively group already-detected manga OCR candidates in their original language.",
     "This is grouping only: never transcribe, correct, or output text or coordinates.",
     "A group is one enclosing balloon, card, caption, or continuous printed composition; line and column boundaries alone never define groups.",
     "Small visible furigana must attach to its host group as rubyIds; it must never become a standalone group.",

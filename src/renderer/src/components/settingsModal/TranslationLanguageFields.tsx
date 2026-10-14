@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import {
   isValidLanguageCodeInput,
+  isValidSourceLanguageInput,
   KNOWN_TRANSLATION_LANGUAGES,
   MAX_LANGUAGE_CODE_LENGTH,
   PRIMARY_TRANSLATION_LANGUAGE_CODES,
@@ -36,8 +37,11 @@ const OTHER_LANGUAGES: ResolvedLanguage[] = KNOWN_TRANSLATION_LANGUAGES.filter(
   (language) => !PRIMARY_TRANSLATION_LANGUAGE_CODES.includes(language.code),
 );
 
-function isPresetLanguageCode(code: string): boolean {
-  return KNOWN_TRANSLATION_LANGUAGES.some((language) => language.code === code);
+function isPresetLanguageCode(code: string, allowAuto: boolean): boolean {
+  return (
+    (allowAuto && code === "auto") ||
+    KNOWN_TRANSLATION_LANGUAGES.some((language) => language.code === code)
+  );
 }
 
 function useCustomLanguageMode(value: string, isPreset: boolean) {
@@ -65,7 +69,9 @@ export function TranslationLanguageFields({
   targetLanguage,
 }: TranslationLanguageFieldsProps): React.JSX.Element {
   const { t } = useTranslation("components");
+  const sourceIsAuto = sourceLanguage.trim().toLowerCase() === "auto";
   const swapLanguages = () => {
+    if (sourceIsAuto) return;
     setSourceLanguage(targetLanguage);
     setTargetLanguage(sourceLanguage);
   };
@@ -73,6 +79,7 @@ export function TranslationLanguageFields({
   return (
     <div className="settings-language-row">
       <LanguageField
+        allowAuto
         label={t("settings.translation.source")}
         value={sourceLanguage}
         disabled={controlsBusy}
@@ -82,7 +89,7 @@ export function TranslationLanguageFields({
         type="button"
         className="settings-language-swap"
         onClick={swapLanguages}
-        disabled={controlsBusy}
+        disabled={controlsBusy || sourceIsAuto}
         title={t("settings.translation.swapTitle")}
         aria-label={t("settings.translation.swapAria")}
         variant="bare"
@@ -100,24 +107,28 @@ export function TranslationLanguageFields({
 }
 
 function LanguageField({
+  allowAuto = false,
   label,
   value,
   disabled,
   onChange,
 }: {
+  allowAuto?: boolean;
   label: string;
   value: string;
   disabled: boolean;
   onChange: (code: string) => void;
 }): React.JSX.Element {
   const { t, i18n } = useTranslation("components");
-  const isPreset = isPresetLanguageCode(value);
+  const isPreset = isPresetLanguageCode(value, allowAuto);
   // 프리셋 값에서 "직접 입력"을 고른 순간을 기억한다. 입력 중 값이 우연히
   // 프리셋 코드와 일치해도(예: "ja"까지 타이핑) 입력창이 사라지지 않는다.
   const { customPicked, locallyEditedValue, setCustomPicked } =
     useCustomLanguageMode(value, isPreset);
   const showCustomInput = customPicked || !isPreset;
-  const codeValid = isValidLanguageCodeInput(value);
+  const codeValid = (
+    allowAuto ? isValidSourceLanguageInput : isValidLanguageCodeInput
+  )(value);
   const locale = i18n.resolvedLanguage ?? i18n.language;
   const displayNames = React.useMemo(
     () => createLanguageDisplayNames(locale),
@@ -138,6 +149,7 @@ function LanguageField({
       <label>
         {label}
         <LanguageSelect
+          allowAuto={allowAuto}
           ariaLabel={label}
           displayNames={displayNames}
           disabled={disabled}
@@ -179,6 +191,7 @@ function LanguageField({
 }
 
 function LanguageSelect({
+  allowAuto,
   ariaLabel,
   displayNames,
   disabled,
@@ -187,6 +200,7 @@ function LanguageSelect({
   otherLanguages,
   value,
 }: {
+  allowAuto: boolean;
   ariaLabel: string;
   displayNames: Intl.DisplayNames | null;
   disabled: boolean;
@@ -197,6 +211,9 @@ function LanguageSelect({
 }): React.JSX.Element {
   const { t } = useTranslation("components");
   const options: SelectOption[] = [
+    ...(allowAuto
+      ? [{ value: "auto", label: t("settings.translation.auto") }]
+      : []),
     ...PRIMARY_LANGUAGES.map((language) => ({
       value: language.code,
       label: getLanguageDisplayName(displayNames, language),

@@ -590,3 +590,27 @@ it("saves Claude settings without requiring a configured local Gemma model", () 
   expect(saved.claude).toEqual({ model: "sonnet", effort: "high" });
   expect(saved.codex).toEqual(initialSettings.codex);
 });
+
+it("round-trips automatic source language while rejecting auto as a target", () => {
+  const initialSettings = resolveDefaultAppSettings({});
+  delete initialSettings.translation;
+  const values = createSettingsFormValues(initialSettings);
+  expect(values.sourceLanguage).toBe("auto");
+  expect(resolveSettingsDraft(values).sourceLanguageValid).toBe(true);
+  const saved = buildSettingsFromDraft({
+    values,
+    draft: resolveSettingsDraft(values),
+    initialSettings,
+    keybindings: {},
+    blockFormatDefaults: DEFAULT_BLOCK_FORMAT_DEFAULTS,
+  });
+  expect(saved.translation).toEqual({
+    sourceLanguage: "auto",
+    targetLanguage: "ko",
+  });
+  expect(createSettingsFormValues(saved).sourceLanguage).toBe("auto");
+  expect(
+    resolveSettingsDraft({ ...values, targetLanguage: "auto" })
+      .targetLanguageValid,
+  ).toBe(false);
+});

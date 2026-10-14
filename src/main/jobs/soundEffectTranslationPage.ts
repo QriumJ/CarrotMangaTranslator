@@ -184,6 +184,7 @@ async function requestAndValidateOneRegion({
     run.runtime.parseJsonLenient,
     region,
     pageOptions.targetLanguage ?? "ko",
+    pageOptions.sourceLanguage,
   );
 }
 
@@ -196,6 +197,7 @@ function validateOneRegionOutput(
   parse: (text: string) => unknown,
   region: StoredSoundEffectTarget["regions"][number],
   targetLanguage: string,
+  sourceLanguage?: string,
 ) {
   let payload: unknown;
   try {
@@ -215,5 +217,6 @@ function validateOneRegionOutput(
     payload,
     [region],
     targetLanguage,
+    sourceLanguage,
   );
 }

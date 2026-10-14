@@ -4,7 +4,7 @@
  *
  * The runtime .cjs modules cannot import the shared TypeScript language
  * domain (src/shared/translationLanguages.ts), so the small prompt-name map
- * is kept here. The default Japanese -> Korean profile must preserve the
+ * is kept here. The explicitly selected Japanese -> Korean profile preserves the
  * existing tuned prompt wording byte-for-byte; every other language pair uses
  * the generic multilingual localization in simple-page-prompts.cjs.
  *
@@ -22,7 +22,7 @@
  * }} PromptLanguageProfile
  */
 
-const DEFAULT_SOURCE_LANGUAGE = "ja";
+const DEFAULT_SOURCE_LANGUAGE = "auto";
 const DEFAULT_TARGET_LANGUAGE = "ko";
 const MAX_LANGUAGE_CODE_LENGTH = 40;
 const RTL_LANGUAGE_BASE_CODES = new Set(["ar", "fa", "he", "ur"]);
@@ -128,6 +128,7 @@ function normalizeLanguageCode(value, fallback) {
  * @returns {string}
  */
 function resolvePromptLanguageName(code) {
+  if (code === "auto") return "automatically detected source-language";
   const aliasedCode = resolveLanguageCodeAlias(code);
   const baseCode = getBaseLanguageCode(code);
   return (
@@ -156,7 +157,7 @@ function resolveLanguageCodeAlias(code) {
 
 /** @param {unknown} code @returns {string} */
 function getBaseLanguageCode(code) {
-  return normalizeLanguageCode(code, DEFAULT_SOURCE_LANGUAGE)
+  return normalizeSourceLanguageCode(code, DEFAULT_SOURCE_LANGUAGE)
     .split("-", 1)[0]
     .toLowerCase();
 }
@@ -176,7 +177,7 @@ function isKoreanLanguageCode(code) {
  * @returns {PromptLanguageProfile}
  */
 function resolvePromptLanguageProfile(options = {}) {
-  const sourceCode = normalizeLanguageCode(
+  const sourceCode = normalizeSourceLanguageCode(
     options?.sourceLanguage,
     DEFAULT_SOURCE_LANGUAGE,
   );
@@ -228,6 +229,15 @@ function isJapaneseSourceLanguage(options = {}) {
  */
 function allowOcrNoTextDetectedSkip(options = {}) {
   return isJapaneseSourceLanguage(options);
+}
+
+/** @param {unknown} value @param {string} fallback @returns {string} */
+function normalizeSourceLanguageCode(value, fallback) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase() === "auto"
+    ? "auto"
+    : normalizeLanguageCode(value, fallback);
 }
 
 module.exports = {

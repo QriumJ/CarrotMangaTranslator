@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import type { TranslationOptions } from "../appSettings";
 import type { ChapterRunPaths } from "../library";
 import type { MangaPage } from "../../shared/libraryTypes";
-import { normalizeLanguageCode } from "../../shared/translationLanguages";
+import { normalizeSourceLanguageCode } from "../../shared/translationLanguages";
 import { DEFAULT_SOURCE_LANGUAGE } from "../../shared/translationLanguageDefaults";
 import {
   buildOcrCacheConfiguration,
@@ -260,7 +260,7 @@ function getOcrHintsOutputDir(
 }
 
 function normalizeOcrCacheLanguage(sourceLanguage?: string): string {
-  return normalizeLanguageCode(sourceLanguage, DEFAULT_SOURCE_LANGUAGE);
+  return normalizeSourceLanguageCode(sourceLanguage, DEFAULT_SOURCE_LANGUAGE);
 }
 
 function normalizeGroupingEvidence(

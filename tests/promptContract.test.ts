@@ -88,6 +88,7 @@ const { buildRequestSummary } = requestSummaryRuntime;
 
 function createPromptContractOptions(): Record<string, unknown> {
   return {
+    sourceLanguage: "ja",
     modelProvider: "openai-codex",
     codexModel: "gpt-5.5",
     codexReasoningEffort: "medium",

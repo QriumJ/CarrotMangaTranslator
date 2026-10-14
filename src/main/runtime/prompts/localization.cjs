@@ -83,6 +83,8 @@ function adaptStaticPromptLineForProfile(line, profile) {
     line ===
     "Process panels and bubbles exhaustively from top to bottom and right to left."
   ) {
+    if (profile.sourceCode === "auto")
+      return "Process all panels and bubbles in the reading order indicated by their writing and layout.";
     return profile.sourceIsRtl
       ? line
       : "Process panels and bubbles exhaustively from top to bottom and left to right.";
@@ -99,7 +101,12 @@ function localizePromptTextForProfile(text, profile) {
   if (profile.isDefaultJapaneseToKorean) {
     return text;
   }
-  const localized = [];
+  const localized =
+    profile.sourceCode === "auto"
+      ? [
+          "Automatically identify the source language from the supplied visible text or source strings, separately for mixed-language passages. Do not assume Japanese or any other fixed language. Preserve the original wording when transcribing; translate into the requested target language. Infer reading order from the actual writing and layout.",
+        ]
+      : [];
   for (const line of text.split("\n")) {
     if (isDynamicPromptDataLine(line)) {
       localized.push(line);

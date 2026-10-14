@@ -35,7 +35,7 @@ describe("Apple Silicon OCR compatibility", () => {
       qualityMode: "economy",
     });
     expect(options).toMatchObject({
-      sourceLanguage: "ja",
+      sourceLanguage: "auto",
       ocrPipeline: "hayai",
       ocrDevice: "cpu",
       ocrQualityMode: "economy",
@@ -62,7 +62,10 @@ describe("Apple Silicon OCR compatibility", () => {
       },
     );
     const settings = parseStoredAppSettings(
-      JSON.stringify({ ocr: { pipeline: "paddle-legacy" } }),
+      JSON.stringify({
+        translation: { sourceLanguage: "ja" },
+        ocr: { pipeline: "paddle-legacy" },
+      }),
       defaults,
     );
 

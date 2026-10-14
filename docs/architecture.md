@@ -1,5 +1,18 @@
 # 코드 경계와 품질 규칙
 
+## 2026-10-13 원문 언어 자동 기본값
+
+효과음 응답 검증도 shared `translationLanguages`의 명시적 일본어 판정을 사용한다.
+자동/다른 원문 언어에서 일본어 문자만 요구하지 않으며, 사용자가 일본어를 지정하면
+기존 검증을 유지한다. 화 단위 글꼴 분석과 MCP 사전 검사는 shared
+`fontChapterSourcePolicy`를 함께 사용해 자동 설정에서도 원문 지원 문자를 분석한다.
+기존 `translationLanguages`의 runtimeImportedBy 상한 34는 유지한다.
+원문/대상 언어 경계, 기존 설정 보존과 체크포인트 분리는 행동 테스트로 검증한다.
+런타임 언어 프로필과 localization은 기존 node22 baseline artifact의 원래 수치로
+커버리지 inventory에 추가했다. 기존 기준은 낮추지 않았다.
+새 글꼴 원문 정책의 첫 커버리지는 네 지표 모두 100%이며 측정 출처와 SHA-256은
+`docs/source-language-auto-audit.md`에 기록했다. 모델 자산과 픽셀 알고리즘은 변경하지 않는다.
+
 ## 2026-10-12 Gemma 생성 설정
 
 Gemma Temperature·Top P·Top K의 기본값은 shared `gemmaSamplingSettings`가 소유한다.

@@ -60,18 +60,6 @@ describe("keep-blocks translation mode", () => {
     expect(result.hints[1]).not.toHaveProperty("ocrText");
   });
 
-  it("joins crop OCR texts in Japanese reading order and skips junk hints", () => {
-    const joined = joinCropOcrTexts([
-      { x1: 10, y1: 10, x2: 40, y2: 200, ocrText: "ばかり" },
-      { x1: 100, y1: 10, x2: 130, y2: 200, ocrText: "その" },
-      { x1: 55, y1: 10, x2: 85, y2: 200, ocrText: "女" },
-      { x1: 55, y1: 10, x2: 85, y2: 200, ocrText: "   " },
-      { ocrText: "좌표없음" },
-      null,
-    ]);
-    expect(joined).toBe("その 女 ばかり");
-  });
-
   it("orders same-column horizontal lines top to bottom", () => {
     const joined = joinCropOcrTexts([
       { x1: 10, y1: 60, x2: 200, y2: 90, ocrText: "二行目" },

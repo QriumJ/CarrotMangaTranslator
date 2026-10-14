@@ -2045,12 +2045,13 @@
       }
     },
     "translation": {
+      "auto": "自动",
       "title": "翻译语言设置",
       "source": "原文语言",
       "target": "目标语言",
       "swapTitle": "交换原文语言和目标语言",
       "swapAria": "交换原文语言和目标语言",
-      "description": "默认值仍为日语 → 韩语。列表中没有的语言可直接输入语言代码。质量会因语言组合和OCR支持情况而异。",
+      "description": "默认自动识别原文语言并翻译为韩语。可直接输入列表中没有的语言，质量取决于语言组合和OCR支持情况。",
       "primaryLanguages": "主要语言",
       "otherLanguages": "其他语言",
       "custom": "自定义…",

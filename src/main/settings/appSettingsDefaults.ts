@@ -8,7 +8,10 @@ import {
 import type { AppSettings } from "../../shared/settingsTypes";
 import { DEFAULT_BUBBLE_LAYOUT_PADDING_RATIO } from "../../shared/bubbleLayoutSettings";
 import { DEFAULT_BLOCK_FORMAT_DEFAULTS } from "../../shared/blockFormat";
-import { normalizeLanguageCode } from "../../shared/translationLanguages";
+import {
+  normalizeLanguageCode,
+  normalizeSourceLanguageCode,
+} from "../../shared/translationLanguages";
 import {
   DEFAULT_SOURCE_LANGUAGE,
   DEFAULT_TARGET_LANGUAGE,
@@ -107,7 +110,7 @@ function resolveDefaultTranslationLanguageSettings(
   env: NodeJS.ProcessEnv,
 ): NonNullable<AppSettings["translation"]> {
   return {
-    sourceLanguage: normalizeLanguageCode(
+    sourceLanguage: normalizeSourceLanguageCode(
       env.MANGA_TRANSLATOR_SOURCE_LANGUAGE,
       DEFAULT_SOURCE_LANGUAGE,
     ),

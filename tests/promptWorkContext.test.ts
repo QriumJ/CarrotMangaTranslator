@@ -128,6 +128,7 @@ describe("prompt work context", () => {
     });
     const prompt = promptRuntime.getOverlayPrompt(
       {
+        sourceLanguage: "ja",
         imageWidth: 1000,
         imageHeight: 1400,
         workContext: context,

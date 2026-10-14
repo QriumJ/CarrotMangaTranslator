@@ -12,6 +12,7 @@ describe("runtime prompt message contracts", () => {
   it("uses OCR bbox candidates as single-pass geometry hints", () => {
     const options = {
       modelProvider: "openai-codex",
+      sourceLanguage: "ja",
       imageWidth: 836,
       imageHeight: 1188,
       ocrBboxHints: [
@@ -101,6 +102,7 @@ describe("runtime prompt message contracts", () => {
     );
 
     const result = await collectOcrBboxHints({
+      sourceLanguage: "ja",
       imageWidth: 1200,
       imageHeight: 1600,
       ocrBboxHintsPath: hintPath,
@@ -120,6 +122,7 @@ describe("runtime prompt message contracts", () => {
     const prompt = getOverlayPrompt(
       {
         modelProvider: "gemma",
+        sourceLanguage: "ja",
         imageWidth: 1200,
         imageHeight: 1600,
         ocrBboxHints: result.hints,
@@ -183,6 +186,7 @@ describe("runtime prompt message contracts", () => {
     );
 
     const result = await collectOcrBboxHints({
+      sourceLanguage: "ja",
       imageWidth: 844,
       imageHeight: 1200,
       ocrBboxHintsPath: hintPath,
@@ -205,6 +209,7 @@ describe("runtime prompt message contracts", () => {
     const prompt = getOverlayPrompt(
       {
         modelProvider: "gemma",
+        sourceLanguage: "ja",
         imageWidth: 844,
         imageHeight: 1200,
         ocrBboxHints: result.hints,
@@ -233,6 +238,7 @@ describe("runtime prompt message contracts", () => {
     const prompt = getOverlayPrompt(
       {
         strictRefineMode: true,
+        sourceLanguage: "ja",
         imageWidth: 1000,
         imageHeight: 1400,
         previousBlocksForPrompt: [
@@ -315,6 +321,7 @@ describe("runtime prompt message contracts", () => {
       {
         modelProvider: "openai-codex",
         regionCropMode: true,
+        sourceLanguage: "ja",
         imageWidth: 420,
         imageHeight: 320,
         ocrBboxHints: [
@@ -366,6 +373,7 @@ describe("runtime prompt message contracts", () => {
   it("keeps selected-region full-page context as a non-authority assist image", () => {
     const options = {
       regionCropMode: true,
+      sourceLanguage: "ja",
       imageWidth: 420,
       imageHeight: 320,
       regionContextImagePath: "page.png",
@@ -431,6 +439,7 @@ describe("runtime prompt message contracts", () => {
     );
 
     const result = await collectOcrBboxHints({
+      sourceLanguage: "ja",
       imageWidth: 836,
       imageHeight: 1188,
       ocrBboxHintsPath: hintPath,
@@ -450,6 +459,7 @@ describe("runtime prompt message contracts", () => {
     const messages = buildMessages(
       {
         modelProvider: "gemma",
+        sourceLanguage: "ja",
         imageWidth: 836,
         imageHeight: 1188,
       },

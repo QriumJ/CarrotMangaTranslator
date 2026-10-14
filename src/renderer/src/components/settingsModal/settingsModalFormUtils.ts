@@ -1,7 +1,10 @@
 import { apiSessionHeaderError } from "../../../../shared/apiSessionHeaders";
 import type { TFunction } from "i18next";
 import { coerceOpenAiCompatibleBaseUrl } from "../../../../shared/apiSettings";
-import { isValidLanguageCodeInput } from "../../../../shared/translationLanguages";
+import {
+  isValidLanguageCodeInput,
+  isValidSourceLanguageInput,
+} from "../../../../shared/translationLanguages";
 import { MODEL_PRESETS } from "../settingsOptions";
 import type { SettingsFormValues } from "./settingsModalFormValues";
 import {
@@ -43,7 +46,7 @@ export function resolveSettingsDraft(values: SettingsFormValues) {
     parsedContextTokens,
     maxTokensValid: isValidMaxTokens(parsedMaxTokens),
     contextTokensValid: isValidContextTokens(parsedContextTokens),
-    sourceLanguageValid: isValidLanguageCodeInput(values.sourceLanguage),
+    sourceLanguageValid: isValidSourceLanguageInput(values.sourceLanguage),
     targetLanguageValid: isValidLanguageCodeInput(values.targetLanguage),
   };
 }
@@ -206,14 +209,10 @@ export function isSettingsFormSubmittable(
   values: SettingsFormValues,
   draft: SettingsDraft,
 ): boolean {
-  if (!draft.maxTokensValid || !draft.contextTokensValid) {
-    return false;
-  }
+  if (!draft.maxTokensValid || !draft.contextTokensValid) return false;
   if (!isInternetResearchDraftSubmittable(values, draft)) return false;
   // 잘못된 언어 코드는 normalize가 조용히 되돌리므로 저장 전에 막는다.
-  if (!draft.sourceLanguageValid || !draft.targetLanguageValid) {
-    return false;
-  }
+  if (!draft.sourceLanguageValid || !draft.targetLanguageValid) return false;
   if (values.modelProvider === "openai-codex") {
     return Boolean(draft.trimmedCodexModel);
   }

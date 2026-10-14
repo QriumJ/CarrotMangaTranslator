@@ -76,7 +76,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--worker", action="store_true")
     parser.add_argument("--progress")
     parser.add_argument("--device", default="gpu")
-    parser.add_argument("--source-language", default="ja")
+    parser.add_argument("--source-language", default="auto")
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--max-new-tokens", type=int, default=128)
     parser.add_argument("--max-num-patches", type=int, default=256)

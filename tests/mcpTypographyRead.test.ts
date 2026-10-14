@@ -16,6 +16,29 @@ const base = {
   sourceLanguage: "ja",
   targetLanguage: "ko",
 };
+
+it("allows automatic source typography and excludes unsupported script per block", async () => {
+  const f = fixture();
+  f.chapter.pages[0].blocks[0].sourceText = "待ってください";
+  f.chapter.pages[0].blocks[1].sourceText = "WAIT";
+  const before = structuredClone(f.chapter);
+  const result = await f.service.preflight(
+    { ...base, sourceLanguage: "auto", allowOcr: true },
+    f.guard,
+  );
+  expect(result).toMatchObject({
+    sourceLanguage: "auto",
+    status: "inputs_available",
+    blockers: [],
+    counts: { fontEligible: 1, sizeEligible: 2 },
+  });
+  expect(result.pages[0].blocks[1]).toMatchObject({
+    fontEligible: false,
+    fontExclusion: "unsupported_source_script",
+    sizeEligible: true,
+  });
+  expect(f.chapter).toEqual(before);
+});
 function fixture() {
   const chapter = editingChapter();
   for (const block of chapter.pages[0].blocks) {

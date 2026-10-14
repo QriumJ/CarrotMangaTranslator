@@ -3,10 +3,7 @@ import { join } from "node:path";
 import { z } from "zod";
 import type { AppPaths } from "../appPaths";
 import type { TranslationOptions } from "../appSettings";
-import {
-  isJapaneseLanguageCode,
-  isKoreanLanguageCode,
-} from "../../shared/translationLanguages";
+import { supportsChapterFontLanguagePair } from "../../shared/fontChapterSourcePolicy";
 import { prepareFontChapterRuntime } from "./fontChapterRuntimeAssets";
 import {
   buildFontChapterC18Input,
@@ -56,8 +53,7 @@ async function prepareChapter(
   const selected = entries.filter(
     ({ pageOptions: o }) =>
       o.autoFontMatching &&
-      isKoreanLanguageCode(o.targetLanguage) &&
-      isJapaneseLanguageCode(o.sourceLanguage),
+      supportsChapterFontLanguagePair(o.sourceLanguage, o.targetLanguage),
   );
   const first = selected[0];
   if (!first) return undefined;

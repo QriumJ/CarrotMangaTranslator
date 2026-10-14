@@ -383,6 +383,7 @@ describeWindows("runtime model support helpers: OCR pipeline execution", () => {
       { baseUrl: "http://127.0.0.1:1" },
       {
         label: "blank-page",
+        sourceLanguage: "ja",
         modelProvider: "gemma",
         imageWidth: 1000,
         imageHeight: 1000,

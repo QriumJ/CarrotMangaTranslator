@@ -6684,6 +6684,28 @@
         "pct": 75
       }
     },
+    "src/main/runtime/prompts/localization.cjs": {
+      "lines": {
+        "total": 34,
+        "covered": 33,
+        "pct": 97.05
+      },
+      "statements": {
+        "total": 34,
+        "covered": 33,
+        "pct": 97.05
+      },
+      "functions": {
+        "total": 8,
+        "covered": 7,
+        "pct": 87.5
+      },
+      "branches": {
+        "total": 35,
+        "covered": 34,
+        "pct": 97.14
+      }
+    },
     "src/main/runtime/prompts/model-profile.cjs": {
       "lines": {
         "covered": 13,
@@ -7474,6 +7496,28 @@
         "covered": 17,
         "total": 22,
         "pct": 77.27
+      }
+    },
+    "src/main/runtime/simple-page-language-profile.cjs": {
+      "lines": {
+        "total": 43,
+        "covered": 41,
+        "pct": 95.34
+      },
+      "statements": {
+        "total": 43,
+        "covered": 41,
+        "pct": 95.34
+      },
+      "functions": {
+        "total": 12,
+        "covered": 11,
+        "pct": 91.66
+      },
+      "branches": {
+        "total": 41,
+        "covered": 37,
+        "pct": 90.24
       }
     },
     "src/main/runtime/simple-page-llama-runtimes.cjs": {
@@ -47295,6 +47339,28 @@
       "branches": {
         "covered": 12,
         "total": 12,
+        "pct": 100
+      }
+    },
+    "src/shared/fontChapterSourcePolicy.ts": {
+      "lines": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 6,
+        "total": 6,
         "pct": 100
       }
     },
