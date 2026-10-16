@@ -16,7 +16,11 @@ export type UseWorkspaceInpaintingPointerHandlersOptions = {
   appendRetouchPoint: (point: ImagePoint) => ImagePoint | null;
   applyRetouchOperation: (operation: {
     geometry: InpaintingRetouchGeometry;
-    mode: "paint" | "restore";
+    mode: "paint" | "restore" | "clone" | "heal";
+    sampled?: import("../../../shared/sampledRetouch").SampledRetouchSettings;
+    expectedRevision?: import("../../../shared/pageRevisionTypes").PageRevision;
+    requestId?: string;
+    onSettled?: (path: string | null) => void;
   }) => Promise<void>;
   imageRef: RefObject<HTMLImageElement | null>;
   inpaintingBrushRadius: number;

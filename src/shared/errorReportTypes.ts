@@ -18,6 +18,9 @@ export type ErrorReportContext = {
   stack?: string;
   componentStack?: string;
   jobStage?: string;
+  jobId?: string;
+  executionId?: string;
+  incidentAt?: string;
 };
 
 export type ErrorReportDraft = {

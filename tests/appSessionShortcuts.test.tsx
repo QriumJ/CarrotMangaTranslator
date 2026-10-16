@@ -94,6 +94,13 @@ describe("app-session shortcut handlers", () => {
     expect(result.current.uiState.stageTool).toBe("eraser-rectangle");
     run(result, "retouch-tool-picker");
     expect(result.current.uiState.stageTool).toBe("picker");
+    const radius = result.current.uiState.inpaintingBrushRadius;
+    run(result, "retouch-brush-larger");
+    expect(result.current.uiState.inpaintingBrushRadius).toBeGreaterThan(
+      radius,
+    );
+    run(result, "retouch-brush-smaller");
+    expect(result.current.uiState.inpaintingBrushRadius).toBe(radius);
     run(result, "stage-tool-select");
     expect(result.current.uiState.stageTool).toBe("select");
 

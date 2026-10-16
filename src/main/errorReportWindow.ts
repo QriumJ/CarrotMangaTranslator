@@ -2,6 +2,7 @@ import { BrowserWindow } from "electron";
 import { ipcEventContracts } from "../shared/ipcContracts";
 import type { ErrorReportContext } from "../shared/errorReportTypes";
 import { ErrorReportContextSchema } from "../shared/errorReportSchemas";
+import { normalizeErrorReportContext } from "../shared/errorReportContext";
 import { tMainCommon } from "./i18n";
 import {
   applyRendererWindowGuards,
@@ -24,7 +25,8 @@ const productionDependencies: ErrorReportWindowDependencies = {
   applyRendererWindowGuards,
   incidentChannel: ipcEventContracts.errorIncident.channel,
   loadRendererIntoWindow,
-  parseContext: (context) => ErrorReportContextSchema.parse(context),
+  parseContext: (context) =>
+    ErrorReportContextSchema.parse(normalizeErrorReportContext(context)),
   rendererWebPreferences,
   resolveRendererLoadTarget,
   title: () => tMainCommon("app.title"),

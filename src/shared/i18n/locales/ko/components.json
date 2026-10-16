@@ -37,6 +37,19 @@
     "search": "항목 검색",
     "noResults": "일치하는 항목이 없습니다."
   },
+  "colorPicker": {
+    "open": "{{label}} 선택",
+    "saturationValue": "채도와 밝기",
+    "saturationValueText": "채도 {{saturation}}%, 밝기 {{brightness}}%",
+    "hue": "색조",
+    "eyedropper": "화면에서 색 추출",
+    "r": "빨강",
+    "g": "초록",
+    "b": "파랑",
+    "palette": "팔레트",
+    "addToPalette": "현재 색을 팔레트에 저장",
+    "swatchHint": "{{color}} — 클릭해 적용, 우클릭이나 Delete로 삭제"
+  },
   "workSelect": {
     "search": "작품 검색",
     "chapterCount": "{{count}}개 화",
@@ -58,7 +71,12 @@
     "share": "작업 내보내기",
     "importWork": "작업 가져오기",
     "showNavigator": "탐색 패널 열기",
-    "hideNavigator": "탐색 패널 닫기"
+    "hideNavigator": "탐색 패널 닫기",
+    "resizeWidth": "왼쪽 패널 너비 조절",
+    "resizeWidthHint": "드래그해서 너비 조절 · 더블클릭하면 기본 너비",
+    "resetWidth": "왼쪽 패널 기본 너비로",
+    "resizeSplit": "보관함과 페이지 높이 조절",
+    "resizeSplitHint": "드래그해서 높이 조절 · 더블클릭하면 기본 비율"
   },
   "conditionalBatch": {
     "open": "텍스트 일괄 편집",
@@ -1139,7 +1157,7 @@
       },
       "paint": {
         "label": "칠하기 도구",
-        "title": "브러시·도형·색 추출 도구"
+        "title": "브러시·도형 도구"
       },
       "restore": {
         "label": "복원 도구",
@@ -1206,6 +1224,14 @@
       "warp": {
         "label": "워프",
         "title": "워프 변형 — 격자점을 움직여 글자 모양을 조정합니다"
+      },
+      "clone": {
+        "label": "복제 도장",
+        "title": "복제 도장 — Alt+클릭으로 원본을 지정한 뒤 드래그합니다"
+      },
+      "heal": {
+        "label": "치유 브러시",
+        "title": "치유 브러시 — Alt+클릭으로 원본을 지정한 뒤 드래그하면 주변 톤에 맞춰 섞입니다"
       }
     }
   },
@@ -1287,7 +1313,7 @@
     "retry": "다시 시도",
     "preparing": "안전한 진단 정보를 준비하는 중…",
     "copySuccess": "진단 정보를 클립보드에 복사했습니다.",
-    "clipboardFallback": "내용이 길어 클립보드에 복사했습니다. 열린 GitHub 이슈에 붙여넣어 주세요.",
+    "clipboardFallback": "핵심 진단을 GitHub에 입력했고 전체 보고서는 클립보드에 복사했습니다. 필요하면 붙여넣어 상세 내용으로 바꿀 수 있습니다.",
     "githubOpened": "GitHub 이슈 작성 화면을 열었습니다. 내용을 확인한 뒤 제출해 주세요.",
     "openLogs": "로그 폴더 열기",
     "openingLogs": "로그 폴더 여는 중…",
@@ -1661,7 +1687,9 @@
       "eraser-rectangle": "사각 복원",
       "mask": "마스크 붓",
       "none": "도구를 선택하세요",
-      "picker": "색 뽑기"
+      "picker": "색 뽑기",
+      "clone": "복제 도장",
+      "heal": "치유 브러시"
     },
     "auto": {
       "description": "먼저 원문 글자를 자동으로 지웁니다. 한 페이지씩 또는 남은 페이지를 한 번에 처리할 수 있어요.",
@@ -1715,6 +1743,28 @@
     "progress": {
       "processingPages": "{{count}}페이지 처리 중",
       "inProgress": "인페인팅 작업 진행 중"
+    },
+    "stamp": {
+      "source": "샘플",
+      "current": "현재 결과",
+      "original": "페이지 원본",
+      "currentTooltip": "지금 보이는 보정 결과에서 복사합니다. 텍스트 레이어는 포함하지 않습니다.",
+      "originalTooltip": "보정하기 전 원본 페이지에서 복사합니다.",
+      "aligned": "정렬",
+      "alignedTooltip": "켜면 원본 위치가 붓을 따라 계속 이동합니다. 끄면 획마다 처음 지정한 위치에서 다시 복사합니다.",
+      "opacity": "불투명도",
+      "hardness": "경도",
+      "pick": "원본 지정",
+      "repick": "다시 지정",
+      "sourceState": {
+        "unset": "원본 위치 미지정",
+        "set": "원본 위치 지정됨",
+        "picking": "이미지에서 원본을 클릭하세요"
+      },
+      "processing": "적용 중… Esc로 취소",
+      "keys": "Alt+클릭 원본 지정 · Shift 직선 · [ ] 크기 · Esc 취소",
+      "cursorHintFirst": "클릭해서 복사할 원본 지정",
+      "cursorHintReplace": "클릭해서 원본 위치 변경"
     }
   },
   "settings": {

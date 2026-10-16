@@ -95,6 +95,80 @@
   display: none;
 }
 
+.retouch-sample-ghost {
+  position: absolute;
+  inset: 0 auto auto 0;
+  z-index: var(--z-stage-retouch-canvas);
+  pointer-events: none;
+}
+
+.retouch-sample-marker {
+  fill: none;
+  stroke: var(--canvas-transform-accent);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 1px var(--shadow-ink-55));
+}
+
+.retouch-sample-ring {
+  stroke-dasharray: 4 3;
+  opacity: 0.85;
+}
+
+.retouch-sample-hint {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: var(--z-stage-drag-hud);
+  padding: 4px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--stage-drag-hud-background);
+  color: var(--text);
+  font-size: var(--font-xs);
+  font-weight: 600;
+  /* The stage sets line-height: 0 for the image; text needs its own. */
+  line-height: 1.4;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.retouch-sample-hint[hidden] {
+  display: none;
+}
+
+.retouch-sample-hint span {
+  display: none;
+}
+
+.retouch-sample-hint[data-sampled-hint-kind="first"] [data-hint-kind="first"],
+.retouch-sample-hint[data-sampled-hint-kind="replace"]
+  [data-hint-kind="replace"] {
+  display: inline;
+}
+
+/* Clone/heal brush: an outline only, so the source preview inside stays clear. */
+.retouch-cursor-clone,
+.retouch-cursor-heal {
+  background: transparent;
+}
+
+/* Picking a source: a precise crosshair replaces the brush preview. */
+.image-stage.retouch-tool-enabled[data-sampled-state="pick"] {
+  cursor:
+    url("../assets/cursors/contrast-crosshair.svg") 12 12,
+    crosshair;
+}
+
+[data-sampled-state="pick"] .retouch-cursor-clone,
+[data-sampled-state="pick"] .retouch-cursor-heal {
+  border-style: dashed;
+  box-shadow: 0 0 0 1px var(--retouch-cursor-outer-ring);
+}
+
+[data-sampled-state="pick"] .retouch-cursor span {
+  display: none;
+}
+
 .retouch-preview-layer {
   position: absolute;
   inset: 0;

@@ -33,6 +33,8 @@ export type ImageStageProps = {
   retouchCursor?: {
     radiusPx: number;
     mode:
+      | "clone"
+      | "heal"
       | "brush"
       | "rectangle"
       | "ellipse"

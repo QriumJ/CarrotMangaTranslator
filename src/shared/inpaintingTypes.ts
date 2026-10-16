@@ -140,9 +140,11 @@ export type InpaintingRetouchRequest = {
   chapterId: string;
   pageId: string;
   expectedRevision: PageRevision;
-  mode: "paint" | "restore";
+  mode: "paint" | "restore" | "clone" | "heal";
   geometry: InpaintingRetouchGeometry;
   color?: string;
+  sampled?: import("./sampledRetouch").SampledRetouchSettings;
+  requestId?: string;
   retainedInpaintedArtifactPaths?: string[];
 };
 

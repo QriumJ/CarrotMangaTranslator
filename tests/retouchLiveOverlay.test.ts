@@ -6,6 +6,7 @@ import {
   beginRetouchShape,
   beginRetouchStroke,
   clearRetouchLiveOverlay,
+  finishRetouchStroke,
   queueRetouchCursor,
   replaceRetouchStrokePreview,
   updateRetouchShape,
@@ -18,6 +19,86 @@ afterEach(() => {
 });
 
 describe("retouch live overlay", () => {
+  it("finishes the sampled endpoint after the last animation frame consumed its points", () => {
+    const frames = installAnimationFrameController();
+    const context = makeCanvasContext();
+    const putImageData =
+      vi.fn<(image: ImageData, x: number, y: number) => void>();
+    const scratch: Partial<CanvasRenderingContext2D> = {
+      clearRect: vi.fn(),
+      drawImage: vi.fn(),
+      putImageData,
+    };
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+      scratch as CanvasRenderingContext2D,
+    );
+    vi.stubGlobal(
+      "ImageData",
+      class {
+        data: Uint8ClampedArray;
+        constructor(width: number, height: number) {
+          this.data = new Uint8ClampedArray(width * height * 4);
+        }
+      },
+    );
+    const { stage } = makeStage(context);
+    const source = document.createElement("img");
+    Object.defineProperty(source, "naturalWidth", { value: 1000 });
+    const geometry = {
+      imageWidth: 1000,
+      imageHeight: 1000,
+      displayWidth: 100,
+      displayHeight: 100,
+    };
+    beginRetouchStroke(stage, { x: 100, y: 100 }, geometry, {
+      color: "#ffffff",
+      mode: "clone",
+      radiusPx: 20,
+      sourceImage: source,
+      sampled: {
+        source: "current",
+        offset: { x: 0, y: 0 },
+        hardness: 1,
+        opacity: 1,
+      },
+    });
+    appendRetouchStrokePoint(stage, { x: 101, y: 100 }, geometry);
+    frames.flush();
+    const alpha = putImageData.mock.calls[0][0];
+    expect(alpha.data[(100 * 256 + 121) * 4 + 3]).toBe(0);
+    finishRetouchStroke(stage, Infinity);
+    for (let i = 0; frames.count() && i < 100; i++) frames.flush();
+    expect(frames.count()).toBe(0);
+    expect(alpha.data[(100 * 256 + 121) * 4 + 3]).toBe(255);
+    expect(putImageData).toHaveBeenCalledTimes(2);
+    // A coalesced jump must continue on later frames instead of monopolizing
+    // the pointer-up task. Use a deterministic clock, keeping the real raster.
+    let now = 0;
+    vi.spyOn(performance, "now").mockImplementation(() => (now += 5));
+    beginRetouchStroke(stage, { x: 100, y: 100 }, geometry, {
+      color: "#ffffff",
+      mode: "clone",
+      radiusPx: 20,
+      sourceImage: source,
+      sampled: {
+        source: "current",
+        offset: { x: 0, y: 0 },
+        hardness: 1,
+        opacity: 1,
+      },
+    });
+    appendRetouchStrokePoint(stage, { x: 180, y: 100 }, geometry);
+    finishRetouchStroke(stage, Infinity);
+    expect(frames.count()).toBe(1);
+    let count = 0;
+    while (frames.count() && count++ < 100) frames.flush();
+    expect(count).toBeGreaterThan(1);
+    expect(count).toBeLessThan(100);
+    expect(
+      putImageData.mock.calls.at(-1)?.[0].data[(100 * 256 + 200) * 4 + 3],
+    ).toBe(255);
+    clearRetouchLiveOverlay(stage);
+  });
   it("publishes cursor and incremental brush drawing at most once per frame", () => {
     const frames = installAnimationFrameController();
     const context = makeCanvasContext();

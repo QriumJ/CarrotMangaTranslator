@@ -1,3 +1,4 @@
+import type { ErrorReportBuildEnvironment } from "../src/main/errorReportEnvironment";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -13,21 +14,173 @@ vi.mock("electron", () => ({
 
 import {
   buildErrorReportDraft,
-  type ErrorReportBuildEnvironment,
+  prepareErrorReportDraft,
 } from "../src/main/errorReport";
 import { redactDiagnosticText } from "../src/main/errorReportRedaction";
+import { ErrorReportDraftSchema } from "../src/shared/errorReportSchemas";
+import { serializeLogDetail } from "../src/main/logger";
 import type { AppPaths } from "../src/main/appPaths";
 import type { AppSettings } from "../src/shared/settingsTypes";
 
 const tempDirs: string[] = [];
 
 afterEach(() => {
+  vi.unstubAllEnvs();
   for (const dir of tempDirs.splice(0)) {
     rmSync(dir, { recursive: true, force: true });
   }
 });
 
 describe("error report diagnostics", () => {
+  it("returns partial diagnostics when optional hardware collection never settles", async () => {
+    const paths = makeAppPaths(createTempDir());
+    vi.stubEnv("MANGA_TRANSLATOR_LOG_PATH", paths.logFile);
+    vi.useFakeTimers();
+    try {
+      const pending = prepareErrorReportDraft({ source: "manual" }, paths, [], {
+        getAppSettings: async () => makeSettings(),
+        detectBestGpuInfo: () => new Promise(() => undefined),
+        readPageWorkflowTimings: async () => [],
+      });
+      await vi.advanceTimersByTimeAsync(3000);
+      const draft = await pending;
+      expect(draft.errorMarkdown).toContain('"gpuCollection":"rejected"');
+      expect(draft.systemMarkdown).toContain("safe-model-id");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("uses the logger override and binds snapshots to the exact resumed execution", async () => {
+    const paths = makeAppPaths(createTempDir());
+    const override = join(paths.dataRoot, "custom.log");
+    vi.stubEnv("MANGA_TRANSLATOR_LOG_PATH", override);
+    writeFileSync(override, logLine("ERROR", "OVERRIDE_LOG_CAUSE"));
+    const draft = await prepareErrorReportDraft(
+      { source: "job-failure", jobId: "run-1", executionId: "attempt-2" },
+      paths,
+      [
+        {
+          id: "run-1",
+          kind: "gemma-analysis",
+          executionId: "attempt-1",
+          startedAt: new Date().toISOString(),
+          active: false,
+          lastProgressAgeMs: 1,
+          phase: "ocr_running",
+        },
+        {
+          id: "run-1",
+          kind: "gemma-analysis",
+          executionId: "attempt-2",
+          startedAt: new Date().toISOString(),
+          active: true,
+          lastProgressAgeMs: 30,
+          phase: "model_requesting",
+        },
+      ],
+      {
+        getAppSettings: async () => makeSettings(),
+        detectBestGpuInfo: async () => null,
+        readPageWorkflowTimings: async () => [],
+      },
+    );
+    expect(draft.logsMarkdown).toContain("OVERRIDE_LOG_CAUSE");
+    expect(draft.errorMarkdown).toContain("attempt-2");
+    expect(draft.errorMarkdown).toContain("model_requesting");
+    expect(draft.errorMarkdown).not.toContain("attempt-1");
+    expect(ErrorReportDraftSchema.safeParse(draft).success).toBe(true);
+  });
+
+  it("keeps an execution root error despite a later progress storm", async () => {
+    const paths = makeAppPaths(createTempDir());
+    mkdirSync(paths.logsDir, { recursive: true });
+    writeFileSync(
+      paths.logFile,
+      [
+        logLine("ERROR", 'ROOT_CAUSE {"executionId":"attempt"}'),
+        ...Array.from({ length: 220 }, (_, i) =>
+          logLine(
+            "INFO",
+            `job:gemma-analysis:running {"executionId":"attempt","progressCurrent":${i}}`,
+          ),
+        ),
+      ].join("\n"),
+    );
+    const draft = await buildErrorReportDraft(
+      { source: "manual", executionId: "attempt" },
+      makeEnvironment(paths, join(paths.logsDir, "previous.log")),
+    );
+    expect(draft.logsMarkdown).toContain("ROOT_CAUSE");
+    expect(draft.logsMarkdown).toContain('"progressCurrent":219');
+    expect(draft.truncated).toBe(true);
+  });
+  it.each(["가", "😀"])(
+    "keeps root errors around oversized Unicode log entries (%s)",
+    async (character) => {
+      const paths = makeAppPaths(createTempDir());
+      mkdirSync(paths.logsDir, { recursive: true });
+      writeFileSync(
+        paths.logFile,
+        [
+          logLine("ERROR", "ROOT_CAUSE request rejected"),
+          logLine(
+            "ERROR",
+            serializeLogDetail(new Error(character.repeat(12000))),
+          ),
+          logLine("WARN", "job:gemma-analysis:cancelled"),
+        ].join("\n"),
+      );
+      const draft = await buildErrorReportDraft(
+        { source: "manual" },
+        makeEnvironment(paths, join(paths.logsDir, "previous.log")),
+      );
+      expect(ErrorReportDraftSchema.safeParse(draft).success).toBe(true);
+      expect(draft.logsMarkdown).toContain("ROOT_CAUSE");
+      expect(draft.logsMarkdown).toContain("cancelled");
+      expect(draft.logsMarkdown).not.toContain("�");
+      expect(draft.truncated).toBe(true);
+    },
+  );
+
+  it("includes current lifecycle evidence and counts collection omissions", async () => {
+    const paths = makeAppPaths(createTempDir());
+    mkdirSync(paths.logsDir, { recursive: true });
+    writeFileSync(
+      paths.logFile,
+      [
+        ...Array.from({ length: 210 }, (_, i) =>
+          logLine("WARN", `warning-${i}`),
+        ),
+        logLine(
+          "INFO",
+          'job:gemma-analysis:running {"id":"run","executionId":"attempt","phase":"model_requesting"}',
+        ),
+      ].join("\n"),
+    );
+    const draft = await buildErrorReportDraft(
+      { source: "manual", executionId: "attempt" },
+      makeEnvironment(paths, join(paths.logsDir, "previous.log")),
+    );
+    expect(draft.logsMarkdown).toContain("model_requesting");
+    expect(draft.logsMarkdown).toContain("Collection omitted: 11 entries");
+    expect(draft.truncated).toBe(true);
+  });
+
+  it("removes model text embedded in legacy localized messages and stacks", () => {
+    const message =
+      '모델 오류 preview={"item":[{"ko":"PRIVATE_MODEL_TEXT"}]} cause=contract invalid';
+    const sanitized = redactDiagnosticText(
+      JSON.stringify({
+        message,
+        stack: `Error: ${message}\n    at parse (app.js:4)`,
+      }),
+    ).text;
+    expect(sanitized).not.toContain("PRIVATE_MODEL_TEXT");
+    expect(sanitized).toContain("Legacy model-response diagnostic omitted");
+    const injected =
+      'preview={"text":"prefix cause=PRIVATE_REMAINDER"} cause=Unexpected token PRIVATE_CAUSE';
+    expect(redactDiagnosticText(injected).text).not.toMatch(/PRIVATE/);
+  });
   it.each([undefined, { model: "sonnet", effort: "max" as const }])(
     "identifies Claude in diagnostics without API credentials",
     async (claude) => {
@@ -188,7 +341,7 @@ describe("error report diagnostics", () => {
       makeEnvironment(paths, join(paths.logsDir, "previous.log")),
     );
 
-    expect(draft.logsMarkdown).toContain("No WARN/ERROR entries");
+    expect(draft.logsMarkdown).toContain("No diagnostic entries");
   });
 
   it("prefixes Apple Silicon Alpha issues and includes Metal metadata", async () => {

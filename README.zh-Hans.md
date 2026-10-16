@@ -6,7 +6,7 @@
 
 [한국어](README.md) · [English](README.en.md) · [日本語](README.ja.md) · **简体中文** · [繁體中文](README.zh-Hant.md)
 
-**[下载 v3.3.7](https://github.com/ucx0204/CarrotMangaTranslator/releases/tag/v3.3.7)** · [更新说明](docs/release-notes/v3.3.7.md) · [问题与建议](https://github.com/ucx0204/CarrotMangaTranslator/issues)
+**[下载 v3.4.0](https://github.com/ucx0204/CarrotMangaTranslator/releases/tag/v3.4.0)** · [更新说明](docs/release-notes/v3.4.0.md) · [问题与建议](https://github.com/ucx0204/CarrotMangaTranslator/issues)
 
 [快速开始](#start) · [编辑文字](#edit) · [音效 ImageGen](#sfx) · [快捷键](#shortcuts) · [常见问题](#troubleshooting)
 
@@ -15,6 +15,16 @@ Windows 10/11 · Apple Silicon macOS 14+ · [GPL-3.0-only](LICENSE)
 ![原稿、页面与文本块编辑面板](docs/images/readme-v2712/workspace.png)
 
 对白保留为**可编辑的文本块**，大型音效则可用 **Codex ImageGen** 转成符合画风的文字图片。[前后对比与操作方法](#sfx)
+
+## 最近新增的编辑功能
+
+**仿制图章与修复画笔：** 在画笔菜单中选择工具，使用当前修复结果或页面原图作为来源。Alt/Option+单击，或点击来源指定按钮后选择取样位置，再拖动修复。开启对齐可在多次笔画之间保持相对偏移；关闭后每次从指定位置开始。可调大小、硬度与不透明度，`[`、`]`调整大小，Esc取消。修复画笔先显示仿制预览，再替换为计算结果；每次笔画可整体撤销。切换页面后需重新指定来源。
+
+拖动左侧栏边界以及资料库与页面列表之间的边界，可调整宽度与高度。尺寸会保存，双击边界可重置。应用内颜色选择器可在文字、画笔等控件间共享最多24个保存色。
+
+![仿制图章与设置（韩语界面示例）](docs/images/readme-current/clone-v340.png)
+
+还支持Codex与Claude聊天、自动识别原文语言、统一的分阶段执行记录。详情见[更新后的图文指南](README.md)。
 
 <a id="start"></a>
 

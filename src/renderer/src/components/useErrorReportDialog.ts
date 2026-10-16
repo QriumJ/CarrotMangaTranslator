@@ -279,10 +279,16 @@ function useStableReportContext(
       stack: context.stack,
       componentStack: context.componentStack,
       jobStage: context.jobStage,
+      jobId: context.jobId,
+      executionId: context.executionId,
+      incidentAt: context.incidentAt,
     }),
     [
       context.componentStack,
       context.jobStage,
+      context.jobId,
+      context.executionId,
+      context.incidentAt,
       context.message,
       context.source,
       context.stack,
@@ -299,5 +305,8 @@ function getContextKey(context: ErrorReportContext): string {
     context.stack,
     context.componentStack,
     context.jobStage,
+    context.jobId,
+    context.executionId,
+    context.incidentAt,
   ]);
 }

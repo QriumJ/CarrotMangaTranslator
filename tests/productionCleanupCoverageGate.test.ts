@@ -566,14 +566,20 @@ describe("production cleanup coverage floor gate", () => {
     expect(Object.keys(manifest.floors)).toEqual(scope.existing);
     expect(Object.keys(manifest.introducedFloors)).toEqual(scope.added);
     expect(manifest.deletedFiles).toEqual(scope.deleted);
-    expect(scope.existing).toHaveLength(845);
+    expect(scope.existing).toHaveLength(856);
     // Includes global chat, shared actions, OpenCode help, MCP event streams, shared
     // translation instructions and image budget; inherited floors remain unchanged.
     // inherited floors remain unchanged.
     // Gemma sampling adds a production control and its shared default contract.
     // The unused chat quality banner and its parser were removed.
     // Issue #149 introduces timing, multi-folder import and preference/disclosure owners.
-    expect(scope.added).toHaveLength(1466);
+    // Issue #151 adds environment collection, execution diagnostics and context bounds;
+    // six newly touched existing report modules retain the original measured floors.
+    // Issue #150 adds the in-app color picker, its pacing and the shared palette;
+    // the newly touched cssColor module keeps its original measured floor.
+    // Issue #149 adds the resizable left rail: its splitter primitive and owners.
+    // Sampled retouch adds worker, raster, gesture and shared contract owners.
+    expect(scope.added).toHaveLength(1497);
     expect(scope.deleted).toHaveLength(12);
   });
 });

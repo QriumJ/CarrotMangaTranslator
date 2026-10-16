@@ -255,7 +255,7 @@
     },
     "errors": {
       "bboxMissing": "{{page}}: Could not produce bounding-box results.",
-      "responseParse": "{{page}}: Could not parse the model response as structured data. preview={{preview}} cause={{cause}}"
+      "responseParse": "{{page}}: Could not parse the model response as structured data. shape={{shape}} cause={{cause}}"
     }
   },
   "region": {

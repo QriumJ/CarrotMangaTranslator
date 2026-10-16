@@ -1,5 +1,36 @@
 # README UI 캡처
 
+## v3.4.0 화면 갱신 · 2026-10-16
+
+현재 v3.4.0 트리의 실제 App·컴포넌트·스타일을 `npm run qa:ui`로 다시 촬영했다. 넓은 창은 1600×1000, 좁은 창은 1240×760이다. 사용자 보관함 대신 기존 공개 예제 원고와 격리된 QA 브리지 데이터를 사용했다. 채팅 응답·작업 이력·계정·하드웨어는 문서용 예시이며 실제 모델 실행 결과가 아니다.
+
+갱신 화면: 작업 공간, 사이드바 크기 조절, 복제 도장, 치유 브러시, 앱 색상 선택기·팔레트, 채팅, 원문 언어 자동·번역 엔진, Gemma·생성 설정, 페이지 작업, 가져오기·중복 화 건너뛰기, 블록 서식, 일반 설정, 단계별 실행 이력, 출력. 20개 캡처와 색상 캡처를 재사용한 retouch.png를 반영했다. 도장·치유·색상·채팅·이력의 좁은 창도 직접 확인했다. 캡처 도구의 런타임 오류 검사를 통과했고 최종 이미지를 열어 잘림·겹침·외부 스크롤을 확인했다.
+
+- [workspace.png](workspace.png)
+- [clone-v340.png](clone-v340.png)
+- [heal-narrow-v340.png](heal-narrow-v340.png)
+- [clone-narrow-v340.png](clone-narrow-v340.png)
+- [sidebar-v340.png](sidebar-v340.png)
+- [color-v340.png](color-v340.png)
+- [color-narrow-v340.png](color-narrow-v340.png)
+- [chat.png](chat.png)
+- [chat-narrow-v340.png](chat-narrow-v340.png)
+- [settings.png](settings.png)
+- [settings-gemma.png](settings-gemma.png)
+- [gemma-sampling-v340.png](gemma-sampling-v340.png)
+- [workflow.png](workflow.png)
+- [import.png](import.png)
+- [import-preview.png](import-preview.png)
+- [editor-format.png](editor-format.png)
+- [settings-general.png](settings-general.png)
+- [timing-v340.png](timing-v340.png)
+- [timing-narrow-v340.png](timing-narrow-v340.png)
+- [export.png](export.png)
+
+임시 QA 엔트리는 최종 트리에서 제거했다. 아래는 이전 촬영의 기록이며, 위에 열거하지 않은 기존 화면은 당시 자료를 유지한다.
+
+## 이전 촬영 기록
+
 2026-09-30, 소스 커밋 `e387aa1a394eec64e5e64d17701cfd4ccbe28a5c`의 실제 `App`·프로덕션 컴포넌트·스타일을 저장소 `qa:ui`로 촬영했다. 앱 동작 코드는 변경하지 않았다. 총 **72장: 일반·상세 화면 59장, 좁은 화면 11장, 원고 비교 2장**이다.
 
 ## 데이터와 검증 범위

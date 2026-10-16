@@ -53,37 +53,7 @@
     "src/shared/richTextMarkup.ts": "and serialization share one safe markup grammar contract, max-lines -- parsing, normalization, range editing"
   },
   "rawFeatureControls": {
-    "src/renderer/src/components/ColorField.tsx": {
-      "button": 0,
-      "input": 1,
-      "select": 0,
-      "textarea": 0
-    },
-    "src/renderer/src/components/ConditionalBatchConditionValueEditor.tsx": {
-      "button": 0,
-      "input": 1,
-      "select": 0,
-      "textarea": 0
-    },
-    "src/renderer/src/components/gatherText/GatherTextDirectDetailControls.tsx": {
-      "button": 0,
-      "input": 1,
-      "select": 0,
-      "textarea": 0
-    },
     "src/renderer/src/components/gatherText/GatherTextFileInputs.tsx": {
-      "button": 0,
-      "input": 1,
-      "select": 0,
-      "textarea": 0
-    },
-    "src/renderer/src/components/inpaintingPanel/RetouchInpaintingStep.tsx": {
-      "button": 0,
-      "input": 1,
-      "select": 0,
-      "textarea": 0
-    },
-    "src/renderer/src/components/settingsModal/FormatDefaultsDetailSections.tsx": {
       "button": 0,
       "input": 1,
       "select": 0,

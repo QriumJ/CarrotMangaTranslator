@@ -4,6 +4,8 @@ export const APP_COMMAND_IDS = [
   "translate-region",
   "translate-pending",
   "translate-all",
+  "retouch-tool-clone",
+  "retouch-tool-heal",
   "run-current-page-inpainting",
   "cancel-job",
   "add-chapter-pages",

@@ -14,6 +14,7 @@ import {
 } from "../src/shared/pageWorkflowTypes";
 import type { JobEvent, JobState } from "../src/shared/jobTypes";
 import { makeOptions } from "./translationWorkflowFixtures";
+import { toast } from "../src/renderer/src/lib/toastStore";
 
 const noop = () => undefined;
 const frames = new Map<number, FrameRequestCallback>();
@@ -67,7 +68,7 @@ const event = (
   kind: JobState["kind"] = "gemma-analysis",
 ): JobEvent => ({ id, status, kind, progressText: status });
 
-function harness() {
+function harness(openErrorReport = vi.fn()) {
   const listeners = new Set<(event: JobEvent) => void>();
   const subscribe = (callback: (event: JobEvent) => void) => {
     listeners.add(callback);
@@ -89,7 +90,7 @@ function harness() {
       onAudibleCompletion: sound.playCompletionSound,
       onJobStart: noop,
       onPageChange: noop,
-      openErrorReport: noop,
+      openErrorReport,
       refreshLibrary: noop,
       resetChapterScopedUi: noop,
       selectedPageId: null,
@@ -128,6 +129,61 @@ function harness() {
 }
 
 describe("completion sound event integration", () => {
+  it("reports an immediate resumed failure in one frame without carrying the old error", () => {
+    const openReport = vi.fn();
+    const errorToast = vi.spyOn(toast, "error");
+    const h = harness(openReport);
+    h.emit({
+      ...event("same-run", "failed"),
+      executionId: "attempt-1",
+      detail: "OLD_ERROR",
+    });
+    flushFrames();
+    h.emit({ ...event("same-run", "starting"), executionId: "attempt-2" });
+    h.emit({
+      ...event("same-run", "failed"),
+      executionId: "attempt-2",
+      progressText: "NEW_ERROR",
+    });
+    flushFrames();
+    expect(errorToast).toHaveBeenCalledTimes(2);
+    errorToast.mock.calls.at(-1)?.[1]?.action?.onClick();
+    expect(openReport).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        executionId: "attempt-2",
+        message: "NEW_ERROR",
+      }),
+      { force: true },
+    );
+  });
+  it("offers a report for each failed resume and keeps its execution context", () => {
+    const openReport = vi.fn();
+    const errorToast = vi.spyOn(toast, "error");
+    const h = harness(openReport);
+    for (const executionId of ["attempt-1", "attempt-2"]) {
+      h.emit({ ...event("same-run", "running"), executionId });
+      flushFrames();
+      h.emit({
+        ...event("same-run", "failed"),
+        executionId,
+        phase: "failed",
+        detail: "failure reason",
+      });
+      flushFrames();
+      const options = errorToast.mock.calls.at(-1)?.[1];
+      options?.action?.onClick();
+      expect(openReport).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          jobId: "same-run",
+          executionId,
+          incidentAt: expect.any(String),
+          message: "failure reason",
+        }),
+        { force: true },
+      );
+    }
+    expect(errorToast).toHaveBeenCalledTimes(2);
+  });
   it("covers all four audible job categories and excludes export/context jobs", () => {
     const h = harness();
     h.emit(event("translation", "completed", "gemma-analysis"));

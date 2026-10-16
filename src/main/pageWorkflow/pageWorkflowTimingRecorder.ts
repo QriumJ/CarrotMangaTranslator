@@ -78,11 +78,14 @@ export class PageWorkflowTimingRecorder {
     execute: () => Promise<T>,
   ): Promise<T> {
     const start = this.now();
+    this.record.activeStage = { stage, startedAt: new Date().toISOString() };
+    await this.checkpoint();
     try {
       return await execute();
     } finally {
       this.record.stages[stage] =
         (this.record.stages[stage] ?? 0) + this.elapsed(start);
+      delete this.record.activeStage;
       await this.checkpoint();
     }
   }
@@ -93,12 +96,20 @@ export class PageWorkflowTimingRecorder {
     page: MangaPage,
   ): () => Promise<void> {
     const start = this.now();
+    this.record.activePage = {
+      stage,
+      chapterId,
+      pageId: page.id,
+      startedAt: new Date().toISOString(),
+    };
+    void this.checkpoint();
     return async () => {
       const row = this.record.pages.find(
         (item) => item.chapterId === chapterId && item.pageId === page.id,
       );
       if (row)
         row.stages[stage] = (row.stages[stage] ?? 0) + this.elapsed(start);
+      delete this.record.activePage;
       await this.checkpoint();
     };
   }
@@ -113,10 +124,14 @@ export class PageWorkflowTimingRecorder {
 
   async cleanup(execute: () => Promise<void>): Promise<void> {
     const start = this.now();
+    this.record.activeCleanup = { startedAt: new Date().toISOString() };
+    await this.checkpoint();
     try {
       await execute();
     } finally {
       this.record.cleanupMs += this.elapsed(start);
+      delete this.record.activeCleanup;
+      await this.checkpoint();
     }
   }
 

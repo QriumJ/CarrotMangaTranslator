@@ -1,3 +1,5 @@
+import { useSampledRetouch } from "../inpainting/sampledRetouchModel";
+import { finishSampledGesture } from "./sampledRetouchGesture";
 import { useCallback, type MutableRefObject, type PointerEvent } from "react";
 import {
   appendMaskStroke,
@@ -26,15 +28,38 @@ export function useInpaintingPointerUp(
   shapeDrawingRef: MutableRefObject<RetouchShapeDrawing | null>,
   brushRadiusDragRef: MutableRefObject<BrushRadiusDrag | null>,
 ): (event: PointerEvent) => boolean {
+  const sampled = useSampledRetouch();
   return useCallback(
     (event) => {
       if (finishBrushRadiusDrag(options, event, brushRadiusDragRef))
         return true;
       if (!options.inpaintingRetouchDrawingRef.current) return false;
-      finishRetouchDrawing(options, event, getImagePixelPoint, shapeDrawingRef);
+      if (
+        (options.inpaintingTool === "clone" ||
+          options.inpaintingTool === "heal") &&
+        sampled
+      ) {
+        releasePointerCaptureSafely(options.stageRef.current, event.pointerId);
+        options.inpaintingRetouchDrawingRef.current = false;
+        const end = getImagePixelPoint(event);
+        if (end) options.appendRetouchPoint(end.point);
+        const points = event.shiftKey
+          ? constrainStrokeToLine(options.inpaintingRetouchPointsRef.current)
+          : options.inpaintingRetouchPointsRef.current;
+        options.inpaintingRetouchPointsRef.current = [];
+        options.lastInpaintingRetouchPointRef.current = null;
+        finishRetouchStroke(options.stageRef.current, Infinity);
+        void finishSampledGesture(sampled, options, points);
+      } else
+        finishRetouchDrawing(
+          options,
+          event,
+          getImagePixelPoint,
+          shapeDrawingRef,
+        );
       return true;
     },
-    [brushRadiusDragRef, getImagePixelPoint, options, shapeDrawingRef],
+    [brushRadiusDragRef, getImagePixelPoint, options, shapeDrawingRef, sampled],
   );
 }
 

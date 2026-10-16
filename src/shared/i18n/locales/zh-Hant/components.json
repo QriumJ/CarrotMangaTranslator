@@ -37,6 +37,19 @@
     "search": "搜尋選項",
     "noResults": "沒有符合的選項。"
   },
+  "colorPicker": {
+    "open": "選擇{{label}}",
+    "saturationValue": "飽和度與亮度",
+    "saturationValueText": "飽和度 {{saturation}}%，亮度 {{brightness}}%",
+    "hue": "色相",
+    "eyedropper": "從螢幕取色",
+    "r": "紅",
+    "g": "綠",
+    "b": "藍",
+    "palette": "調色盤",
+    "addToPalette": "將目前顏色儲存到調色盤",
+    "swatchHint": "{{color}} — 按一下套用，右鍵或 Delete 刪除"
+  },
   "workSelect": {
     "search": "搜尋作品",
     "chapterCount": "{{count}}話",
@@ -58,7 +71,12 @@
     "share": "匯出專案",
     "importWork": "匯入專案",
     "showNavigator": "開啟導覽面板",
-    "hideNavigator": "關閉導覽面板"
+    "hideNavigator": "關閉導覽面板",
+    "resizeWidth": "調整左側面板寬度",
+    "resizeWidthHint": "拖曳調整寬度 · 按兩下恢復預設寬度",
+    "resetWidth": "恢復左側面板預設寬度",
+    "resizeSplit": "調整書庫與頁面高度",
+    "resizeSplitHint": "拖曳調整高度 · 按兩下恢復預設比例"
   },
   "conditionalBatch": {
     "open": "批次編輯文字",
@@ -1139,7 +1157,7 @@
       },
       "paint": {
         "label": "繪製工具",
-        "title": "筆刷、形狀與取色工具"
+        "title": "筆刷與形狀工具"
       },
       "restore": {
         "label": "還原工具",
@@ -1206,6 +1224,14 @@
       "warp": {
         "label": "網格變形",
         "title": "移動網格點以調整文字形狀"
+      },
+      "clone": {
+        "label": "仿製圖章",
+        "title": "仿製圖章 — Alt+點擊指定來源後拖曳"
+      },
+      "heal": {
+        "label": "修復筆刷",
+        "title": "修復筆刷 — Alt+點擊指定來源後拖曳，與周圍色調融合"
       }
     }
   },
@@ -1287,7 +1313,7 @@
     "retry": "重試",
     "preparing": "正在準備安全的診斷資訊…",
     "copySuccess": "診斷資訊已複製到剪貼簿。",
-    "clipboardFallback": "報告內容過長，已複製到剪貼簿。請將其貼到已開啟的GitHub議題中。",
+    "clipboardFallback": "已在 GitHub 填入診斷摘要，完整報告已複製到剪貼簿。可貼上以提供更多詳情。",
     "githubOpened": "已開啟GitHub議題建立頁面。請檢查內容後再提交。",
     "openLogs": "開啟記錄資料夾",
     "openingLogs": "正在開啟記錄資料夾…",
@@ -1661,7 +1687,9 @@
       "eraser-rectangle": "矩形還原",
       "mask": "遮罩畫筆",
       "none": "請選取工具",
-      "picker": "取色器"
+      "picker": "取色器",
+      "clone": "仿製圖章",
+      "heal": "修復筆刷"
     },
     "auto": {
       "description": "先自動清除原文文字。可以逐頁處理，也可以一次處理所有剩餘頁面。",
@@ -1715,6 +1743,28 @@
     "progress": {
       "processingPages": "正在處理{{count}}頁",
       "inProgress": "影像修補進行中"
+    },
+    "stamp": {
+      "source": "取樣",
+      "current": "目前結果",
+      "original": "頁面原圖",
+      "currentTooltip": "從目前顯示的修補結果複製。不包含文字圖層。",
+      "originalTooltip": "從修補前的原始頁面複製。",
+      "aligned": "對齊",
+      "alignedTooltip": "開啟：來源點隨筆刷持續移動。關閉：每一筆都從最初指定的位置重新複製。",
+      "opacity": "不透明度",
+      "hardness": "硬度",
+      "pick": "指定來源",
+      "repick": "重新指定",
+      "sourceState": {
+        "unset": "未指定來源",
+        "set": "已指定來源",
+        "picking": "點擊圖片指定來源"
+      },
+      "processing": "套用中… 按 Esc 取消",
+      "keys": "Alt+點擊：指定來源 · Shift：直線 · [ ]：大小 · Esc：取消",
+      "cursorHintFirst": "點擊指定複製來源",
+      "cursorHintReplace": "點擊變更複製來源"
     }
   },
   "settings": {

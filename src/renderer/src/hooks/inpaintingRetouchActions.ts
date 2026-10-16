@@ -183,6 +183,7 @@ function useApplyRetouchOperationAction({
           retainedInpaintedArtifactPaths,
         );
         const afterPath = findPageInpaintPath(result.chapter, selectedPage.id);
+        notifyRetouchSettled(operation, afterPath, beforePath);
         options.clearPageImageCache();
         options.mergeLiveChapter(result.chapter);
         const transactionId = result.historyTransaction?.transactionId;
@@ -194,9 +195,16 @@ function useApplyRetouchOperationAction({
           });
         }
       } catch (error) {
+        notifyRetouchSettled(operation);
         finishEdit(error);
         console.error(error);
-        options.pushStatus(t("inpainting.retouch.applyFailed"));
+        options.pushStatus(
+          retouchFailureMessage(
+            operation,
+            error,
+            t("inpainting.retouch.applyFailed"),
+          ),
+        );
       } finally {
         finishEdit();
         setRetouchBusyState(refs, state.setRetouchBusy, false);
@@ -320,4 +328,21 @@ function useRetouchHistoryReplayAction({
     sourceRef,
     successMessage,
   ]);
+}
+
+function notifyRetouchSettled(
+  operation: import("./inpaintingRetouchTypes").RetouchApplyOperation,
+  afterPath?: string,
+  beforePath?: string,
+): void {
+  operation.onSettled?.(
+    afterPath && afterPath !== beforePath ? afterPath : null,
+  );
+}
+function retouchFailureMessage(
+  operation: import("./inpaintingRetouchTypes").RetouchApplyOperation,
+  error: unknown,
+  fallback: string,
+): string {
+  return operation.sampled && error instanceof Error ? error.message : fallback;
 }

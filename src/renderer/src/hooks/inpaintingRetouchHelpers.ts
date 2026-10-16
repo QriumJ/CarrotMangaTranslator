@@ -77,7 +77,9 @@ export async function applyRetouchRequest(
   return mangaGateway.applyInpaintingRetouch({
     chapterId: currentChapter.id,
     pageId: selectedPage.id,
-    expectedRevision: createPageRevision(page),
+    expectedRevision: operation.expectedRevision ?? createPageRevision(page),
+    sampled: operation.sampled,
+    requestId: operation.requestId,
     mode: operation.mode,
     geometry: operation.geometry,
     color: inpaintingPaintColor,

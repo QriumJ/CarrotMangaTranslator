@@ -1,0 +1,59 @@
+/* The hit area is wider than the visible line; the pane's own border stays
+   the resting divider, and the accent line only marks hover, focus and drag. */
+.handle {
+  position: relative;
+  flex: 0 0 auto;
+  touch-action: none;
+  outline: none;
+}
+
+.vertical {
+  width: 8px;
+  cursor: col-resize;
+}
+
+.horizontal {
+  height: 8px;
+  cursor: row-resize;
+}
+
+.handle::after {
+  content: "";
+  position: absolute;
+  background: transparent;
+  pointer-events: none;
+  transition: background var(--motion-fast) var(--ease-standard);
+}
+
+.vertical::after {
+  inset: 0 auto 0 50%;
+  width: 2px;
+  transform: translateX(-50%);
+}
+
+.horizontal::after {
+  inset: 50% 0 auto;
+  height: 2px;
+  transform: translateY(-50%);
+}
+
+.handle:hover::after {
+  background: var(--accent-bd);
+}
+
+.handle[data-dragging]::after,
+.handle:focus-visible::after {
+  background: var(--focus);
+}
+
+/* Focus is the same 2px focus-colored stroke, drawn as the divider line
+   itself rather than an outline box around the hit area. */
+.handle:focus-visible {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .handle::after {
+    transition: none;
+  }
+}

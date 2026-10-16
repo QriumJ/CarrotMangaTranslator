@@ -51,6 +51,10 @@ function useSessionCommands(
   inpainting: ReturnType<typeof useAppSessionInpaintingController>,
 ) {
   return useAppSessionCommandController({
+    selectSampledTool: (tool) => {
+      chapter.core.setRegionSelection(null);
+      chapter.uiState.selectWorkspaceTool(tool);
+    },
     redactionPreparation: {
       currentPageId: chapter.derivedState.selectedPage?.id ?? null,
       open: chapter.uiState.setRedactionPreparationRequest,

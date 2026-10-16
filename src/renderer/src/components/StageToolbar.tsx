@@ -334,7 +334,9 @@ function StageToolGroupTrigger({
         stroke={2.4}
         aria-hidden="true"
       />
-      {group.showSwatch ? (
+      {group.showSwatch &&
+      selectedTool !== "clone" &&
+      selectedTool !== "heal" ? (
         <i
           aria-hidden="true"
           className="stage-toolbar-swatch"

@@ -6,7 +6,7 @@
 
 [한국어](README.md) · [English](README.en.md) · **日本語** · [简体中文](README.zh-Hans.md) · [繁體中文](README.zh-Hant.md)
 
-**[v3.3.7 ダウンロード](https://github.com/ucx0204/CarrotMangaTranslator/releases/tag/v3.3.7)** · [更新内容](docs/release-notes/v3.3.7.md) · [不具合・要望](https://github.com/ucx0204/CarrotMangaTranslator/issues)
+**[v3.4.0 ダウンロード](https://github.com/ucx0204/CarrotMangaTranslator/releases/tag/v3.4.0)** · [更新内容](docs/release-notes/v3.4.0.md) · [不具合・要望](https://github.com/ucx0204/CarrotMangaTranslator/issues)
 
 [はじめに](#start) · [文字編集](#edit) · [効果音 ImageGen](#sfx) · [ショートカット](#shortcuts) · [困ったとき](#troubleshooting)
 
@@ -15,6 +15,16 @@ Windows 10/11 · Apple Silicon macOS 14+ · [GPL-3.0-only](LICENSE)
 ![原稿とページ・ブロックの編集画面](docs/images/readme-v2712/workspace.png)
 
 セリフは**編集できるテキストブロック**、大きな効果音は**Codex ImageGen**で原稿に合う文字画像にできます。[変更前後と使い方](#sfx)
+
+## 最近追加された編集機能
+
+**コピースタンプ・修復ブラシ:** ブラシメニューから選び、現在の補正結果またはページ原本をコピー元にします。Alt/Option+クリック、またはコピー元指定ボタンで位置を指定してから描画します。整列を有効にするとストローク間でも相対位置を維持します。サイズ・硬さ・不透明度を調整でき、`[`・`]`でサイズ変更、Escでキャンセルできます。修復はコピーのプレビュー後に計算結果へ切り替わり、1ストロークを1回で取り消せます。ページ移動時はコピー位置を再指定します。
+
+左サイドバーの境界と、ライブラリ・ページ一覧の境界をドラッグして幅と高さを調整できます。サイズは保存され、境界のダブルクリックで初期化できます。アプリ内のカラーピッカーは文字・ブラシなどで最大24色のパレットを共有します。
+
+![コピースタンプと設定（韓国語UIの例）](docs/images/readme-current/clone-v340.png)
+
+Codex・Claudeチャット、原文言語の自動選択、工程別の統合実行履歴にも対応しています。[更新した画面付きガイド](README.md)もご覧ください。
 
 <a id="start"></a>
 

@@ -1,3 +1,4 @@
+import { buildInpaintingCommands } from "../lib/appInpaintingCommands";
 import { useMemo } from "react";
 import {
   buildRedactionPreparationCommands,
@@ -15,6 +16,7 @@ import {
 type UseAppCommandsOptions = {
   redactionPreparation?: RedactionPreparationActions;
   startRegionTranslation?: () => void;
+  selectSampledTool?: (tool: "clone" | "heal") => void;
   currentChapter: ChapterSnapshot | null;
   jobActive: boolean;
   /** AI is unavailable, or a running job blocks the current provider. */
@@ -52,6 +54,7 @@ export function useAppCommands(
         componentText,
         redactionPreparation: options.redactionPreparation,
         startRegionTranslation: options.startRegionTranslation,
+        selectSampledTool: options.selectSampledTool,
         cancelJob: options.cancelJob,
         currentChapter: options.currentChapter,
         jobActive: options.jobActive,
@@ -81,6 +84,7 @@ export function useAppCommands(
       componentText,
       options.redactionPreparation,
       options.startRegionTranslation,
+      options.selectSampledTool,
       options.cancelJob,
       options.currentChapter,
       options.jobActive,
@@ -192,25 +196,6 @@ function buildTranslationCommands({
       keywords: t("commands.translateAll.keywords"),
       paletteVisible,
       run: () => void runAnalysis("all"),
-    },
-  };
-}
-
-function buildInpaintingCommands({
-  currentChapter,
-  runCurrentPageInpainting,
-  t,
-}: LocalizedCommandOptions): Pick<
-  AppCommandMap,
-  "run-current-page-inpainting"
-> {
-  return {
-    "run-current-page-inpainting": {
-      id: "run-current-page-inpainting",
-      label: t("commands.autoInpainting.label"),
-      keywords: t("commands.autoInpainting.keywords"),
-      paletteVisible: Boolean(currentChapter),
-      run: runCurrentPageInpainting,
     },
   };
 }

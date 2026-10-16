@@ -138,6 +138,7 @@ function boundJobEventText(
       "Job event text shortened for IPC; full diagnostic",
       {
         id: event.id,
+        executionId: event.executionId,
         progressText: event.progressText,
         detail: event.detail,
         installLogLine: event.installLogLine,
@@ -244,6 +245,7 @@ function dispatchJobEvent(
     `job:${event.kind}:${event.status}`,
     {
       id: event.id,
+      executionId: event.executionId,
       progressText: event.progressText,
       phase: event.phase,
       progressCurrent: event.progressCurrent,

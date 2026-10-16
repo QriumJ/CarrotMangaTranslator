@@ -6,7 +6,7 @@ A desktop app for **OCR → translation → text removal → lettering and revie
 
 [한국어](README.md) · **English** · [日本語](README.ja.md) · [简体中文](README.zh-Hans.md) · [繁體中文](README.zh-Hant.md)
 
-**[Download v3.3.7](https://github.com/ucx0204/CarrotMangaTranslator/releases/tag/v3.3.7)** · [Release notes](docs/release-notes/v3.3.7.md) · [Bugs and requests](https://github.com/ucx0204/CarrotMangaTranslator/issues)
+**[Download v3.4.0](https://github.com/ucx0204/CarrotMangaTranslator/releases/tag/v3.4.0)** · [Release notes](docs/release-notes/v3.4.0.md) · [Bugs and requests](https://github.com/ucx0204/CarrotMangaTranslator/issues)
 
 [Getting started](#start) · [Edit text](#edit) · [SFX ImageGen](#sfx) · [Shortcuts](#shortcuts) · [Troubleshooting](#troubleshooting)
 
@@ -15,6 +15,16 @@ Windows 10/11 · Apple Silicon macOS 14+ · [GPL-3.0-only](LICENSE)
 ![Manuscript, pages, and block editing](docs/images/readme-v2712/workspace.png)
 
 Keep dialogue as **editable text blocks**, and use **Codex ImageGen** to turn large sound effects into lettering that fits the artwork. [Before/after and workflow](#sfx)
+
+## Recent editing tools
+
+**Clone Stamp / Healing Brush:** open the brush menu, choose Current result or Page original, then Alt/Option-click to set the source (or use the source button). Drag to retouch. Aligned keeps the source offset across strokes; turn it off to restart at the anchor. Adjust size, hardness and opacity; use `[` / `]` for size and Esc to cancel. Healing shows a clone preview before its final calculation. One stroke is one undo step. Source coordinates reset on page changes.
+
+Resize the left sidebar and the split between the library and page list by dragging their boundaries. Sizes are remembered; double-click a boundary to reset it. The in-app color picker shares up to 24 saved swatches across text and brush controls.
+
+![Clone Stamp and brush settings (Korean UI example)](docs/images/readme-current/clone-v340.png)
+
+The app also supports Codex and Claude chat, automatic source-language selection, and unified per-stage processing history. See the [updated illustrated guide](README.md) for details.
 
 <a id="start"></a>
 

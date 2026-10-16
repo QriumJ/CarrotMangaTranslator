@@ -6,6 +6,7 @@ import {
   listConditionalBatchFields,
 } from "./conditionalBatchUi";
 
+import { ColorField } from "./ColorField";
 import { CheckboxField } from "./ui/CheckboxField";
 import { Select } from "./ui/Select";
 
@@ -223,15 +224,12 @@ function ConditionNumberValue({
 function ConditionColorValue({ condition, onChange }: ConditionValueProps) {
   return (
     <div className={styles.valuePair}>
-      <Field label="색">
-        <input
-          type="color"
-          value={String(condition.value ?? "#000000")}
-          onChange={(event) =>
-            onChange({ ...condition, value: event.target.value })
-          }
-        />
-      </Field>
+      <ColorField
+        label="색"
+        value={String(condition.value ?? "#000000")}
+        disabled={false}
+        onChange={(value) => onChange({ ...condition, value })}
+      />
       {condition.operator === "near" ? (
         <Field label="허용 오차">
           <Input

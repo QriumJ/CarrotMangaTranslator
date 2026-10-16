@@ -7,7 +7,7 @@
     "sourceArtifact": ".tmp/production-cleanup-coverage-baseline-node22.json",
     "sourceArtifactSha256": "a0e1199f46a80734d228ff1772b99d1fde2f700321346da77abf9c29795e4c0a",
     "introducedArtifact": ".tmp/production-cleanup-coverage-accepted-node26.json",
-    "introducedArtifactSha256": "77bdf6ab36ca10ebc252a472e42793e8a029fe9003daa798779b81f5a6f53fe5",
+    "introducedArtifactSha256": "ded12bf93801d8025d28263f3efc5198799b0bf6d1695e88e3f61e623ae3aef2",
     "validatedNodeV8": ["22/12.4", "24/13.6", "26/14.6"],
     "vitestVersion": "4.1.11",
     "coverageV8Version": "4.1.11"
@@ -744,6 +744,28 @@
         "pct": 60.2
       }
     },
+    "src/main/errorReportLogs.ts": {
+      "lines": {
+        "covered": 20,
+        "total": 24,
+        "pct": 83.33
+      },
+      "statements": {
+        "covered": 20,
+        "total": 24,
+        "pct": 83.33
+      },
+      "functions": {
+        "covered": 5,
+        "total": 6,
+        "pct": 83.33
+      },
+      "branches": {
+        "covered": 8,
+        "total": 14,
+        "pct": 57.14
+      }
+    },
     "src/main/errorReportRedaction.ts": {
       "lines": {
         "covered": 48,
@@ -764,6 +786,28 @@
         "covered": 11,
         "total": 11,
         "pct": 100
+      }
+    },
+    "src/main/errorReportWindow.ts": {
+      "lines": {
+        "covered": 43,
+        "total": 46,
+        "pct": 93.47
+      },
+      "statements": {
+        "covered": 43,
+        "total": 46,
+        "pct": 93.47
+      },
+      "functions": {
+        "covered": 10,
+        "total": 12,
+        "pct": 83.33
+      },
+      "branches": {
+        "covered": 16,
+        "total": 22,
+        "pct": 72.72
       }
     },
     "src/main/fatalMainProcessIncident.ts": {
@@ -9214,6 +9258,28 @@
         "pct": 100
       }
     },
+    "src/renderer/src/App.tsx": {
+      "lines": {
+        "covered": 0,
+        "total": 1,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 1,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
     "src/renderer/src/AppSession.tsx": {
       "lines": {
         "covered": 0,
@@ -9281,6 +9347,28 @@
       }
     },
     "src/renderer/src/api/exportGateway.ts": {
+      "lines": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/api/inpaintingGateway.ts": {
       "lines": {
         "covered": 1,
         "total": 1,
@@ -14296,6 +14384,28 @@
         "pct": 89.65
       }
     },
+    "src/renderer/src/components/useErrorReportDialog.ts": {
+      "lines": {
+        "covered": 77,
+        "total": 79,
+        "pct": 97.46
+      },
+      "statements": {
+        "covered": 79,
+        "total": 81,
+        "pct": 97.53
+      },
+      "functions": {
+        "covered": 26,
+        "total": 26,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 24,
+        "total": 29,
+        "pct": 82.75
+      }
+    },
     "src/renderer/src/components/useOverlayBlockLayout.ts": {
       "lines": {
         "covered": 24,
@@ -15814,6 +15924,28 @@
         "pct": 89.36
       }
     },
+    "src/renderer/src/hooks/useWorkspaceInpaintingPointerFinish.ts": {
+      "lines": {
+        "covered": 31,
+        "total": 46,
+        "pct": 67.39
+      },
+      "statements": {
+        "covered": 34,
+        "total": 51,
+        "pct": 66.66
+      },
+      "functions": {
+        "covered": 6,
+        "total": 7,
+        "pct": 85.71
+      },
+      "branches": {
+        "covered": 25,
+        "total": 43,
+        "pct": 58.13
+      }
+    },
     "src/renderer/src/hooks/useWorkspaceInpaintingPointerHandlers.ts": {
       "lines": {
         "total": 73,
@@ -16032,6 +16164,28 @@
         "covered": 20,
         "total": 23,
         "pct": 86.95
+      }
+    },
+    "src/renderer/src/hooks/workspaceInpaintingPointerTypes.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
       }
     },
     "src/renderer/src/hooks/workspaceRetouchShapeGesture.ts": {
@@ -16364,6 +16518,28 @@
         "pct": 84.78
       }
     },
+    "src/renderer/src/lib/cssColor.ts": {
+      "lines": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
     "src/renderer/src/lib/curveGlyphLayout.ts": {
       "lines": {
         "covered": 62,
@@ -16423,6 +16599,28 @@
         "covered": 1,
         "total": 1,
         "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/lib/errorReportGateway.ts": {
+      "lines": {
+        "covered": 6,
+        "total": 8,
+        "pct": 75
+      },
+      "statements": {
+        "covered": 6,
+        "total": 8,
+        "pct": 75
+      },
+      "functions": {
+        "covered": 5,
+        "total": 7,
+        "pct": 71.42
       },
       "branches": {
         "covered": 0,
@@ -17440,6 +17638,50 @@
         "covered": 39,
         "total": 53,
         "pct": 73.58
+      }
+    },
+    "src/shared/errorReportSchemas.ts": {
+      "lines": {
+        "covered": 18,
+        "total": 18,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 18,
+        "total": 18,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 6,
+        "total": 6,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/shared/errorReportTypes.ts": {
+      "lines": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
       }
     },
     "src/shared/fontMatchingProfileSchemas.ts": {
@@ -23164,6 +23406,28 @@
         "pct": 80
       }
     },
+    "src/main/errorReportEnvironment.ts": {
+      "lines": {
+        "covered": 38,
+        "total": 47,
+        "pct": 80.85
+      },
+      "statements": {
+        "covered": 38,
+        "total": 47,
+        "pct": 80.85
+      },
+      "functions": {
+        "covered": 14,
+        "total": 16,
+        "pct": 87.5
+      },
+      "branches": {
+        "covered": 47,
+        "total": 73,
+        "pct": 64.38
+      }
+    },
     "src/main/fontPostScriptName.ts": {
       "lines": {
         "covered": 26,
@@ -24088,6 +24352,160 @@
         "pct": 70
       }
     },
+    "src/main/inpainting/retouchPoisson.ts": {
+      "lines": {
+        "covered": 146,
+        "total": 152,
+        "pct": 96.05
+      },
+      "statements": {
+        "covered": 178,
+        "total": 186,
+        "pct": 95.69
+      },
+      "functions": {
+        "covered": 18,
+        "total": 19,
+        "pct": 94.73
+      },
+      "branches": {
+        "covered": 79,
+        "total": 85,
+        "pct": 92.94
+      }
+    },
+    "src/main/inpainting/sampledRetouchClient.ts": {
+      "lines": {
+        "covered": 4,
+        "total": 77,
+        "pct": 5.19
+      },
+      "statements": {
+        "covered": 4,
+        "total": 85,
+        "pct": 4.7
+      },
+      "functions": {
+        "covered": 0,
+        "total": 14,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 39,
+        "pct": 0
+      }
+    },
+    "src/main/inpainting/sampledRetouchDecode.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 28,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 31,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 7,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 16,
+        "pct": 0
+      }
+    },
+    "src/main/inpainting/sampledRetouchDecodeEntry.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 20,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 21,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 3,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 12,
+        "pct": 0
+      }
+    },
+    "src/main/inpainting/sampledRetouchRaster.ts": {
+      "lines": {
+        "covered": 47,
+        "total": 48,
+        "pct": 97.91
+      },
+      "statements": {
+        "covered": 52,
+        "total": 55,
+        "pct": 94.54
+      },
+      "functions": {
+        "covered": 8,
+        "total": 8,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 40,
+        "total": 45,
+        "pct": 88.88
+      }
+    },
+    "src/main/inpainting/sampledRetouchWorker.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 58,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 65,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 9,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 45,
+        "pct": 0
+      }
+    },
+    "src/main/inpainting/sampledRetouchWorkerProtocol.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
     "src/main/inpainting/sourceGlyphComponentResidual.ts": {
       "lines": {
         "total": 36,
@@ -24746,6 +25164,28 @@
         "total": 18,
         "covered": 8,
         "pct": 44.44
+      }
+    },
+    "src/main/jobs/jobDiagnostics.ts": {
+      "lines": {
+        "covered": 28,
+        "total": 30,
+        "pct": 93.33
+      },
+      "statements": {
+        "covered": 30,
+        "total": 35,
+        "pct": 85.71
+      },
+      "functions": {
+        "covered": 9,
+        "total": 9,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 34,
+        "total": 42,
+        "pct": 80.95
       }
     },
     "src/main/jobs/jobPageOwnership.ts": {
@@ -39840,6 +40280,28 @@
         "pct": 0
       }
     },
+    "src/renderer/src/components/SidebarWidthResizer.tsx": {
+      "lines": {
+        "total": 16,
+        "covered": 16,
+        "pct": 100
+      },
+      "statements": {
+        "total": 18,
+        "covered": 16,
+        "pct": 88.88
+      },
+      "functions": {
+        "total": 3,
+        "covered": 3,
+        "pct": 100
+      },
+      "branches": {
+        "total": 10,
+        "covered": 8,
+        "pct": 80
+      }
+    },
     "src/renderer/src/components/SoundEffectCandidateOverlay.tsx": {
       "lines": {
         "total": 9,
@@ -41776,6 +42238,28 @@
         "pct": 67.39
       }
     },
+    "src/renderer/src/components/inpaintingPanel/SampledRetouchSettings.tsx": {
+      "lines": {
+        "covered": 0,
+        "total": 15,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 16,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 6,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 12,
+        "pct": 0
+      }
+    },
     "src/renderer/src/components/pageEditor/PageEditorControls.tsx": {
       "lines": {
         "total": 7,
@@ -43426,6 +43910,72 @@
         "pct": 87.5
       }
     },
+    "src/renderer/src/components/ui/ColorPaletteSwatches.tsx": {
+      "lines": {
+        "total": 13,
+        "covered": 13,
+        "pct": 100
+      },
+      "statements": {
+        "total": 15,
+        "covered": 14,
+        "pct": 93.33
+      },
+      "functions": {
+        "total": 6,
+        "covered": 6,
+        "pct": 100
+      },
+      "branches": {
+        "total": 11,
+        "covered": 8,
+        "pct": 72.72
+      }
+    },
+    "src/renderer/src/components/ui/ColorPicker.tsx": {
+      "lines": {
+        "total": 41,
+        "covered": 41,
+        "pct": 100
+      },
+      "statements": {
+        "total": 43,
+        "covered": 43,
+        "pct": 100
+      },
+      "functions": {
+        "total": 9,
+        "covered": 9,
+        "pct": 100
+      },
+      "branches": {
+        "total": 24,
+        "covered": 20,
+        "pct": 83.33
+      }
+    },
+    "src/renderer/src/components/ui/ColorPickerPanel.tsx": {
+      "lines": {
+        "total": 59,
+        "covered": 49,
+        "pct": 83.05
+      },
+      "statements": {
+        "total": 69,
+        "covered": 53,
+        "pct": 76.81
+      },
+      "functions": {
+        "total": 21,
+        "covered": 18,
+        "pct": 85.71
+      },
+      "branches": {
+        "total": 24,
+        "covered": 9,
+        "pct": 37.5
+      }
+    },
     "src/renderer/src/components/ui/FavoriteToggleButton.tsx": {
       "lines": {
         "total": 1,
@@ -43470,6 +44020,28 @@
         "pct": 87.5
       }
     },
+    "src/renderer/src/components/ui/HexColorInput.tsx": {
+      "lines": {
+        "total": 18,
+        "covered": 15,
+        "pct": 83.33
+      },
+      "statements": {
+        "total": 22,
+        "covered": 18,
+        "pct": 81.81
+      },
+      "functions": {
+        "total": 6,
+        "covered": 5,
+        "pct": 83.33
+      },
+      "branches": {
+        "total": 26,
+        "covered": 22,
+        "pct": 84.61
+      }
+    },
     "src/renderer/src/components/ui/RadioMenu.tsx": {
       "lines": {
         "total": 5,
@@ -43512,6 +44084,28 @@
         "total": 11,
         "covered": 11,
         "pct": 100
+      }
+    },
+    "src/renderer/src/components/ui/ResizeHandle.tsx": {
+      "lines": {
+        "total": 31,
+        "covered": 31,
+        "pct": 100
+      },
+      "statements": {
+        "total": 35,
+        "covered": 35,
+        "pct": 100
+      },
+      "functions": {
+        "total": 6,
+        "covered": 6,
+        "pct": 100
+      },
+      "branches": {
+        "total": 30,
+        "covered": 29,
+        "pct": 96.66
       }
     },
     "src/renderer/src/components/ui/Section.tsx": {
@@ -43622,6 +44216,28 @@
         "total": 4,
         "covered": 3,
         "pct": 75
+      }
+    },
+    "src/renderer/src/components/ui/usePacedColorDraft.ts": {
+      "lines": {
+        "total": 65,
+        "covered": 65,
+        "pct": 100
+      },
+      "statements": {
+        "total": 76,
+        "covered": 74,
+        "pct": 97.36
+      },
+      "functions": {
+        "total": 22,
+        "covered": 22,
+        "pct": 100
+      },
+      "branches": {
+        "total": 21,
+        "covered": 17,
+        "pct": 80.95
       }
     },
     "src/renderer/src/components/ui/useRovingFocus.ts": {
@@ -44240,6 +44856,50 @@
         "pct": 90.47
       }
     },
+    "src/renderer/src/components/useSidebarPanelLayout.ts": {
+      "lines": {
+        "total": 32,
+        "covered": 30,
+        "pct": 93.75
+      },
+      "statements": {
+        "total": 36,
+        "covered": 32,
+        "pct": 88.88
+      },
+      "functions": {
+        "total": 11,
+        "covered": 9,
+        "pct": 81.81
+      },
+      "branches": {
+        "total": 16,
+        "covered": 13,
+        "pct": 81.25
+      }
+    },
+    "src/renderer/src/components/useSidebarWidth.ts": {
+      "lines": {
+        "total": 30,
+        "covered": 30,
+        "pct": 100
+      },
+      "statements": {
+        "total": 35,
+        "covered": 32,
+        "pct": 91.42
+      },
+      "functions": {
+        "total": 8,
+        "covered": 8,
+        "pct": 100
+      },
+      "branches": {
+        "total": 14,
+        "covered": 10,
+        "pct": 71.42
+      }
+    },
     "src/renderer/src/components/useSoundEffectPageEditor.ts": {
       "lines": {
         "total": 42,
@@ -44634,6 +45294,28 @@
         "total": 43,
         "covered": 42,
         "pct": 97.67
+      }
+    },
+    "src/renderer/src/hooks/sampledRetouchGesture.ts": {
+      "lines": {
+        "covered": 45,
+        "total": 47,
+        "pct": 95.74
+      },
+      "statements": {
+        "covered": 46,
+        "total": 48,
+        "pct": 95.83
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 30,
+        "total": 37,
+        "pct": 81.08
       }
     },
     "src/renderer/src/hooks/translationChapterFlow.ts": {
@@ -45230,6 +45912,50 @@
         "pct": 0
       }
     },
+    "src/renderer/src/hooks/useSampledGestureLifecycle.ts": {
+      "lines": {
+        "covered": 28,
+        "total": 41,
+        "pct": 68.29
+      },
+      "statements": {
+        "covered": 32,
+        "total": 45,
+        "pct": 71.11
+      },
+      "functions": {
+        "covered": 9,
+        "total": 9,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 10,
+        "total": 17,
+        "pct": 58.82
+      }
+    },
+    "src/renderer/src/hooks/useSampledRetouchCursor.ts": {
+      "lines": {
+        "covered": 5,
+        "total": 14,
+        "pct": 35.71
+      },
+      "statements": {
+        "covered": 5,
+        "total": 14,
+        "pct": 35.71
+      },
+      "functions": {
+        "covered": 2,
+        "total": 3,
+        "pct": 66.66
+      },
+      "branches": {
+        "covered": 2,
+        "total": 22,
+        "pct": 9.09
+      }
+    },
     "src/renderer/src/hooks/useSoundEffectTextReview.ts": {
       "lines": {
         "covered": 32,
@@ -45450,6 +46176,72 @@
         "pct": 76.92
       }
     },
+    "src/renderer/src/inpainting/SampledRetouchProvider.tsx": {
+      "lines": {
+        "covered": 0,
+        "total": 2,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 2,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/inpainting/sampledRetouchModel.ts": {
+      "lines": {
+        "covered": 17,
+        "total": 17,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 17,
+        "total": 17,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/lib/appInpaintingCommands.ts": {
+      "lines": {
+        "covered": 1,
+        "total": 3,
+        "pct": 33.33
+      },
+      "statements": {
+        "covered": 1,
+        "total": 3,
+        "pct": 33.33
+      },
+      "functions": {
+        "covered": 1,
+        "total": 3,
+        "pct": 33.33
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
     "src/renderer/src/lib/appOperationPresentation.ts": {
       "lines": {
         "total": 10,
@@ -45514,6 +46306,28 @@
         "covered": 28,
         "total": 37,
         "pct": 75.67
+      }
+    },
+    "src/renderer/src/lib/colorPaletteStore.ts": {
+      "lines": {
+        "total": 19,
+        "covered": 19,
+        "pct": 100
+      },
+      "statements": {
+        "total": 23,
+        "covered": 22,
+        "pct": 95.65
+      },
+      "functions": {
+        "total": 10,
+        "covered": 10,
+        "pct": 100
+      },
+      "branches": {
+        "total": 7,
+        "covered": 6,
+        "pct": 85.71
       }
     },
     "src/renderer/src/lib/conditionalBatchTypography.ts": {
@@ -46130,6 +46944,50 @@
         "total": 8,
         "covered": 7,
         "pct": 87.5
+      }
+    },
+    "src/renderer/src/lib/sampledRetouchCursor.ts": {
+      "lines": {
+        "covered": 9,
+        "total": 44,
+        "pct": 20.45
+      },
+      "statements": {
+        "covered": 9,
+        "total": 52,
+        "pct": 17.3
+      },
+      "functions": {
+        "covered": 1,
+        "total": 4,
+        "pct": 25
+      },
+      "branches": {
+        "covered": 4,
+        "total": 24,
+        "pct": 16.66
+      }
+    },
+    "src/renderer/src/lib/sampledRetouchPreview.ts": {
+      "lines": {
+        "covered": 2,
+        "total": 48,
+        "pct": 4.16
+      },
+      "statements": {
+        "covered": 2,
+        "total": 57,
+        "pct": 3.5
+      },
+      "functions": {
+        "covered": 1,
+        "total": 5,
+        "pct": 20
+      },
+      "branches": {
+        "covered": 0,
+        "total": 31,
+        "pct": 0
       }
     },
     "src/renderer/src/lib/shortcuts/shortcutBindingsContext.ts": {
@@ -47298,6 +48156,28 @@
         "pct": 100
       }
     },
+    "src/shared/errorReportContext.ts": {
+      "lines": {
+        "covered": 8,
+        "total": 8,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 8,
+        "total": 8,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      }
+    },
     "src/shared/exportPreferences.ts": {
       "lines": {
         "total": 5,
@@ -48154,6 +49034,28 @@
         "covered": 3,
         "total": 4,
         "pct": 75
+      }
+    },
+    "src/shared/ipcRetouchContracts.ts": {
+      "lines": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
       }
     },
     "src/shared/ipcSchemaValidation.ts": {
@@ -50464,6 +51366,28 @@
         "covered": 63,
         "total": 64,
         "pct": 98.43
+      }
+    },
+    "src/shared/sampledRetouch.ts": {
+      "lines": {
+        "covered": 69,
+        "total": 72,
+        "pct": 95.83
+      },
+      "statements": {
+        "covered": 77,
+        "total": 80,
+        "pct": 96.25
+      },
+      "functions": {
+        "covered": 10,
+        "total": 11,
+        "pct": 90.9
+      },
+      "branches": {
+        "covered": 23,
+        "total": 24,
+        "pct": 95.83
       }
     },
     "src/shared/settingsAliasCanonicalizers.ts": {

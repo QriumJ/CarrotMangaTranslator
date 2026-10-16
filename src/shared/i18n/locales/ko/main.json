@@ -255,7 +255,7 @@
     },
     "errors": {
       "bboxMissing": "{{page}}: bbox 결과를 만들지 못했습니다.",
-      "responseParse": "{{page}}: 모델 응답을 구조화 형식으로 해석하지 못했습니다. preview={{preview}} cause={{cause}}"
+      "responseParse": "{{page}}: 모델 응답을 구조화 형식으로 해석하지 못했습니다. shape={{shape}} cause={{cause}}"
     }
   },
   "region": {

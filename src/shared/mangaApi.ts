@@ -517,6 +517,7 @@ export interface MangaApi extends McpApi, ChatApi, ClaudeApi {
   applyInpaintingRetouch: (
     request: InpaintingRetouchRequest,
   ) => Promise<InpaintingRetouchResult>;
+  cancelInpaintingRetouch: (requestId: string | null) => Promise<void>;
   setPageInpaintingResult: (
     request: SetPageInpaintingResultRequest,
   ) => Promise<SetPageInpaintingResultResult>;

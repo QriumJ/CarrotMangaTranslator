@@ -1,8 +1,14 @@
 import React from "react";
+import {
+  SampledRetouchSliders,
+  SampledRetouchSourceControls,
+} from "./SampledRetouchSettings";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import type { RetouchTool } from "../../lib/stageTool";
+import { ColorField } from "../ColorField";
 import { Button } from "../ui/Button";
+import { ColorPaletteSwatches } from "../ui/ColorPaletteSwatches";
 import { RangeInput } from "../ui/Field";
 import { useWorkspacePreference } from "../../hooks/useWorkspacePreference";
 import {
@@ -78,23 +84,34 @@ function RetouchToolSettings({
   tool,
 }: RetouchInpaintingStepProps): React.JSX.Element {
   const { t } = useTranslation("components");
+  const sampledTool = tool === "clone" || tool === "heal" ? tool : null;
+  const sizeControl =
+    tool === "brush" || tool === "eraser" || tool === "mask" || sampledTool ? (
+      <label className="brush-size-control">
+        <span className="brush-size-label">{t("format.size")}</span>
+        <RangeInput
+          min={RETOUCH_BRUSH_RADIUS_RANGE.min}
+          max={RETOUCH_BRUSH_RADIUS_RANGE.max}
+          value={brushRadius}
+          disabled={false}
+          onChange={(event) => onBrushRadiusChange(Number(event.target.value))}
+        />
+        <strong>{brushRadius}px</strong>
+      </label>
+    ) : null;
   return (
     <div className="retouch-tool-settings">
-      {tool === "brush" || tool === "eraser" || tool === "mask" ? (
-        <label className="brush-size-control">
-          <span className="brush-size-label">{t("format.size")}</span>
-          <RangeInput
-            min={RETOUCH_BRUSH_RADIUS_RANGE.min}
-            max={RETOUCH_BRUSH_RADIUS_RANGE.max}
-            value={brushRadius}
-            disabled={false}
-            onChange={(event) =>
-              onBrushRadiusChange(Number(event.target.value))
-            }
-          />
-          <strong>{brushRadius}px</strong>
-        </label>
-      ) : null}
+      {sampledTool ? (
+        <>
+          <div className="retouch-slider-stack">
+            {sizeControl}
+            <SampledRetouchSliders tool={sampledTool} />
+          </div>
+          <SampledRetouchSourceControls />
+        </>
+      ) : (
+        sizeControl
+      )}
       {colorTool ? (
         <RetouchColorControl
           activeToolLabel={activeToolLabel}
@@ -122,22 +139,21 @@ function RetouchColorControl({
   const accessibleLabel = `${activeToolLabel} ${t("format.color")}`;
 
   return (
-    <label className="retouch-color-control">
+    <div className="retouch-color-control">
       <span className="retouch-color-label">{t("format.color")}</span>
-      <span className="retouch-color-picker">
-        <input
-          className="retouch-color-input"
-          type="color"
-          aria-label={accessibleLabel}
-          value={brushColor}
-          disabled={disabled}
-          onChange={(event) => onBrushColorChange(event.target.value)}
-        />
-        <span className="retouch-color-details">
-          <code>{brushColor.toUpperCase()}</code>
-        </span>
-      </span>
-    </label>
+      <ColorField
+        label={accessibleLabel}
+        labelHidden
+        value={brushColor}
+        disabled={disabled}
+        onChange={onBrushColorChange}
+      />
+      <ColorPaletteSwatches
+        value={brushColor}
+        disabled={disabled}
+        onSelect={onBrushColorChange}
+      />
+    </div>
   );
 }
 

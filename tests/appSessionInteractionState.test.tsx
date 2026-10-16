@@ -109,6 +109,17 @@ describe("unified workspace interaction state", () => {
     expect(result.current.inpaintingTool).toBe("brush");
   });
 
+  it.each(["clone", "heal"] as const)(
+    "activates the canvas pointer handlers for the %s tool",
+    (tool) => {
+      const { result } = renderHook(() => useAppSessionUiState());
+
+      act(() => result.current.selectWorkspaceTool(tool));
+      expect(result.current.inpaintingTool).toBe(tool);
+      expect(result.current.lastRetouchTool).toBe(tool);
+    },
+  );
+
   it("keeps the active and remembered retouch tool for the app session", () => {
     const first = renderHook(() => useAppSessionUiState());
 

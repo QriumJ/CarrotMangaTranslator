@@ -16,6 +16,21 @@ import type { ShortcutActionDef, ShortcutContext } from "./shortcutActionTypes";
 const canTranslate = (context: ShortcutContext): boolean =>
   context.chapterOpen && !(context.translationBlocked ?? context.jobActive);
 
+/** Retouch tool pickers share one shape: id, label, default key. */
+const RETOUCH_TOOL_ACTIONS: ReadonlyArray<
+  readonly [ShortcutActionId, string, string]
+> = [
+  ["retouch-tool-mask", "마스크 브러시", "j"],
+  ["retouch-tool-clone", "복제 도장", ""],
+  ["retouch-tool-heal", "치유 브러시", ""],
+  ["retouch-tool-brush", "페인트 브러시", "b"],
+  ["retouch-tool-rectangle", "사각형 보정", "r"],
+  ["retouch-tool-ellipse", "타원 보정", "e"],
+  ["retouch-tool-eraser", "보정 지우개", "x"],
+  ["retouch-tool-eraser-rectangle", "사각 지우개", ""],
+  ["retouch-tool-picker", "색상 추출", "p"],
+];
+
 export const SHORTCUT_ACTIONS: ShortcutActionDef[] = [
   {
     id: "toggle-block-chrome",
@@ -191,54 +206,20 @@ export const SHORTCUT_ACTIONS: ShortcutActionDef[] = [
     defaultCombo: "i",
     enabled: (c) => c.chapterOpen,
   },
+  ...createRetouchToolActions(),
   {
-    id: "retouch-tool-mask",
-    label: "마스크 브러시",
+    id: "retouch-brush-smaller",
+    label: "브러시 작게",
     category: "inpaint",
-    defaultCombo: "j",
-    enabled: (c) => c.chapterOpen,
+    defaultCombo: "[",
+    enabled: (c) => c.chapterOpen && c.retouchToolActive,
   },
   {
-    id: "retouch-tool-brush",
-    label: "페인트 브러시",
+    id: "retouch-brush-larger",
+    label: "브러시 크게",
     category: "inpaint",
-    defaultCombo: "b",
-    enabled: (c) => c.chapterOpen,
-  },
-  {
-    id: "retouch-tool-rectangle",
-    label: "사각형 보정",
-    category: "inpaint",
-    defaultCombo: "r",
-    enabled: (c) => c.chapterOpen,
-  },
-  {
-    id: "retouch-tool-ellipse",
-    label: "타원 보정",
-    category: "inpaint",
-    defaultCombo: "e",
-    enabled: (c) => c.chapterOpen,
-  },
-  {
-    id: "retouch-tool-eraser",
-    label: "보정 지우개",
-    category: "inpaint",
-    defaultCombo: "x",
-    enabled: (c) => c.chapterOpen,
-  },
-  {
-    id: "retouch-tool-eraser-rectangle",
-    label: "사각 지우개",
-    category: "inpaint",
-    defaultCombo: "",
-    enabled: (c) => c.chapterOpen,
-  },
-  {
-    id: "retouch-tool-picker",
-    label: "색상 추출",
-    category: "inpaint",
-    defaultCombo: "p",
-    enabled: (c) => c.chapterOpen,
+    defaultCombo: "]",
+    enabled: (c) => c.chapterOpen && c.retouchToolActive,
   },
   {
     id: "retouch-apply-mask",
@@ -384,6 +365,16 @@ export const SHORTCUT_ACTIONS: ShortcutActionDef[] = [
     allowInEditable: true,
   },
 ];
+
+function createRetouchToolActions(): ShortcutActionDef[] {
+  return RETOUCH_TOOL_ACTIONS.map(([id, label, defaultCombo]) => ({
+    id,
+    label,
+    category: "inpaint" as const,
+    defaultCombo,
+    enabled: (context: ShortcutContext) => context.chapterOpen,
+  }));
+}
 
 function createStyleSlotActions(): ShortcutActionDef[] {
   return Array.from({ length: 10 }, (_, index) => {

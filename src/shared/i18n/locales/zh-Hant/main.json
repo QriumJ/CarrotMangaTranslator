@@ -255,7 +255,7 @@
     },
     "errors": {
       "bboxMissing": "{{page}}：無法產生邊界框結果。",
-      "responseParse": "{{page}}：無法將模型回應解析為結構化格式。preview={{preview}} cause={{cause}}"
+      "responseParse": "{{page}}：無法將模型回應解析為結構化格式。shape={{shape}} cause={{cause}}"
     }
   },
   "region": {

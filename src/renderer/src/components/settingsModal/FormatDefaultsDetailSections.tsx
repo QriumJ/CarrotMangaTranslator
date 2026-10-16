@@ -30,6 +30,7 @@ import {
 } from "../blockFormat/BlockFormatPrimitives";
 import { TextWrappingSelect } from "../TextWrappingSelect";
 import { CheckboxField } from "../ui/CheckboxField";
+import { ColorPickerTrigger } from "../ui/ColorPicker";
 import {
   PresetGroupControl,
   type PresetGroupAvailability,
@@ -133,26 +134,27 @@ function DefaultColorControl({
   onChange: (value: string) => void;
 }): React.JSX.Element {
   return (
-    <label
+    <div
       className="gather-direct-color-control"
       aria-disabled={disabled || undefined}
     >
       <DirectControlCaption label={label} mixed={false} touched={false} />
-      <span className="gather-direct-color-button">
-        <span
-          className="gather-direct-color-swatch"
-          style={{ background: value }}
-        />
-        <span>{value.toUpperCase()}</span>
-      </span>
-      <input
-        type="color"
-        aria-label={label}
+      <ColorPickerTrigger
+        className="gather-direct-color-trigger"
+        label={label}
         value={value}
         disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </label>
+        onChange={onChange}
+      >
+        <span className="gather-direct-color-button">
+          <span
+            className="gather-direct-color-swatch"
+            style={{ background: value }}
+          />
+          <span>{value.toUpperCase()}</span>
+        </span>
+      </ColorPickerTrigger>
+    </div>
   );
 }
 

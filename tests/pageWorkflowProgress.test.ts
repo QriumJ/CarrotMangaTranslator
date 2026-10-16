@@ -1,9 +1,45 @@
 import { describe, expect, it } from "vitest";
-import { createPageWorkflowProgress } from "../src/main/jobs/pageWorkflowProgress";
+import {
+  createPageWorkflowProgress,
+  emitWorkflowCompletion,
+} from "../src/main/jobs/pageWorkflowProgress";
 import type { JobEvent } from "../src/shared/jobTypes";
 import { makePage } from "./helpers/workspacePointerFixtures";
 
 describe("page workflow progress ownership", () => {
+  it.each(["cancelled", "failed", "partial", "completed"] as const)(
+    "emits truthful %s progress",
+    (status) => {
+      const events: JobEvent[] = [];
+      const last: JobEvent = {
+        id: "run",
+        kind: "gemma-analysis",
+        status: "running",
+        phase: "model_requesting",
+        progressText: "requesting",
+        progressCurrent: 12,
+        progressTotal: 1062,
+        pageIndex: 4,
+        pageTotal: 100,
+      };
+      emitWorkflowCompletion(
+        (event) => events.push(event),
+        "run",
+        { runId: "run", status, issues: [], chapters: [] },
+        1062,
+        last,
+      );
+      expect(events[0]).toMatchObject({
+        status,
+        phase: status === "completed" ? "done" : status,
+        progressCurrent: status === "completed" ? 1062 : 12,
+        progressTotal: 1062,
+        pageIndex: 4,
+      });
+      if (status !== "completed")
+        expect(events[0].progressText).not.toContain("완료");
+    },
+  );
   it("retains aggregate progress through nested requests, retries and finalization", () => {
     const events: JobEvent[] = [];
     const progress = createPageWorkflowProgress("outer", 68, (e) =>

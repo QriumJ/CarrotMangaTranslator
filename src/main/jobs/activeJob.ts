@@ -12,6 +12,7 @@ import { withLibraryActivityOwner } from "../library/lock";
 import type { AppSettings } from "../../shared/settingsTypes";
 import { withExecutionSettings } from "../settings/executionSettings";
 import { PageEditHandoffs } from "./pageEditHandoffs";
+import { JobDiagnostics } from "./jobDiagnostics";
 import { withLocalInferenceOwner } from "../runtimeSupport/localInferenceSection";
 
 export type JobCleanupDiagnostics = {
@@ -37,6 +38,7 @@ export type ActiveJob = {
 
 export class ActiveJobStore {
   readonly pageHandoffs = new PageEditHandoffs();
+  readonly reportDiagnostics = new JobDiagnostics();
   private readonly entries = new Map<
     string,
     { job: ActiveJob; lease: AppActivityLease; ownerId: string }
@@ -71,6 +73,15 @@ export class ActiveJobStore {
   }
 
   run<T>(id: string, run: () => T, settings?: AppSettings): T {
+    if (settings) {
+      this.reportDiagnostics.settings(id, settings);
+      this.diagnostics.info(
+        "Job execution settings",
+        this.reportDiagnostics
+          .snapshot()
+          .find((entry) => entry.id === id && entry.active),
+      );
+    }
     const ownerId = this.activityOwnerFor(id);
     return withLibraryActivityOwner(ownerId, () =>
       withLocalInferenceOwner(ownerId, () =>
@@ -150,6 +161,7 @@ export class ActiveJobStore {
     }
 
     this.entries.set(job.id, { job, lease, ownerId });
+    this.reportDiagnostics.start(job.id, job.kind, job.abortController.signal);
   }
 
   private activeGroupOwner(): string | undefined {
@@ -171,12 +183,14 @@ export class ActiveJobStore {
   updateLastEvent(jobId: string, event: JobEvent): void {
     const entry = this.entries.get(jobId);
     if (entry) entry.job.lastEvent = event;
+    this.reportDiagnostics.update(event);
   }
 
   clearIfCurrent(jobId: string): void {
     const entry = this.entries.get(jobId);
     if (!entry) return;
     this.entries.delete(jobId);
+    this.reportDiagnostics.finish(jobId);
     this.pageHandoffs.removeJob(jobId);
     entry.lease.release();
   }

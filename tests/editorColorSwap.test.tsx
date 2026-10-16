@@ -7,14 +7,24 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TranslationBlock } from "../src/shared/textTypes";
 import { EditorColorGroup } from "../src/renderer/src/components/EditorColorGroup";
 import { EditorTextEffectGroup } from "../src/renderer/src/components/EditorTextEffectControls";
 import { ColorField } from "../src/renderer/src/components/ColorField";
+import {
+  hexToRgb,
+  hsvToRgb,
+  rgbToHex,
+  rgbToHsv,
+} from "../src/renderer/src/lib/cssColor";
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 describe("color field updates", () => {
   it("does not republish the controlled value and restores invalid drafts", () => {
@@ -65,45 +75,86 @@ describe("color field updates", () => {
     expect(onChange).toHaveBeenCalledWith("#abcdef");
   });
 
-  it("stays finite during sustained native color picker input", () => {
-    const onChange = vi.fn();
-    function ControlledColor(): React.JSX.Element {
-      const [value, setValue] = React.useState("#112233");
-      return (
-        <ColorField
-          label="연속 색상"
-          value={value}
-          disabled={false}
-          onChange={(next) => {
-            onChange(next);
-            setValue(next);
-          }}
-        />
-      );
-    }
-    render(<ControlledColor />);
+  it("tracks a drag at pointer speed while pacing owner renders", () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const onChange = renderPacedColor();
+    const area = openPickerArea();
+    const dialog = screen.getByRole("dialog", { name: "연속 색상" });
 
-    const picker = screen.getByLabelText("연속 색상") as HTMLInputElement;
-    const setNativeValue = Object.getOwnPropertyDescriptor(
-      HTMLInputElement.prototype,
-      "value",
-    )?.set;
-    expect(setNativeValue).toBeTypeOf("function");
+    act(() => {
+      fireEvent.pointerDown(area, { button: 0, clientX: 0, clientY: 10 });
+      for (let index = 1; index <= 80; index += 1) {
+        fireEvent.pointerMove(area, { clientX: index, clientY: 10 });
+      }
+      fireEvent.pointerUp(area);
+    });
+    const finalColor = colorAt(0.8, 0.9);
+    // The picker already shows the newest sample; the owner has rendered none.
+    expect(onChange).not.toHaveBeenCalled();
+    expect(within(dialog).getByRole<HTMLInputElement>("textbox").value).toBe(
+      finalColor.toUpperCase(),
+    );
 
-    expect(() => {
-      act(() => {
-        for (let index = 0; index < 80; index += 1) {
-          setNativeValue?.call(
-            picker,
-            `#${(index + 1).toString(16).padStart(6, "0")}`,
-          );
-          picker.dispatchEvent(new Event("input", { bubbles: true }));
-        }
-      });
-    }).not.toThrow();
-    expect(onChange).toHaveBeenCalledTimes(80);
+    act(() => vi.advanceTimersByTime(0));
+    // 81 samples cost the owner a single render, with the newest color.
+    expect(onChange.mock.calls).toEqual([[finalColor]]);
+    act(() => vi.advanceTimersByTime(1000));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it("applies the last dragged color when the picker closes mid-drag", () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    const onChange = renderPacedColor();
+    const area = openPickerArea();
+    act(() => {
+      fireEvent.pointerDown(area, { button: 0, clientX: 0, clientY: 10 });
+      fireEvent.pointerMove(area, { clientX: 50, clientY: 10 });
+      fireEvent.keyDown(window, { key: "Escape" });
+    });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(onChange).toHaveBeenLastCalledWith(colorAt(0.5, 0.9));
+    expect(
+      screen.getByRole<HTMLInputElement>("textbox", { name: "연속 색상 HEX" })
+        .value,
+    ).toBe(colorAt(0.5, 0.9).toUpperCase());
+    vi.useRealTimers();
   });
 });
+
+function renderPacedColor(): ReturnType<typeof vi.fn> {
+  const onChange = vi.fn();
+  function ControlledColor(): React.JSX.Element {
+    const [value, setValue] = React.useState("#112233");
+    return (
+      <ColorField
+        label="연속 색상"
+        value={value}
+        disabled={false}
+        onChange={(next) => {
+          onChange(next);
+          setValue(next);
+        }}
+      />
+    );
+  }
+  render(<ControlledColor />);
+  return onChange;
+}
+
+function openPickerArea(): HTMLElement {
+  fireEvent.click(screen.getByRole("button", { name: "연속 색상 선택" }));
+  const area = screen.getByRole("slider", { name: "채도와 밝기" });
+  area.getBoundingClientRect = () =>
+    ({ left: 0, top: 0, width: 100, height: 100 }) as DOMRect;
+  return area;
+}
+
+/** The color at saturation `s` and value `v` for #112233's hue. */
+function colorAt(s: number, v: number): string {
+  const { h } = rgbToHsv(hexToRgb("#112233"));
+  return rgbToHex(hsvToRgb({ h, s, v }));
+}
 
 describe("editor text and outline color swap", () => {
   it("swaps the resolved text and outline colors in one edit", () => {

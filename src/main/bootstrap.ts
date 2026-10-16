@@ -1,4 +1,5 @@
 import { recoverEnvironmentRestore } from "./environmentBackup/transaction";
+import { startSampledImageDecode } from "./inpainting/sampledRetouchDecodeEntry";
 import { app, dialog } from "electron";
 import { mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -43,7 +44,7 @@ const bootstrapLogger = createBootstrapLogger({
 const PACKAGED_MAIN_RUNTIME_SMOKE_TOKEN =
   "--mgt-packaged-main-runtime-smoke=module-graph-v1";
 
-bootstrap();
+if (!startSampledImageDecode(process.argv)) bootstrap();
 
 function bootstrap(): void {
   let dataRoot: string | null;

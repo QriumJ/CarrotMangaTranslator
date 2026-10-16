@@ -31,6 +31,7 @@ import {
   type DirectSliderField,
 } from "./GatherTextDirectFormatPrimitives";
 import { TextWrappingSelect } from "../TextWrappingSelect";
+import { ColorPickerTrigger } from "../ui/ColorPicker";
 import {
   hasDirectFormatField,
   resolveControlState,
@@ -272,31 +273,33 @@ function ColorSwatchControl<Field extends "textColor" | "outlineColor">({
   const state = resolveControlState(model.values, patch, field);
   const touched = hasDirectFormatField(patch, field);
   const effective = resolvePreviewValue(model, patch, field) ?? fallback;
-  const valueLabel =
-    state.kind === "mixed" && !touched
-      ? t("gatherText.mixedValue")
-      : effective.toUpperCase();
+  const mixed = state.kind === "mixed" && !touched;
+  const valueLabel = mixed
+    ? t("gatherText.mixedValue")
+    : effective.toUpperCase();
   return (
-    <label
+    <div
       className="gather-direct-color-control"
       data-touched={touched || undefined}
     >
       <DirectControlCaption label={label} mixed={false} touched={touched} />
-      <span className="gather-direct-color-button">
-        <span
-          className="gather-direct-color-swatch"
-          style={{ background: effective }}
-        />
-        <span>{valueLabel}</span>
-      </span>
-      <input
-        type="color"
-        aria-label={label}
+      <ColorPickerTrigger
+        className="gather-direct-color-trigger"
+        label={label}
         value={effective}
         disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-      />
-    </label>
+        mixed={mixed}
+        onChange={onChange}
+      >
+        <span className="gather-direct-color-button">
+          <span
+            className="gather-direct-color-swatch"
+            style={{ background: effective }}
+          />
+          <span>{valueLabel}</span>
+        </span>
+      </ColorPickerTrigger>
+    </div>
   );
 }
 

@@ -8,7 +8,6 @@ import {
   isJapaneseCumulativeNoTextRequest,
   isRequestNoTextDetected,
 } from "./noText";
-import { summarizePreview } from "./options";
 import { extractPageContextResponse } from "./pageContextResponse";
 import { tMain } from "./localization";
 import type { TranslationRuntimePort } from "./translationRuntimePort";
@@ -217,21 +216,71 @@ function buildParseError(
   result: TranslationResult,
   error: unknown,
 ): Error {
-  const preview = summarizePreview(result.outputText);
+  const responseShape = describeResponseShape(result.outputText);
+  const safeCause = safeParseCause(error);
   const parseError = new Error(
     tMain("translation.errors.responseParse", {
-      page: page.name,
-      preview,
-      cause: error instanceof Error ? error.message : String(error),
+      page: page.id,
+      shape: responseShape,
+      cause: safeCause.message,
     }),
   ) as Error & { cause?: unknown };
-  parseError.cause = error;
+  parseError.cause = safeCause;
   Object.assign(parseError, {
-    outputPreview: preview,
+    responseShape,
+    outputLength: result.outputText.length,
     outputDir: pageOptions.outputDir,
     responseFormat: pageOptions.regionCropMode
       ? "region-single-item"
       : "structured-overlay",
   });
   return parseError;
+}
+
+function safeParseCause(error: unknown, depth = 0): Error {
+  const safeMessages = new Set([
+    "Region response contract violation: item must be an object or null.",
+    "Region response contract violation: item object is incomplete.",
+    "Region response contract violation: top-level object required.",
+    "Region response contract violation: exactly one item key required.",
+    'Region response contract violation: expected { "item": {...} } or { "item": null }.',
+    "Region response contract violation: JSON object missing.",
+    "Failed to parse model output as JSON.",
+  ]);
+  const safe = new Error(
+    error instanceof Error && safeMessages.has(error.message)
+      ? error.message
+      : "Structured response validation failed",
+  );
+  if (error instanceof Error) {
+    safe.name = error instanceof SyntaxError ? "SyntaxError" : "Error";
+    safe.stack = `${safe.name}: ${safe.message}\n${
+      error.stack
+        ?.split("\n")
+        .filter((line) => /^\s+at /.test(line))
+        .join("\n") ?? ""
+    }`;
+    if (error.cause !== undefined && depth < 3)
+      safe.cause = safeParseCause(error.cause, depth + 1);
+  }
+  return safe;
+}
+
+function describeResponseShape(text: string): string {
+  const kind = (value: unknown): string =>
+    value === null
+      ? "null"
+      : Array.isArray(value)
+        ? `array(${value.length})`
+        : typeof value;
+  try {
+    const value: unknown = JSON.parse(text);
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      const record = value as Record<string, unknown>;
+      return `object; item=${kind(record.item)}; items=${kind(record.items)}; length=${text.length}`;
+    }
+    return `${kind(value)}; length=${text.length}`;
+  } catch (_error) {
+    return `non-JSON; length=${text.length}`;
+  }
 }

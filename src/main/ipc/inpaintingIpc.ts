@@ -19,7 +19,7 @@ import type {
   SetPageInpaintingResultResult,
   StartInpaintingResult,
 } from "../../shared/inpaintingTypes";
-import { applyInpaintingRetouch, sampleImageColor } from "../inpainting";
+import { sampleImageColor } from "../inpainting";
 import { disposeCachedInpaintingEngines } from "../inpainting/inpaintingEnginePool";
 import type { InpaintingRevisionStore } from "../inpainting/inpaintingRevisionStore";
 import { prepareInpaintingRevertRevision } from "../inpainting/inpaintingRevisionPreparation";
@@ -37,6 +37,10 @@ import { createPageRevision } from "../../shared/pageRevision";
 import { pageContentResource } from "../../shared/appActivityTypes";
 import { withLibraryContentEdit } from "../library/lock";
 import { getAppSettings } from "../settingsStore";
+import {
+  applyRetouchRequestWithWorker,
+  cancelSampledRetouch,
+} from "../inpainting/sampledRetouchClient";
 
 function requireRevisionStore(context: IpcContext): InpaintingRevisionStore {
   if (!context.inpaintingRevisionStore) {
@@ -48,6 +52,7 @@ function requireRevisionStore(context: IpcContext): InpaintingRevisionStore {
 export function registerInpaintingIpc(context: IpcContext): void {
   registerInpaintingJobIpc(context);
   registerInpaintingRetouchIpc(context);
+  registerSampledCancel(context);
   registerInpaintingResultIpc(context);
   registerInpaintingRevertIpc(context);
   registerInpaintingHistoryIpc(context);
@@ -97,10 +102,11 @@ function registerInpaintingJobIpc(context: IpcContext): void {
 
 function registerInpaintingRetouchIpc(context: IpcContext): void {
   const revisionStore = requireRevisionStore(context);
+
   trustedHandleContract(
     context,
     inpaintingIpcContracts.applyInpaintingRetouch,
-    async (_event, rawRequest: unknown): Promise<InpaintingRetouchResult> => {
+    async (event, rawRequest: unknown): Promise<InpaintingRetouchResult> => {
       const request = parseIpcPayload(
         InpaintingRetouchRequestSchema,
         rawRequest,
@@ -110,12 +116,13 @@ function registerInpaintingRetouchIpc(context: IpcContext): void {
         [pageContentResource(request.chapterId, request.pageId)],
         async () => {
           const page = await readRetouchPage(request);
-          const nextPage = await applyInpaintingRetouch(page, {
-            mode: request.mode,
-            geometry: request.geometry,
-            color: request.color,
-            decodeFallback: context.decodeImage,
-          });
+          const nextPage = await applyRetouchRequestWithWorker(
+            page,
+            request,
+            context.appPaths,
+            event.sender.id,
+            context.decodeImage,
+          );
           const transactionId = revisionStore.beginTransaction();
           const changeAdded = revisionStore.addChange(transactionId, {
             chapterId: request.chapterId,
@@ -350,6 +357,16 @@ function registerInpaintingUtilityIpc(context: IpcContext): void {
           context.decodeImage,
         ),
       };
+    },
+  );
+}
+
+function registerSampledCancel(context: IpcContext): void {
+  trustedHandleContract(
+    context,
+    inpaintingIpcContracts.cancelInpaintingRetouch,
+    async (event, requestId) => {
+      await cancelSampledRetouch(event.sender.id, requestId);
     },
   );
 }

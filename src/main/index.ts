@@ -51,6 +51,7 @@ import { ErrorReportWindowRegistry } from "./errorReportWindow";
 import { initializeMainLocaleFromSettings, tMain } from "./i18n";
 import { ipcEventContracts } from "../shared/ipcContracts";
 import type { ErrorReportContext } from "../shared/errorReportTypes";
+import { normalizeErrorReportContext } from "../shared/errorReportContext";
 import { APP_ISSUES_URL } from "../shared/appRelease";
 import {
   decodeImageThroughRuntime,
@@ -656,7 +657,9 @@ function notifyMainProcessIncident(summary: string, reason: unknown): void {
     try {
       mainWindow.webContents.send(
         ipcEventContracts.errorIncident.channel,
-        ipcEventContracts.errorIncident.payload.parse(context),
+        ipcEventContracts.errorIncident.payload.parse(
+          normalizeErrorReportContext(context),
+        ),
       );
       return;
     } catch (error) {

@@ -215,7 +215,7 @@ const InpaintingMaskStrokeSchema = z
     radiusPx: finiteNumber.min(1).max(512),
   })
   .strict();
-const InpaintingRetouchGeometrySchema = z.discriminatedUnion("kind", [
+export const InpaintingRetouchGeometrySchema = z.discriminatedUnion("kind", [
   z
     .object({
       kind: z.literal("stroke"),
@@ -330,15 +330,63 @@ export const InpaintingRetouchRequestSchema = z
     chapterId: uuid,
     pageId: uuid,
     expectedRevision: PageJobTargetSnapshotSchema.shape.revision,
-    mode: z.enum(["paint", "restore"]),
-    geometry: InpaintingRetouchGeometrySchema,
+    mode: z.enum(["paint", "restore", "clone", "heal"]),
+    geometry: z.union([
+      InpaintingRetouchGeometrySchema,
+      z
+        .object({
+          kind: z.literal("stroke"),
+          points: z.array(InpaintingPointSchema).min(1).max(32768),
+          radiusPx: finiteNumber.min(1).max(512),
+        })
+        .strict(),
+    ]),
     color: hexColor.optional(),
+    requestId: uuid.optional(),
+    sampled: z
+      .object({
+        source: z.enum(["current", "original"]),
+        offset: z
+          .object({
+            x: finiteNumber.int().min(-120000000).max(120000000),
+            y: finiteNumber.int().min(-120000000).max(120000000),
+          })
+          .strict(),
+        opacity: finiteNumber.min(0).max(1),
+        hardness: finiteNumber.min(0).max(1),
+      })
+      .strict()
+      .optional(),
     retainedInpaintedArtifactPaths: z
       .array(filePath)
       .max(MAX_RETAINED_INPAINTING_ARTIFACTS)
       .optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((request, context) => {
+    const sampled = request.mode === "clone" || request.mode === "heal";
+    if (
+      sampled &&
+      (!request.sampled ||
+        !request.requestId ||
+        request.geometry.kind !== "stroke")
+    )
+      context.addIssue({
+        code: "custom",
+        message: "Sampled retouch requires stroke, settings and requestId.",
+      });
+    if (
+      !sampled &&
+      request.geometry.kind === "stroke" &&
+      request.geometry.points.length > MAX_STROKE_POINTS
+    )
+      context.addIssue({ code: "custom", message: "Too many stroke points." });
+    if (!sampled && (request.sampled || request.requestId))
+      context.addIssue({
+        code: "custom",
+        message: "Sample settings are only valid for clone/heal.",
+      });
+  });
 
 export const SetPageInpaintingResultRequestSchema = z
   .object({

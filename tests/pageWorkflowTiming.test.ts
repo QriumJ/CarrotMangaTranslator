@@ -32,6 +32,58 @@ async function fixture() {
 }
 
 describe("persistent workflow timing", () => {
+  it("persists active stage, page and cleanup before they settle", async () => {
+    const f = await fixture();
+    const recorder = new PageWorkflowTimingRecorder(
+      f.root,
+      randomUUID(),
+      f.request,
+      [f.chapter],
+    );
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let entered!: () => void;
+    const ready = new Promise<void>((resolve) => {
+      entered = resolve;
+    });
+    const stage = recorder.stage("ocr", async () => {
+      const finishPage = recorder.startPage("ocr", f.chapter.id, f.page);
+      await recorder.checkpoint();
+      entered();
+      await pending;
+      await finishPage();
+    });
+    await ready;
+    const [active] = await readPageWorkflowTimings(f.root);
+    expect(active.activeStage?.stage).toBe("ocr");
+    expect(active.activePage).toMatchObject({
+      chapterId: f.chapter.id,
+      pageId: f.page.id,
+      stage: "ocr",
+    });
+    markWorkflowTimingActive(
+      workflowTimingPath(f.root, recorder.record.attemptId),
+      false,
+    );
+    expect((await readPageWorkflowTimings(f.root))[0]).toMatchObject({
+      status: "interrupted",
+      activePage: active.activePage,
+    });
+    release();
+    await stage;
+    await recorder.cleanup(async () => {
+      expect(
+        (await readPageWorkflowTimings(f.root))[0].activeCleanup?.startedAt,
+      ).toBeTruthy();
+    });
+    await recorder.finish("cancelled");
+    const [finished] = await readPageWorkflowTimings(f.root);
+    expect(finished.activePage).toBeUndefined();
+    expect(finished.activeStage).toBeUndefined();
+    expect(finished.activeCleanup).toBeUndefined();
+  });
   it("measures actual wall, stage, page and cleanup spans separately, including zero duration", async () => {
     const f = await fixture();
     let now = 0;

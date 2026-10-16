@@ -9,6 +9,13 @@ export function redactDiagnosticText(
   value: string,
   options: DiagnosticRedactionOptions = {},
 ): { text: string; redactionCount: number } {
+  // Legacy response exceptions can quote user text in message, stack and cause.
+  // Their free-text delimiters are not trustworthy; omit the whole diagnostic.
+  if (/\bpreview=/i.test(value))
+    return {
+      text: "[Legacy model-response diagnostic omitted: contained raw user content.]",
+      redactionCount: 1,
+    };
   let text = value;
   let redactionCount = 0;
 

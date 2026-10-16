@@ -106,7 +106,9 @@ export async function letteringAppFixture() {
   const settleJob = async (jobId: string, principal = owner) => {
     await vi.waitFor(
       () => expectTerminal(operations.status(jobId, principal).status),
-      { timeout: 10000 },
+      // Real durable saves can exceed 10s on CI disks. The enclosing test
+      // still enforces vitest.config.ts's 15s local / 45s CI deadline.
+      { timeout: 45000 },
     );
     return operations.status(jobId, principal);
   };
@@ -122,7 +124,7 @@ export async function letteringAppFixture() {
         const result = await invoke("carrot_get_lettering_batch", { batchId });
         expectTerminal(String(result.status));
       },
-      { timeout: 10000 },
+      { timeout: 45000 },
     );
     return invoke("carrot_get_lettering_batch", { batchId });
   };

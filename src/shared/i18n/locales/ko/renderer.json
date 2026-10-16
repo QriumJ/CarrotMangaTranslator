@@ -278,6 +278,8 @@
       "retouch-tool-eraser": "보정 지우개",
       "retouch-tool-eraser-rectangle": "사각 지우개",
       "retouch-tool-picker": "색상 추출",
+      "retouch-brush-smaller": "브러시 작게",
+      "retouch-brush-larger": "브러시 크게",
       "retouch-apply-mask": "마스크 적용",
       "retouch-cancel-mask": "마스크 취소",
       "block-previous": "이전 블록",
@@ -306,7 +308,9 @@
       "apply-style-slot-10": "스타일 슬롯 10 적용",
       "toggle-command-palette": "명령 팔레트",
       "toggle-shortcut-help": "단축키 도움말",
-      "open-settings": "설정 열기"
+      "open-settings": "설정 열기",
+      "retouch-tool-clone": "복제 도장",
+      "retouch-tool-heal": "치유 브러시"
     }
   },
   "workspaceHistory": {

@@ -255,7 +255,7 @@
     },
     "errors": {
       "bboxMissing": "{{page}}：无法生成边界框结果。",
-      "responseParse": "{{page}}：无法将模型响应解析为结构化格式。preview={{preview}} cause={{cause}}"
+      "responseParse": "{{page}}：无法将模型响应解析为结构化格式。shape={{shape}} cause={{cause}}"
     }
   },
   "region": {

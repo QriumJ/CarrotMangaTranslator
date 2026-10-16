@@ -1,3 +1,4 @@
+import { retouchIpcContracts } from "./ipcRetouchContracts";
 import { SoundEffectImageRecoverySchema } from "./ipcJobSchemas";
 import { imageRedactionIpcContracts } from "./ipcImageRedactionContracts";
 import { translationReviewIpcContracts } from "./ipcTranslationReviewContracts";
@@ -270,6 +271,7 @@ export const translationJobIpcContracts = {
 } as const;
 
 export const inpaintingIpcContracts = {
+  ...retouchIpcContracts,
   startInpainting: defineIpcContract<
     [StartInpaintingRequest],
     StartInpaintingResult

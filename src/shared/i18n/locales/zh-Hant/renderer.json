@@ -278,6 +278,8 @@
       "retouch-tool-eraser": "修補橡皮擦",
       "retouch-tool-eraser-rectangle": "矩形橡皮擦",
       "retouch-tool-picker": "色彩擷取",
+      "retouch-brush-smaller": "縮小筆刷",
+      "retouch-brush-larger": "放大筆刷",
       "retouch-apply-mask": "套用遮罩",
       "retouch-cancel-mask": "取消遮罩",
       "block-previous": "上一個文字區塊",
@@ -306,7 +308,9 @@
       "apply-style-slot-10": "套用樣式槽位10",
       "toggle-command-palette": "命令選擇區",
       "toggle-shortcut-help": "快速鍵說明",
-      "open-settings": "開啟設定"
+      "open-settings": "開啟設定",
+      "retouch-tool-clone": "仿製圖章",
+      "retouch-tool-heal": "修復筆刷"
     }
   },
   "workspaceHistory": {

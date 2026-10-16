@@ -42,7 +42,10 @@ type UseWorkspacePointerHandlersOptions = {
   }) => { x: number; y: number } | null;
   applyRetouchOperation: (operation: {
     geometry: InpaintingRetouchGeometry;
-    mode: "paint" | "restore";
+    mode: "paint" | "restore" | "clone" | "heal";
+    sampled?: import("../../../shared/sampledRetouch").SampledRetouchSettings;
+    expectedRevision?: import("../../../shared/pageRevisionTypes").PageRevision;
+    requestId?: string;
   }) => Promise<void>;
   blockFormatDefaults?: BlockFormatDefaults;
   currentChapter: ChapterSnapshot | null;
@@ -380,7 +383,9 @@ function useEscapePointerCancellation(
   onEscapeTool: () => void,
 ): void {
   const cancelPointerInteraction = useEventCallback(() => {
-    cancelInpaintingDrawing();
+    // Esc during a brush stroke only drops that stroke; a second Esc leaves
+    // the tool, as in Photoshop.
+    const cancelledStroke = cancelInpaintingDrawing();
     if (
       !cancelActiveDrag() &&
       !cancelBlockCreate() &&
@@ -389,7 +394,7 @@ function useEscapePointerCancellation(
     ) {
       cancelRegionSelection();
     }
-    onEscapeTool();
+    if (!cancelledStroke) onEscapeTool();
   });
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent): void => {

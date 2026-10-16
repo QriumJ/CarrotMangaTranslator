@@ -62,6 +62,59 @@ function harness(
 }
 
 describe("Hayai page workflow commits", () => {
+  it.each(["fatal", "cancel", "cleanup"])(
+    "preserves earlier page issues when a later %s interrupts the stage",
+    async (failure) => {
+      const first = new Error("first page failure", {
+        cause: new Error("underlying cause"),
+      });
+      Object.assign(first, { code: "MODEL_SCHEMA" });
+      const h = harness(["ocr"], async (_stage, _chapter, page) => {
+        if (page.id === "page-1") throw first;
+        if (failure === "cancel") h.abort.abort();
+        if (failure === "fatal") throw new TypeError("fatal second page");
+        return page;
+      });
+      h.addPage({ ...makePage(), id: "page-2" });
+      const reportFailure = vi.fn();
+      h.port.reportFailure = reportFailure;
+      if (failure === "cleanup")
+        h.port.finishStage = async () => {
+          throw new Error("cleanup failed");
+        };
+      const result = await executePageWorkflow(h.input, h.port);
+      expect(result.issues[0]).toMatchObject({
+        pageId: "page-1",
+        message: "first page failure",
+      });
+      expect(result.status).toBe(failure === "cancel" ? "cancelled" : "failed");
+      expect(reportFailure).toHaveBeenCalledWith(first, {
+        chapterId: "chapter-1",
+        pageId: "page-1",
+        stage: "ocr",
+      });
+      expect(first.cause).toBeInstanceOf(Error);
+    },
+  );
+
+  it("passes both preparation and cleanup errors to diagnostics", async () => {
+    const h = harness(["ocr"]);
+    const prepare = new Error("prepare failed");
+    const cleanup = new Error("cleanup failed");
+    h.port.prepareStage = async () => {
+      throw prepare;
+    };
+    h.port.finishStage = async () => {
+      throw cleanup;
+    };
+    const report = vi.fn();
+    h.port.reportFailure = report;
+    await executePageWorkflow(h.input, h.port);
+    const aggregate = report.mock.calls.find(
+      ([error]) => error instanceof AggregateError,
+    )?.[0] as AggregateError;
+    expect(aggregate.errors).toEqual([prepare, cleanup]);
+  });
   it("closes failed page timings and marks receipt-skipped stages without executing them again", async () => {
     const h = harness(["ocr"]);
     const finish = vi.fn(async () => {});

@@ -1,3 +1,4 @@
+import { normalizeHexColor } from "./cssColor";
 import type { LibrarySort } from "./librarySort";
 import type { GatherField } from "../../../shared/gatherText";
 import type { WebImportSizeFilter } from "../../../shared/webImportTypes";
@@ -13,16 +14,30 @@ export const WORKSPACE_PREFERENCES_STORAGE_KEY = "workspace.preferences.v1";
 export const RETOUCH_BRUSH_RADIUS_RANGE = { min: 4, max: 90 } as const;
 export const MASK_ADJUSTMENT_RADIUS_RANGE = { min: 1, max: 32 } as const;
 export const REGION_REVIEW_BRUSH_SIZE_RANGE = { min: 1, max: 400 } as const;
+/** Saved swatches shared by every color control in the app. */
+export const COLOR_PALETTE_MAX_SWATCHES = 24;
+/** Dragged left-rail width in CSS px; `null` keeps the responsive default. */
+export const SIDEBAR_WIDTH_RANGE = { min: 240, max: 760 } as const;
+/** Library panel's share of the space it splits with the page list. */
+const SIDEBAR_LIBRARY_SPLIT_RANGE = { min: 0.05, max: 0.95 } as const;
 
 export type SidebarCollapsedPanel = "library" | "pages" | null;
 
 export type WorkspacePreferences = {
+  stampSource: "current" | "original";
+  stampAligned: boolean;
+  stampOpacity: number;
+  cloneHardness: number;
+  healHardness: number;
   inpaintingBrushRadius: number;
   inpaintingPaintColor: string;
+  colorPalette: readonly string[];
   maskAdjustmentRadius: number;
   editorFloating: boolean;
   stageToolbarHidden: boolean;
   sidebarCollapsedPanel: SidebarCollapsedPanel;
+  sidebarWidth: number | null;
+  sidebarLibrarySplit: number | null;
   webImportSizeFilter: WebImportSizeFilter;
   /** Opens translation settings after an import; never starts a run itself. */
   openTranslationAfterImport: boolean;
@@ -40,12 +55,20 @@ export type WorkspacePreferences = {
 export type WorkspacePreferenceKey = keyof WorkspacePreferences;
 
 export const DEFAULT_WORKSPACE_PREFERENCES: Readonly<WorkspacePreferences> = {
+  stampSource: "current",
+  stampAligned: true,
+  stampOpacity: 100,
+  cloneHardness: 100,
+  healHardness: 50,
   inpaintingBrushRadius: 28,
   inpaintingPaintColor: "#ffffff",
+  colorPalette: ["#ffffff", "#000000", "#808080"],
   maskAdjustmentRadius: 4,
   editorFloating: false,
   stageToolbarHidden: false,
   sidebarCollapsedPanel: null,
+  sidebarWidth: null,
+  sidebarLibrarySplit: null,
   webImportSizeFilter: "large",
   openTranslationAfterImport: true,
   skipDuplicateChapterTitles: false,
@@ -66,12 +89,18 @@ type PreferenceNormalizers = {
 };
 
 const NORMALIZERS: PreferenceNormalizers = {
+  stampSource: (value) => normalizeChoice(value, ["current", "original"]),
+  stampAligned: normalizeBoolean,
+  stampOpacity: (value) => normalizeInteger(value, { min: 1, max: 100 }),
+  cloneHardness: (value) => normalizeInteger(value, { min: 0, max: 100 }),
+  healHardness: (value) => normalizeInteger(value, { min: 0, max: 100 }),
   inpaintingBrushRadius: (value) =>
     normalizeInteger(value, RETOUCH_BRUSH_RADIUS_RANGE),
   inpaintingPaintColor: (value) =>
     typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value)
       ? value.toLowerCase()
       : undefined,
+  colorPalette: normalizeColorPalette,
   maskAdjustmentRadius: (value) =>
     normalizeInteger(value, MASK_ADJUSTMENT_RADIUS_RANGE),
   editorFloating: normalizeBoolean,
@@ -80,6 +109,12 @@ const NORMALIZERS: PreferenceNormalizers = {
     value === "library" || value === "pages" || value === null
       ? value
       : undefined,
+  sidebarWidth: (value) =>
+    value === null ? null : normalizeInteger(value, SIDEBAR_WIDTH_RANGE),
+  sidebarLibrarySplit: (value) =>
+    value === null
+      ? null
+      : normalizeFraction(value, SIDEBAR_LIBRARY_SPLIT_RANGE),
   webImportSizeFilter: (value) =>
     value === "all" || value === "medium-or-larger" || value === "large"
       ? value
@@ -189,6 +224,29 @@ function normalizeInteger(
 ): number | undefined {
   if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
   return Math.max(range.min, Math.min(range.max, Math.round(value)));
+}
+
+function normalizeFraction(
+  value: unknown,
+  range: { min: number; max: number },
+): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value)) return undefined;
+  const clamped = Math.max(range.min, Math.min(range.max, value));
+  return Math.round(clamped * 1000) / 1000;
+}
+
+/** Keeps valid, distinct `#rrggbb` swatches in saved order. */
+export function normalizeColorPalette(
+  value: unknown,
+): readonly string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const swatches: string[] = [];
+  for (const entry of value) {
+    const color = typeof entry === "string" ? normalizeHexColor(entry) : null;
+    if (color && !swatches.includes(color)) swatches.push(color);
+    if (swatches.length >= COLOR_PALETTE_MAX_SWATCHES) break;
+  }
+  return swatches;
 }
 
 function normalizeLinkedWorkspaceSort(value: unknown): LibrarySort | undefined {

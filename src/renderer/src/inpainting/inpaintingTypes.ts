@@ -4,6 +4,8 @@ import type { ProgressSnapshot } from "../lib/jobProgress";
 
 export type InpaintingTool =
   | "none"
+  | "clone"
+  | "heal"
   | "brush"
   | "rectangle"
   | "ellipse"

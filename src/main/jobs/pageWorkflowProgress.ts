@@ -1,3 +1,4 @@
+import type { PageWorkflowResult } from "../../shared/pageWorkflowTypes";
 import type { JobEvent } from "../../shared/jobTypes";
 import type { MangaPage } from "../../shared/libraryTypes";
 import {
@@ -46,4 +47,32 @@ export function createPageWorkflowProgress(
       });
     },
   };
+}
+
+export function emitWorkflowCompletion(
+  emit: (event: JobEvent) => void,
+  id: string,
+  result: PageWorkflowResult,
+  total: number,
+  lastEvent?: JobEvent,
+) {
+  emit({
+    id,
+    kind: "gemma-analysis",
+    status: result.status,
+    phase: result.status === "completed" ? "done" : result.status,
+    progressText:
+      result.issues[0]?.message ??
+      (result.status === "cancelled"
+        ? "페이지 작업 취소"
+        : result.status === "completed"
+          ? "페이지 작업 완료"
+          : "페이지 작업 실패"),
+    progressCurrent:
+      result.status === "completed" ? total : lastEvent?.progressCurrent,
+    progressTotal: total,
+    pageIndex: lastEvent?.pageIndex,
+    pageTotal: lastEvent?.pageTotal,
+    detail: lastEvent?.detail,
+  });
 }

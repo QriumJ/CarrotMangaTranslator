@@ -21,6 +21,20 @@ export const PageWorkflowTimingSchema = z
     elapsedMs: milliseconds,
     stages,
     cleanupMs: milliseconds,
+    activeStage: z
+      .object({ stage: z.enum(PAGE_WORKFLOW_STAGES), startedAt: z.string() })
+      .strict()
+      .optional(),
+    activePage: z
+      .object({
+        stage: z.enum(PAGE_WORKFLOW_STAGES),
+        chapterId: z.string(),
+        pageId: z.string(),
+        startedAt: z.string(),
+      })
+      .strict()
+      .optional(),
+    activeCleanup: z.object({ startedAt: z.string() }).strict().optional(),
     chapters: z.array(
       z
         .object({ id: z.string(), title: z.string(), workId: z.string() })

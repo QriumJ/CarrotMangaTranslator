@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ERROR_REPORT_CONTEXT_LIMITS as limits } from "./errorReportContext";
 import {
   ERROR_REPORT_LOG_MAX_BYTES,
   ERROR_REPORT_MAX_BYTES,
@@ -26,11 +27,14 @@ const boundedOptionalText = (maxLength: number) =>
 export const ErrorReportContextSchema: z.ZodType<ErrorReportContext> = z
   .object({
     source: errorReportSourceSchema,
-    summary: boundedOptionalText(1000),
-    message: boundedOptionalText(16000),
-    stack: boundedOptionalText(32000),
-    componentStack: boundedOptionalText(32000),
-    jobStage: boundedOptionalText(500),
+    summary: boundedOptionalText(limits.summary),
+    message: boundedOptionalText(limits.message),
+    stack: boundedOptionalText(limits.stack),
+    componentStack: boundedOptionalText(limits.componentStack),
+    jobStage: boundedOptionalText(limits.jobStage),
+    jobId: boundedOptionalText(limits.jobId),
+    executionId: boundedOptionalText(limits.executionId),
+    incidentAt: boundedOptionalText(limits.incidentAt),
   })
   .strict();
 

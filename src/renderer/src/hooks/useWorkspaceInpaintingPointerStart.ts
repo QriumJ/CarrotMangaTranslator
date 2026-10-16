@@ -1,3 +1,6 @@
+import { useSampledRetouch } from "../inpainting/sampledRetouchModel";
+import { beginSampledGesture } from "./sampledRetouchGesture";
+import { queueSampledCursorAt } from "./useSampledRetouchCursor";
 import { useCallback, type MutableRefObject, type PointerEvent } from "react";
 import type { TFunction } from "i18next";
 import type { InpaintingTool } from "../inpainting/inpaintingTypes";
@@ -34,6 +37,7 @@ export function useInpaintingPointerDown(
   brushRadiusDragRef: MutableRefObject<BrushRadiusDrag | null>,
   t: TFunction<"renderer">,
 ): (event: PointerEvent) => boolean {
+  const sampled = useSampledRetouch();
   return useCallback(
     (event) => {
       if (!options.inpaintingToolActive) return false;
@@ -42,7 +46,8 @@ export function useInpaintingPointerDown(
         (options.jobActive ||
           pendingPageEdits.isHandingOff(options.selectedPage?.id)) &&
         options.inpaintingTool !== "mask" &&
-        options.inpaintingTool !== "picker"
+        options.inpaintingTool !== "picker" &&
+        !isAlternateColorSample(options.inpaintingTool, event.altKey)
       )
         return true;
       const resolved = getImagePixelPoint(event, true);
@@ -51,10 +56,18 @@ export function useInpaintingPointerDown(
       event.preventDefault();
       event.stopPropagation();
       options.setSelectedBlockId(null);
-      handleToolPointerDown(options, resolved, event, shapeDrawingRef, t);
+      if (!handleSampledPointerDown(options, resolved, event, sampled))
+        handleToolPointerDown(options, resolved, event, shapeDrawingRef, t);
       return true;
     },
-    [brushRadiusDragRef, getImagePixelPoint, options, shapeDrawingRef, t],
+    [
+      brushRadiusDragRef,
+      getImagePixelPoint,
+      options,
+      shapeDrawingRef,
+      t,
+      sampled,
+    ],
   );
 }
 
@@ -107,6 +120,7 @@ function handleToolPointerDown(
     sampleInpaintingColor(options, resolved.point, t);
     return;
   }
+  // The "picker" tool has no toolbar button; it is reached with its shortcut.
   if (options.inpaintingTool === "picker") {
     sampleInpaintingColor(options, resolved.point, t);
     return;
@@ -168,6 +182,7 @@ function startRetouchDrawing(
   resolved: ResolvedImagePoint,
   event: PointerEvent,
   tool: RetouchDrawTool,
+  sampled?: import("../../../shared/sampledRetouch").SampledRetouchSettings,
 ): void {
   options.inpaintingRetouchDrawingRef.current = true;
   options.inpaintingRetouchPointsRef.current = [];
@@ -176,9 +191,46 @@ function startRetouchDrawing(
   if (point && options.stageRef.current) {
     beginRetouchStroke(options.stageRef.current, point, resolved.geometry, {
       color: options.inpaintingPaintColor,
+      sampled,
+      onError: (message) => {
+        options.inpaintingRetouchDrawingRef.current = false;
+        options.inpaintingRetouchPointsRef.current = [];
+        options.pushStatus(message);
+      },
+      sourceImage:
+        sampled?.source === "original"
+          ? options.stageRef.current.querySelector<HTMLImageElement>(
+              "[data-retouch-original-source]",
+            )
+          : options.imageRef.current,
       mode: tool,
       radiusPx: options.inpaintingBrushRadius,
     });
   }
   capturePointerSafely(options.stageRef.current, event.pointerId);
+}
+
+function handleSampledPointerDown(
+  options: UseWorkspaceInpaintingPointerHandlersOptions,
+  resolved: ResolvedImagePoint,
+  event: PointerEvent,
+  sampled: ReturnType<typeof useSampledRetouch>,
+): boolean {
+  if (options.inpaintingTool !== "clone" && options.inpaintingTool !== "heal")
+    return false;
+  if (event.button !== 0 || !sampled) return true;
+  if (!beginSampledGesture(sampled, options, resolved, event.altKey)) {
+    // A pick should show its marker and preview now, not on the next move.
+    sampled.altHeld.current = event.altKey;
+    queueSampledCursorAt(sampled, options, resolved);
+    return true;
+  }
+  startRetouchDrawing(
+    options,
+    resolved,
+    event,
+    options.inpaintingTool,
+    sampled.stroke.current?.sampled,
+  );
+  return true;
 }

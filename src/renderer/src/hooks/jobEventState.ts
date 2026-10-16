@@ -57,12 +57,26 @@ function reduceJobState(
   }
   const preserveCurrentStatus = sameJob && isLogOnlyEvent(event);
   return buildNextJobState({
-    current,
-    event,
+    current: sameJob
+      ? current
+      : {
+          id: current.id,
+          kind: current.kind,
+          status: "idle",
+          progressText: "",
+        },
+    event: retainFailureDetail(event),
     preserveCurrentStatus,
     sameJob,
     t,
   });
+}
+
+function retainFailureDetail(event: JobEvent): JobEvent {
+  // Display labels are localized below; retain the actual terminal reason.
+  return event.status === "failed"
+    ? { ...event, detail: event.detail || event.progressText }
+    : event;
 }
 
 function buildNextJobState({

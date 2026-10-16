@@ -18,6 +18,52 @@
   --app-right-rail-track: 0px;
 }
 
+/* A dragged width still yields to the window: the image workspace keeps
+   480px beside both rails (mirrors useSidebarWidth). */
+.app-shell.has-custom-sidebar-width {
+  --app-sidebar-width: clamp(
+    240px,
+    var(--app-sidebar-user-width),
+    calc(100vw - var(--app-right-rail-track) - 480px)
+  );
+}
+
+.app-shell.is-resizing-sidebar {
+  transition: none;
+}
+
+.sidebar-width-resizer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--app-sidebar-track) - 4px);
+  z-index: var(--layer-floating);
+  display: flex;
+}
+
+/* Hidden until the edge is hovered or focused, and lingers briefly so the
+   pointer can travel from the edge onto it. */
+.sidebar-width-reset {
+  position: absolute;
+  top: var(--sidebar-width-reset-y, 50%);
+  left: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-50%);
+  transition:
+    opacity var(--motion-fast) var(--ease-standard) 300ms,
+    visibility 0s linear calc(300ms + var(--motion-fast));
+}
+
+.sidebar-width-resizer:is(:hover, :focus-within):not(:has([data-dragging]))
+  .sidebar-width-reset {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--motion-fast) var(--ease-standard),
+    visibility 0s;
+}
+
 .workspace-region {
   grid-column: 2;
   grid-row: 1;
@@ -232,6 +278,23 @@
 .sidebar > .library-panel,
 .sidebar > .page-list {
   padding-inline: 0;
+}
+
+/* The hit area straddles the page list's top border, which stays the visible
+   divider; the margins cancel the extra flex gap the handle would add. */
+.sidebar > .sidebar-split-handle {
+  margin-top: -4px;
+  margin-bottom: calc(-1 * var(--sp-4) - 4px);
+}
+
+/* Dragged split: flex-grow shares divide the height left after padding
+   (mirrors useSidebarPanelLayout). Collapsing either panel drops it. */
+.sidebar.has-custom-split > .library-panel:not(.collapsed) {
+  flex: var(--sidebar-library-share) 1 0px;
+}
+
+.sidebar.has-custom-split > .page-list:not(.collapsed, .empty) {
+  flex: calc(1 - var(--sidebar-library-share)) 1 0px;
 }
 
 /* The rail is a fixed viewport, not a second scroll owner. Context panels
@@ -877,6 +940,11 @@
   .sidebar.has-chapter.is-context-expanded .sidebar-context-toggle {
     align-self: flex-end;
   }
+
+  .app-shell:has(> .sidebar.has-chapter:not(.is-context-expanded))
+    > .sidebar-width-resizer {
+    display: none;
+  }
 }
 
 @media (max-width: 1119px) {
@@ -892,6 +960,11 @@
 
   .app-shell:has(> .sidebar.has-chapter) {
     --app-sidebar-track: 52px;
+  }
+
+  /* The expanded rail floats over the workspace here at its own width. */
+  .app-shell:has(> .sidebar.has-chapter) > .sidebar-width-resizer {
+    display: none;
   }
 
   .app-shell:has(> .right-rail.is-open) {
@@ -966,7 +1039,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .app-shell,
-  .right-rail {
+  .right-rail,
+  .sidebar-width-reset {
     transition: none;
   }
 

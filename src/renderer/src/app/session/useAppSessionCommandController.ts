@@ -7,6 +7,7 @@ import { useAppCommands } from "../../hooks/useAppCommands";
 type UseAppSessionCommandControllerArgs = {
   redactionPreparation: RedactionPreparationActions;
   startRegionTranslation: () => void;
+  selectSampledTool?: (tool: "clone" | "heal") => void;
   cancelJob: () => void;
   currentChapter: ChapterSnapshot | null;
   jobActive: boolean;
@@ -35,6 +36,7 @@ type UseAppSessionCommandControllerArgs = {
 };
 
 export function useAppSessionCommandController({
+  selectSampledTool,
   redactionPreparation,
   startRegionTranslation,
   cancelJob,
@@ -63,6 +65,7 @@ export function useAppSessionCommandController({
   setAddPagesChapter,
 }: UseAppSessionCommandControllerArgs): AppCommandRegistry {
   return useAppCommands({
+    selectSampledTool,
     redactionPreparation,
     startRegionTranslation,
     cancelJob,

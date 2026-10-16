@@ -1,7 +1,7 @@
 import { join } from "node:path";
-import { getAppPaths } from "./appPaths";
 
 const APP_RUNTIME_MODULE_FILES = {
+  imageSourceAssets: "assets/image-source-assets.cjs",
   ocrEnvironment: "ocr/runtime-environment.cjs",
   ocrCommands: "simple-page-ocr-commands.cjs",
   ocrProgress: "simple-page-progress.cjs",
@@ -45,7 +45,14 @@ function resolveAppRuntimeDirectory(): string {
     isVitest: Boolean(process.env.VITEST),
     resourcesPath: process.resourcesPath,
     testRuntimeDir: join(__dirname, "runtime"),
-    resolveInstalledRuntimeDir: () => getAppPaths().runtimeDir,
+    resolveInstalledRuntimeDir: () => {
+      // Explicit-directory consumers (Node workers) must not initialize Electron app paths.
+      return (
+        require("./appPaths") as {
+          getAppPaths(): { runtimeDir: string };
+        }
+      ).getAppPaths().runtimeDir;
+    },
   });
 }
 

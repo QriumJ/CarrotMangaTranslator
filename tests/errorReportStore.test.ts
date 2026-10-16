@@ -1,15 +1,52 @@
 /** @vitest-environment jsdom */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ErrorReportContextSchema } from "../src/shared/errorReportSchemas";
 import {
   closeErrorReport,
   getErrorReportIncident,
   openErrorReport,
   openManualErrorReport,
   resetErrorReportStoreForTests,
+  initializeGlobalErrorReporting,
 } from "../src/renderer/src/lib/errorReportStore";
+import { createTestMangaGatewayStub } from "../src/renderer/src/api/mangaGateway";
 
 describe("error report incident store", () => {
+  it("reports global Error, string and structured rejection inputs within the IPC contract", async () => {
+    const writeLog = vi.fn(async () => ({ logged: true }));
+    window.mangaApi = createTestMangaGatewayStub({
+      writeLog,
+      onErrorIncident: () => () => undefined,
+    });
+    initializeGlobalErrorReporting();
+    window.dispatchEvent(
+      new ErrorEvent("error", { error: new Error("한".repeat(1200)) }),
+    );
+    expect(
+      ErrorReportContextSchema.safeParse(getErrorReportIncident()).success,
+    ).toBe(true);
+    expect(getErrorReportIncident()?.summary).toHaveLength(1000);
+    closeErrorReport();
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+    for (const reason of [
+      "rejected string",
+      { code: "MODEL_FAILED" },
+      circular,
+    ]) {
+      const event = new Event("unhandledrejection");
+      Object.defineProperty(event, "reason", { value: reason });
+      window.dispatchEvent(event);
+      expect(getErrorReportIncident()?.source).toBe("renderer-global");
+      expect(
+        ErrorReportContextSchema.safeParse(getErrorReportIncident()).success,
+      ).toBe(true);
+      closeErrorReport();
+    }
+    await Promise.resolve();
+    expect(writeLog).toHaveBeenCalledTimes(4);
+  });
   afterEach(() => {
     resetErrorReportStoreForTests();
     vi.useRealTimers();
@@ -63,8 +100,12 @@ describe("error report incident store", () => {
     expect(
       openErrorReport({
         source: "renderer-global",
-        message: "m".repeat(5_000),
-        stack: "s".repeat(17_000),
+        summary: "한".repeat(1001),
+        message: "m".repeat(17_000),
+        stack: "s".repeat(33_000),
+        jobStage: "x".repeat(501),
+        jobId: "run-1",
+        executionId: "attempt-2",
       }),
     ).toBe(true);
     expect(
@@ -76,9 +117,15 @@ describe("error report incident store", () => {
 
     expect(getErrorReportIncident()).toMatchObject({
       source: "renderer-global",
-      message: `${"m".repeat(4_000)}…`,
-      stack: `${"s".repeat(16_000)}…`,
+      summary: `${"한".repeat(999)}…`,
+      message: `${"m".repeat(15_999)}…`,
+      stack: `${"s".repeat(31_999)}…`,
+      jobId: "run-1",
+      executionId: "attempt-2",
     });
+    expect(
+      ErrorReportContextSchema.safeParse(getErrorReportIncident()).success,
+    ).toBe(true);
   });
 
   it("deduplicates automatic incidents for 30 seconds", () => {
@@ -110,7 +157,10 @@ describe("error report incident store", () => {
 
   it("opens the shared report window without requiring an automatic incident", () => {
     expect(openManualErrorReport()).toBe(true);
-    expect(getErrorReportIncident()).toEqual({ source: "manual" });
+    expect(getErrorReportIncident()).toMatchObject({
+      source: "manual",
+      incidentAt: expect.any(String),
+    });
   });
 
   it("bounds recent automatic incident fingerprints during an error storm", () => {

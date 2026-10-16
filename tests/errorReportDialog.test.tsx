@@ -61,6 +61,29 @@ afterEach(() => {
 });
 
 describe("ErrorReportDialog", () => {
+  it("preserves execution identity and bounds direct boundary exceptions before IPC", async () => {
+    render(
+      <ErrorReportDialog
+        context={{
+          source: "react-boundary",
+          summary: "x".repeat(1001),
+          jobId: "run-1",
+          executionId: "attempt-2",
+          incidentAt: "2026-10-15T00:00:00.000Z",
+        }}
+        onClose={vi.fn()}
+      />,
+    );
+    await waitFor(() =>
+      expect(gatewayMocks.prepareErrorReport).toHaveBeenCalled(),
+    );
+    expect(gatewayMocks.prepareErrorReport.mock.calls[0][0]).toMatchObject({
+      summary: `${"x".repeat(999)}…`,
+      jobId: "run-1",
+      executionId: "attempt-2",
+      incidentAt: "2026-10-15T00:00:00.000Z",
+    });
+  });
   it("exposes an accessible editable report and defaults diagnostics on", async () => {
     render(<ErrorReportDialog context={CONTEXT} onClose={vi.fn()} />);
 
@@ -168,7 +191,7 @@ describe("ErrorReportDialog", () => {
 
     expect(
       await screen.findByText(
-        "내용이 길어 클립보드에 복사했습니다. 열린 GitHub 이슈에 붙여넣어 주세요.",
+        "핵심 진단을 GitHub에 입력했고 전체 보고서는 클립보드에 복사했습니다. 필요하면 붙여넣어 상세 내용으로 바꿀 수 있습니다.",
       ),
     ).toBeTruthy();
   });

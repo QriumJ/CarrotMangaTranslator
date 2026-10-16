@@ -3,7 +3,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { InpaintingMaskStroke } from "../../../../shared/inpaintingTypes";
 import type { InpaintingTool } from "../../inpainting/inpaintingTypes";
-import type { StageTool } from "../../lib/stageTool";
+import { isRetouchTool, type StageTool } from "../../lib/stageTool";
 import type { AutoInpaintingEntryScope } from "../../lib/autoInpaintingSelection";
 import type { TranslationOptionsInitialScope } from "../../lib/translationSelection";
 import { clampOriginalImageOpacity } from "../../lib/originalImageOpacity";
@@ -240,7 +240,7 @@ function useInpaintingUiState() {
   const selectWorkspaceTool = useCallback(
     (tool: StageTool) => {
       setStageTool(tool);
-      if (isManualInpaintingTool(tool)) {
+      if (isRetouchTool(tool)) {
         setPeekOriginal(false);
       }
     },
@@ -303,7 +303,7 @@ function useWorkspaceToolState() {
           typeof nextTool === "function"
             ? nextTool(current.stageTool)
             : nextTool;
-        const lastRetouchTool = isManualInpaintingTool(stageTool)
+        const lastRetouchTool = isRetouchTool(stageTool)
           ? stageTool
           : current.lastRetouchTool;
         if (
@@ -355,22 +355,10 @@ function useInpaintingToolSetter(
   );
 }
 
+// One canonical list: a retouch tool missing here would resolve to "none" and
+// silently ignore every click on the canvas.
 function resolveInpaintingTool(tool: StageTool): InpaintingTool {
-  return isManualInpaintingTool(tool) ? tool : "none";
-}
-
-function isManualInpaintingTool(
-  tool: StageTool,
-): tool is Exclude<InpaintingTool, "none"> {
-  return [
-    "mask",
-    "brush",
-    "rectangle",
-    "ellipse",
-    "eraser",
-    "eraser-rectangle",
-    "picker",
-  ].includes(tool);
+  return isRetouchTool(tool) ? tool : "none";
 }
 
 function useTranslateModalUiState() {

@@ -37,6 +37,19 @@
     "search": "項目を検索",
     "noResults": "一致する項目がありません。"
   },
+  "colorPicker": {
+    "open": "{{label}}を選択",
+    "saturationValue": "彩度と明るさ",
+    "saturationValueText": "彩度 {{saturation}}%、明るさ {{brightness}}%",
+    "hue": "色相",
+    "eyedropper": "画面から色を抽出",
+    "r": "赤",
+    "g": "緑",
+    "b": "青",
+    "palette": "パレット",
+    "addToPalette": "現在の色をパレットに保存",
+    "swatchHint": "{{color}} — クリックで適用、右クリックまたは Delete で削除"
+  },
   "workSelect": {
     "search": "作品を検索",
     "chapterCount": "{{count}}話",
@@ -58,7 +71,12 @@
     "share": "作業を書き出す",
     "importWork": "作業を読み込む",
     "showNavigator": "ナビゲーションパネルを開く",
-    "hideNavigator": "ナビゲーションパネルを閉じる"
+    "hideNavigator": "ナビゲーションパネルを閉じる",
+    "resizeWidth": "左パネルの幅を調整",
+    "resizeWidthHint": "ドラッグで幅を調整 · ダブルクリックで既定の幅",
+    "resetWidth": "左パネルを既定の幅に戻す",
+    "resizeSplit": "ライブラリとページの高さを調整",
+    "resizeSplitHint": "ドラッグで高さを調整 · ダブルクリックで既定の比率"
   },
   "conditionalBatch": {
     "open": "テキスト一括編集",
@@ -1139,7 +1157,7 @@
       },
       "paint": {
         "label": "描画ツール",
-        "title": "ブラシ・図形・色抽出ツール"
+        "title": "ブラシ・図形ツール"
       },
       "restore": {
         "label": "復元ツール",
@@ -1206,6 +1224,14 @@
       "warp": {
         "label": "ワープ",
         "title": "格子点を動かして文字の形を調整します"
+      },
+      "clone": {
+        "label": "コピースタンプ",
+        "title": "コピースタンプ — Alt+クリックでコピー元を指定してドラッグ"
+      },
+      "heal": {
+        "label": "修復ブラシ",
+        "title": "修復ブラシ — Alt+クリックでコピー元を指定し、ドラッグで周囲になじませます"
       }
     }
   },
@@ -1287,7 +1313,7 @@
     "retry": "再試行",
     "preparing": "安全な診断情報を準備中…",
     "copySuccess": "診断情報をクリップボードにコピーしました。",
-    "clipboardFallback": "内容が長いためクリップボードにコピーしました。開いたGitHub Issueに貼り付けてください。",
+    "clipboardFallback": "診断の要約をGitHubに入力しました。完全なレポートはクリップボードにコピー済みです。必要に応じて貼り付けてください。",
     "githubOpened": "GitHubのIssue作成画面を開きました。内容を確認してから送信してください。",
     "openLogs": "ログフォルダーを開く",
     "openingLogs": "ログフォルダーを開いています…",
@@ -1661,7 +1687,9 @@
       "eraser-rectangle": "矩形復元",
       "mask": "マスクブラシ",
       "none": "ツールを選択してください",
-      "picker": "スポイト"
+      "picker": "スポイト",
+      "clone": "コピースタンプ",
+      "heal": "修復ブラシ"
     },
     "auto": {
       "description": "まず原文の文字を自動で消します。1ページずつ、または残りのページをまとめて処理できます。",
@@ -1715,6 +1743,28 @@
     "progress": {
       "processingPages": "{{count}}ページを処理中",
       "inProgress": "インペインティング処理中"
+    },
+    "stamp": {
+      "source": "サンプル",
+      "current": "現在の結果",
+      "original": "ページ原本",
+      "currentTooltip": "いま表示されている補正結果からコピーします。テキストレイヤーは含みません。",
+      "originalTooltip": "補正前の元のページからコピーします。",
+      "aligned": "調整あり",
+      "alignedTooltip": "オン：ソース位置がブラシに合わせて移動し続けます。オフ：ストロークごとに最初に指定した位置からコピーし直します。",
+      "opacity": "不透明度",
+      "hardness": "硬さ",
+      "pick": "ソースを指定",
+      "repick": "再指定",
+      "sourceState": {
+        "unset": "ソース未指定",
+        "set": "ソース指定済み",
+        "picking": "画像をクリックしてソースを指定"
+      },
+      "processing": "適用中… Escでキャンセル",
+      "keys": "Alt+クリック：ソース指定 · Shift：直線 · [ ]：サイズ · Esc：キャンセル",
+      "cursorHintFirst": "クリックでコピー元を指定",
+      "cursorHintReplace": "クリックでコピー元を変更"
     }
   },
   "settings": {

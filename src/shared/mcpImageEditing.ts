@@ -1,5 +1,5 @@
 import { z } from "zod/v4";
-import { InpaintingRetouchRequestSchema } from "./ipcJobSchemas";
+import { InpaintingRetouchGeometrySchema } from "./ipcJobSchemas";
 import { McpSourceRectPatchSchema } from "./mcpSourceRect";
 import { mcpTranslationBatchOutputs } from "./mcpTranslationBatch";
 
@@ -22,10 +22,7 @@ const geometry = z
       .strict(),
     z.object({ kind: z.literal("ellipse"), start: point, end: point }).strict(),
   ])
-  .refine(
-    (value) =>
-      InpaintingRetouchRequestSchema.shape.geometry.safeParse(value).success,
-  );
+  .refine((value) => InpaintingRetouchGeometrySchema.safeParse(value).success);
 const protectedAreas = z.array(geometry).max(50).default([]);
 const engine = z.enum(["flux-klein", "lama-manga", "aot-inpainting"]);
 const erasure = {

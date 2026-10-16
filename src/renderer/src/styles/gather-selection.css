@@ -519,9 +519,8 @@
   gap: 12px;
 }
 
-.gather-direct-color-control {
-  position: relative;
-  cursor: pointer;
+.gather-direct-color-trigger {
+  width: 100%;
 }
 
 .gather-direct-color-button {
@@ -538,7 +537,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.gather-direct-color-control:hover .gather-direct-color-button {
+.gather-direct-color-trigger:hover:not(:disabled) .gather-direct-color-button {
   border-color: var(--border-hover);
 }
 
@@ -549,15 +548,6 @@
   border: 1px solid var(--gather-direct-color-swatch-border);
   border-radius: 50%;
   box-shadow: 0 0 0 2px var(--shadow-ink-22);
-}
-
-.gather-direct-color-control > input[type="color"] {
-  position: absolute;
-  inset: 20px 0 0;
-  width: 100%;
-  height: calc(100% - 20px);
-  opacity: 0;
-  cursor: pointer;
 }
 
 .gather-direct-slider-control {

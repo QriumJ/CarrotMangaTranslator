@@ -13,7 +13,11 @@ export type RetouchHistoryEntry = {
 
 export type RetouchApplyOperation = {
   geometry: InpaintingRetouchGeometry;
-  mode: "paint" | "restore";
+  mode: "paint" | "restore" | "clone" | "heal";
+  sampled?: import("../../../shared/sampledRetouch").SampledRetouchSettings;
+  expectedRevision?: import("../../../shared/pageRevisionTypes").PageRevision;
+  requestId?: string;
+  onSettled?: (path: string | null) => void;
 };
 
 export type UseInpaintingRetouchOptions = {

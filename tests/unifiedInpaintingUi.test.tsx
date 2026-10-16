@@ -8,6 +8,7 @@ import {
   fireEvent,
   render,
   screen,
+  within,
 } from "@testing-library/react";
 import {
   afterAll,
@@ -411,7 +412,7 @@ describe("unified workspace toolbar", () => {
     const group = retouch?.closest(".stage-toolbar-group-control");
     fireEvent.pointerEnter(retouch as HTMLButtonElement);
     const menu = screen.getByRole("menu");
-    expect(screen.getAllByRole("menuitemradio")).toHaveLength(4);
+    expect(screen.getAllByRole("menuitemradio")).toHaveLength(5);
 
     fireEvent.pointerLeave(group as HTMLElement);
     fireEvent.pointerEnter(menu);
@@ -1010,22 +1011,25 @@ describe("unified right rail", () => {
     });
     const view = renderRightRail(props);
 
-    const brushColorInput = screen.getByLabelText(
-      "붓 색상",
-    ) as HTMLInputElement;
-    expect(brushColorInput.type).toBe("color");
-    expect(brushColorInput.value).toBe("#fa8128");
-    expect(screen.getByText("#FA8128")).not.toBeNull();
+    const brushColorTrigger = screen.getByRole("button", { name: /^붓 색상/ });
+    const brushHexInput =
+      screen.getByLabelText<HTMLInputElement>("붓 색상 HEX");
+    expect(brushHexInput.value).toBe("#FA8128");
     expect(document.querySelector(".brush-size-control")).not.toBeNull();
     expect(document.querySelector(".retouch-color-label")?.textContent).toBe(
       "색상",
     );
     expect(document.querySelector(".retouch-color-tool")).toBeNull();
-    brushColorInput.focus();
-    expect(document.activeElement).toBe(brushColorInput);
+    brushColorTrigger.focus();
+    expect(document.activeElement).toBe(brushColorTrigger);
 
-    fireEvent.change(brushColorInput, { target: { value: "#123456" } });
+    fireEvent.change(brushHexInput, { target: { value: "#123456" } });
     expect(props.onBrushColorChange).toHaveBeenCalledWith("#123456");
+
+    const palette = screen.getByRole("group", { name: "팔레트" });
+    expect(palette.closest(".retouch-color-control")).not.toBeNull();
+    fireEvent.click(within(palette).getByRole("button", { name: "#FFFFFF" }));
+    expect(props.onBrushColorChange).toHaveBeenCalledWith("#ffffff");
 
     for (const [tool, label] of [
       ["rectangle", "사각형 색상"],
@@ -1040,10 +1044,8 @@ describe("unified right rail", () => {
         />,
       );
 
-      const shapeColorInput = screen.getByLabelText(label) as HTMLInputElement;
-      expect(shapeColorInput.type).toBe("color");
-      expect(shapeColorInput.value).toBe("#abcdef");
-      expect(screen.getByText("#ABCDEF")).not.toBeNull();
+      const shapeHex = screen.getByLabelText<HTMLInputElement>(`${label} HEX`);
+      expect(shapeHex.value).toBe("#ABCDEF");
       expect(document.querySelector(".brush-size-control")).toBeNull();
     }
   });

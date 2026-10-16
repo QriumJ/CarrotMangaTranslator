@@ -1,4 +1,9 @@
 import type { RetouchCanvasContext } from "./retouchCanvasContext";
+import { hideSampledCursor } from "./sampledRetouchCursor";
+import {
+  drawSampledPreview,
+  resetSampledPreview,
+} from "./sampledRetouchPreview";
 import type {
   RetouchLiveGeometry,
   RetouchLivePoint,
@@ -16,8 +21,11 @@ import {
 
 export type RetouchLiveStyle = {
   color: string;
-  mode: "brush" | "eraser" | "mask";
+  mode: "brush" | "eraser" | "mask" | "clone" | "heal";
   radiusPx: number;
+  sampled?: import("../../../shared/sampledRetouch").SampledRetouchSettings;
+  sourceImage?: HTMLImageElement | null;
+  onError?: (message: string) => void;
 };
 
 export type RetouchLiveShapeStyle = {
@@ -38,6 +46,8 @@ type StrokePreviewFrame = {
   lastDrawnPoint: RetouchLivePoint | null;
   pendingPoints: RetouchLivePoint[];
   resetBeforeDraw: boolean;
+  finished?: boolean;
+  sampledPending?: boolean;
   style: RetouchLiveStyle;
 };
 
@@ -65,6 +75,18 @@ export function queueRetouchCursor(
   scheduleLiveFrame(stage, state);
 }
 
+/** Redraw a visible brush cursor at a new radius, e.g. after `[` or `]`. */
+export function resizeRetouchCursor(
+  stage: HTMLElement | null,
+  radiusPx: number,
+): void {
+  if (!stage) return;
+  const state = liveStates.get(stage);
+  if (!state?.cursorFrame || state.cursorHidden) return;
+  state.cursorFrame = { ...state.cursorFrame, radiusPx };
+  scheduleLiveFrame(stage, state);
+}
+
 export function hideRetouchCursor(stage: HTMLElement | null): void {
   if (!stage) return;
   const state = getLiveState(stage);
@@ -83,6 +105,7 @@ export function beginRetouchStroke(
   geometry: RetouchLiveGeometry,
   style: RetouchLiveStyle,
 ): void {
+  resetSampledPreview(stage);
   const state = getLiveState(stage);
   cancelPreviewClear(state);
   clearPreviewCanvas(stage);
@@ -166,8 +189,16 @@ export function finishRetouchStroke(
 ): void {
   if (!stage) return;
   const state = getLiveState(stage);
+  const preview = state.previewFrame;
+  if (preview?.kind === "stroke") {
+    preview.finished = true;
+    // The last rAF may already have consumed all points. Still stamp the
+    // endpoint that lies between regularly spaced dabs before holding preview.
+    if (preview.style.sampled) preview.sampledPending = true;
+  }
   flushLiveFrame(stage, state);
   cancelPreviewClear(state);
+  if (!Number.isFinite(holdMilliseconds)) return;
   state.clearTimer = window.setTimeout(() => {
     clearRetouchPreview(stage, state);
   }, holdMilliseconds);
@@ -175,6 +206,8 @@ export function finishRetouchStroke(
 
 export function clearRetouchLiveOverlay(stage: HTMLElement | null): void {
   if (!stage) return;
+  resetSampledPreview(stage);
+  hideSampledCursor(stage);
   const state = liveStates.get(stage);
   if (state) {
     if (state.frameId !== null) {
@@ -220,7 +253,10 @@ function flushLiveFrame(stage: HTMLElement, state: RetouchLiveState): void {
     renderCursor(stage, state.cursorFrame);
   }
   const preview = state.previewFrame;
-  if (preview?.kind === "stroke" && preview.pendingPoints.length) {
+  if (
+    preview?.kind === "stroke" &&
+    (preview.pendingPoints.length || preview.sampledPending)
+  ) {
     renderPendingPreview(stage, preview);
   } else if (preview?.kind !== "stroke" && preview?.dirty) {
     renderShapePreview(stage, preview);
@@ -262,6 +298,7 @@ function renderPendingPreview(
   }
   const resized = prepareCanvas(canvas, context, preview.geometry);
   if (resized || preview.resetBeforeDraw) {
+    if (preview.resetBeforeDraw) resetSampledPreview(stage);
     context.clearRect(
       0,
       0,
@@ -273,6 +310,27 @@ function renderPendingPreview(
   }
   canvas.hidden = false;
   const points = preview.pendingPoints.splice(0);
+  if (preview.style.sampled) {
+    try {
+      preview.sampledPending = drawSampledPreview(
+        stage,
+        canvas,
+        points,
+        preview.geometry,
+        preview.style,
+        resized,
+        preview.finished,
+      );
+      preview.finished = false;
+      if (preview.sampledPending) scheduleLiveFrame(stage, getLiveState(stage));
+    } catch (error) {
+      clearRetouchLiveOverlay(stage);
+      preview.style.onError?.(
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+    return;
+  }
   for (const point of points) {
     drawPreviewSegment(
       stage,

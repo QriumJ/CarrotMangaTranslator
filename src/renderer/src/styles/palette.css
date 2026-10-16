@@ -27,6 +27,13 @@
   --palette-danger-700: #713b3e;
   --palette-danger-500: #bd6f73;
   --palette-danger-300: #e2a5a8;
+  /* Pure hues for the color picker's hue track (color math, not chrome). */
+  --palette-spectrum-red: #ff0000;
+  --palette-spectrum-yellow: #ffff00;
+  --palette-spectrum-green: #00ff00;
+  --palette-spectrum-cyan: #00ffff;
+  --palette-spectrum-blue: #0000ff;
+  --palette-spectrum-magenta: #ff00ff;
 
   /* Component and canvas roles. Artwork and user-selected paint colours are data. */
   --canvas-transform-accent: var(--info);
@@ -110,6 +117,28 @@
   --color-picker-button-hover-background: var(--palette-neutral-900);
   --color-swatch-border: rgb(from var(--palette-paper) r g b / 36%);
   --shadow-ink-26: rgb(from var(--palette-ink) r g b / 26%);
+  /* Color-space math for ui/ColorPicker, not themeable chrome. */
+  --color-picker-saturation-overlay: linear-gradient(
+    to right,
+    var(--palette-paper),
+    transparent
+  );
+  --color-picker-value-overlay: linear-gradient(
+    to top,
+    var(--palette-ink),
+    transparent
+  );
+  --color-picker-hue-track: linear-gradient(
+    to right,
+    var(--palette-spectrum-red) 0%,
+    var(--palette-spectrum-yellow) 16.67%,
+    var(--palette-spectrum-green) 33.33%,
+    var(--palette-spectrum-cyan) 50%,
+    var(--palette-spectrum-blue) 66.67%,
+    var(--palette-spectrum-magenta) 83.33%,
+    var(--palette-spectrum-red) 100%
+  );
+  --color-picker-thumb-ring: var(--palette-paper);
   --progress-card-border: var(--palette-neutral-750);
   --job-completed-card-border-start: var(--success-bd);
   --job-completed-card-border-end: var(--palette-neutral-750);
@@ -180,7 +209,6 @@
   --drawn-mask-panel-panel-header-small-color: var(--palette-accent-300);
   --brush-swatch-border: rgb(from var(--palette-paper) r g b / 72%);
   --shadow-ink-45: rgb(from var(--palette-ink) r g b / 45%);
-  --retouch-color-picker-border: rgb(from var(--palette-paper) r g b / 28%);
   --shadow-ink-32: rgb(from var(--palette-ink) r g b / 32%);
   --type-stat-review-border-color: var(--success-bd);
   --type-stat-review-background: var(--success-soft);

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import type { ErrorReportContext } from "../../../shared/errorReportTypes";
+import { normalizeErrorReportContext } from "../../../shared/errorReportContext";
 import { errorReportGateway } from "./errorReportGateway";
 
 const DUPLICATE_WINDOW_MS = 30_000;
@@ -37,7 +38,10 @@ export function openErrorReport(
   context: ErrorReportContext,
   options: { force?: boolean } = {},
 ): boolean {
-  const normalized = normalizeContext(context);
+  const normalized = normalizeErrorReportContext({
+    ...context,
+    incidentAt: context.incidentAt ?? new Date().toISOString(),
+  });
   const now = Date.now();
   if (!options.force && isRecentDuplicate(normalized, now)) {
     return false;
@@ -147,29 +151,6 @@ function emitChange(): void {
   }
 }
 
-function normalizeContext(context: ErrorReportContext): ErrorReportContext {
-  return {
-    source: context.source,
-    ...(context.summary
-      ? { summary: limitText(context.summary, MAX_MESSAGE_LENGTH) }
-      : {}),
-    ...(context.message
-      ? { message: limitText(context.message, MAX_MESSAGE_LENGTH) }
-      : {}),
-    ...(context.stack
-      ? { stack: limitText(context.stack, MAX_STACK_LENGTH) }
-      : {}),
-    ...(context.componentStack
-      ? {
-          componentStack: limitText(context.componentStack, MAX_STACK_LENGTH),
-        }
-      : {}),
-    ...(context.jobStage
-      ? { jobStage: limitText(context.jobStage, MAX_MESSAGE_LENGTH) }
-      : {}),
-  };
-}
-
 function normalizeUnknownError(value: unknown): {
   message: string;
   stack?: string;
@@ -201,6 +182,8 @@ function createFingerprint(context: ErrorReportContext): string {
     context.message ?? "",
     context.stack?.split(/\r?\n/, 2).join("\n") ?? "",
     context.jobStage ?? "",
+    context.jobId ?? "",
+    context.executionId ?? "",
   ].join("\u241f");
 }
 
@@ -223,5 +206,7 @@ function evictOldestFingerprints(): void {
 }
 
 function limitText(value: string, maxLength: number): string {
-  return value.length <= maxLength ? value : `${value.slice(0, maxLength)}…`;
+  return value.length <= maxLength
+    ? value
+    : `${value.slice(0, maxLength - 1)}…`;
 }

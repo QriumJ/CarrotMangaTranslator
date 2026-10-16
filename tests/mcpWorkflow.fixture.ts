@@ -191,7 +191,9 @@ export async function workflowFixture() {
         if ((await get(id)).status === "running")
           throw new Error("Workflow still running");
       },
-      { timeout: 20000 },
+      // Allow durable output/cleanup to use the existing CI test budget;
+      // the enclosing test still enforces the configured total deadline.
+      { timeout: 45000 },
     );
     return get(id);
   };

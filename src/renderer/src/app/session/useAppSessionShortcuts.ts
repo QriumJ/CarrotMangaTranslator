@@ -5,6 +5,7 @@ import type { InpaintingController } from "./useInpaintingController";
 import type { TranslationController } from "./useTranslationController";
 import { useSelectedBlockKeyboardNudge } from "../../hooks/useSelectedBlockKeyboardNudge";
 import { isBlockEditingTool, type RetouchTool } from "../../lib/stageTool";
+import { stepBrushRadius } from "../../hooks/workspaceInpaintingPointerState";
 import {
   resolveAdjacentBlockId,
   type BlockNavigationDirection,
@@ -170,6 +171,8 @@ function createTranslationAndRetouchShortcutHandlers(
       }
     },
     "retouch-tool-mask": () => selectRetouchTool(chapter, "mask"),
+    "retouch-tool-clone": commands["retouch-tool-clone"].run,
+    "retouch-tool-heal": commands["retouch-tool-heal"].run,
     "retouch-tool-brush": () => selectRetouchTool(chapter, "brush"),
     "retouch-tool-rectangle": () => selectRetouchTool(chapter, "rectangle"),
     "retouch-tool-ellipse": () => selectRetouchTool(chapter, "ellipse"),
@@ -177,6 +180,10 @@ function createTranslationAndRetouchShortcutHandlers(
     "retouch-tool-eraser-rectangle": () =>
       selectRetouchTool(chapter, "eraser-rectangle"),
     "retouch-tool-picker": () => selectRetouchTool(chapter, "picker"),
+    "retouch-brush-smaller": () =>
+      chapter.uiState.setInpaintingBrushRadius((r) => stepBrushRadius(r, -1)),
+    "retouch-brush-larger": () =>
+      chapter.uiState.setInpaintingBrushRadius((r) => stepBrushRadius(r, 1)),
     "retouch-apply-mask": () =>
       inpainting.inpaintingBridge.contextValue.onRunDrawnPattern(),
     "retouch-cancel-mask": () => cancelRetouchMask(chapter, inpainting),

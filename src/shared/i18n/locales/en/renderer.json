@@ -278,6 +278,8 @@
       "retouch-tool-eraser": "Retouch eraser",
       "retouch-tool-eraser-rectangle": "Rectangle eraser",
       "retouch-tool-picker": "Color picker",
+      "retouch-brush-smaller": "Smaller brush",
+      "retouch-brush-larger": "Larger brush",
       "retouch-apply-mask": "Apply mask",
       "retouch-cancel-mask": "Cancel mask",
       "block-previous": "Previous block",
@@ -306,7 +308,9 @@
       "apply-style-slot-10": "Apply style slot 10",
       "toggle-command-palette": "Command palette",
       "toggle-shortcut-help": "Shortcut help",
-      "open-settings": "Open settings"
+      "open-settings": "Open settings",
+      "retouch-tool-clone": "Clone stamp",
+      "retouch-tool-heal": "Healing brush"
     }
   },
   "workspaceHistory": {

@@ -37,6 +37,19 @@
     "search": "Search options",
     "noResults": "No matching options."
   },
+  "colorPicker": {
+    "open": "Choose {{label}}",
+    "saturationValue": "Saturation and brightness",
+    "saturationValueText": "Saturation {{saturation}}%, brightness {{brightness}}%",
+    "hue": "Hue",
+    "eyedropper": "Pick a color from the screen",
+    "r": "Red",
+    "g": "Green",
+    "b": "Blue",
+    "palette": "Palette",
+    "addToPalette": "Save current color to palette",
+    "swatchHint": "{{color}} — click to apply, right-click or Delete to remove"
+  },
   "workSelect": {
     "search": "Search works",
     "chapterCount": "{{count}} chapters",
@@ -58,7 +71,12 @@
     "share": "Export work",
     "importWork": "Import work",
     "showNavigator": "Open navigation panel",
-    "hideNavigator": "Close navigation panel"
+    "hideNavigator": "Close navigation panel",
+    "resizeWidth": "Resize left panel",
+    "resizeWidthHint": "Drag to resize · Double-click for default width",
+    "resetWidth": "Reset left panel width",
+    "resizeSplit": "Resize library and pages",
+    "resizeSplitHint": "Drag to resize · Double-click for default split"
   },
   "conditionalBatch": {
     "open": "Batch edit text",
@@ -1139,7 +1157,7 @@
       },
       "paint": {
         "label": "Paint tools",
-        "title": "Brush, shape, and color picker tools"
+        "title": "Brush and shape tools"
       },
       "restore": {
         "label": "Restore tools",
@@ -1206,6 +1224,14 @@
       "warp": {
         "label": "Warp",
         "title": "Warp text by moving grid points"
+      },
+      "clone": {
+        "label": "Clone stamp",
+        "title": "Clone stamp — Alt-click a source, then drag"
+      },
+      "heal": {
+        "label": "Healing brush",
+        "title": "Healing brush — Alt-click a source, then drag to blend it into the surroundings"
       }
     }
   },
@@ -1287,7 +1313,7 @@
     "retry": "Try again",
     "preparing": "Preparing safe diagnostics…",
     "copySuccess": "Diagnostics copied to the clipboard.",
-    "clipboardFallback": "The report was too long, so it was copied to the clipboard. Paste it into the GitHub issue that opened.",
+    "clipboardFallback": "A diagnostic summary is prefilled on GitHub. The full report is on the clipboard; paste it to include more detail.",
     "githubOpened": "The GitHub issue page is open. Review the content before submitting it.",
     "openLogs": "Open log folder",
     "openingLogs": "Opening log folder…",
@@ -1661,7 +1687,9 @@
       "eraser-rectangle": "Rectangle restore",
       "mask": "Mask brush",
       "none": "Select a tool",
-      "picker": "Color picker"
+      "picker": "Color picker",
+      "clone": "Clone stamp",
+      "heal": "Healing brush"
     },
     "auto": {
       "description": "First, erase the source text automatically. Process one page or all remaining pages at once.",
@@ -1715,6 +1743,28 @@
     "progress": {
       "processingPages": "Processing pages: {{count}}",
       "inProgress": "Inpainting in progress"
+    },
+    "stamp": {
+      "source": "Sample",
+      "current": "Current result",
+      "original": "Page original",
+      "currentTooltip": "Copy from the retouched image you see now. Text layers are not included.",
+      "originalTooltip": "Copy from the page before any retouching.",
+      "aligned": "Aligned",
+      "alignedTooltip": "On: the source follows the brush across strokes. Off: every stroke starts again from the point you set.",
+      "opacity": "Opacity",
+      "hardness": "Hardness",
+      "pick": "Set source",
+      "repick": "Set again",
+      "sourceState": {
+        "unset": "No source set",
+        "set": "Source set",
+        "picking": "Click the image to set the source"
+      },
+      "processing": "Applying… Esc to cancel",
+      "keys": "Alt-click: set source · Shift: straight line · [ ]: size · Esc: cancel",
+      "cursorHintFirst": "Click to set the source",
+      "cursorHintReplace": "Click to move the source"
     }
   },
   "settings": {

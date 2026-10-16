@@ -7,6 +7,7 @@ import {
   isRetouchShapeTool,
   resolveImagePixelPoint,
   resolveDraggedBrushRadius,
+  stepBrushRadius,
 } from "../src/renderer/src/hooks/workspaceInpaintingPointerState";
 
 describe("workspace inpainting pointer state", () => {
@@ -92,5 +93,16 @@ describe("workspace inpainting pointer state", () => {
     expect(resolveDraggedBrushRadius(20, 12)).toBe(26);
     expect(resolveDraggedBrushRadius(4, -200)).toBe(4);
     expect(resolveDraggedBrushRadius(90, 200)).toBe(90);
+  });
+
+  it("steps bracket brush sizes symmetrically and within range", () => {
+    expect(stepBrushRadius(28, 1)).toBe(30);
+    expect(stepBrushRadius(30, -1)).toBe(28);
+    expect(stepBrushRadius(30, 1)).toBe(35);
+    expect(stepBrushRadius(35, -1)).toBe(30);
+    expect(stepBrushRadius(29, 1)).toBe(30);
+    expect(stepBrushRadius(29, -1)).toBe(28);
+    expect(stepBrushRadius(4, -1)).toBe(4);
+    expect(stepBrushRadius(90, 1)).toBe(90);
   });
 });

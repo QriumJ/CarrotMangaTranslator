@@ -278,6 +278,8 @@
       "retouch-tool-eraser": "補正消しゴム",
       "retouch-tool-eraser-rectangle": "矩形消しゴム",
       "retouch-tool-picker": "色を抽出",
+      "retouch-brush-smaller": "ブラシを小さく",
+      "retouch-brush-larger": "ブラシを大きく",
       "retouch-apply-mask": "マスクを適用",
       "retouch-cancel-mask": "マスクをキャンセル",
       "block-previous": "前のブロック",
@@ -306,7 +308,9 @@
       "apply-style-slot-10": "スタイルスロット10を適用",
       "toggle-command-palette": "コマンドパレット",
       "toggle-shortcut-help": "ショートカットヘルプ",
-      "open-settings": "設定を開く"
+      "open-settings": "設定を開く",
+      "retouch-tool-clone": "コピースタンプ",
+      "retouch-tool-heal": "修復ブラシ"
     }
   },
   "workspaceHistory": {

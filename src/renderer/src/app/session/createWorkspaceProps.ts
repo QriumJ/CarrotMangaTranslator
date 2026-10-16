@@ -44,6 +44,7 @@ export function createWorkspaceProps({
     lastRetouchTool: uiState.lastRetouchTool,
     ...createOriginalImageOpacityProps({ derivedState, uiState }),
     ...createWorkspaceInteractionProps({
+      commandRegistry,
       blockEditingActions,
       core,
       pointerHandlers,
@@ -87,13 +88,18 @@ export function createWorkspaceProps({
 }
 
 function createWorkspaceInteractionProps({
+  commandRegistry,
   blockEditingActions,
   core,
   pointerHandlers,
   uiState,
 }: Pick<
   AppSessionViewModel,
-  "blockEditingActions" | "core" | "pointerHandlers" | "uiState"
+  | "blockEditingActions"
+  | "core"
+  | "pointerHandlers"
+  | "uiState"
+  | "commandRegistry"
 >) {
   return {
     onBlockPointerDown: pointerHandlers.onBlockPointerDown,
@@ -108,6 +114,12 @@ function createWorkspaceInteractionProps({
     onSelectStageTool: (
       tool: Parameters<typeof uiState.selectWorkspaceTool>[0],
     ) => {
+      if (tool === "clone" || tool === "heal") {
+        commandRegistry.run(
+          tool === "clone" ? "retouch-tool-clone" : "retouch-tool-heal",
+        );
+        return;
+      }
       core.setRegionSelection(null);
       uiState.selectWorkspaceTool(tool);
     },

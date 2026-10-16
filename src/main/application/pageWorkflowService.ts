@@ -17,6 +17,10 @@ import {
 } from "../../shared/pageWorkflowStages";
 
 export type PageWorkflowExecutionPort = {
+  reportFailure?: (
+    error: unknown,
+    context: { chapterId?: string; pageId?: string; stage?: PageWorkflowStage },
+  ) => void;
   startPageTiming?: (
     stage: PageWorkflowStage,
     chapterId: string,
@@ -69,9 +73,12 @@ export async function executePageWorkflow(
   const issues: PageWorkflowIssue[] = [];
   try {
     for (const selection of input.selection) {
-      issues.push(...(await executeWorkflowChapter(input, port, selection)));
+      await executeWorkflowChapter(input, port, selection, (issue) =>
+        issues.push(issue),
+      );
     }
   } catch (error) {
+    port.reportFailure?.(error, {});
     if (!input.signal.aborted)
       issues.push({
         chapterId: "",
@@ -98,6 +105,7 @@ async function executeWorkflowChapter(
   input: PageWorkflowExecution,
   port: PageWorkflowExecutionPort,
   selection: PageWorkflowExecution["selection"][number],
+  onIssue: (issue: PageWorkflowIssue) => void,
 ) {
   const acquired: string[] = [];
   const issues: PageWorkflowIssue[] = [];
@@ -123,10 +131,11 @@ async function executeWorkflowChapter(
         );
       if (reportCompletedStage(input, port, chapter, pageIds, stage)) continue;
       const execute = () =>
-        executeWorkflowStage(input, port, chapter, pageIds, stage);
-      issues.push(
-        ...(await (port.group ? port.group(stage, execute) : execute())),
-      );
+        executeWorkflowStage(input, port, chapter, pageIds, stage, (issue) => {
+          issues.push(issue);
+          onIssue(issue);
+        });
+      await (port.group ? port.group(stage, execute) : execute());
     }
     return issues;
   } finally {
@@ -140,12 +149,13 @@ async function executeWorkflowStage(
   chapter: ChapterSnapshot,
   pageIds: string[],
   stage: PageWorkflowStage,
+  onIssue: (issue: PageWorkflowIssue) => void,
 ) {
-  let issues: PageWorkflowIssue[];
   try {
     await port.prepareStage(stage, chapter, pageIds);
-    issues = await executeWorkflowPages(input, port, chapter, pageIds, stage);
+    await executeWorkflowPages(input, port, chapter, pageIds, stage, onIssue);
   } catch (error) {
+    port.reportFailure?.(error, { chapterId: chapter.id, stage });
     try {
       await port.finishStage?.();
     } catch (cleanupError) {
@@ -158,7 +168,6 @@ async function executeWorkflowStage(
     throw error;
   }
   await port.finishStage?.();
-  return issues;
 }
 
 function reportCompletedStage(
@@ -260,6 +269,7 @@ async function executeAndSaveWorkflowPage(
     after = await port.execute(stage, current, before);
     input.signal.throwIfAborted();
   } catch (error) {
+    port.reportFailure?.(error, { chapterId, pageId: before.id, stage });
     if (input.signal.aborted || port.isFatal(error)) throw error;
     const message = error instanceof Error ? error.message : String(error);
     const partial =
@@ -290,8 +300,8 @@ async function executeWorkflowPages(
   chapter: ChapterSnapshot,
   pageIds: string[],
   stage: PageWorkflowStage,
+  onIssue: (issue: PageWorkflowIssue) => void,
 ) {
-  const issues: PageWorkflowIssue[] = [];
   for (const pageId of pageIds) {
     input.signal.throwIfAborted();
     const issue = await executeWorkflowPage(
@@ -301,7 +311,6 @@ async function executeWorkflowPages(
       pageId,
       stage,
     );
-    if (issue) issues.push(issue);
+    if (issue) onIssue(issue);
   }
-  return issues;
 }

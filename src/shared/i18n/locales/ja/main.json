@@ -255,7 +255,7 @@
     },
     "errors": {
       "bboxMissing": "{{page}}：バウンディングボックス結果を作成できませんでした。",
-      "responseParse": "{{page}}：モデル応答を構造化形式として解析できませんでした。preview={{preview}} cause={{cause}}"
+      "responseParse": "{{page}}：モデル応答を構造化形式として解析できませんでした。shape={{shape}} cause={{cause}}"
     }
   },
   "region": {

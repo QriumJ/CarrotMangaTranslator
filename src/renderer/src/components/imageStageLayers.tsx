@@ -180,7 +180,9 @@ export const RetouchLiveLayer = React.memo(function RetouchLiveLayer({
         width={canvasSize.width}
       />
       {(retouchCursor.mode === "eraser" ||
-        retouchCursor.mode === "eraser-rectangle") &&
+        retouchCursor.mode === "eraser-rectangle" ||
+        retouchCursor.mode === "clone" ||
+        retouchCursor.mode === "heal") &&
       retouchOriginalImageDataUrl ? (
         <img
           alt=""
@@ -195,9 +197,55 @@ export const RetouchLiveLayer = React.memo(function RetouchLiveLayer({
         color={retouchCursor.color}
         kind="retouch"
       />
+      {retouchCursor.mode === "clone" || retouchCursor.mode === "heal" ? (
+        <SampledSourceLayer />
+      ) : null}
     </>
   );
 });
+
+/** Clone/heal overlays; `sampledRetouchCursor` positions them per frame. */
+function SampledSourceLayer(): React.JSX.Element {
+  const { t } = useTranslation("components");
+  return (
+    <>
+      <canvas
+        className="retouch-sample-ghost"
+        data-sampled-ghost=""
+        width={1}
+        height={1}
+        hidden
+        aria-hidden="true"
+      />
+      <svg
+        className="retouch-preview-layer retouch-sample-marker"
+        aria-hidden="true"
+      >
+        <g data-sampled-source="" visibility="hidden">
+          <circle
+            className="retouch-sample-ring"
+            data-sampled-source-ring=""
+            r="5"
+          />
+          <path d="M -7 0 H 7 M 0 -7 V 7" />
+        </g>
+      </svg>
+      <div
+        className="retouch-sample-hint"
+        data-sampled-hint=""
+        aria-hidden="true"
+        hidden
+      >
+        <span data-hint-kind="first">
+          {t("inpainting.stamp.cursorHintFirst")}
+        </span>
+        <span data-hint-kind="replace">
+          {t("inpainting.stamp.cursorHintReplace")}
+        </span>
+      </div>
+    </>
+  );
+}
 
 /** Region-translate marquee plus the block tool's create marquee. */
 export const StageMarqueeLayers = React.memo(function StageMarqueeLayers({

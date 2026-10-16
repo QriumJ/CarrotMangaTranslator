@@ -12,12 +12,12 @@ import type {
   LibraryIndex,
 } from "../../../shared/libraryTypes";
 import { useEventCallback } from "../hooks/useEventCallback";
-import { useWorkspacePreference } from "../hooks/useWorkspacePreference";
-import type { SidebarCollapsedPanel } from "../lib/workspacePreferences";
 import { LibraryTree } from "./LibraryTree";
 import { PageList } from "./PageList";
 import { ActionMenu } from "./ui/ActionMenu";
 import { IconButton } from "./ui/IconButton";
+import { ResizeHandle } from "./ui/ResizeHandle";
+import { SidebarWidthResizer } from "./SidebarWidthResizer";
 import { MacAlphaBadge } from "./MacAlphaBadge";
 import {
   resolveAppCommandLabel,
@@ -25,6 +25,10 @@ import {
   type AppCommandLabels,
 } from "../lib/appCommandTypes";
 import { useContextRailExpansion } from "./useContextRailExpansion";
+import {
+  useSidebarPanelLayout,
+  type SidebarPanelLayout,
+} from "./useSidebarPanelLayout";
 
 type AppSidebarProps = {
   chatOpen?: boolean;
@@ -65,11 +69,21 @@ type AppSidebarProps = {
 };
 
 export function AppSidebar(props: AppSidebarProps): React.JSX.Element {
-  const { t } = useTranslation("components");
-  const hasChapter = Boolean(props.currentChapter);
+  return (
+    <>
+      <SidebarAside {...props} />
+      {/* A sibling inside the app shell, so it can straddle the rail's edge. */}
+      <SidebarWidthResizer />
+    </>
+  );
+}
+
+function SidebarAside(props: AppSidebarProps): React.JSX.Element {
   const { contextExpanded, toggleContextExpanded, toggleRef } =
     useContextRailExpansion(props.currentChapter?.id);
-
+  const layout = useSidebarPanelLayout();
+  const { t } = useTranslation("components");
+  const hasChapter = Boolean(props.currentChapter);
   const toggleLabel = t(
     contextExpanded ? "sidebar.hideNavigator" : "sidebar.showNavigator",
   );
@@ -78,7 +92,15 @@ export function AppSidebar(props: AppSidebarProps): React.JSX.Element {
     : IconLayoutSidebarLeftExpand;
   return (
     <aside
-      className={`sidebar ${hasChapter ? "has-chapter" : ""} ${contextExpanded ? "is-context-expanded" : ""}`.trim()}
+      className={[
+        "sidebar",
+        hasChapter ? "has-chapter" : "",
+        contextExpanded ? "is-context-expanded" : "",
+        layout.librarySplit === null ? "" : "has-custom-split",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      style={layout.splitStyle}
     >
       {hasChapter ? (
         <IconButton
@@ -93,15 +115,19 @@ export function AppSidebar(props: AppSidebarProps): React.JSX.Element {
         </IconButton>
       ) : null}
       <MacAlphaBadge />
-      <LibrarySidebarContent {...props} />
+      <LibrarySidebarContent {...props} layout={layout} />
     </aside>
   );
 }
 
-function LibrarySidebarContent(props: AppSidebarProps): React.JSX.Element {
-  const { collapsedPanel, toggleLibraryContent, togglePageContent } =
-    useSidebarPanelCollapse();
+function LibrarySidebarContent({
+  layout,
+  ...props
+}: AppSidebarProps & { layout: SidebarPanelLayout }): React.JSX.Element {
+  const { collapsedPanel, toggleLibraryContent, togglePageContent } = layout;
   const actions = useStableSidebarActions(props);
+  const splitResizable =
+    collapsedPanel === null && Boolean(props.currentChapter?.pages.length);
   return (
     <>
       <SidebarToolbar
@@ -133,6 +159,8 @@ function LibrarySidebarContent(props: AppSidebarProps): React.JSX.Element {
         onToggleOtherPanel={togglePageContent}
       />
 
+      {splitResizable ? <SidebarSplitHandle layout={layout} /> : null}
+
       <PageList
         onEditPages={props.onEditPages}
         onAddPages={props.currentChapter ? props.onAddChapterPages : undefined}
@@ -163,36 +191,38 @@ function LibrarySidebarContent(props: AppSidebarProps): React.JSX.Element {
   );
 }
 
+function SidebarSplitHandle({
+  layout,
+}: {
+  layout: SidebarPanelLayout;
+}): React.JSX.Element {
+  const { t } = useTranslation("components");
+  return (
+    <ResizeHandle
+      orientation="horizontal"
+      className="sidebar-split-handle"
+      label={t("sidebar.resizeSplit")}
+      title={t("sidebar.resizeSplitHint")}
+      valueNow={
+        layout.librarySplit === null
+          ? undefined
+          : Math.round(layout.librarySplit * 100)
+      }
+      valueMin={0}
+      valueMax={100}
+      onResizeStart={layout.onSplitResizeStart}
+      onResize={layout.onSplitResize}
+      onResizeEnd={layout.onSplitResizeEnd}
+      onReset={layout.resetSplit}
+    />
+  );
+}
+
 function currentChapterPages(chapter: ChapterSnapshot | null): {
   chapterId: string | null;
   pages: ChapterSnapshot["pages"];
 } {
   return { chapterId: chapter?.id ?? null, pages: chapter?.pages ?? [] };
-}
-
-function useSidebarPanelCollapse(): {
-  collapsedPanel: SidebarCollapsedPanel;
-  toggleLibraryContent: () => void;
-  togglePageContent: () => void;
-} {
-  const [collapsedPanel, setCollapsedPanel] = useWorkspacePreference(
-    "sidebarCollapsedPanel",
-  );
-  return {
-    collapsedPanel,
-    toggleLibraryContent: React.useCallback(
-      () =>
-        setCollapsedPanel((current) =>
-          current === "library" ? null : "library",
-        ),
-      [setCollapsedPanel],
-    ),
-    togglePageContent: React.useCallback(
-      () =>
-        setCollapsedPanel((current) => (current === "pages" ? null : "pages")),
-      [setCollapsedPanel],
-    ),
-  };
 }
 
 function useStableSidebarActions(props: AppSidebarProps) {

@@ -27,6 +27,8 @@ export type WorkspaceTool =
   | "warp"
   | "bubble"
   | "mask"
+  | "clone"
+  | "heal"
   | "brush"
   | "rectangle"
   | "ellipse"
@@ -40,6 +42,8 @@ export type StageTool = WorkspaceTool;
 export type RetouchTool = Extract<
   WorkspaceTool,
   | "mask"
+  | "clone"
+  | "heal"
   | "brush"
   | "rectangle"
   | "ellipse"
@@ -51,6 +55,8 @@ export type RetouchTool = Extract<
 export function isRetouchTool(tool: WorkspaceTool): tool is RetouchTool {
   return (
     tool === "mask" ||
+    tool === "clone" ||
+    tool === "heal" ||
     tool === "brush" ||
     tool === "rectangle" ||
     tool === "ellipse" ||
@@ -78,8 +84,17 @@ export function isBlockEditingTool(
 
 export function isSizableRetouchTool(
   tool: WorkspaceTool,
-): tool is Extract<RetouchTool, "mask" | "brush" | "eraser"> {
-  return tool === "mask" || tool === "brush" || tool === "eraser";
+): tool is Extract<
+  RetouchTool,
+  "mask" | "clone" | "heal" | "brush" | "eraser"
+> {
+  return (
+    tool === "mask" ||
+    tool === "clone" ||
+    tool === "heal" ||
+    tool === "brush" ||
+    tool === "eraser"
+  );
 }
 
 export function isPaintColorRetouchTool(

@@ -49,7 +49,14 @@ type UseInpaintingContextBridgeOptions = {
 };
 
 type RetouchCursorMode =
-  "brush" | "rectangle" | "ellipse" | "eraser" | "eraser-rectangle" | "mask";
+  | "brush"
+  | "rectangle"
+  | "ellipse"
+  | "eraser"
+  | "eraser-rectangle"
+  | "mask"
+  | "clone"
+  | "heal";
 
 type RetouchCursor = {
   color: string;
@@ -93,9 +100,14 @@ type InpaintingBridgeResult = {
 };
 
 const RETOUCH_CURSOR_COLORS: Record<
-  Extract<RetouchCursorMode, "eraser" | "eraser-rectangle" | "mask">,
+  Extract<
+    RetouchCursorMode,
+    "eraser" | "eraser-rectangle" | "mask" | "clone" | "heal"
+  >,
   string
 > = {
+  clone: "var(--canvas-transform-accent)",
+  heal: "var(--canvas-transform-accent)",
   eraser: "var(--canvas-transform-accent)",
   "eraser-rectangle": "var(--canvas-transform-accent)",
   mask: "var(--canvas-curve-accent)",
@@ -103,6 +115,8 @@ const RETOUCH_CURSOR_COLORS: Record<
 
 function isRetouchCursorMode(tool: InpaintingTool): tool is RetouchCursorMode {
   return (
+    tool === "clone" ||
+    tool === "heal" ||
     tool === "brush" ||
     tool === "rectangle" ||
     tool === "ellipse" ||

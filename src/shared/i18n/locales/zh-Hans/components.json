@@ -37,6 +37,19 @@
     "search": "搜索选项",
     "noResults": "没有匹配的选项。"
   },
+  "colorPicker": {
+    "open": "选择{{label}}",
+    "saturationValue": "饱和度和亮度",
+    "saturationValueText": "饱和度 {{saturation}}%，亮度 {{brightness}}%",
+    "hue": "色相",
+    "eyedropper": "从屏幕取色",
+    "r": "红",
+    "g": "绿",
+    "b": "蓝",
+    "palette": "调色板",
+    "addToPalette": "将当前颜色保存到调色板",
+    "swatchHint": "{{color}} — 单击应用，右键或 Delete 删除"
+  },
   "workSelect": {
     "search": "搜索作品",
     "chapterCount": "{{count}}话",
@@ -58,7 +71,12 @@
     "share": "导出项目",
     "importWork": "导入项目",
     "showNavigator": "打开导航面板",
-    "hideNavigator": "关闭导航面板"
+    "hideNavigator": "关闭导航面板",
+    "resizeWidth": "调整左侧面板宽度",
+    "resizeWidthHint": "拖动调整宽度 · 双击恢复默认宽度",
+    "resetWidth": "恢复左侧面板默认宽度",
+    "resizeSplit": "调整书库与页面高度",
+    "resizeSplitHint": "拖动调整高度 · 双击恢复默认比例"
   },
   "conditionalBatch": {
     "open": "批量编辑文本",
@@ -1139,7 +1157,7 @@
       },
       "paint": {
         "label": "绘制工具",
-        "title": "画笔、形状和取色工具"
+        "title": "画笔和形状工具"
       },
       "restore": {
         "label": "恢复工具",
@@ -1206,6 +1224,14 @@
       "warp": {
         "label": "网格变形",
         "title": "移动网格点以调整文字形状"
+      },
+      "clone": {
+        "label": "仿制图章",
+        "title": "仿制图章 — Alt+单击指定源点后拖动"
+      },
+      "heal": {
+        "label": "修复画笔",
+        "title": "修复画笔 — Alt+单击指定源点后拖动，与周围色调融合"
       }
     }
   },
@@ -1287,7 +1313,7 @@
     "retry": "重试",
     "preparing": "正在准备安全的诊断信息…",
     "copySuccess": "诊断信息已复制到剪贴板。",
-    "clipboardFallback": "报告内容过长，已复制到剪贴板。请将其粘贴到已打开的GitHub议题中。",
+    "clipboardFallback": "已在 GitHub 填入诊断摘要，完整报告已复制到剪贴板。可粘贴以提供更多详情。",
     "githubOpened": "已打开GitHub议题创建页面。请检查内容后再提交。",
     "openLogs": "打开日志文件夹",
     "openingLogs": "正在打开日志文件夹…",
@@ -1661,7 +1687,9 @@
       "eraser-rectangle": "矩形恢复",
       "mask": "蒙版画笔",
       "none": "请选择工具",
-      "picker": "取色器"
+      "picker": "取色器",
+      "clone": "仿制图章",
+      "heal": "修复画笔"
     },
     "auto": {
       "description": "先自动擦除原文文字。可以逐页处理，也可以一次处理所有剩余页面。",
@@ -1715,6 +1743,28 @@
     "progress": {
       "processingPages": "正在处理{{count}}页",
       "inProgress": "图像修复进行中"
+    },
+    "stamp": {
+      "source": "取样",
+      "current": "当前结果",
+      "original": "页面原图",
+      "currentTooltip": "从当前显示的修补结果复制。不包含文本图层。",
+      "originalTooltip": "从修补前的原始页面复制。",
+      "aligned": "对齐",
+      "alignedTooltip": "开启：源点随画笔持续移动。关闭：每一笔都从最初指定的位置重新复制。",
+      "opacity": "不透明度",
+      "hardness": "硬度",
+      "pick": "指定源点",
+      "repick": "重新指定",
+      "sourceState": {
+        "unset": "未指定源点",
+        "set": "已指定源点",
+        "picking": "点击图像指定源点"
+      },
+      "processing": "正在应用… 按 Esc 取消",
+      "keys": "Alt+单击：指定源点 · Shift：直线 · [ ]：大小 · Esc：取消",
+      "cursorHintFirst": "单击指定复制源",
+      "cursorHintReplace": "单击更改复制源"
     }
   },
   "settings": {

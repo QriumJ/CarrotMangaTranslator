@@ -2,7 +2,10 @@ import type {
   PageWorkflowRequest,
   PageWorkflowResult,
 } from "../../shared/pageWorkflowTypes";
-import { createPageWorkflowProgress } from "./pageWorkflowProgress";
+import {
+  createPageWorkflowProgress,
+  emitWorkflowCompletion,
+} from "./pageWorkflowProgress";
 import { PageWorkflowTimingRecorder } from "../pageWorkflow/pageWorkflowTimingRecorder";
 import {
   pageWorkflowNeedsExclusiveModel,
@@ -34,6 +37,7 @@ type PageWorkflowJobContext = TranslationJobContext & { appPaths: AppPaths };
 import type { AppSettings } from "../../shared/settingsTypes";
 import type { JobEvent } from "../../shared/jobTypes";
 import type { AppActivityResource } from "../../shared/appActivityTypes";
+import { logError, logInfo } from "../logger";
 
 function workflowResources(
   request: PageWorkflowRequest,
@@ -106,6 +110,15 @@ export async function startPageWorkflowJob(
       ...event,
       executionId: timing.record.attemptId,
     });
+  emit({
+    id: run.id,
+    kind: "gemma-analysis",
+    status: "starting",
+    phase: "booting",
+    progressText: "페이지 작업 준비",
+    progressCurrent: 0,
+    progressTotal: preflight.pageCount * run.request.plan.stages.length,
+  });
   return context.jobs.run(
     run.id,
     () =>
@@ -174,6 +187,13 @@ async function runWorkflowJob({
       },
       {
         ...runtime,
+        reportFailure: (error, location) =>
+          logError("Page workflow failure", {
+            id: run.id,
+            executionId: timing.record.attemptId,
+            ...location,
+            error,
+          }),
         group: (stage, execute) =>
           timing.stage(stage, () => runtime.group(stage, execute)),
         startPageTiming: (stage, chapterId, page) =>
@@ -215,23 +235,6 @@ function reserveWorkflowChapters(
     ]);
 }
 
-function emitWorkflowCompletion(
-  emit: (event: JobEvent) => void,
-  id: string,
-  result: PageWorkflowResult,
-  total: number,
-) {
-  emit({
-    id,
-    kind: "gemma-analysis",
-    status: result.status,
-    phase: "done",
-    progressText: result.issues[0]?.message ?? "페이지 작업 완료",
-    progressCurrent: total,
-    progressTotal: total,
-  });
-}
-
 async function runWorkflowJobSafely(
   input: Parameters<typeof runWorkflowJob>[0],
 ) {
@@ -239,14 +242,29 @@ async function runWorkflowJobSafely(
     await input.timing.checkpoint();
     const result = await runWorkflowJob(input);
     await input.timing.finish(result.status);
+    const lastEvent = input.context.jobs.get(input.run.id)?.lastEvent;
+    logInfo("Page workflow result", {
+      id: input.run.id,
+      executionId: input.timing.record.attemptId,
+      status: result.status,
+      issues: result.issues,
+      lastEvent,
+    });
     emitWorkflowCompletion(
       input.emit,
       input.run.id,
       result,
       input.preflight.pageCount * input.run.request.plan.stages.length,
+      lastEvent,
     );
     return result;
   } catch (error) {
+    logError("Page workflow execution failed", {
+      id: input.run.id,
+      executionId: input.timing.record.attemptId,
+      lastEvent: input.context.jobs.get(input.run.id)?.lastEvent,
+      error,
+    });
     await input.timing.finish(
       input.abortController.signal.aborted ? "cancelled" : "failed",
     );
@@ -254,7 +272,7 @@ async function runWorkflowJobSafely(
       id: input.run.id,
       kind: "gemma-analysis",
       status: input.abortController.signal.aborted ? "cancelled" : "failed",
-      phase: "failed",
+      phase: input.abortController.signal.aborted ? "cancelled" : "failed",
       progressText: error instanceof Error ? error.message : String(error),
     });
     throw error;

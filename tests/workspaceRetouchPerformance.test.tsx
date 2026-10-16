@@ -1,3 +1,4 @@
+import { SampledRetouchProvider } from "../src/renderer/src/inpainting/SampledRetouchProvider";
 // @vitest-environment jsdom
 
 import React, {
@@ -36,6 +37,47 @@ afterEach(() => {
 });
 
 describe("workspace retouch pointer performance", () => {
+  it("preserves Alt color sampling on the paint brush, including provider failure", async () => {
+    installAnimationFrameController();
+    const sample = vi
+      .fn()
+      .mockResolvedValueOnce({ color: "#123456" })
+      .mockRejectedValueOnce(new Error("sample failed"));
+    vi.stubGlobal("mangaApi", { sampleInpaintingColor: sample });
+    const error = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+    const api = renderRetouchHarness();
+    const stage = screen.getByTestId("retouch-stage");
+    await act(async () => {
+      fireEvent.pointerDown(stage, {
+        clientX: 10,
+        clientY: 20,
+        altKey: true,
+        button: 0,
+        pointerId: 1,
+      });
+    });
+    expect(sample).toHaveBeenCalledWith({
+      imagePath: "page-1.png",
+      x: 100,
+      y: 200,
+    });
+    expect(api.current.applyRetouchOperation).not.toHaveBeenCalled();
+    await act(async () => {
+      fireEvent.pointerDown(stage, {
+        clientX: 10,
+        clientY: 20,
+        altKey: true,
+        button: 0,
+        pointerId: 2,
+      });
+    });
+    expect(error).toHaveBeenCalledWith(
+      expect.objectContaining({ message: "sample failed" }),
+    );
+    expect(api.current.getPoints()).toEqual([]);
+  });
   it("batches a hover burst into one compositor cursor frame without rerendering", () => {
     const frames = installAnimationFrameController();
     const api = renderRetouchHarness();
@@ -235,6 +277,45 @@ describe("workspace retouch pointer performance", () => {
     });
     expect(frames.count()).toBe(0);
   });
+  it("samples with Alt and submits one frozen clone operation through the production pointer handlers", async () => {
+    installAnimationFrameController();
+    vi.stubGlobal("mangaApi", {
+      cancelInpaintingRetouch: vi.fn(async () => {}),
+    });
+    const api = renderRetouchHarness("clone");
+    const stage = screen.getByTestId("retouch-stage");
+    fireEvent.pointerDown(stage, {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 3,
+      altKey: true,
+      button: 0,
+    });
+    expect(api.current.appendRetouchPoint).not.toHaveBeenCalled();
+    fireEvent.pointerDown(stage, {
+      clientX: 50,
+      clientY: 50,
+      pointerId: 4,
+      button: 0,
+    });
+    fireEvent.pointerMove(stage, { clientX: 60, clientY: 55, pointerId: 4 });
+    await act(async () => {
+      fireEvent.pointerUp(stage, {
+        clientX: 60,
+        clientY: 55,
+        pointerId: 4,
+        button: 0,
+      });
+    });
+    expect(api.current.applyRetouchOperation).toHaveBeenCalledOnce();
+    expect(api.current.applyRetouchOperation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: "clone",
+        sampled: expect.objectContaining({ offset: { x: -400, y: -400 } }),
+        expectedRevision: expect.stringMatching(/^page-v1:/),
+      }),
+    );
+  });
 });
 
 function renderRetouchHarness(
@@ -242,14 +323,21 @@ function renderRetouchHarness(
   jobActive = false,
 ): React.MutableRefObject<RetouchHarnessApi> {
   const api = React.createRef<RetouchHarnessApi>();
-  render(
+  const view = (
     <RetouchHarness
       tool={tool}
       jobActive={jobActive}
       onReady={(nextApi) => {
         api.current = nextApi;
       }}
-    />,
+    />
+  );
+  render(
+    tool === "clone" || tool === "heal" ? (
+      <SampledRetouchProvider>{view}</SampledRetouchProvider>
+    ) : (
+      view
+    ),
   );
   if (!api.current) {
     throw new Error("Retouch harness did not initialize.");

@@ -379,9 +379,9 @@ textarea {
   padding: var(--ctl-pad-y) var(--ctl-pad-x);
 }
 
-input:not([type="range"]):not([type="color"]):not([type="checkbox"]):not(
-    [type="radio"]
-  ):not([data-ui-framed-input]):not(.library-search-input) {
+input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not(
+    [data-ui-framed-input]
+  ):not(.library-search-input) {
   min-height: var(--ctl-h);
 }
 

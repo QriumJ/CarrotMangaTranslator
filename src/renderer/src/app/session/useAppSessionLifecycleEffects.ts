@@ -47,8 +47,6 @@ export function useAppSessionLifecycleEffects({
   translationFlowActive,
 }: UseAppSessionLifecycleEffectsArgs): (job: JobState) => void {
   const { t } = useTranslation("renderer");
-  const prevJobStatusRef = useRef<JobState["status"]>("idle");
-  const prevFlowActiveRef = useRef(translationFlowActive);
   const reportedJobIdRef = useRef<string | null>(null);
   const previousPageIdRef = useRef(selectedPageId);
   const notifyJobTerminal = useAudibleJobCompletion(
@@ -72,7 +70,6 @@ export function useAppSessionLifecycleEffects({
     });
   });
   const currentChapterId = currentChapter?.id ?? null;
-  const jobStatus = jobState.status;
 
   useInitialLibraryRefresh(refreshLibraryState);
 
@@ -92,8 +89,31 @@ export function useAppSessionLifecycleEffects({
     }
   }, [currentChapterId, resetCurrentChapterUi]);
 
+  useJobStatusTransitions(
+    jobState,
+    translationFlowActive,
+    refreshLibraryState,
+    notifyJobStatusChange,
+  );
+  return notifyJobTerminal;
+}
+
+function useJobStatusTransitions(
+  jobState: JobState,
+  translationFlowActive: boolean,
+  refreshLibraryState: () => void,
+  notifyJobStatusChange: () => void,
+): void {
+  const prevJobStatusRef = useRef<{
+    status: JobState["status"];
+    execution: string;
+  }>({ status: "idle", execution: "" });
+  const prevFlowActiveRef = useRef(translationFlowActive);
+  const jobStatus = jobState.status;
+  const execution = jobState.executionId ?? jobState.id;
   useEffect(() => {
-    const previous = prevJobStatusRef.current;
+    const previous = prevJobStatusRef.current.status;
+    const executionChanged = prevJobStatusRef.current.execution !== execution;
     const next = jobStatus;
     const flowJustFinished =
       prevFlowActiveRef.current && !translationFlowActive;
@@ -101,22 +121,26 @@ export function useAppSessionLifecycleEffects({
     if (
       isTerminalJobStatus(next) &&
       !translationFlowActive &&
-      (previous !== next || flowJustFinished)
+      (previous !== next || executionChanged || flowJustFinished)
     ) {
       refreshLibraryState();
     }
-    if (previous === next && !(flowJustFinished && isTerminalJobStatus(next))) {
+    if (
+      previous === next &&
+      !executionChanged &&
+      !(flowJustFinished && isTerminalJobStatus(next))
+    ) {
       return;
     }
-    prevJobStatusRef.current = next;
+    prevJobStatusRef.current = { status: next, execution };
     notifyJobStatusChange();
   }, [
     jobStatus,
+    execution,
     notifyJobStatusChange,
     refreshLibraryState,
     translationFlowActive,
   ]);
-  return notifyJobTerminal;
 }
 
 function useAudibleJobCompletion(
@@ -238,10 +262,11 @@ function handleFailedJob({
   JobStatusChangeArgs,
   "jobState" | "openErrorReport" | "reportedJobIdRef" | "t"
 >): void {
-  if (reportedJobIdRef.current === jobState.id) {
+  const executionKey = jobState.executionId ?? jobState.id;
+  if (reportedJobIdRef.current === executionKey) {
     return;
   }
-  reportedJobIdRef.current = jobState.id;
+  reportedJobIdRef.current = executionKey;
   const summary = formatJobLabel(jobState, t) || t("job.notifications.failed");
   if (jobState.failureGuidance) {
     toast.error(summary);
@@ -268,6 +293,9 @@ function createFailedJobContext(
 ): ErrorReportContext {
   return {
     source: "job-failure",
+    jobId: jobState.id,
+    executionId: jobState.executionId,
+    incidentAt: new Date().toISOString(),
     summary,
     message: jobState.detail || jobState.progressText || summary,
     jobStage: jobState.phase || jobState.progressText || undefined,

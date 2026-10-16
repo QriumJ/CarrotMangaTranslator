@@ -1,5 +1,12 @@
+import { useSampledGestureLifecycle } from "./useSampledGestureLifecycle";
+import { useSampledRetouchCursor } from "./useSampledRetouchCursor";
+import {
+  hideSampledCursor,
+  refreshSampledCursor,
+} from "../lib/sampledRetouchCursor";
 import {
   useCallback,
+  useEffect,
   useRef,
   type MutableRefObject,
   type PointerEvent,
@@ -11,6 +18,7 @@ import {
   hideRetouchCursor,
   queueRetouchCursor,
   replaceRetouchStrokePreview,
+  resizeRetouchCursor,
 } from "../lib/retouchLiveOverlay";
 import {
   constrainStrokeToLine,
@@ -43,9 +51,27 @@ type InpaintingPointerHandlers = {
   onPointerUp: (event: PointerEvent) => boolean;
 };
 
+/** Keep a visible brush cursor in step with `[`/`]` and the size slider. */
+function useLiveCursorRadius(
+  stageRef: UseWorkspaceInpaintingPointerHandlersOptions["stageRef"],
+  radius: number,
+): void {
+  useEffect(() => {
+    resizeRetouchCursor(stageRef.current, radius);
+    refreshSampledCursor(stageRef.current, { radius });
+  }, [radius, stageRef]);
+}
+
 export function useWorkspaceInpaintingPointerHandlers(
   options: UseWorkspaceInpaintingPointerHandlersOptions,
 ): InpaintingPointerHandlers {
+  useSampledGestureLifecycle(
+    options.selectedPage?.id,
+    options.selectedPage?.inpaintedImagePath ?? options.selectedPage?.imagePath,
+    options.inpaintingTool,
+    options.stageRef,
+  );
+  useLiveCursorRadius(options.stageRef, options.inpaintingBrushRadius);
   const { t } = useTranslation("renderer");
   const shapeDrawingRef = useRef<RetouchShapeDrawing | null>(null);
   const brushRadiusDragRef = useRef<BrushRadiusDrag | null>(null);
@@ -57,7 +83,7 @@ export function useWorkspaceInpaintingPointerHandlers(
     brushRadiusDragRef,
     t,
   );
-  const onPointerMove = useInpaintingPointerMove(
+  const move = useInpaintingPointerMove(
     options,
     imagePointResolver.resolve,
     shapeDrawingRef,
@@ -70,9 +96,15 @@ export function useWorkspaceInpaintingPointerHandlers(
     brushRadiusDragRef,
   );
   const { inpaintingRetouchDrawingRef, stageRef } = options;
+  const onPointerMove = useSampledRetouchCursor(
+    options,
+    imagePointResolver,
+    move,
+  );
   const onPointerLeave = useCallback(() => {
     if (!inpaintingRetouchDrawingRef.current) {
       hideRetouchCursor(stageRef.current);
+      hideSampledCursor(stageRef.current);
       imagePointResolver.invalidate();
     }
   }, [imagePointResolver, inpaintingRetouchDrawingRef, stageRef]);
