@@ -80,6 +80,7 @@ type AppModalsProps = {
   onCancelSettings: () => void;
   onOpenErrorReport: () => void;
   onOpenLogFolder: () => void;
+  onOpenModelFolder: () => void;
   onResetSettings: () => Promise<AppSettings | null>;
   onSubmitSettings: (settings: AppSettings) => void;
   onResolveConfirm: (confirmed: boolean) => void;
@@ -249,6 +250,7 @@ function EditAndSettingsModals({
   onDeleteRename,
   onOpenErrorReport,
   onOpenLogFolder,
+  onOpenModelFolder,
   onResetSettings,
   onSubmitRename,
   onSubmitSettings,
@@ -267,6 +269,7 @@ function EditAndSettingsModals({
   | "onDeleteRename"
   | "onOpenErrorReport"
   | "onOpenLogFolder"
+  | "onOpenModelFolder"
   | "onResetSettings"
   | "onSubmitRename"
   | "onSubmitSettings"
@@ -299,6 +302,7 @@ function EditAndSettingsModals({
           onCancel={onCancelSettings}
           onOpenErrorReport={onOpenErrorReport}
           onOpenLogFolder={onOpenLogFolder}
+          onOpenModelFolder={onOpenModelFolder}
           onReset={onResetSettings}
           onSubmit={onSubmitSettings}
         />

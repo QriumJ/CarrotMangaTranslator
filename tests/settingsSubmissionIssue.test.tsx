@@ -119,6 +119,7 @@ it("keeps API errors beside Save across tabs and returns focus to the invalid fi
       jobActive={false}
       onCancel={vi.fn()}
       onOpenLogFolder={vi.fn()}
+      onOpenModelFolder={vi.fn()}
       onOpenErrorReport={vi.fn()}
       onReset={async () => null}
       onSubmit={onSubmit}

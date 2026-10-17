@@ -470,6 +470,7 @@ export interface MangaApi extends McpApi, ChatApi, ClaudeApi {
     page: VertexSetupPageId,
   ) => Promise<{ opened: boolean; url: string }>;
   getLogPath: () => Promise<string>;
+  openModelFolder: () => Promise<{ opened: boolean }>;
   openLogFolder: () => Promise<unknown>;
   writeLog: (
     level: "debug" | "info" | "warn" | "error",

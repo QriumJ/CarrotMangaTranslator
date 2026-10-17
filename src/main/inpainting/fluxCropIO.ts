@@ -8,7 +8,7 @@ import {
 import { restoreFluxFlatBackground } from "./fluxFlatBackground";
 import type { InpaintingWindowMask } from "./inpaintingEngine";
 
-export async function readFluxCropCandidate(
+export async function readFluxCropCandidates(
   path: string,
   options: {
     source: Buffer;
@@ -16,15 +16,26 @@ export async function readFluxCropCandidate(
     constraint: InpaintingWindowMask | null;
     width: number;
     height: number;
+    speechBubble?: boolean;
+    core?: InpaintingWindowMask;
   },
-): Promise<Buffer> {
-  const generated = await readGeneratedBitmap(
+): Promise<{ generated: Buffer; contextGenerated: Buffer }> {
+  const contextGenerated = await readGeneratedBitmap(
     path,
     options.crop.w,
     options.crop.h,
   );
-  restoreFluxFlatBackground({ ...options, generated });
-  return generated;
+  restoreFluxFlatBackground({
+    ...options,
+    speechBubble: false,
+    generated: contextGenerated,
+  });
+  const generated = options.speechBubble
+    ? Buffer.from(contextGenerated)
+    : contextGenerated;
+  if (options.speechBubble)
+    restoreFluxFlatBackground({ ...options, generated });
+  return { generated, contextGenerated };
 }
 
 export function resolveFluxCropPaths(

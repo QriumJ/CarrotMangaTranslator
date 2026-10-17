@@ -1826,7 +1826,8 @@
       "reportProblem": "报告问题",
       "restoreDefaults": "恢复默认值",
       "cancel": "取消",
-      "save": "保存"
+      "save": "保存",
+      "openModels": "打开模型文件夹"
     },
     "unsavedChanges": {
       "title": "未保存的更改",

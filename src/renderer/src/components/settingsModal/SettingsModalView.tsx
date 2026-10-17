@@ -46,6 +46,7 @@ export type SettingsModalViewProps = {
   onCancel: () => void;
   onOpenErrorReport: () => void;
   onOpenLogFolder: () => void;
+  onOpenModelFolder: () => void;
   onReset: () => void;
   setActiveTab: React.Dispatch<React.SetStateAction<SettingsTabId>>;
   shortcutsPanelProps: React.ComponentProps<typeof ShortcutsSettingsPanel>;
@@ -77,14 +78,13 @@ export function SettingsModalView({
   formatPanelTitle,
   formatPanelProps,
   onCancel,
-  onOpenErrorReport,
-  onOpenLogFolder,
   onReset,
   setActiveTab,
   shortcutsPanelProps,
   submit,
   testPanelProps,
   validationProps,
+  ...supportActions
 }: SettingsModalViewProps): React.JSX.Element {
   const [activeLlmTab, setActiveLlmTab] =
     React.useState<LlmSettingsTab>("translation");
@@ -110,8 +110,7 @@ export function SettingsModalView({
           onRevealIssue={revealIssue}
           controlsBusy={controlsBusy}
           onCancel={onCancel}
-          onOpenErrorReport={onOpenErrorReport}
-          onOpenLogFolder={onOpenLogFolder}
+          {...supportActions}
           onReset={onReset}
           submit={submit}
         />

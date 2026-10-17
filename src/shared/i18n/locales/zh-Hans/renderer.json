@@ -7,7 +7,8 @@
   "bridge": {
     "cancelJobFailed": "无法发送取消任务请求。",
     "openLibraryFailed": "无法打开资料库文件夹。",
-    "openLogsFailed": "无法打开日志文件夹。"
+    "openLogsFailed": "无法打开日志文件夹。",
+    "openModelsFailed": "无法打开模型文件夹。"
   },
   "panels": {
     "connecting": "正在连接…",

@@ -1826,7 +1826,8 @@
       "reportProblem": "問題を報告",
       "restoreDefaults": "既定値に戻す",
       "cancel": "キャンセル",
-      "save": "保存"
+      "save": "保存",
+      "openModels": "モデルフォルダーを開く"
     },
     "unsavedChanges": {
       "title": "未保存の変更",

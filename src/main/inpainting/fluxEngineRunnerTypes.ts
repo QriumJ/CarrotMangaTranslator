@@ -45,6 +45,7 @@ export type FluxInpaintDiagnostics = {
 export type FluxWindowProcessArgs = {
   bitmap: Buffer;
   sourceBitmap: Buffer;
+  contextBitmap: Buffer;
   getWorker: () => FluxWorker;
   height: number;
   index: number;

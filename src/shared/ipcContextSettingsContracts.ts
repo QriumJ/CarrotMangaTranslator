@@ -296,6 +296,12 @@ const optionalModelTestArgsSchema = z.union([
   z.tuple([AppSettingsSchema, z.unknown()]),
 ]);
 export const settingsIpcContracts = {
+  openModelFolder: defineIpcContract<[], { opened: boolean }>({
+    apiKey: "openModelFolder",
+    channel: "settings:open-model-folder",
+    args: z.tuple([]),
+    result: z.object({ opened: z.boolean() }).strict(),
+  }),
   saveExportPreferences: defineIpcContract<
     [ExportPreferences],
     ExportPreferences

@@ -1,3 +1,6 @@
+import { mkdtemp, rm, stat, writeFile, readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   BrowserWindow,
   clipboard,
@@ -1069,3 +1072,35 @@ async function createMcpControlBoundary(url: string | null = null) {
   };
   return { service, savePreferences, local, call };
 }
+
+it("opens the managed model directory, preserves existing files and reports shell failures", async () => {
+  const root = await mkdtemp(join(tmpdir(), "model-folder-ipc-"));
+  const harness = await createConcurrentActivityIpcHarness();
+  try {
+    harness.context.appPaths = { ...harness.context.appPaths, dataRoot: root };
+    const { registerSettingsFilePickers } =
+      await import("../src/main/ipc/settingsFilePickerIpc");
+    registerSettingsFilePickers(harness.context);
+    const modelPath = join(root, "models");
+    vi.mocked(shell.openPath).mockResolvedValue("");
+    await expect(
+      harness.call("openModelFolder", "C:/untrusted"),
+    ).rejects.toThrow();
+    await expect(harness.call("openModelFolder")).resolves.toEqual({
+      opened: true,
+    });
+    expect((await stat(modelPath)).isDirectory()).toBe(true);
+    expect(shell.openPath).toHaveBeenLastCalledWith(modelPath);
+    const sentinel = join(modelPath, "existing-model.bin");
+    await writeFile(sentinel, "existing-model");
+    await harness.call("openModelFolder");
+    expect(await readFile(sentinel, "utf8")).toBe("existing-model");
+    vi.mocked(shell.openPath).mockResolvedValueOnce("Explorer unavailable");
+    await expect(harness.call("openModelFolder")).rejects.toThrow(
+      "Explorer unavailable",
+    );
+  } finally {
+    harness.libraryMutationCoordinator.configureActivityGate(null);
+    await rm(root, { recursive: true, force: true });
+  }
+});

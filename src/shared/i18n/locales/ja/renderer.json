@@ -7,7 +7,8 @@
   "bridge": {
     "cancelJobFailed": "処理のキャンセル要求を送信できませんでした。",
     "openLibraryFailed": "ライブラリフォルダーを開けませんでした。",
-    "openLogsFailed": "ログフォルダーを開けませんでした。"
+    "openLogsFailed": "ログフォルダーを開けませんでした。",
+    "openModelsFailed": "モデルフォルダーを開けませんでした。"
   },
   "panels": {
     "connecting": "接続中…",

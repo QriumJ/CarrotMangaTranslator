@@ -1,5 +1,6 @@
-import { dialog, type OpenDialogOptions } from "electron";
+import { dialog, shell, type OpenDialogOptions } from "electron";
 import { existsSync, readdirSync } from "node:fs";
+import { mkdir } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import type { LocalModelPickResult } from "../../shared/jobTypes";
 import {
@@ -15,6 +16,17 @@ import { trustedHandleContract } from "./trustedIpc";
 import { settingsIpcContracts } from "../../shared/ipcContextSettingsContracts";
 
 export function registerSettingsFilePickers(context: IpcContext): void {
+  trustedHandleContract(
+    context,
+    settingsIpcContracts.openModelFolder,
+    async () => {
+      const modelPath = join(context.appPaths.dataRoot, "models");
+      await mkdir(modelPath, { recursive: true });
+      const error = await shell.openPath(modelPath);
+      if (error) throw new Error(error);
+      return { opened: true };
+    },
+  );
   trustedHandleContract(
     context,
     settingsIpcContracts.pickLocalModelFile,

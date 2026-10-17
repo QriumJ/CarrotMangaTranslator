@@ -10,7 +10,7 @@ import {
   FLUX_RUNNER_MASK_PADDING_PX,
 } from "./fluxEngineConstants";
 import {
-  readFluxCropCandidate,
+  readFluxCropCandidates,
   resolveFluxCropPaths,
   writeFluxCropInputs,
 } from "./fluxCropIO";
@@ -31,6 +31,7 @@ import { reportFluxInpaintSummary } from "./fluxInpaintSummary";
 import type { FluxInpaintSummary } from "./fluxInpaintSummary";
 import { assertFluxMaskContracts } from "./fluxMaskContracts";
 import type { PixelRect } from "./maskGeometry";
+import type { FluxPreparedCrop } from "./fluxCropTiling";
 import type {
   FluxInpaintDiagnostics,
   FluxInpaintRunnerArgs,
@@ -95,6 +96,7 @@ export async function runFluxInpaint(
     const summary = await processFluxWindows({
       bitmap,
       sourceBitmap: Buffer.from(bitmap),
+      contextBitmap: Buffer.from(bitmap),
       getWorker,
       height,
       isolateWindowMasks,
@@ -180,15 +182,13 @@ async function processFluxWindow(
 ): Promise<FluxWindowProcessResult> {
   const {
     bitmap,
-    compositeMasks,
+    contextBitmap,
     getWorker,
-    height,
     index,
     tileLargeCrops,
     options,
     runDir,
     runOptions,
-    windowMasks,
     width,
   } = args;
   const { crops, effectiveMask } = prepareFluxWindowForProcessing(args);
@@ -196,7 +196,7 @@ async function processFluxWindow(
     return {
       covered: isWindowMaskFullyOwnedByEarlierWindow(
         runOptions.windowMasks?.[index],
-        windowMasks?.[index],
+        args.windowMasks?.[index],
       ),
       eligible: false,
     };
@@ -205,7 +205,11 @@ async function processFluxWindow(
   for (const [tileIndex, crop] of crops.entries()) {
     throwIfAborted(runOptions.signal);
     const paths = resolveFluxCropPaths(runDir, index, tileIndex);
-    const cropBitmap = cropBitmapFromPage(bitmap, width, crop.paddedBounds);
+    const cropBitmap = cropBitmapFromPage(
+      contextBitmap,
+      width,
+      crop.paddedBounds,
+    );
     await writeFluxCropInputs(paths, crop, cropBitmap);
     await getWorker().inpaint(
       {
@@ -225,35 +229,69 @@ async function processFluxWindow(
       },
       runOptions.signal,
     );
-    const generated = await readFluxCropCandidate(paths.outputPath, {
-      source: args.sourceBitmap,
-      crop: crop.paddedBounds,
-      constraint: runOptions.compositeConstraints?.[index] ?? null,
-      width,
-      height,
-    });
+    const candidates = await readFluxWindowCandidates(
+      paths.outputPath,
+      args,
+      crop.paddedBounds,
+    );
     const stats = measureMaskedRegionChange(
-      cropBitmap,
-      generated,
+      cropBitmapFromPage(bitmap, width, crop.paddedBounds),
+      candidates.generated,
       crop.validationMask,
     );
     if (stats.maskedPixels > 0) changeStats.push(stats);
-    compositeConstrainedFluxOutput({
-      bitmap,
-      generated,
-      effectiveMask,
-      width,
-      height,
-      crop,
-      featherPx: resolveCompositeFeatherPx(runOptions, options, index),
-      index,
-      windowMask: windowMasks?.[index],
-      coreWindowMasks: runOptions.windowMasks,
-      compositeMasks,
-      compositeConstraints: runOptions.compositeConstraints,
-    });
+    compositeFluxCandidates(args, crop, effectiveMask, candidates);
   }
   return summarizeFluxWindowChange(changeStats, index);
+}
+
+function readFluxWindowCandidates(
+  path: string,
+  args: FluxWindowProcessArgs,
+  crop: PixelRect,
+): ReturnType<typeof readFluxCropCandidates> {
+  return readFluxCropCandidates(path, {
+    source: args.sourceBitmap,
+    crop,
+    constraint: args.runOptions.compositeConstraints?.[args.index] ?? null,
+    speechBubble: args.runOptions.speechBubbleWindows?.[args.index],
+    core: args.compositeMasks?.[args.index],
+    width: args.width,
+    height: args.height,
+  });
+}
+
+function compositeFluxCandidates(
+  args: FluxWindowProcessArgs,
+  crop: FluxPreparedCrop,
+  effectiveMask: Uint8Array,
+  candidates: Awaited<ReturnType<typeof readFluxCropCandidates>>,
+): void {
+  const { index, options, runOptions } = args;
+  const common = {
+    effectiveMask,
+    width: args.width,
+    height: args.height,
+    crop,
+    featherPx: resolveCompositeFeatherPx(runOptions, options, index),
+    index,
+    windowMask: args.windowMasks?.[index],
+    coreWindowMasks: runOptions.windowMasks,
+    compositeMasks: args.compositeMasks,
+    compositeConstraints: runOptions.compositeConstraints,
+  };
+  // Keep post-generation paper correction out of subsequent model inputs.
+  // The established native/outer-ring composite remains their context.
+  compositeConstrainedFluxOutput({
+    ...common,
+    bitmap: args.contextBitmap,
+    generated: candidates.contextGenerated,
+  });
+  compositeConstrainedFluxOutput({
+    ...common,
+    bitmap: args.bitmap,
+    generated: candidates.generated,
+  });
 }
 
 function resolveCompositeFeatherPx(

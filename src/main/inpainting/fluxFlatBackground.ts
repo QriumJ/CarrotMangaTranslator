@@ -3,6 +3,7 @@ import { projectWindowMask } from "./bubbleLayoutConstraintMask";
 import { expandRect, type PixelRect } from "./maskGeometry";
 import { dilateBinaryMaskDisk } from "./patternMaskMorphology";
 import { maskComponents } from "./rasterMasks";
+import { distanceFromMaskBoundary } from "../bubbleLayout/bubbleDistanceTransform";
 
 type FlatBackgroundInput = {
   source: Buffer;
@@ -11,12 +12,14 @@ type FlatBackgroundInput = {
   crop: PixelRect;
   width: number;
   height: number;
+  speechBubble?: boolean;
+  core?: InpaintingWindowMask;
 };
 
 /**
  * A generator can invent a bubble on black paper or marks on white paper.
- * Only correct explicitly owned regions whose entire surrounding ring agrees
- * on a flat colour. Textured/edge-crossing regions keep the generated pixels.
+ * Only correct explicitly owned regions with consistent source-paper evidence.
+ * Textured/edge-crossing regions keep the generated pixels.
  * The existing compositor still owns all page writes and feathering.
  */
 export function restoreFluxFlatBackground(input: FlatBackgroundInput): void {
@@ -36,9 +39,133 @@ export function restoreFluxFlatBackground(input: FlatBackgroundInput): void {
       },
       data: component.data,
     };
-    const color = surroundingFlatColor(input, mask, constraint);
+    const color =
+      surroundingFlatColor(input, mask, constraint) ??
+      interiorFlatColor(input, mask) ??
+      ownedRimFlatColor(input, mask);
     if (color) paintCandidate(input, mask, color);
   }
+}
+
+/** A clipped balloon's outside ring can contain its inked outline or artwork.
+ * Use the inside ring only for detected balloons, excluding the owned text
+ * core. Keep the original strict colour test and require distributed evidence.
+ */
+function interiorFlatColor(
+  input: FlatBackgroundInput,
+  mask: InpaintingWindowMask,
+): number[] | null {
+  if (!input.speechBubble || !input.core) return null;
+  const { bounds, data } = mask;
+  const distances = distanceFromMaskBoundary(data, bounds.w, bounds.h);
+  const core = projectWindowMask(input.core, bounds);
+  const channels: number[][] = [[], [], []];
+  const quadrants = [0, 0, 0, 0];
+  let ringPixels = 0;
+  let ringSamples = 0;
+  for (let i = 0; i < data.length; i++) {
+    if (!data[i] || distances[i] <= 2) continue;
+    const inRing = distances[i] <= 5;
+    ringPixels += Number(inRing);
+    if (core[i]) continue;
+    const x = i % bounds.w;
+    const y = Math.floor(i / bounds.w);
+    if (inRing) {
+      ringSamples++;
+      quadrants[Number(x >= bounds.w / 2) + 2 * Number(y >= bounds.h / 2)]++;
+    }
+    const offset = ((bounds.y + y) * input.width + bounds.x + x) * 4;
+    for (let c = 0; c < 3; c++) channels[c].push(input.source[offset + c]);
+  }
+  if (
+    ringSamples < Math.max(64, ringPixels * 0.25) ||
+    quadrants.filter((count) => count >= 16).length < 3
+  )
+    return null;
+  return flatSampleColor(channels);
+}
+
+/** Small balloons can have a core covering almost all their paper. Require a
+ * complete flat inner rim and dominant matching paper before using that rim.
+ * Any unowned interior artwork still vetoes the correction.
+ */
+function ownedRimFlatColor(
+  input: FlatBackgroundInput,
+  mask: InpaintingWindowMask,
+): number[] | null {
+  if (!input.speechBubble || !input.core) return null;
+  const { bounds, data } = mask;
+  const core = projectWindowMask(input.core, bounds);
+  const total = data.reduce((count, value) => count + Number(!!value), 0);
+  const owned = data.reduce(
+    (count, value, i) => count + Number(!!value && !!core[i]),
+    0,
+  );
+  if (owned < total * 0.9) return null;
+  const { channels, quadrants } = sampleOwnedRim(input, mask, core);
+  const color = distributedFlatColor(channels, quadrants);
+  return color && hasDominantPaperColor(input, mask, color, total)
+    ? color
+    : null;
+}
+
+function sampleOwnedRim(
+  input: FlatBackgroundInput,
+  mask: InpaintingWindowMask,
+  core: Uint8Array,
+) {
+  const { bounds, data } = mask;
+  const distances = distanceFromMaskBoundary(data, bounds.w, bounds.h);
+  const channels: number[][] = [[], [], []];
+  const quadrants = [0, 0, 0, 0];
+  for (let i = 0; i < data.length; i++) {
+    if (!data[i]) continue;
+    const x = i % bounds.w;
+    const y = Math.floor(i / bounds.w);
+    const inRing = distances[i] > 1 && distances[i] <= 3;
+    if (inRing)
+      quadrants[Number(x >= bounds.w / 2) + 2 * Number(y >= bounds.h / 2)]++;
+    if (!inRing && (core[i] || distances[i] <= 2)) continue;
+    const offset = ((bounds.y + y) * input.width + bounds.x + x) * 4;
+    for (let c = 0; c < 3; c++) channels[c].push(input.source[offset + c]);
+  }
+  return { channels, quadrants };
+}
+
+function distributedFlatColor(
+  channels: number[][],
+  quadrants: number[],
+): number[] | null {
+  if (
+    quadrants.reduce((sum, count) => sum + count, 0) < 64 ||
+    quadrants.filter((count) => count >= 16).length < 3
+  )
+    return null;
+  return flatSampleColor(channels);
+}
+
+function hasDominantPaperColor(
+  input: FlatBackgroundInput,
+  mask: InpaintingWindowMask,
+  color: number[],
+  total: number,
+): boolean {
+  const { bounds, data } = mask;
+  let matching = 0;
+  for (let i = 0; i < data.length; i++) {
+    if (!data[i]) continue;
+    const offset =
+      ((bounds.y + Math.floor(i / bounds.w)) * input.width +
+        bounds.x +
+        (i % bounds.w)) *
+      4;
+    matching += Number(
+      color.every(
+        (value, c) => Math.abs(input.source[offset + c] - value) <= 24,
+      ),
+    );
+  }
+  return matching >= total * 0.8;
 }
 
 function surroundingFlatColor(
@@ -69,6 +196,10 @@ function surroundingFlatColor(
     for (let c = 0; c < 3; c++) channels[c].push(input.source[offset + c]);
   }
   if (channels[0].length < 64) return null;
+  return flatSampleColor(channels);
+}
+
+function flatSampleColor(channels: number[][]): number[] | null {
   const color = channels.map(
     (channel) => channel.sort((a, b) => a - b)[Math.floor(channel.length / 2)],
   );

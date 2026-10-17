@@ -22,6 +22,81 @@ afterEach(() => {
 });
 
 describe("Flux inpainting engine change detection", () => {
+  it("restores framed paper without feeding the correction into the next worker input", async () => {
+    vi.doMock("electron", () => ({ nativeImage: createFakeNativeImage() }));
+    const { createFluxEngine } =
+      await import("../src/main/inpainting/fluxEngine");
+    const root = createTempDir("mgt-flux-framed-bubble-");
+    const capture = join(root, "requests.json");
+    const worker = join(root, "worker.cjs");
+    writeFileSync(worker, createMaskCaptureWorkerScript(capture));
+    const engine = createFluxEngine({
+      diagnostics: createTestDiagnostics(),
+      launch: {
+        backend: "cuda-native",
+        executable: process.execPath,
+        args: [worker],
+        runtimePath: root,
+        label: "test Flux worker",
+      },
+      runRootDir: root,
+    });
+    const bitmap = Buffer.alloc(64 * 64 * 4, 255);
+    for (let y = 19; y <= 40; y++)
+      for (const x of [19, 40])
+        bitmap.fill(0, (y * 64 + x) * 4, (y * 64 + x) * 4 + 3);
+    for (let y = 27; y < 33; y++)
+      for (let x = 27; x < 33; x++)
+        bitmap.fill(0, (y * 64 + x) * 4, (y * 64 + x) * 4 + 3);
+    const constraint = {
+      bounds: { x: 20, y: 20, w: 20, h: 20 },
+      data: new Uint8Array(400).fill(1),
+    };
+    const core = {
+      bounds: { x: 27, y: 27, w: 6, h: 6 },
+      data: new Uint8Array(36).fill(1),
+    };
+    const following = {
+      bounds: { x: 44, y: 24, w: 10, h: 10 },
+      data: new Uint8Array(100).fill(1),
+    };
+    const before = Buffer.from(bitmap);
+    try {
+      await engine.inpaint(
+        bitmap,
+        64,
+        64,
+        new Uint8Array(4096).fill(1),
+        [constraint.bounds, following.bounds],
+        {
+          contextPx: 64,
+          maskPaddingPx: 0,
+          featherPx: 3,
+          speechBubbleWindows: [true, false],
+          windowMasks: [constraint, following],
+          compositeConstraints: [constraint, following],
+          compositeMasks: [core, following],
+          requirePixelChange: true,
+        },
+      );
+    } finally {
+      await engine.dispose();
+    }
+    expect(bitmap[(30 * 64 + 30) * 4]).toBe(255);
+    for (let i = 0; i < 4096; i++) {
+      if (i % 64 >= 20 && i % 64 < 40 && i >= 20 * 64 && i < 40 * 64) continue;
+      expect(bitmap.subarray(i * 4, i * 4 + 4)).toEqual(
+        before.subarray(i * 4, i * 4 + 4),
+      );
+    }
+    const requests = JSON.parse(readFileSync(capture, "utf8"));
+    expect(requests).toEqual([
+      expect.objectContaining({ speechBubble: true }),
+      expect.objectContaining({ speechBubble: false }),
+    ]);
+    expect(requests[1].inputHash).toBe(requests[0].inputHash);
+  });
+
   it("rejects mismatched or out-of-page priority cores before assigning ownership", async () => {
     const { buildExclusivePaddedWindowMasks } =
       await import("../src/main/inpainting/inpaintingWindowMask");
@@ -670,7 +745,8 @@ rl.on("line", (line) => {
   const requests = fs.existsSync(${JSON.stringify(capturePath)})
     ? JSON.parse(fs.readFileSync(${JSON.stringify(capturePath)}, "utf8"))
     : [];
-  requests.push({ activePixels, speechBubble: request.speech_bubble });
+  requests.push({ activePixels, speechBubble: request.speech_bubble,
+    inputHash: require("node:crypto").createHash("sha256").update(inputFile).digest("hex") });
   fs.writeFileSync(${JSON.stringify(capturePath)}, JSON.stringify(requests));
   fs.copyFileSync(request.input, request.output);
   process.stdout.write(JSON.stringify({ id: request.id, ok: true }) + "\\n");

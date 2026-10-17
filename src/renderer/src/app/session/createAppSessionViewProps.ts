@@ -149,6 +149,7 @@ function createModalsProps({
     onWebImportBackgroundStateChange: importShareModal.setWebImportBackgrounded,
     onDeleteRename: () => void libraryActions.deleteRenameTarget(),
     onOpenLogFolder: bridgeActions.openLogFolder,
+    onOpenModelFolder: bridgeActions.openModelFolder,
     onOpenErrorReport: openManualErrorReport,
     onCloseFontManager: () => uiState.setFontManagerOpen(false),
     onResetSettings: settingsDialog.resetSettings,

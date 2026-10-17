@@ -120,6 +120,7 @@ it("opens, closes, and reopens the page editor through the header and inactive a
           onCancelSettings={noop}
           onOpenErrorReport={noop}
           onOpenLogFolder={noop}
+          onOpenModelFolder={noop}
           onResetSettings={async () => null}
           onSubmitSettings={noop}
           onResolveConfirm={noop}

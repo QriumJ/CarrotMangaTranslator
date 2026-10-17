@@ -33,6 +33,7 @@ type SettingsModalViewPropsInput = {
   onCancel: () => void;
   onOpenErrorReport: () => void;
   onOpenLogFolder: () => void;
+  onOpenModelFolder: () => void;
   onReset: () => void;
   runModelTest: () => Promise<void>;
   runtime: SettingsRuntimeGuards;
@@ -58,8 +59,6 @@ export function buildSettingsModalViewProps({
   keybindings,
   localActions,
   onCancel,
-  onOpenErrorReport,
-  onOpenLogFolder,
   onReset,
   runModelTest,
   runtime,
@@ -68,6 +67,7 @@ export function buildSettingsModalViewProps({
   submit,
   test,
   t,
+  ...supportActions
 }: SettingsModalViewPropsInput): SettingsModalViewProps {
   const enginePanelProps = buildEnginePanelProps({
     controlsBusy,
@@ -101,8 +101,7 @@ export function buildSettingsModalViewProps({
     formatPanelTitle,
     formatPanelProps,
     onCancel,
-    onOpenErrorReport,
-    onOpenLogFolder,
+    ...supportActions,
     onReset,
     setActiveTab,
     shortcutsPanelProps: {

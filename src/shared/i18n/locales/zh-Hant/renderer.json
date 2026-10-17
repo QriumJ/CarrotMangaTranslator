@@ -7,7 +7,8 @@
   "bridge": {
     "cancelJobFailed": "無法傳送取消工作要求。",
     "openLibraryFailed": "無法開啟資料庫資料夾。",
-    "openLogsFailed": "無法開啟記錄資料夾。"
+    "openLogsFailed": "無法開啟記錄資料夾。",
+    "openModelsFailed": "無法開啟模型資料夾。"
   },
   "panels": {
     "connecting": "正在連線…",

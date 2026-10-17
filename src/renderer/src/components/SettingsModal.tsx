@@ -16,6 +16,7 @@ type SettingsModalProps = {
   onCancel: () => void;
   onOpenErrorReport: () => void;
   onOpenLogFolder: () => void;
+  onOpenModelFolder: () => void;
   onReset: () => Promise<AppSettings | null>;
   onSubmit: (settings: AppSettings) => void;
 };
@@ -29,6 +30,7 @@ export function SettingsModal({
   onCancel,
   onOpenErrorReport,
   onOpenLogFolder,
+  onOpenModelFolder,
   onReset,
   onSubmit,
 }: SettingsModalProps): React.JSX.Element {
@@ -49,6 +51,7 @@ export function SettingsModal({
     openRequest,
     onOpenErrorReport,
     onOpenLogFolder,
+    onOpenModelFolder,
     onReset,
     onSubmit,
     onCancel: requestClose,

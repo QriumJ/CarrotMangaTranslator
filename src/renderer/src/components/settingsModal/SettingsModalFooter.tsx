@@ -5,6 +5,19 @@ import { ModalActionBar } from "../ui/ModalActionBar";
 import type { SettingsSubmissionIssue } from "./settingsSubmissionIssue";
 import styles from "./SettingsModalFooter.module.css";
 
+type SettingsModalFooterProps = {
+  canSubmit: boolean;
+  submissionIssue?: SettingsSubmissionIssue;
+  controlsBusy: boolean;
+  onCancel: () => void;
+  onOpenErrorReport: () => void;
+  onOpenLogFolder: () => void;
+  onOpenModelFolder: () => void;
+  onReset: () => void;
+  submit: () => void;
+  onRevealIssue: () => void;
+};
+
 export function SettingsModalFooter({
   canSubmit,
   submissionIssue,
@@ -12,20 +25,11 @@ export function SettingsModalFooter({
   onCancel,
   onOpenErrorReport,
   onOpenLogFolder,
+  onOpenModelFolder,
   onReset,
   submit,
   onRevealIssue,
-}: {
-  canSubmit: boolean;
-  submissionIssue?: SettingsSubmissionIssue;
-  controlsBusy: boolean;
-  onCancel: () => void;
-  onOpenErrorReport: () => void;
-  onOpenLogFolder: () => void;
-  onReset: () => void;
-  submit: () => void;
-  onRevealIssue: () => void;
-}): React.JSX.Element {
+}: SettingsModalFooterProps): React.JSX.Element {
   const { t } = useTranslation("components");
   return (
     <div className={styles.root}>
@@ -46,6 +50,13 @@ export function SettingsModalFooter({
               disabled={controlsBusy}
             >
               {t("settings.footer.openLogs")}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={onOpenModelFolder}
+              disabled={controlsBusy}
+            >
+              {t("settings.footer.openModels")}
             </Button>
             <Button
               variant="ghost"

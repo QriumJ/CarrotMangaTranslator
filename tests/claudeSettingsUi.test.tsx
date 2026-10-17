@@ -89,6 +89,7 @@ it("selects Claude only for image reading and preserves Codex image generation",
       onCancel: vi.fn(),
       onOpenErrorReport: vi.fn(),
       onOpenLogFolder: vi.fn(),
+      onOpenModelFolder: vi.fn(),
       onReset: async () => null,
       onSubmit: vi.fn(),
     });

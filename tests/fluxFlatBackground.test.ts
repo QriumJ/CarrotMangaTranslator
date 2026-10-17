@@ -27,6 +27,139 @@ function fixture(value = 255) {
 }
 
 describe("FLUX flat background correction", () => {
+  function outlinedBubble(color = [255, 255, 255]) {
+    const f = fixture();
+    for (let i = 0; i < f.width * f.height; i++)
+      for (let c = 0; c < 3; c++) f.source[i * 4 + c] = color[c];
+    // The erasure boundary abuts an inked frame; its outside ring is not paper.
+    for (let y = 19; y <= 40; y++)
+      for (const x of [19, 40])
+        f.source.fill(0, (y * f.width + x) * 4, (y * f.width + x) * 4 + 3);
+    const core = {
+      bounds: { x: 27, y: 27, w: 6, h: 6 },
+      data: new Uint8Array(36).fill(1),
+    };
+    for (let y = 27; y < 33; y++)
+      for (let x = 27; x < 33; x++)
+        f.source.fill(128, (y * f.width + x) * 4, (y * f.width + x) * 4 + 3);
+    return { ...f, speechBubble: true, core };
+  }
+
+  it.each([
+    [255, 255, 255],
+    [0, 0, 0],
+    [240, 225, 180],
+  ])(
+    "restores framed balloon paper (%i,%i,%i) without changing source, alpha or exterior",
+    (r, g, b) => {
+      const f = outlinedBubble([r, g, b]);
+      const source = Buffer.from(f.source);
+      restoreFluxFlatBackground(f);
+      expect([
+        ...f.generated.subarray((30 * 60 + 30) * 4, (30 * 60 + 30) * 4 + 4),
+      ]).toEqual([r, g, b, 120]);
+      expect(f.generated[(30 * 60 + 19) * 4]).toBe(120);
+      expect(f.source).toEqual(source);
+    },
+  );
+
+  it("requires detected balloon semantics and an independently owned text core", () => {
+    for (const overrides of [{ speechBubble: false }, { core: undefined }]) {
+      const f = { ...outlinedBubble(), ...overrides };
+      const before = Buffer.from(f.generated);
+      restoreFluxFlatBackground(f);
+      expect(f.generated).toEqual(before);
+    }
+  });
+
+  it("refuses patterned or gradient balloon interiors even with flat exterior strips", () => {
+    for (const pattern of ["tone", "gradient"]) {
+      const f = outlinedBubble();
+      for (let y = 20; y < 40; y++)
+        for (let x = 20; x < 40; x++) {
+          const value = pattern === "tone" ? (x % 2 ? 255 : 100) : 100 + x * 3;
+          f.source[(y * f.width + x) * 4] = value;
+        }
+      const before = Buffer.from(f.generated);
+      restoreFluxFlatBackground(f);
+      expect(f.generated).toEqual(before);
+    }
+  });
+
+  it("rejects one-sided interior evidence", () => {
+    const f = outlinedBubble();
+    f.core = {
+      bounds: f.constraint.bounds,
+      data: Uint8Array.from({ length: 400 }, (_, i) => (i % 20 < 10 ? 1 : 0)),
+    };
+    const before = Buffer.from(f.generated);
+    restoreFluxFlatBackground(f);
+    expect(f.generated).toEqual(before);
+  });
+
+  it("keeps non-text artwork inside a flat rim instead of filling the whole balloon", () => {
+    const f = outlinedBubble();
+    // This mark lies deeper than the sampled rim and outside the text core.
+    f.source[(26 * f.width + 30) * 4] = 0;
+    const before = Buffer.from(f.generated);
+    restoreFluxFlatBackground(f);
+    expect(f.generated).toEqual(before);
+  });
+
+  it("recovers a small balloon when its owned core includes the paper rim", () => {
+    const f = outlinedBubble();
+    f.core = { ...f.constraint, data: new Uint8Array(400).fill(1) };
+    restoreFluxFlatBackground(f);
+    expect(f.generated[(30 * 60 + 30) * 4]).toBe(255);
+    expect(f.generated[(30 * 60 + 19) * 4]).toBe(120);
+  });
+
+  it("preserves holes when an almost fully owned balloon has a flat paper rim", () => {
+    const f = outlinedBubble();
+    f.constraint.data[2 * 20 + 2] = 0;
+    f.core = { ...f.constraint, data: new Uint8Array(400).fill(1) };
+    restoreFluxFlatBackground(f);
+    expect(f.generated[(22 * 60 + 22) * 4]).toBe(120);
+    expect(f.generated[(30 * 60 + 30) * 4]).toBe(255);
+  });
+
+  it("vetoes unowned deep artwork even when the core owns almost all the paper", () => {
+    const f = outlinedBubble();
+    const data = new Uint8Array(400).fill(1);
+    data[0] = 0;
+    data[6 * 20 + 10] = 0;
+    f.core = { ...f.constraint, data };
+    f.source[(26 * 60 + 30) * 4] = 0;
+    const before = Buffer.from(f.generated);
+    restoreFluxFlatBackground(f);
+    expect(f.generated).toEqual(before);
+  });
+
+  it("keeps tiny edge-clipped balloons without enough rim evidence unchanged", () => {
+    const f = outlinedBubble();
+    f.constraint = {
+      bounds: { x: 0, y: 20, w: 4, h: 4 },
+      data: new Uint8Array(16).fill(1),
+    };
+    f.core = f.constraint;
+    const before = Buffer.from(f.generated);
+    restoreFluxFlatBackground(f);
+    expect(f.generated).toEqual(before);
+  });
+
+  it("rejects a fully owned interior without dominant paper or with an inked rim", () => {
+    for (const rim of [true, false]) {
+      const f = outlinedBubble();
+      f.core = { ...f.constraint, data: new Uint8Array(400).fill(1) };
+      for (let y = rim ? 22 : 24; y < (rim ? 23 : 36); y++)
+        for (let x = rim ? 22 : 24; x < (rim ? 23 : 36); x++)
+          f.source[(y * 60 + x) * 4] = 0;
+      const before = Buffer.from(f.generated);
+      restoreFluxFlatBackground(f);
+      expect(f.generated).toEqual(before);
+    }
+  });
+
   it.each([0, 255])(
     "restores uniform %i paper instead of generated clouds; keeps mask exterior and alpha",
     (value) => {

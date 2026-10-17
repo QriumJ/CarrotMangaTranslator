@@ -11,6 +11,31 @@ afterEach(() => {
 });
 
 describe("app session bridge actions", () => {
+  it.each([false, true])(
+    "opens the model folder and surfaces failures: %s",
+    async (fails) => {
+      const openModelFolder = vi.fn(async () => {
+        if (fails) throw new Error("Explorer unavailable");
+        return { opened: true };
+      });
+      window.mangaApi = createTestMangaGatewayStub({ openModelFolder });
+      const pushStatus = vi.fn();
+      const { result } = renderHook(() =>
+        useAppSessionBridgeActions(pushStatus),
+      );
+      act(() => result.current.openModelFolder());
+      await waitFor(() => expect(openModelFolder).toHaveBeenCalledOnce());
+      if (fails) {
+        await waitFor(() =>
+          expect(pushStatus).toHaveBeenCalledWith(
+            "모델 폴더를 열지 못했습니다.",
+          ),
+        );
+      } else {
+        expect(pushStatus).not.toHaveBeenCalled();
+      }
+    },
+  );
   it("cancels the displayed job even when another job became the main default", async () => {
     const cancelJob = vi.fn(async () => ({ cancelled: true }));
     window.mangaApi = createTestMangaGatewayStub({ cancelJob });

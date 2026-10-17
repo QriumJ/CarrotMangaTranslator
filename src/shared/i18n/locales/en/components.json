@@ -1826,7 +1826,8 @@
       "reportProblem": "Report a problem",
       "restoreDefaults": "Restore defaults",
       "cancel": "Cancel",
-      "save": "Save"
+      "save": "Save",
+      "openModels": "Open model folder"
     },
     "unsavedChanges": {
       "title": "Unsaved changes",

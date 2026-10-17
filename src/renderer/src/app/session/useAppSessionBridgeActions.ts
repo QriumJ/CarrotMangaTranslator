@@ -12,6 +12,7 @@ export function useAppSessionBridgeActions(
   cancelJob: () => void;
   openLibraryFolder: () => void;
   openLogFolder: () => void;
+  openModelFolder: () => void;
 } {
   const { t } = useTranslation("renderer");
   const cancelJob = useCallback(() => {
@@ -35,9 +36,16 @@ export function useAppSessionBridgeActions(
     });
   }, [pushStatus, t]);
 
+  const openModelFolder = useCallback(() => {
+    void appGateway.openModelFolder().catch((error) => {
+      pushStatus(formatErrorMessage(error, t("bridge.openModelsFailed")));
+    });
+  }, [pushStatus, t]);
+
   return {
     cancelJob,
     openLibraryFolder,
     openLogFolder,
+    openModelFolder,
   };
 }

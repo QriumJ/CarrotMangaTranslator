@@ -1826,7 +1826,8 @@
       "reportProblem": "오류 보고",
       "restoreDefaults": "기본값 복원",
       "cancel": "취소",
-      "save": "저장"
+      "save": "저장",
+      "openModels": "모델 폴더 열기"
     },
     "unsavedChanges": {
       "title": "저장하지 않은 변경",

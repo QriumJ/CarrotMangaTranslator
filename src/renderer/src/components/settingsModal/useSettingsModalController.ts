@@ -27,6 +27,7 @@ export type SettingsModalControllerInput = {
   onCancel: () => void;
   onOpenErrorReport: () => void;
   onOpenLogFolder: () => void;
+  onOpenModelFolder: () => void;
   onReset: () => Promise<AppSettings | null>;
   onDirtyChange?: (isDirty: boolean) => void;
   onSubmit: (settings: AppSettings) => void;
@@ -38,11 +39,10 @@ export function useSettingsModalController({
   jobActive,
   openRequest,
   onCancel,
-  onOpenErrorReport,
-  onOpenLogFolder,
   onReset,
   onDirtyChange,
   onSubmit,
+  ...supportActions
 }: SettingsModalControllerInput): SettingsModalViewProps {
   const { t } = useTranslation("components");
   const state = useSettingsControllerState({
@@ -99,8 +99,7 @@ export function useSettingsModalController({
     keybindings: state.keybindings,
     localActions: state.localActions,
     onCancel,
-    onOpenErrorReport,
-    onOpenLogFolder,
+    ...supportActions,
     onReset: state.resetDraft,
     runModelTest,
     runtime: state.runtime,
