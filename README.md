@@ -14,11 +14,9 @@ Windows 10/11 · Apple Silicon macOS 14+ · [GPL-3.0-only](LICENSE)
 
 **최근 추가된 기능:** [복제 도장·치유 브러시](#복제-도장과-치유-브러시), [패널 크기 조절](#작업-화면), [공유 색상 팔레트](#색상-선택과-공유-팔레트), [Codex·Claude 채팅](#채팅으로-번역), [단계별 작업 이력](#번역과-페이지-작업). 아래 화면은 실제 앱 컴포넌트를 QA 캡처 도구로 촬영한 예시입니다. [촬영 범위](docs/images/readme-current/README.md)
 
-## 성인용 만화에서 Gemma 4 사용이 어렵다면: OpenCode Go + DeepSeek V4.1 Flash
+## 성인용 만화에서 Gemma 4 사용이 어렵다면: OpenCode Go + DeepSeek V4.1 Flash Free
 
-**PC 사양이나 실행 환경 때문에 Gemma 4 로컬 번역이 여의치 않다면, OpenCode Go의 DeepSeek V4.1 Flash를 대안으로 강력 추천합니다.** 특히 **수위 높은 성인용 만화에서 대안을 찾는 경우** 우선 추천하는 모델입니다.
-
-처음에는 **월 US$10인 Go 기본 요금제부터 시작하는 것을 추천합니다.** 사용량이 부족한지 확인한 뒤 상위 요금제를 검토하세요. 2026-10-06 확인 기준 가격이며, 무제한 요금제가 아니라 시간대별·주간·월간 사용 한도가 있습니다. [공식 요금·사용 한도](https://opencode.ai/docs/go/#usage-limits)
+**PC 사양이나 실행 환경 때문에 Gemma 4 로컬 번역이 여의치 않다면, OpenCode Go의 DeepSeek V4.1 Flash Free를 대안으로 강력 추천합니다.** 특히 **수위 높은 성인용 만화에서 대안을 찾는 경우** 우선 추천하는 모델입니다.
 
 **OpenCode GO 빠른 설정은 v3.2.0부터 사용할 수 있습니다.** 이전 설치본을 사용 중이라면 위 다운로드 링크에서 업데이트하세요.
 
