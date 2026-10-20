@@ -582,7 +582,8 @@ describe("production cleanup coverage floor gate", () => {
     // Grok web and Build share a dedicated MCP connection guide.
     // Text exchange adds its file codec and renderer review importer.
     // Issue #156 adds chapter selection/deletion and glossary file exchange owners.
-    expect(scope.added).toHaveLength(1537);
+    // Hunyuan adds 11 OCR runtime, domain and production UI owners.
+    expect(scope.added).toHaveLength(1548);
     expect(scope.deleted).toHaveLength(12);
   });
 });

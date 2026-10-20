@@ -3,9 +3,18 @@
 
 const HAYAI_OCR_PIPELINE = "hayai";
 const PADDLE_LEGACY_OCR_PIPELINE = "paddle-legacy";
-const MANAGED_OCR_BBOX_PROVIDERS = new Set(["hayai-regions", "paddleocr"]);
+const MANAGED_OCR_BBOX_PROVIDERS = new Set([
+  "hayai-regions",
+  "paddleocr",
+  "hunyuan-regions",
+]);
 
 const OCR_ENGINE_PROFILES = Object.freeze({
+  hunyuan: Object.freeze({
+    id: "hunyuan",
+    displayName: "HunyuanOCR 1.5",
+    provider: "hunyuan-regions",
+  }),
   [HAYAI_OCR_PIPELINE]: Object.freeze({
     id: HAYAI_OCR_PIPELINE,
     displayName: "HayaiOCR",
@@ -13,20 +22,22 @@ const OCR_ENGINE_PROFILES = Object.freeze({
   }),
   [PADDLE_LEGACY_OCR_PIPELINE]: Object.freeze({
     id: PADDLE_LEGACY_OCR_PIPELINE,
-    displayName: "Paddle OCR",
+    displayName: "PaddleOCR(레거시)",
     provider: "paddleocr",
   }),
 });
 
-/** @param {OcrEngineOptions} [options] @returns {"hayai" | "paddle-legacy" | null} */
+/** @param {OcrEngineOptions} [options] @returns {"hayai" | "paddle-legacy" | "hunyuan" | null} */
 function readConfiguredOcrEngineId(options = {}) {
   const value = String(options.ocrPipeline ?? "").trim();
-  return value === HAYAI_OCR_PIPELINE || value === PADDLE_LEGACY_OCR_PIPELINE
+  return value === HAYAI_OCR_PIPELINE ||
+    value === PADDLE_LEGACY_OCR_PIPELINE ||
+    value === "hunyuan"
     ? value
     : null;
 }
 
-/** @param {OcrEngineOptions} [options] @returns {"hayai" | "paddle-legacy"} */
+/** @param {OcrEngineOptions} [options] @returns {"hayai" | "paddle-legacy" | "hunyuan"} */
 function resolveOcrEngineId(options = {}) {
   return readConfiguredOcrEngineId(options) ?? PADDLE_LEGACY_OCR_PIPELINE;
 }
@@ -46,9 +57,9 @@ function assertPaddleLegacyOcrPipeline(
   options = {},
   operation = "Paddle OCR operation",
 ) {
-  if (isHayaiOcrPipeline(options)) {
+  if (resolveOcrEngineId(options) !== PADDLE_LEGACY_OCR_PIPELINE) {
     throw new TypeError(
-      `${operation} is unavailable for the HayaiOCR pipeline.`,
+      `${operation} is unavailable for the ${resolveOcrEngineLabel(options)} pipeline.`,
     );
   }
 }
@@ -95,7 +106,15 @@ function isManagedOcrBboxProvider(provider) {
   return MANAGED_OCR_BBOX_PROVIDERS.has(normalizeOcrBboxProvider(provider));
 }
 
+/** @param {OcrEngineOptions} [options] */
+function isRegionOcrPipeline(options = {}) {
+  return (
+    isHayaiOcrPipeline(options) || resolveOcrEngineId(options) === "hunyuan"
+  );
+}
+
 module.exports = {
+  isRegionOcrPipeline,
   HAYAI_OCR_PIPELINE,
   PADDLE_LEGACY_OCR_PIPELINE,
   assertPaddleLegacyOcrPipeline,

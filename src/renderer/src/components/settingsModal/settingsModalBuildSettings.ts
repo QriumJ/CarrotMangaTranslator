@@ -81,6 +81,7 @@ export function buildSettingsFromDraft({
     ...buildConnectionFields(draft, values, initialSettings),
     ocrDevice: values.ocrDevice,
     ocrPipeline: values.ocrPipeline,
+    hunyuanOcr: values.hunyuanOcr,
     ocrGpuBackend: values.ocrGpuBackend,
     ocrQualityMode: values.ocrQualityMode,
     inpaintingModel: values.inpaintingModel,

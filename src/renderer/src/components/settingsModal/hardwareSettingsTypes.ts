@@ -10,6 +10,13 @@ import type {
 } from "../../../../shared/settingsTypes";
 
 export type HardwareSettingsPanelProps = {
+  sourceLanguage?: string;
+  hunyuanOcr?: import("../../../../shared/settingsTypes").HunyuanSettings;
+  setHunyuanOcr?: React.Dispatch<
+    React.SetStateAction<
+      import("../../../../shared/settingsTypes").HunyuanSettings
+    >
+  >;
   onApplyGemmaDefaults?: () => Promise<void>;
   allowUnsafeLowMemoryFlux: boolean;
   clearTestState: () => void;

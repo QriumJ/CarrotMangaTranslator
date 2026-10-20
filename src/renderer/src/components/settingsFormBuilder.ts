@@ -104,6 +104,7 @@ type BuildSettingsFromFormInput = {
   apiCustomHeadersJson: string;
   ocrDevice: OcrDevice;
   ocrPipeline: OcrPipeline;
+  hunyuanOcr?: import("../../../shared/settingsTypes").HunyuanSettings;
   ocrGpuBackend: OcrGpuBackend;
   ocrQualityMode: OcrQualityMode;
   inpaintingModel: InpaintingModel;
@@ -224,6 +225,7 @@ function buildGemmaSettings(input: BuildSettingsFromFormInput) {
 
 function buildOcrSettings(input: BuildSettingsFromFormInput) {
   return {
+    hunyuan: input.hunyuanOcr ?? input.initialSettings.ocr.hunyuan,
     pipeline: input.ocrPipeline,
     device: input.ocrDevice,
     qualityMode: input.ocrQualityMode,

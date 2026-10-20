@@ -91,7 +91,11 @@
       "ocrPreanalysisDone": "Paddle OCR pre-analysis complete",
       "hayaiOcrRunning": "Analyzing with HayaiOCR",
       "hayaiOcrPreanalysisDone": "HayaiOCR pre-analysis complete",
-      "pageRetry": "Retrying page"
+      "pageRetry": "Retrying page",
+      "hunyuanOcrDownloading": "Downloading/installing HunyuanOCR",
+      "hunyuanOcrPreparing": "Preparing HunyuanOCR",
+      "hunyuanOcrRunning": "Analyzing with HunyuanOCR",
+      "hunyuanOcrPreanalysisDone": "HunyuanOCR pre-analysis complete"
     },
     "status": {
       "starting": "Preparing model",

@@ -1,4 +1,5 @@
 import React from "react";
+import { OcrRecommendation } from "./OcrRecommendation";
 import type { TranslationOptionsModalProps } from "./translationOptionsModalTypes";
 import type { usePageWorkflowModalState } from "./pageWorkflowModalState";
 import {
@@ -25,6 +26,10 @@ export function PageWorkflowOptions({ props, state, changePlan }: Props) {
   const selectResume = useWorkflowResumeSelection(props, state);
   return (
     <section className={styles.toolbar} aria-label="작업 구성">
+      <OcrRecommendation
+        sourceLanguage={props.sourceLanguage}
+        pipeline={props.settings?.ocr.pipeline}
+      />
       <WorkflowPresets props={props} state={state} changePlan={changePlan} />
       {!!state.resumeIds.length && (
         <Select

@@ -240,7 +240,10 @@
       "pageSkippedDetail": "重试 {{maxAttempts}} 次后失败",
       "finalizing": "正在整理结果",
       "pagesReadyNoModel": "{{count}} 页准备完成，无模型调用",
-      "pagesReady": "{{count}} 页准备完成"
+      "pagesReady": "{{count}} 页准备完成",
+      "hunyuanOcrPreparing": "正在准备 HunyuanOCR 预分析",
+      "hunyuanOcrPreparingDetail": "正在为 HunyuanOCR 准备文本区域和识别运行时。",
+      "hunyuanPageNoTextDetail": "HunyuanOCR 未找到文字，因此跳过了模型请求。"
     },
     "warnings": {
       "attemptFailed": "{{page}}：第 {{attempt}} 次尝试失败（共 {{maxAttempts}} 次）— {{message}}",
@@ -290,10 +293,16 @@
     "blocksRunning": "正在执行文本块 OCR 预分析",
     "blocksDetail": "裁剪 {{count}} 个现有文本块区域以读取文本。",
     "gpuCacheReleased": "已为 GPU OCR 释放修复引擎缓存",
-    "gpuCacheReleasedDetail": "已释放 GPU 显存（VRAM）"
+    "gpuCacheReleasedDetail": "已释放 GPU 显存（VRAM）",
+    "hunyuanRunning": "HunyuanOCR固定区域识别",
+    "hunyuanBatchRunning": "正在执行 HunyuanOCR 批量预分析",
+    "hunyuanPrepassDone": "HunyuanOCR 预分析完成"
   },
   "inpainting": {
-    "targets": { "drawn": "绘制区域", "source": "原文" },
+    "targets": {
+      "drawn": "绘制区域",
+      "source": "原文"
+    },
     "preparing": "正在准备擦除{{target}}",
     "pageRunning": "正在擦除第 {{current}} / {{total}} 页的{{target}}",
     "drawnDetail": "{{page}} · {{count}} 个绘制区域",
@@ -308,7 +317,10 @@
     "noTargets": "没有可修复的文本块。",
     "mixedCompletionWorkflows": "所选页面使用了不同的翻译完成工作流，无法作为同一任务处理。",
     "noChanges": "未生成修复结果。",
-    "assets": { "fluxModel": "Flux 模型", "aot": "AOT 修复" },
+    "assets": {
+      "fluxModel": "Flux 模型",
+      "aot": "AOT 修复"
+    },
     "runtime": {
       "fluxReady": "Flux 修复准备完成",
       "fluxReadyLog": "Flux 原文擦除引擎准备完成。",

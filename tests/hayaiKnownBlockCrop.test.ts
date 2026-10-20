@@ -28,6 +28,17 @@ async function fixture() {
   return { options, detect };
 }
 
+it("preserves the exact Hayai known-region contract for Hunyuan", async () => {
+  const { options, detect } = await fixture();
+  const hayai = await prepareHayaiRegions(options, detect);
+  const hunyuan = await prepareHayaiRegions(
+    { ...options, ocrPipeline: "hunyuan" },
+    detect,
+  );
+  expect(hunyuan.manifest).toEqual(hayai.manifest);
+  expect(detect).not.toHaveBeenCalled();
+});
+
 it.each([
   [280, 42],
   [271, 36],

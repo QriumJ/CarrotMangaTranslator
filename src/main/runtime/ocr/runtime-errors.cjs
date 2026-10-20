@@ -281,7 +281,7 @@ function isRocmHipAccessViolationText(value) {
 
 /** @param {unknown} value @returns {boolean} */
 function isOcrVerificationTimeoutText(value) {
-  return /(?:Paddle OCR|HayaiOCR) runtime verification timed out|OCR bbox command timed out/i.test(
+  return /(?:Paddle\s?OCR(?:\(레거시\))?|HayaiOCR) runtime verification timed out|OCR bbox command timed out/i.test(
     String(value ?? ""),
   );
 }

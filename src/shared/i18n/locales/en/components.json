@@ -2419,8 +2419,12 @@
           "description": "The text detector separates ordinary text from sound-effect regions, then Hayai OCR reads each fixed crop. Sound effects stay out of normal translation and are saved for review."
         },
         "paddle-legacy": {
-          "label": "PaddleOCR",
+          "label": "PaddleOCR (Legacy)",
           "description": "Keeps the previous Paddle OCR fragments and Gemma grouping behavior."
+        },
+        "hunyuan": {
+          "label": "HunyuanOCR 1.5",
+          "description": "Multilingual OCR of one fixed region at a time. F16 by default; Q4 optional."
         }
       },
       "ocrQuality": "Paddle OCR quality",
@@ -2458,6 +2462,18 @@
         "rocm-transformers": "Requires ROCm-compatible AMD GPU",
         "cpu": "No GPU needed",
         "unsupportedRocm": "Detected GPU does not support ROCm OCR"
+      },
+      "hunyuan": {
+        "current": "Current: {{engine}}",
+        "recommendation": "Recommended for the source language: {{engine}}",
+        "autoLanguage": "Use Hayai for Japanese and Hunyuan for multilingual OCR.",
+        "apply": "Apply recommendation",
+        "model": "Hunyuan model",
+        "autoModel": "Auto (F16)",
+        "modelHelp": "F16 is the default. Q4 saves VRAM; both use the same vision model.",
+        "device": "Execution device",
+        "autoDevice": "Auto",
+        "deviceHelp": "Uses dedicated GPUs with at least 4GB or Apple unified memory with at least 8GB. GPU initialization or memory failures retry once on CPU with the same model."
       }
     },
     "format": {

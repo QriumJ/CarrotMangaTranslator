@@ -91,7 +91,11 @@
       "ocrPreanalysisDone": "Paddle OCR 預分析完成",
       "hayaiOcrRunning": "正在使用 HayaiOCR 分析",
       "hayaiOcrPreanalysisDone": "HayaiOCR 預分析完成",
-      "pageRetry": "正在重試頁面"
+      "pageRetry": "正在重試頁面",
+      "hunyuanOcrDownloading": "正在下載／安裝 HunyuanOCR",
+      "hunyuanOcrPreparing": "正在準備 HunyuanOCR",
+      "hunyuanOcrRunning": "正在使用 HunyuanOCR 分析",
+      "hunyuanOcrPreanalysisDone": "HunyuanOCR 預分析完成"
     },
     "status": {
       "starting": "正在準備模型",

@@ -1,6 +1,9 @@
 import { join } from "node:path";
 
 const APP_RUNTIME_MODULE_FILES = {
+  llamaDownload: "model/llama-runtime-download.cjs",
+  mainlineRuntimes: "model/speed-llama-runtime-contracts.cjs",
+  processTermination: "transport/process-termination.cjs",
   imageSourceAssets: "assets/image-source-assets.cjs",
   ocrEnvironment: "ocr/runtime-environment.cjs",
   ocrCommands: "simple-page-ocr-commands.cjs",

@@ -24,6 +24,7 @@ const animeTextContract = JSON.parse(
 );
 
 const assets = [
+  ...readHunyuanAssets(),
   pinnedGemmaAsset(
     "Gemma 12B model",
     modelPresets,
@@ -222,6 +223,27 @@ const assets = [
     })),
   ),
 ];
+
+function readHunyuanAssets() {
+  const source = readSource("src/main/runtimeSupport/hunyuanAssets.ts");
+  const repo = readStringConstant(source, "HUNYUAN_REPO");
+  const revision = readStringConstant(source, "HUNYUAN_REVISION");
+  const matches = [
+    ...source.matchAll(
+      /fileName:\s*"([^"]+)",\s*bytes:\s*(\d+),\s*sha256:\s*"([a-f0-9]{64})"/g,
+    ),
+  ];
+  if (matches.length !== 3)
+    throw new Error("Expected three pinned Hunyuan assets");
+  return matches.map((match) => ({
+    label: `HunyuanOCR: ${match[1]}`,
+    repo,
+    revision,
+    file: match[1],
+    expectedBytes: Number(match[2]),
+    expectedSha256: match[3],
+  }));
+}
 
 async function main() {
   const failures = [];

@@ -35,7 +35,7 @@ const {
   isRejectedLowConfidenceNoiseGroup,
   resolveFixedBlockConfidence,
 } = require("./fixed-block-quality.cjs");
-const { isHayaiOcrPipeline } = require("../ocr/engine-profile.cjs");
+const { isRegionOcrPipeline } = require("../ocr/engine-profile.cjs");
 const {
   mergeFixedBlockTranslationResults,
   parseFixedBlockTranslationDraft,
@@ -71,7 +71,7 @@ function shouldUseFixedBlockTranslation(options = {}) {
 function isKeepBlocksSourceMode(options) {
   const hints = Array.isArray(options.ocrBboxHints) ? options.ocrBboxHints : [];
   return (
-    isHayaiOcrPipeline(options) &&
+    isRegionOcrPipeline(options) &&
     options.keepBlocksMode === true &&
     !options.regionCropMode &&
     hints.length > 0 &&
@@ -83,7 +83,7 @@ function isKeepBlocksSourceMode(options) {
 function isHayaiLockedRegionMode(options = {}) {
   const hints = Array.isArray(options.ocrBboxHints) ? options.ocrBboxHints : [];
   return (
-    isHayaiOcrPipeline(options) &&
+    isRegionOcrPipeline(options) &&
     !options.regionCropMode &&
     hints.length > 0 &&
     hints.every((hint) => isRecord(hint) && hint.geometryLocked === true)

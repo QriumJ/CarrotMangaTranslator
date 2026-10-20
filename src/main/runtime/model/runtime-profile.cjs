@@ -27,6 +27,9 @@ const {
 } = require("../simple-page-model-config.cjs");
 const { runtimeOverrideEnv } = require("../simple-page-child-env.cjs");
 const { createDetailedError } = require("../simple-page-runtime-common.cjs");
+const {
+  SPEED_LLAMA_RUNTIME_CPU,
+} = require("./speed-llama-runtime-contracts.cjs");
 
 /** @typedef {import("../runtime-jsdoc-types").RuntimeOptions & { llamaRuntimeProfile?: string | null }} RuntimePathOptions */
 
@@ -226,6 +229,15 @@ function resolveCudaRuntime(options = {}) {
 
 /** @param {RuntimePathOptions} [options] */
 function resolvePreferredLlamaRuntime(options = {}) {
+  if (options.llamaRuntimePurpose === "hunyuan") {
+    const selected = normalizedConfiguredProfile(options);
+    if (selected === "metal") return SPEED_LLAMA_RUNTIME_METAL_ARM64;
+    if (selected === "cpu") return SPEED_LLAMA_RUNTIME_CPU;
+    if (selected === "vulkan") return SPEED_LLAMA_RUNTIME_VULKAN;
+    return shouldUseRtx50LlamaRuntime(options)
+      ? SPEED_LLAMA_RUNTIME_CUDA13
+      : SPEED_LLAMA_RUNTIME_CUDA12;
+  }
   const profile = resolveLlamaRuntimeProfile(options);
   if (profile === "metal") return resolveMetalRuntime(options);
   if (profile === "rocm") return resolveRocmRuntime(options);

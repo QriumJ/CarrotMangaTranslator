@@ -1,6 +1,9 @@
 import type { TranslationOptions } from "../appSettings";
+import type { OcrBboxResult } from "./types";
+import { hunyuanCacheIdentity } from "./hunyuanCacheIdentity";
 
 type OcrHintCacheConfiguration = {
+  hunyuanIdentity?: string;
   ocrPipeline: string | null;
   ocrDevice: string | null;
   ocrGpuBackend: string | null;
@@ -49,6 +52,11 @@ export function matchesOcrCacheConfiguration(
   }
   const expected = buildOcrCacheConfiguration(options);
   const candidate = cached as Record<string, unknown>;
+  if (
+    options.ocrPipeline === "hunyuan" &&
+    candidate.hunyuanIdentity !== expected.hunyuanIdentity
+  )
+    return false;
   return OCR_HINT_CACHE_CONFIGURATION_KEYS.every(
     (key) => candidate[key] === expected[key],
   );
@@ -56,8 +64,12 @@ export function matchesOcrCacheConfiguration(
 
 export function buildOcrCacheConfiguration(
   options: TranslationOptions,
+  result?: OcrBboxResult,
 ): OcrHintCacheConfiguration {
   return {
+    ...(options.ocrPipeline === "hunyuan"
+      ? { hunyuanIdentity: hunyuanCacheIdentity(options, result) }
+      : {}),
     ocrPipeline: normalizeOcrCacheOption(options.ocrPipeline),
     ocrDevice: normalizeOcrCacheOption(options.ocrDevice),
     ocrGpuBackend: normalizeOcrCacheOption(options.ocrGpuBackend),

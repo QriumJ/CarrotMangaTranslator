@@ -240,7 +240,10 @@
       "pageSkippedDetail": "{{maxAttempts}}回の再試行後に失敗",
       "finalizing": "結果を整理中",
       "pagesReadyNoModel": "{{count}}ページ準備完了、モデル呼び出しなし",
-      "pagesReady": "{{count}}ページ準備完了"
+      "pagesReady": "{{count}}ページ準備完了",
+      "hunyuanOcrPreparing": "HunyuanOCR事前解析を準備中",
+      "hunyuanOcrPreparingDetail": "HunyuanOCR用のテキスト領域と認識ランタイムを準備します。",
+      "hunyuanPageNoTextDetail": "HunyuanOCRで文字が見つからなかったため、モデルへのリクエストを省略しました。"
     },
     "warnings": {
       "attemptFailed": "{{page}}：試行 {{attempt}}/{{maxAttempts}} に失敗：{{message}}",
@@ -290,10 +293,16 @@
     "blocksRunning": "ブロックOCR事前解析中",
     "blocksDetail": "既存ブロック{{count}}個の領域を切り出してテキストを読み取ります。",
     "gpuCacheReleased": "GPU OCRのためインペインティングエンジンのキャッシュを解放しました",
-    "gpuCacheReleasedDetail": "GPUメモリ（VRAM）を解放"
+    "gpuCacheReleasedDetail": "GPUメモリ（VRAM）を解放",
+    "hunyuanRunning": "HunyuanOCR固定領域認識",
+    "hunyuanBatchRunning": "HunyuanOCR一括事前解析中",
+    "hunyuanPrepassDone": "HunyuanOCR事前解析完了"
   },
   "inpainting": {
-    "targets": { "drawn": "描画領域", "source": "原文" },
+    "targets": {
+      "drawn": "描画領域",
+      "source": "原文"
+    },
     "preparing": "{{target}}の消去を準備中",
     "pageRunning": "{{current}} / {{total}}ページの{{target}}を消去中",
     "drawnDetail": "{{page}} · 描画領域{{count}}個",
@@ -308,7 +317,10 @@
     "noTargets": "インペインティングするテキストブロックがありません。",
     "mixedCompletionWorkflows": "選択したページの翻訳完了ワークフローが異なるため、1つのジョブとして処理できません。",
     "noChanges": "インペインティング結果を生成できませんでした。",
-    "assets": { "fluxModel": "Fluxモデル", "aot": "AOTインペインティング" },
+    "assets": {
+      "fluxModel": "Fluxモデル",
+      "aot": "AOTインペインティング"
+    },
     "runtime": {
       "fluxReady": "Fluxインペインティング準備完了",
       "fluxReadyLog": "Flux原文消去エンジンの準備が完了しました。",

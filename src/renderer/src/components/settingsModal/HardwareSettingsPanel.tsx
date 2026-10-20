@@ -8,6 +8,8 @@ import { FluxBackendSettings } from "./FluxBackendSettings";
 import { HardwareStatusSummary } from "./HardwareStatusSummary";
 import type { HardwareSettingsPanelProps } from "./hardwareSettingsTypes";
 import { Button } from "../ui/Button";
+import { HunyuanSettingsFields } from "./HunyuanSettingsFields";
+import { OcrRecommendation } from "../OcrRecommendation";
 
 export function HardwareSettingsPanel(
   props: HardwareSettingsPanelProps,
@@ -30,6 +32,9 @@ export function HardwareSettingsPanel(
 }
 
 export function OcrSettingsSection({
+  sourceLanguage,
+  hunyuanOcr,
+  setHunyuanOcr,
   clearTestState,
   controlsBusy,
   ocrDevice,
@@ -55,6 +60,15 @@ export function OcrSettingsSection({
           ocrPipeline={ocrPipeline}
           setOcrPipeline={setOcrPipeline}
         />
+        <OcrRecommendation
+          sourceLanguage={sourceLanguage}
+          pipeline={ocrPipeline}
+          disabled={controlsBusy}
+          onApply={(pipeline) => {
+            clearTestState();
+            setOcrPipeline(pipeline);
+          }}
+        />
         {ocrPipeline === "paddle-legacy" ? (
           <OcrQualitySettings
             clearTestState={clearTestState}
@@ -69,19 +83,30 @@ export function OcrSettingsSection({
             usesNvidiaOcrContext={usesNvidiaOcrContext}
           />
         ) : null}
-        <OcrDeviceSettings
-          clearTestState={clearTestState}
-          controlsBusy={controlsBusy}
-          ocrDevice={ocrDevice}
-          ocrGpuBackend={ocrGpuBackend}
-          ocrPipeline={ocrPipeline}
-          setOcrDevice={setOcrDevice}
-          setOcrGpuBackend={setOcrGpuBackend}
-          supportsOcrRocm={supportsOcrRocm}
-          usesAmdOcrContext={usesAmdOcrContext}
-          usesAppleHardware={usesAppleHardware}
-          usesNvidiaOcrContext={usesNvidiaOcrContext}
-        />
+        {ocrPipeline === "hunyuan" ? (
+          <HunyuanSettingsFields
+            value={hunyuanOcr}
+            disabled={controlsBusy}
+            onChange={(value) => {
+              clearTestState();
+              setHunyuanOcr?.(value);
+            }}
+          />
+        ) : (
+          <OcrDeviceSettings
+            clearTestState={clearTestState}
+            controlsBusy={controlsBusy}
+            ocrDevice={ocrDevice}
+            ocrGpuBackend={ocrGpuBackend}
+            ocrPipeline={ocrPipeline}
+            setOcrDevice={setOcrDevice}
+            setOcrGpuBackend={setOcrGpuBackend}
+            supportsOcrRocm={supportsOcrRocm}
+            usesAmdOcrContext={usesAmdOcrContext}
+            usesAppleHardware={usesAppleHardware}
+            usesNvidiaOcrContext={usesNvidiaOcrContext}
+          />
+        )}
       </div>
     </SettingsSection>
   );
@@ -105,7 +130,7 @@ function OcrPipelineSettings({
         role="group"
         aria-label={t("settings.hardware.ocrPipeline")}
       >
-        {(["hayai", "paddle-legacy"] as const).map((pipeline) => (
+        {(["hayai", "hunyuan", "paddle-legacy"] as const).map((pipeline) => (
           <ControlTooltip
             floating
             content={t(

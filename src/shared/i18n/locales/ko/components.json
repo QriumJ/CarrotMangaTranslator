@@ -2419,8 +2419,12 @@
           "description": "텍스트 검출기가 일반 텍스트와 효과음 영역을 분리하고 Hayai OCR이 각 고정 영역만 판독합니다. 효과음은 기본 번역에서 제외하고 검토 대상으로 보관합니다."
         },
         "paddle-legacy": {
-          "label": "PaddleOCR",
+          "label": "PaddleOCR(레거시)",
           "description": "기존 Paddle OCR 조각과 Gemma 병합 방식을 그대로 사용합니다."
+        },
+        "hunyuan": {
+          "label": "HunyuanOCR 1.5",
+          "description": "고정 영역을 하나씩 읽는 다국어 OCR. 기본 F16, 선택 Q4."
         }
       },
       "ocrQuality": "Paddle OCR 품질",
@@ -2458,6 +2462,18 @@
         "rocm-transformers": "ROCm 지원 AMD GPU 필요",
         "cpu": "GPU 없이 실행",
         "unsupportedRocm": "감지된 GPU는 ROCm OCR 미지원"
+      },
+      "hunyuan": {
+        "current": "현재: {{engine}}",
+        "recommendation": "원문 언어 추천: {{engine}}",
+        "autoLanguage": "일본어는 Hayai, 다국어는 Hunyuan을 추천합니다.",
+        "apply": "추천 적용",
+        "model": "Hunyuan 모델",
+        "autoModel": "자동 (F16)",
+        "modelHelp": "F16이 기본입니다. Q4는 VRAM 절약 옵션이며 이미지 모델은 동일합니다.",
+        "device": "실행 장치",
+        "autoDevice": "자동",
+        "deviceHelp": "4GB 이상 전용 GPU 또는 8GB 이상 Apple 통합 메모리는 GPU를 사용합니다. GPU 초기화·메모리 부족 시 같은 모델로 CPU에서 한 번 재시도합니다."
       }
     },
     "format": {

@@ -11,16 +11,18 @@ import {
 } from "./pageWorkflowStages";
 
 /**
- * Local Gemma translation and local-engine erasure keep the model runtime for
- * the whole run. Other plans only share the short local detection/OCR/font
- * stages, so they may run beside other API/Codex jobs.
+ * Local Gemma translation, local erasure and a persistent Hunyuan OCR server
+ * own the model runtime. Hunyuan's server stays resident between pages, so
+ * sharing only each page's inference lock would overlap model allocations.
  */
 export function pageWorkflowNeedsExclusiveModel(
   request: Pick<PageWorkflowRequest, "plan">,
-  settings: { modelProvider?: string } | null | undefined,
+  settings:
+    { modelProvider?: string; ocr?: { pipeline?: string } } | null | undefined,
 ): boolean {
   const { plan } = request;
   return (
+    (plan.stages.includes("ocr") && settings?.ocr?.pipeline === "hunyuan") ||
     (plan.stages.includes("translate") &&
       (settings?.modelProvider ?? "gemma") === "gemma") ||
     (plan.stages.includes("erase") && plan.erasureEngine !== "codex")

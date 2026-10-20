@@ -2419,8 +2419,12 @@
           "description": "テキスト検出器が本文と効果音の領域を分離し、Hayai OCRが固定された各領域を読み取ります。効果音は通常翻訳から除外して確認対象として保存します。"
         },
         "paddle-legacy": {
-          "label": "PaddleOCR",
+          "label": "PaddleOCR（レガシー）",
           "description": "従来のPaddle OCR断片とGemmaのグループ化をそのまま使用します。"
+        },
+        "hunyuan": {
+          "label": "HunyuanOCR 1.5",
+          "description": "固定領域を一つずつ読む多言語OCR。標準F16、任意Q4。"
         }
       },
       "ocrQuality": "Paddle OCR品質",
@@ -2458,6 +2462,18 @@
         "rocm-transformers": "ROCm 対応 AMD GPU が必要",
         "cpu": "GPU 不要",
         "unsupportedRocm": "検出した GPU は ROCm OCR 非対応"
+      },
+      "hunyuan": {
+        "current": "現在: {{engine}}",
+        "recommendation": "原文言語の推奨: {{engine}}",
+        "autoLanguage": "日本語はHayai、多言語はHunyuanを推奨します。",
+        "apply": "推奨を適用",
+        "model": "Hunyuanモデル",
+        "autoModel": "自動 (F16)",
+        "modelHelp": "F16が標準です。Q4はVRAM節約用で、画像モデルは共通です。",
+        "device": "実行デバイス",
+        "autoDevice": "自動",
+        "deviceHelp": "専用VRAM 4GB以上またはApple統合メモリ8GB以上ではGPUを使用します。GPU初期化やメモリ不足時は同じモデルでCPUを一度再試行します。"
       }
     },
     "format": {

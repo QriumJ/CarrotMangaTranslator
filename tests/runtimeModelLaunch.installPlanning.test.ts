@@ -72,7 +72,7 @@ describeWindows(
       ).toContain("TDR");
       expect(
         buildOcrGpuFailureMessage(new Error("something odd"), rocmOptions),
-      ).toContain("Paddle OCR AMD GPU 실행에 실패했습니다");
+      ).toContain("PaddleOCR(레거시) AMD GPU 실행에 실패했습니다");
     });
 
     it("parses the error phase from OCR batch progress lines", () => {

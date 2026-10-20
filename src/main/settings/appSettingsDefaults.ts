@@ -247,6 +247,7 @@ function resolveDefaultOcrSettings(
     "hayai",
   );
   return {
+    hunyuan: { model: "f16", device: "auto" },
     pipeline,
     device,
     qualityMode: resolveOcrQualityMode(

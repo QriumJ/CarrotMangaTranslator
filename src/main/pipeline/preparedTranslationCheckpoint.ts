@@ -120,11 +120,17 @@ export function restorePreparedTranslationCheckpoint(
 ): PreparedPageBuildResult {
   const prepared = checkpoint.prepared;
   const preparedPage = prepared.soundEffectReview
-    ? attachEffectReviewToPage(page, "hayai", {
-        hints: [],
-        diagnostics: [],
-        effectReviewRegions: prepared.soundEffectReview.regions,
-      })
+    ? attachEffectReviewToPage(
+        page,
+        prepared.soundEffectReview.producer === "hunyuan-regions-v1"
+          ? "hunyuan"
+          : "hayai",
+        {
+          hints: [],
+          diagnostics: [],
+          effectReviewRegions: prepared.soundEffectReview.regions,
+        },
+      )
     : page;
   if (prepared.kind === "ready") {
     const result: PageBuildResult =

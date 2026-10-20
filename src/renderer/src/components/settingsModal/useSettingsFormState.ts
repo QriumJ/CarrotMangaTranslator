@@ -133,6 +133,7 @@ function useSettingsFormSetters(
       setComputeGpuIndex: createFormFieldDispatch(setValues, "computeGpuIndex"),
       setOcrDevice: createFormFieldDispatch(setValues, "ocrDevice"),
       setOcrPipeline: createFormFieldDispatch(setValues, "ocrPipeline"),
+      setHunyuanOcr: createFormFieldDispatch(setValues, "hunyuanOcr"),
       setOcrGpuBackend: createFormFieldDispatch(setValues, "ocrGpuBackend"),
       setOcrQualityMode: createFormFieldDispatch(setValues, "ocrQualityMode"),
       setInpaintingModel: createFormFieldDispatch(setValues, "inpaintingModel"),

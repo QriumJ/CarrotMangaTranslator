@@ -4,6 +4,7 @@ export type CommandSpec = {
 };
 
 export type RuntimeOptions = {
+  llamaRuntimePurpose?: "hunyuan";
   modelProvider?: string;
   claudeModel?: string;
   claudeEffort?: string;

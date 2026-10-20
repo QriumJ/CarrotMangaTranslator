@@ -147,7 +147,7 @@ describeWindows("runtime model support helpers: OCR pipeline execution", () => {
     expect(runtimeSetupOptions[0]).not.toHaveProperty("pageTotal");
     expect(progressEvents[0]).toMatchObject({
       phase: "ocr_running",
-      progressText: "Paddle OCR 배치 위치 분석 중",
+      progressText: "PaddleOCR(레거시) 배치 위치 분석 중",
       pageIndex: null,
       pageTotal: null,
       progressCurrent: 6,
@@ -156,7 +156,7 @@ describeWindows("runtime model support helpers: OCR pipeline execution", () => {
     expect(progressEvents).toContainEqual(
       expect.objectContaining({
         phase: "ocr_running",
-        progressText: "7 / 9 페이지 Paddle OCR 분석 중",
+        progressText: "7 / 9 페이지 PaddleOCR(레거시) 분석 중",
         pageIndex: 7,
         pageTotal: 9,
         progressCurrent: 6,
@@ -165,7 +165,7 @@ describeWindows("runtime model support helpers: OCR pipeline execution", () => {
     );
     expect(progressEvents).toContainEqual(
       expect.objectContaining({
-        progressText: "7 / 9 페이지 Paddle OCR 분석 중",
+        progressText: "7 / 9 페이지 PaddleOCR(레거시) 분석 중",
         detail: "1개 후보",
         progressCurrent: 7,
       }),

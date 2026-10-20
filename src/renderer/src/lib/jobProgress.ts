@@ -344,7 +344,12 @@ function formatOcrPhaseLabel(
       : suffix === "Preparing"
         ? "준비 중"
         : "분석 중";
-  const engine = prefix === "hayaiOcr" ? "HayaiOCR" : "Paddle OCR";
+  const engine =
+    prefix === "hayaiOcr"
+      ? "HayaiOCR"
+      : prefix === "hunyuanOcr"
+        ? "HunyuanOCR"
+        : "Paddle OCR";
   return translate(t, key, `${engine} ${action}`);
 }
 

@@ -69,7 +69,7 @@ export async function startPageWorkflowJob(
   request: PageWorkflowRequest,
   settings: AppSettings,
 ): Promise<PageWorkflowResult> {
-  if (settings.ocr.pipeline !== "hayai")
+  if (settings.ocr.pipeline !== "hayai" && settings.ocr.pipeline !== "hunyuan")
     throw new Error("페이지 작업은 HayaiOCR에서만 실행할 수 있습니다.");
   const run = await preparePageWorkflowRun(
     context.appPaths.dataRoot,

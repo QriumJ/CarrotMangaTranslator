@@ -14,6 +14,7 @@ import { BinaryChapterPagePicker } from "./BinaryChapterPagePicker";
 import { ChapterPickerHeader } from "./ChapterPickerHeader";
 import { handoffActiveModalToWorkCenter } from "../lib/modalWorkCenterHandoff";
 import styles from "./PageWorkflowModal.module.css";
+import { resolveOcrEngineDisplayName } from "../../../shared/ocrEngines";
 
 export function PageWorkflowModal(
   props: TranslationOptionsModalProps & TranslationModalPresentation,
@@ -49,7 +50,13 @@ export function PageWorkflowModal(
     <Modal
       title="페이지 작업"
       headerExtra={
-        props.headerExtra ?? <span className={styles.engine}>HayaiOCR</span>
+        props.headerExtra ?? (
+          <span className={styles.engine}>
+            {resolveOcrEngineDisplayName(
+              props.settings?.ocr.pipeline ?? "hayai",
+            )}
+          </span>
+        )
       }
       resizeFromWidth={props.resizeFromWidth}
       width="min(1440px, 100%)"

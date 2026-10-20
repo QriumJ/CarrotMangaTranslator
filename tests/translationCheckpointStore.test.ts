@@ -44,16 +44,18 @@ describe("translation checkpoint store", () => {
   // Disk-backed cancellation/resumption reloads the library twice per case.
   // Allow Windows coverage runners headroom without changing the global timeout.
   it.each([
-    ["ready", false, false],
-    ["ready", true, false],
-    ["translated", false, false],
-    ["translated", true, false],
-    ["ready", true, true],
-    ["translated", true, true],
+    ["ready", false, false, "hayai"],
+    ["ready", true, false, "hayai"],
+    ["translated", false, false, "hayai"],
+    ["translated", true, false, "hayai"],
+    ["ready", true, true, "hayai"],
+    ["translated", true, true, "hayai"],
+    ["ready", true, false, "hunyuan"],
+    ["translated", true, false, "hunyuan"],
   ] as const)(
-    "retains Hayai review through %s checkpoint cancellation and resumption (history=%s, edited after save=%s)",
-    async (kind, withHistory, editAfterSave) => {
-      vi.stubEnv("MANGA_TRANSLATOR_OCR_PIPELINE", "hayai");
+    "retains engine review through %s checkpoint cancellation and resumption (history=%s, edited after save=%s, engine=%s)",
+    async (kind, withHistory, editAfterSave, pipeline) => {
+      vi.stubEnv("MANGA_TRANSLATOR_OCR_PIPELINE", pipeline);
       const root = await createLibrary();
       if (withHistory) {
         const chapter = await readChapter(root);
@@ -110,7 +112,7 @@ describe("translation checkpoint store", () => {
       };
       let expectedReview = attachEffectReviewToPage(
         page,
-        "hayai",
+        pipeline,
         ocrResult,
       ).soundEffectReview;
       expect(expectedReview?.regions.some(({ id }) => id === "FX-new")).toBe(
@@ -118,7 +120,7 @@ describe("translation checkpoint store", () => {
       );
       const requestTranslation = vi.fn(
         async (_server: unknown, options: TranslationOptions) => {
-          expect(options.ocrPipeline).toBe("hayai");
+          expect(options.ocrPipeline).toBe(pipeline);
           return kind === "ready"
             ? {
                 outputText: '{"items":[]}',

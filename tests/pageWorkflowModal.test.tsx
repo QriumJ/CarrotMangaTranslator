@@ -11,6 +11,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TranslationOptionsModal } from "../src/renderer/src/components/TranslationOptionsModal";
+import { PageWorkflowModal } from "../src/renderer/src/components/PageWorkflowModal";
 import { createTestMangaGatewayStub } from "../src/renderer/src/api/mangaGateway";
 import { resolveDefaultAppSettings } from "../src/main/appSettings";
 import { createPageWorkflowPlan } from "../src/shared/pageWorkflowTypes";
@@ -67,7 +68,7 @@ afterEach(() => {
 function show(
   plan = createPageWorkflowPlan(["detect"]),
   initialUi: UiSettings = {},
-  pipeline: "hayai" | "paddle-legacy" = "hayai",
+  pipeline: "hayai" | "paddle-legacy" | "hunyuan" = "hayai",
 ) {
   const onStart = vi.fn<
     (
@@ -124,6 +125,22 @@ function installChapterPages(ids: string[]): () => void {
 }
 
 describe("Hayai page work modal", () => {
+  it("uses the region workflow for Hunyuan and retains a header without optional settings", () => {
+    show(createPageWorkflowPlan(["detect"]), {}, "hunyuan");
+    expect(screen.getByText(/현재: HunyuanOCR/)).toBeTruthy();
+    cleanup();
+    render(
+      <PageWorkflowModal
+        chapter={chapter}
+        library={library}
+        uiSettings={{}}
+        onStart={() => {}}
+        onClose={() => {}}
+        onPersistDefaults={() => {}}
+      />,
+    );
+    expect(screen.getByText("HayaiOCR")).toBeTruthy();
+  });
   it("uses the shared reverse Shift range and Ctrl toggle for its final page IDs", async () => {
     const restore = installChapterPages(["p1", "p2", "p3", "p4"]);
     try {

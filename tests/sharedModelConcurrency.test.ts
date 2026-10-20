@@ -70,7 +70,7 @@ describe("shared model runtime", () => {
     ).toEqual(modelRuntimeResource(true));
   });
 
-  it("marks only Gemma translation and local erasure workflows exclusive", () => {
+  it("keeps resident Hunyuan, Gemma and local erasure workflows exclusive", () => {
     const plan = (
       stages: PageWorkflowStage[],
       erasureEngine: "local" | "codex" = "local",
@@ -78,6 +78,23 @@ describe("shared model runtime", () => {
     const codex = { modelProvider: "openai-codex" };
     expect(
       pageWorkflowNeedsExclusiveModel(plan(["ocr", "translate"]), codex),
+    ).toBe(false);
+    const hunyuan = { ...codex, ocr: { pipeline: "hunyuan" } };
+    expect(pageWorkflowNeedsExclusiveModel(plan(["ocr"]), hunyuan)).toBe(true);
+    expect(
+      pageWorkflowNeedsExclusiveModel(plan(["ocr", "translate"]), hunyuan),
+    ).toBe(true);
+    expect(pageWorkflowNeedsExclusiveModel(plan(["translate"]), hunyuan)).toBe(
+      false,
+    );
+    expect(pageWorkflowNeedsExclusiveModel(plan(["detect"]), hunyuan)).toBe(
+      false,
+    );
+    expect(
+      pageWorkflowNeedsExclusiveModel(plan(["ocr"]), {
+        ...codex,
+        ocr: { pipeline: "hayai" },
+      }),
     ).toBe(false);
     expect(
       pageWorkflowNeedsExclusiveModel(plan(["translate"]), {

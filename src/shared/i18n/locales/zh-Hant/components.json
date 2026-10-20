@@ -2419,8 +2419,12 @@
           "description": "文字偵測器分離正文與擬聲詞區域，Hayai OCR只辨識固定裁切區域。擬聲詞不會進入一般翻譯，而是儲存為待審項目。"
         },
         "paddle-legacy": {
-          "label": "PaddleOCR",
+          "label": "PaddleOCR（舊版）",
           "description": "保留原有Paddle OCR碎片與Gemma合併行為。"
+        },
+        "hunyuan": {
+          "label": "HunyuanOCR 1.5",
+          "description": "逐個辨識固定區域的多語言OCR。預設F16，Q4可選。"
         }
       },
       "ocrQuality": "Paddle OCR品質",
@@ -2458,6 +2462,18 @@
         "rocm-transformers": "需要支援 ROCm 的 AMD GPU",
         "cpu": "無需 GPU",
         "unsupportedRocm": "偵測到的 GPU 不支援 ROCm OCR"
+      },
+      "hunyuan": {
+        "current": "目前：{{engine}}",
+        "recommendation": "原文語言建議：{{engine}}",
+        "autoLanguage": "日語建議Hayai，多語言建議Hunyuan。",
+        "apply": "套用建議",
+        "model": "Hunyuan模型",
+        "autoModel": "自動 (F16)",
+        "modelHelp": "預設使用F16。Q4可節省顯示記憶體，兩者使用相同影像模型。",
+        "device": "執行裝置",
+        "autoDevice": "自動",
+        "deviceHelp": "獨立顯示記憶體至少4GB或Apple統一記憶體至少8GB時使用GPU。GPU初始化失敗或記憶體不足時，同一模型會在CPU上重試一次。"
       }
     },
     "format": {
