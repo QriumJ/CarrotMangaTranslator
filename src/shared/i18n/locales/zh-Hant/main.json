@@ -37,13 +37,16 @@
     "saveText": "儲存文字",
     "openConditionalBatchYaml": "匯入批次編輯 YAML",
     "saveConditionalBatchYaml": "匯出批次編輯 YAML",
+    "openWorkGlossary": "匯入術語檔案",
+    "saveWorkGlossary": "匯出術語檔案",
     "conditionalBatchYamlTooLarge": "批次編輯 YAML 檔案超過 2 MiB。",
     "exportOutputFolder": "選擇結果匯出資料夾",
     "filters": {
       "images": "影像檔案",
       "font": "字型檔案",
       "yaml": "YAML 檔案",
-      "text": "文字檔案"
+      "text": "文字檔案",
+      "json": "JSON 檔案"
     }
   },
   "jobs": {
@@ -59,7 +62,8 @@
       "untrusted": "不受信任的 IPC 要求。",
       "invalidImportPreview": "匯入預覽已過期或無效。",
       "invalidSharePreview": "共享檔案預覽已過期或無效。",
-      "libraryOperationBusy": "請等待資料庫工作完成後再變更其結構。"
+      "libraryOperationBusy": "請等待資料庫工作完成後再變更其結構。",
+      "chapterSelectionChanged": "章節列表已變更。請重新確認後再刪除。"
     },
     "labels": {
       "translationJob": "翻譯工作",

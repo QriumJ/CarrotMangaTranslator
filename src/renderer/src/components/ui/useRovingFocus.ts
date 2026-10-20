@@ -37,7 +37,7 @@ export function useRovingFocus({
     event: React.KeyboardEvent<HTMLButtonElement>,
   ): void => {
     if (disabled) return;
-    const nextIndex = resolveNextIndex(event.key, index, count);
+    const nextIndex = resolveRovingFocusIndex(event.key, index, count);
     if (nextIndex === null) return;
     event.preventDefault();
     onActivate(nextIndex);
@@ -47,7 +47,7 @@ export function useRovingFocus({
   return { register, handleKeyDown };
 }
 
-function resolveNextIndex(
+export function resolveRovingFocusIndex(
   key: string,
   index: number,
   count: number,

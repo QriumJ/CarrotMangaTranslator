@@ -566,7 +566,7 @@ describe("production cleanup coverage floor gate", () => {
     expect(Object.keys(manifest.floors)).toEqual(scope.existing);
     expect(Object.keys(manifest.introducedFloors)).toEqual(scope.added);
     expect(manifest.deletedFiles).toEqual(scope.deleted);
-    expect(scope.existing).toHaveLength(856);
+    expect(scope.existing).toHaveLength(859);
     // Includes global chat, shared actions, OpenCode help, MCP event streams, shared
     // translation instructions and image budget; inherited floors remain unchanged.
     // inherited floors remain unchanged.
@@ -579,7 +579,10 @@ describe("production cleanup coverage floor gate", () => {
     // the newly touched cssColor module keeps its original measured floor.
     // Issue #149 adds the resizable left rail: its splitter primitive and owners.
     // Sampled retouch adds worker, raster, gesture and shared contract owners.
-    expect(scope.added).toHaveLength(1497);
+    // Grok web and Build share a dedicated MCP connection guide.
+    // Text exchange adds its file codec and renderer review importer.
+    // Issue #156 adds chapter selection/deletion and glossary file exchange owners.
+    expect(scope.added).toHaveLength(1537);
     expect(scope.deleted).toHaveLength(12);
   });
 });

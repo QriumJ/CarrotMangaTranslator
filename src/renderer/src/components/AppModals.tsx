@@ -22,7 +22,7 @@ import type { ShareImportModalSubmit } from "../lib/shareImportTypes";
 import { ConfirmModal } from "./ConfirmModal";
 import { InpaintingGuideModal } from "./InpaintingGuideModal";
 import { ImportModal } from "./ImportModal";
-import { RenameModal } from "./RenameModal";
+import { LibraryEditModals } from "./LibraryEditModals";
 import { SettingsModal } from "./SettingsModal";
 import { ShareExportModal } from "./ShareExportModal";
 import { ShareImportModal } from "./ShareImportModal";
@@ -75,7 +75,6 @@ type AppModalsProps = {
   onCancelShareImport: () => void;
   onSubmitShareImport: (payload: ShareImportModalSubmit) => void;
   onCancelRename: () => void;
-  onDeleteRename: () => void;
   onSubmitRename: (title: string) => void;
   onCancelSettings: () => void;
   onOpenErrorReport: () => void;
@@ -109,8 +108,8 @@ type ImportFlowModalProps = Pick<
   | "importFeedback"
   | "importPreview"
   | "library"
-  | "currentWorkId"
   | "currentChapterId"
+  | "currentWorkId"
   | "onCancelImport"
   | "onCancelTranslationSource"
   | "onCancelWebImport"
@@ -123,10 +122,10 @@ type ImportFlowModalProps = Pick<
 >;
 
 function ImportFlowModals({
+  currentChapterId,
   addPagesChapter,
   onClearAddPages,
   currentWorkId,
-  currentChapterId,
   importBusy,
   importDraft,
   importFeedback,
@@ -247,7 +246,6 @@ function EditAndSettingsModals({
   jobActive,
   onCancelRename,
   onCancelSettings,
-  onDeleteRename,
   onOpenErrorReport,
   onOpenLogFolder,
   onOpenModelFolder,
@@ -266,7 +264,6 @@ function EditAndSettingsModals({
   | "library"
   | "onCancelRename"
   | "onCancelSettings"
-  | "onDeleteRename"
   | "onOpenErrorReport"
   | "onOpenLogFolder"
   | "onOpenModelFolder"
@@ -282,16 +279,12 @@ function EditAndSettingsModals({
 >): React.JSX.Element {
   return (
     <>
-      {renameTarget ? (
-        <RenameModal
-          kind={renameTarget.kind}
-          initialTitle={renameTarget.title}
-          busy={renameBusy}
-          onCancel={onCancelRename}
-          onDelete={onDeleteRename}
-          onSubmit={onSubmitRename}
-        />
-      ) : null}
+      <LibraryEditModals
+        onCancelRename={onCancelRename}
+        onSubmitRename={onSubmitRename}
+        renameBusy={renameBusy}
+        renameTarget={renameTarget}
+      />
       {settingsOpen && settings ? (
         <SettingsModal
           initialSettings={settings}

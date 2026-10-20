@@ -183,13 +183,15 @@ describe("review table source projection", () => {
   it("reports ignored/duplicate headers while preserving the native row projection", () => {
     const f = fixture();
     const csv = serializeReviewRows([f.row], "csv", false);
-    const content = csv.replace(
-      "review_note\r\n",
-      "review_note,fontFamily,review_note\r\n",
-    );
+    const content =
+      csv
+        .trimEnd()
+        .replace("review_note\r\n", "review_note,fontFamily,review_note\r\n") +
+      ",font,note\r\n";
     const result = parseReviewDocument(content, "csv");
     expect(result.ignoredColumns).toEqual(["fontFamily"]);
     expect(result.duplicateColumns).toEqual(["review_note"]);
-    expect(result.rows).toEqual(parseReviewTable(content, "csv"));
+    expect(result.rows[0].review_note).toBe("note");
+    expect(() => parseReviewTable(content, "csv")).toThrow("중복");
   });
 });

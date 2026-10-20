@@ -20,11 +20,17 @@ import {
 } from "./styleGuide/StyleGuideChrome";
 import { useStyleGuideModalModel } from "./styleGuide/useStyleGuideModalModel";
 import { StyleGuideResearchReview } from "./styleGuide/StyleGuideResearchReview";
+import {
+  StyleGuideFileActions,
+  StyleGuideImportReviewModal,
+  StyleGuideTabBar,
+} from "./styleGuide/StyleGuideFileExchange";
 import { StyleGuideResearchSetupContent } from "./styleGuide/StyleGuideResearchSetupContent";
 import { useStyleGuideResearchSetup } from "./styleGuide/useStyleGuideResearchSetup";
 
 type StyleGuideModalProps = {
-  chapter: ChapterSnapshot;
+  chapter: ChapterSnapshot | null;
+  workId?: string;
   workTitle: string;
   jobActive?: boolean;
   notificationPort?: NotificationPort;
@@ -36,6 +42,7 @@ type StyleGuideModalProps = {
 
 export function StyleGuideModal({
   chapter,
+  workId,
   workTitle,
   jobActive = false,
   notificationPort = toastNotificationPort,
@@ -44,40 +51,37 @@ export function StyleGuideModal({
   onBackgroundStateChange,
   onClose,
 }: StyleGuideModalProps): React.JSX.Element {
-  const { t } = useTranslation("components");
   const model = useStyleGuideModalModel(
     chapter,
     workTitle,
     settings,
     notificationPort,
+    workId,
   );
   const [researchSetupOpen, setResearchSetupOpen] = React.useState(false);
-  React.useEffect(
-    () => onBackgroundStateChange?.(model.analyzing),
-    [model.analyzing, onBackgroundStateChange],
+  const [returningFromImport, setReturningFromImport] = React.useState(false);
+  const { confirm, confirmAndReset } = useStyleGuidePresentation(
+    model,
+    onBackgroundStateChange,
   );
-  React.useEffect(
-    () => () => onBackgroundStateChange?.(false),
-    [onBackgroundStateChange],
-  );
-  const confirm = useConfirmDialog();
-  const confirmAndReset = async (): Promise<void> => {
-    const approved = await confirm.askConfirm(
-      t("styleGuide.reset.button"),
-      t("styleGuide.reset.message"),
-      t("styleGuide.reset.detail"),
-    );
-    if (approved) {
-      await model.resetAllWorkContext();
-    }
-  };
   return (
     <>
-      {!model.analyzing ? (
+      {!model.analyzing &&
+      !researchSetupOpen &&
+      !model.proposal &&
+      !model.exchange.importReview ? (
         <StyleGuidePrimaryModal
+          focusImport={returningFromImport}
           jobActive={jobActive}
           model={model}
-          onAnalyze={() => setResearchSetupOpen(true)}
+          onImport={() => {
+            setReturningFromImport(true);
+            void model.exchange.openImport();
+          }}
+          onAnalyze={() => {
+            setReturningFromImport(false);
+            setResearchSetupOpen(true);
+          }}
           onClose={onClose}
           onReset={confirmAndReset}
         />
@@ -102,11 +106,10 @@ export function StyleGuideModal({
           onDismiss={model.dismissProposal}
         />
       ) : null}
+      <StyleGuideImportReviewModal exchange={model.exchange} />
       {confirm.confirmDialog ? (
         <ConfirmModal
-          title={confirm.confirmDialog.title}
-          message={confirm.confirmDialog.message}
-          detail={confirm.confirmDialog.detail}
+          {...confirm.confirmDialog}
           onCancel={() => confirm.resolveConfirmDialog(false)}
           onConfirm={() => confirm.resolveConfirmDialog(true)}
         />
@@ -115,13 +118,44 @@ export function StyleGuideModal({
   );
 }
 
+function useStyleGuidePresentation(
+  model: ReturnType<typeof useStyleGuideModalModel>,
+  onBackgroundStateChange: StyleGuideModalProps["onBackgroundStateChange"],
+) {
+  const { t } = useTranslation("components");
+  React.useEffect(
+    () => onBackgroundStateChange?.(model.analyzing),
+    [model.analyzing, onBackgroundStateChange],
+  );
+  React.useEffect(
+    () => () => onBackgroundStateChange?.(false),
+    [onBackgroundStateChange],
+  );
+  const confirm = useConfirmDialog();
+  const confirmAndReset = async (): Promise<void> => {
+    const approved = await confirm.askConfirm(
+      t("styleGuide.reset.button"),
+      t("styleGuide.reset.message"),
+      t("styleGuide.reset.detail"),
+    );
+    if (approved) {
+      await model.resetAllWorkContext();
+    }
+  };
+  return { confirm, confirmAndReset };
+}
+
 function StyleGuidePrimaryModal({
+  onImport,
+  focusImport,
   jobActive,
   model,
   onAnalyze,
   onClose,
   onReset,
 }: {
+  onImport: () => void;
+  focusImport: boolean;
   jobActive: boolean;
   model: ReturnType<typeof useStyleGuideModalModel>;
   onAnalyze: () => void;
@@ -145,14 +179,37 @@ function StyleGuidePrimaryModal({
         />
       }
     >
-      <StyleGuideAnalysisActions
-        analyzing={model.analyzing}
-        disabled={model.working}
-        engine={model.researchEngine}
-        onEngineChange={model.setResearchEngine}
-        onAnalyze={onAnalyze}
+      {model.chapterAvailable ? (
+        <StyleGuideAnalysisActions
+          analyzing={model.analyzing}
+          disabled={model.working || !model.chapterAvailable}
+          engine={model.researchEngine}
+          onEngineChange={model.setResearchEngine}
+          onAnalyze={onAnalyze}
+        />
+      ) : null}
+
+      <StyleGuideTabBar
+        tabs={
+          <StyleGuideTabs
+            active={model.tab}
+            onChange={model.setTab}
+            chapterAvailable={model.chapterAvailable}
+          />
+        }
+        actions={
+          <StyleGuideFileActions
+            focusImport={focusImport}
+            busy={model.exchange.fileBusy}
+            disabled={!model.guide || model.working}
+            exportDisabled={
+              !model.guide?.glossary.length && !model.guide?.characters.length
+            }
+            onExport={() => void model.exchange.exportFile()}
+            onImport={onImport}
+          />
+        }
       />
-      <StyleGuideTabs active={model.tab} onChange={model.setTab} />
       <StyleGuideTabContent
         busy={model.busy}
         guide={model.guide}
@@ -299,18 +356,25 @@ function StyleGuideFooter({
       }
       actions={
         <>
-          <Button
-            variant="danger"
-            onClick={() => void onReset()}
-            disabled={!model.guide || model.working || jobActive}
-            aria-busy={model.resetting}
-          >
-            {t(
-              model.resetting
-                ? "styleGuide.reset.running"
-                : "styleGuide.reset.button",
-            )}
-          </Button>
+          {model.chapterAvailable ? (
+            <Button
+              variant="danger"
+              onClick={() => void onReset()}
+              disabled={
+                !model.guide ||
+                model.working ||
+                jobActive ||
+                !model.chapterAvailable
+              }
+              aria-busy={model.resetting}
+            >
+              {t(
+                model.resetting
+                  ? "styleGuide.reset.running"
+                  : "styleGuide.reset.button",
+              )}
+            </Button>
+          ) : null}
           <ModalActionButtons
             cancel={{
               label: t("common.cancel"),

@@ -5,6 +5,7 @@ import { editingChapter } from "./mcpEditing.fixture";
 import { createPageRevision } from "../src/shared/pageRevision";
 import { mcpContextRevision } from "../src/shared/mcpContextEditing";
 import { gatherText, formatGatheredText } from "../src/shared/gatherText";
+import { formatGatheredTextFile } from "../src/shared/gatherTextFile";
 import {
   buildReviewRows,
   serializeReviewRows,
@@ -14,7 +15,10 @@ import {
   createMcpTextImportPolicy,
   type McpTextImportSourcePort,
 } from "../src/main/application/mcpTextImportPolicy";
-import { applyMcpTextImportSnapshots } from "../src/main/application/mcpReviewImportPolicy";
+import {
+  applyMcpTextImportSnapshots,
+  planMcpReviewFile,
+} from "../src/main/application/mcpReviewImportPolicy";
 
 const fixtures: ReturnType<typeof translationBatchFixture>[] = [];
 afterEach(async () => {
@@ -88,6 +92,29 @@ function fixture(format: "txt" | "csv" | "tsv" = "csv") {
 }
 
 describe("reviewed text import admission", () => {
+  it("rejects duplicate review headers even when every cell is present", async () => {
+    const f = fixture();
+    const [header, row] = serializeReviewRows(f.rows(), "csv", false).split(
+      "\r\n",
+    );
+    f.setContent(`${header},review_note\r\n${row},duplicate\r\n`);
+    await expect(f.plan()).rejects.toMatchObject({ code: "invalid_edit" });
+  });
+  it("rejects a truncated review row before planning or changing any saved block", async () => {
+    const f = fixture();
+    const before = structuredClone(f.chapter);
+    const content = serializeReviewRows(f.rows(), "csv", false);
+    const [header, row] = content.split("\r\n");
+    f.setContent(header + "\r\n" + row.split(",").slice(0, 7).join(","));
+    await expect(f.plan()).rejects.toMatchObject({ code: "invalid_edit" });
+    expect(f.chapter).toEqual(before);
+  });
+  it("rejects TXT at the review-table planner boundary", () => {
+    const f = fixture("txt");
+    expect(() => planMcpReviewFile(f.chapter, f.request(), "")).toThrow(
+      "CSV or TSV",
+    );
+  });
   it.each(["", "foreign"])(
     "never applies a CSV row with chapter_id=%s",
     async (chapterId) => {
@@ -258,6 +285,36 @@ describe("reviewed text import admission", () => {
 });
 
 describe("native TXT mapping through the existing translation policy", () => {
+  it("imports a versioned file by block ID while retaining explicit MCP selection", async () => {
+    const f = fixture("txt");
+    const gathered = gatherText({
+      chapter: f.chapter,
+      page: null,
+      scope: "chapter",
+      direction: "rtl",
+    });
+    const file = formatGatheredTextFile(gathered, "both");
+    f.setContent(file);
+    expect((await f.plan()).pages[0].changedBlocks).toBe(0);
+    f.setContent(
+      file
+        .replaceAll("\noriginal-a\n", "\nreviewed-a\n")
+        .replaceAll("\noriginal-b\n", "\nreviewed-b\n"),
+    );
+    const plan = await f.plan();
+    expect(plan.pages[0].changes).toHaveLength(1);
+    expect(plan.pages[0].changes[0]).toMatchObject({
+      blockId: "a",
+      after: { translatedText: "reviewed-a" },
+    });
+    expect(
+      plan.diagnostics.some(
+        (item) => item.code === "unselected_txt_update_ignored",
+      ),
+    ).toBe(true);
+    expect(f.checkSource).toHaveBeenCalledTimes(2);
+    expect(f.verify).toHaveBeenCalledTimes(2);
+  });
   it("rejects source-only TXT at the policy boundary before translation planning", async () => {
     const f = fixture("txt");
     const input = f.policy.parse(f.request());

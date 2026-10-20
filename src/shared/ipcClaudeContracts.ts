@@ -4,6 +4,7 @@ import { CLAUDE_EFFORTS, type ClaudeAccount } from "./claudeTypes";
 const account = z
   .object({
     authenticated: z.boolean(),
+    runtimeInstalled: z.boolean().optional(),
     email: z.string().nullable(),
     plan: z.string().nullable(),
     version: z.string(),

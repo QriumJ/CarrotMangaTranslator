@@ -56,6 +56,8 @@ const ALLOWED_INTERNAL_BOUNDARY_MOCKS = new Set([
   "tests/libraryPaths.test.ts::../src/main/appPaths",
   "tests/libraryStartupLoad.test.ts::../src/main/appPaths",
   "tests/deleteTransactionRecovery.test.ts::../src/main/appPaths",
+  // Real multi-chapter deletion keeps the work's terms; temporary library only, never user data.
+  "tests/chapterBatchDeletionLibrary.test.ts::../src/main/appPaths",
   "tests/importTransactionRecovery.test.ts::../src/main/appPaths",
   "tests/legacyShareTrashRecovery.test.ts::../src/main/appPaths",
   // Real page-stage commits and crash recovery use a temporary library, never user data.

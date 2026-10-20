@@ -10,6 +10,7 @@ export const APP_OPERATION_KINDS = [
   "work-share-export",
   "model-test",
   "claude-auth",
+  "grok-auth",
   "codex-auth",
 ] as const;
 
@@ -49,6 +50,7 @@ export const APP_OPERATION_PHASES = [
   "model-test-checking",
   "codex-auth-opening-browser",
   "codex-auth-updating",
+  "cli-downloading",
   "waiting-for-user",
 ] as const;
 

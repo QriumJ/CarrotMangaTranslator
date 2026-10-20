@@ -667,7 +667,7 @@ describe("translation workflow modes", () => {
       }),
     );
     expect(notificationMocks.error).toHaveBeenCalledWith(
-      expect.stringContaining("설정 > LLM > 작품 정보 예산"),
+      expect.stringContaining("설정 > 번역 > 작품 정보 예산"),
     );
   });
 

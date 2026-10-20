@@ -26,6 +26,7 @@ export const recentDialogPathKeys = {
   reviewTextExport: "reviewTextExport",
   plainTextExport: "plainTextExport",
   conditionalBatchYaml: "conditionalBatchYaml",
+  workGlossaryFile: "workGlossaryFile",
 } as const;
 
 export type RecentDialogPathKey =

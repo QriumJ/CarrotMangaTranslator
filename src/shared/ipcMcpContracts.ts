@@ -129,6 +129,8 @@ export const mcpIpcContracts = {
       | "claude"
       | "claude-code"
       | "opencode"
+      | "grok"
+      | "grok-build"
       | "generic",
     ],
     { completed: boolean }
@@ -144,6 +146,8 @@ export const mcpIpcContracts = {
         "claude",
         "claude-code",
         "opencode",
+        "grok",
+        "grok-build",
         "generic",
       ]),
     ]),

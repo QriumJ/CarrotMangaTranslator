@@ -37,13 +37,16 @@
     "saveText": "Save Text",
     "openConditionalBatchYaml": "Import Batch Editor YAML",
     "saveConditionalBatchYaml": "Export Batch Editor YAML",
+    "openWorkGlossary": "Import terminology file",
+    "saveWorkGlossary": "Export terminology file",
     "conditionalBatchYamlTooLarge": "The batch editor YAML file exceeds 2 MiB.",
     "exportOutputFolder": "Select Results Folder",
     "filters": {
       "images": "Image files",
       "font": "Font files",
       "yaml": "YAML files",
-      "text": "Text files"
+      "text": "Text files",
+      "json": "JSON files"
     }
   },
   "jobs": {
@@ -59,7 +62,8 @@
       "untrusted": "Untrusted IPC request.",
       "invalidImportPreview": "This import preview is expired or invalid.",
       "invalidSharePreview": "This shared-file preview is expired or invalid.",
-      "libraryOperationBusy": "Wait for the library operation to finish before changing its structure."
+      "libraryOperationBusy": "Wait for the library operation to finish before changing its structure.",
+      "chapterSelectionChanged": "The chapter list changed. Check the list again before deleting."
     },
     "labels": {
       "translationJob": "Translation job",

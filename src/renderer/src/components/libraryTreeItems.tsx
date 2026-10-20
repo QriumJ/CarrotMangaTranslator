@@ -1,5 +1,8 @@
+import { buildWorkContextCommand } from "../lib/workContextCommand";
+import type { LibraryContextActions } from "../hooks/libraryActionTypes";
+import { ChapterBulkDeleteSelection } from "./ChapterBulkDeleteSelection";
+import { ActionMenu } from "./ui/ActionMenu";
 import React from "react";
-import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
   SortableContext,
@@ -17,6 +20,7 @@ import { ChevronDownIcon, EditIcon } from "./ui/icons";
 import { Button } from "./ui/Button";
 import type { LibraryWorkDisclosure } from "./useLibraryWorkDisclosure";
 import styles from "./LibraryTree.module.css";
+import { resolveChapterStatusLabel } from "../lib/chapterStatusLabel";
 
 /** Saved-layout bulk actions; search keeps folding transient, so it disables them. */
 export function LibraryBulkDisclosureButtons({
@@ -59,6 +63,7 @@ export function LibraryBulkDisclosureButtons({
 }
 
 type LibraryWorkGroupProps = {
+  contextActions?: LibraryContextActions;
   currentChapterId: string | null;
   dragEnabled: boolean;
   expanded: boolean;
@@ -72,6 +77,7 @@ type LibraryWorkGroupProps = {
 
 /** A work heading that discloses its chapters; reorder stays within a work. */
 export function LibraryWorkGroup({
+  contextActions,
   currentChapterId,
   dragEnabled,
   expanded,
@@ -82,63 +88,148 @@ export function LibraryWorkGroup({
   onToggleExpanded,
   work,
 }: LibraryWorkGroupProps): React.JSX.Element {
-  const { t } = useTranslation("components");
+  const selection = contextActions?.selection;
+  const selecting = selection?.work?.id === work.id;
+  const actionsBlocked = jobActive || Boolean(selection?.busy);
   const listId = `library-work-${React.useId()}`;
+  const heading = (
+    <LibraryWorkHeader
+      work={work}
+      expanded={expanded || selecting}
+      selecting={selecting}
+      controlsId={listId}
+      onToggleExpanded={onToggleExpanded}
+      actions={
+        <LibraryWorkMenu
+          work={work}
+          contextActions={contextActions}
+          onRenameWork={onRenameWork}
+          disabled={actionsBlocked}
+        />
+      }
+    />
+  );
   return (
     <div className="work-group" data-expanded={expanded}>
-      <div className="work-row">
-        <Button
-          variant="bare"
-          className={styles.workDisclosure}
-          aria-expanded={expanded}
-          aria-controls={expanded ? listId : undefined}
-          onClick={() => onToggleExpanded(work.id)}
-          title={work.title}
-          type="button"
-        >
-          <ChevronDownIcon
-            size={14}
-            className={expanded ? styles.chevron : styles.chevronCollapsed}
-          />
-          <strong>{work.title}</strong>
-          {expanded ? null : (
-            <small className={styles.collapsedCount}>
-              {t("common.chapterCount", { count: work.chapters.length })}
-            </small>
-          )}
-        </Button>
-        <IconButton
-          size="sm"
-          label={t("library.renameItem", { title: work.title })}
-          title={t("common.rename")}
-          onClick={() => onRenameWork(work.id)}
-          disabled={jobActive}
-        >
-          <EditIcon size={14} />
-        </IconButton>
-      </div>
-      {expanded ? (
-        <SortableContext
-          items={work.chapters.map((chapter) => chapter.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="chapter-list" id={listId}>
-            {work.chapters.map((chapter) => (
-              <SortableChapterItem
-                key={chapter.id}
-                workId={work.id}
-                chapter={chapter}
-                active={chapter.id === currentChapterId}
-                disabled={!dragEnabled}
-                jobActive={jobActive}
-                onOpenChapter={onOpenChapter}
-                onRenameChapter={onRenameChapter}
-              />
-            ))}
-          </div>
-        </SortableContext>
-      ) : null}
+      {selecting && selection?.work ? (
+        <ChapterBulkDeleteSelection
+          heading={heading}
+          id={listId}
+          controller={{ ...selection, work: selection.work }}
+          currentChapterId={currentChapterId}
+          jobActive={jobActive}
+        />
+      ) : (
+        <>
+          {heading}
+          {expanded ? (
+            <SortableContext
+              items={work.chapters.map((chapter) => chapter.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="chapter-list" id={listId}>
+                {work.chapters.map((chapter) => (
+                  <SortableChapterItem
+                    key={chapter.id}
+                    workId={work.id}
+                    chapter={chapter}
+                    active={chapter.id === currentChapterId}
+                    disabled={!dragEnabled}
+                    jobActive={jobActive}
+                    onOpenChapter={onOpenChapter}
+                    onRenameChapter={onRenameChapter}
+                    onDeleteChapter={contextActions?.deleteTarget}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          ) : null}
+        </>
+      )}
     </div>
+  );
+}
+
+function LibraryWorkHeader({
+  work,
+  expanded,
+  selecting,
+  controlsId,
+  onToggleExpanded,
+  actions,
+}: Pick<LibraryWorkGroupProps, "work" | "expanded" | "onToggleExpanded"> & {
+  selecting: boolean;
+  controlsId: string;
+  actions: React.ReactNode;
+}) {
+  const { t } = useTranslation("components");
+  return (
+    <div className="work-row">
+      <Button
+        variant="bare"
+        className={styles.workDisclosure}
+        aria-expanded={selecting || expanded}
+        disabled={selecting}
+        aria-controls={selecting || expanded ? controlsId : undefined}
+        onClick={() => onToggleExpanded(work.id)}
+        title={work.title}
+        type="button"
+      >
+        <ChevronDownIcon
+          size={14}
+          className={expanded ? styles.chevron : styles.chevronCollapsed}
+        />
+        <strong>{work.title}</strong>
+        {expanded ? null : (
+          <small className={styles.collapsedCount}>
+            {t("common.chapterCount", { count: work.chapters.length })}
+          </small>
+        )}
+      </Button>
+      {actions}
+    </div>
+  );
+}
+
+function LibraryWorkMenu({
+  work,
+  contextActions,
+  onRenameWork,
+  disabled,
+}: Pick<LibraryWorkGroupProps, "work" | "contextActions" | "onRenameWork"> & {
+  disabled: boolean;
+}) {
+  const { t } = useTranslation("components");
+  const selection = contextActions?.selection;
+  return (
+    <ActionMenu
+      iconOnly
+      label={t("library.itemActions", { title: work.title })}
+      disabled={disabled}
+      items={[
+        {
+          ...buildWorkContextCommand(work.id, contextActions?.openContext, t),
+          disabled: !contextActions,
+        },
+        {
+          label: t("library.selectChapters"),
+          run: () => selection?.open(work.id),
+          disabled: !selection || !work.chapters.length,
+        },
+        { label: t("common.rename"), run: () => onRenameWork(work.id) },
+        {
+          label: t("rename.deleteWork"),
+          run: () =>
+            contextActions?.deleteTarget({
+              kind: "work",
+              id: work.id,
+              title: work.title,
+            }),
+          disabled: !contextActions,
+          destructive: true,
+        },
+      ]}
+    />
   );
 }
 
@@ -150,9 +241,11 @@ type SortableChapterItemProps = {
   jobActive: boolean;
   onOpenChapter: (chapterId: string) => void;
   onRenameChapter: (chapterId: string) => void;
+  onDeleteChapter?: LibraryContextActions["deleteTarget"];
 };
 
 function SortableChapterItem({
+  onDeleteChapter,
   workId,
   chapter,
   active,
@@ -197,15 +290,25 @@ function SortableChapterItem({
         setActivatorNodeRef={setActivatorNodeRef}
       />
       <ChapterSelectButton chapter={chapter} onOpenChapter={onOpenChapter} />
-      <IconButton
-        size="sm"
-        label={t("library.renameItem", { title: chapter.title })}
-        title={t("common.rename")}
-        onClick={() => onRenameChapter(chapter.id)}
+      <ActionMenu
+        iconOnly
+        label={t("library.itemActions", { title: chapter.title })}
         disabled={jobActive}
-      >
-        <EditIcon size={14} />
-      </IconButton>
+        items={[
+          { label: t("common.rename"), run: () => onRenameChapter(chapter.id) },
+          {
+            label: t("rename.deleteChapter"),
+            run: () =>
+              onDeleteChapter?.({
+                kind: "chapter",
+                id: chapter.id,
+                title: chapter.title,
+              }),
+            disabled: !onDeleteChapter,
+            destructive: true,
+          },
+        ]}
+      />
     </div>
   );
 }
@@ -291,22 +394,4 @@ export function ChapterDragPreview({
       </span>
     </div>
   );
-}
-
-function resolveChapterStatusLabel(
-  status: string,
-  t: TFunction<"components">,
-): string {
-  switch (status) {
-    case "completed":
-      return t("status.completed");
-    case "running":
-      return t("common.inProgress");
-    case "failed":
-      return t("status.failed");
-    case "partial":
-      return t("status.partiallyCompleted");
-    default:
-      return t("status.waiting");
-  }
 }

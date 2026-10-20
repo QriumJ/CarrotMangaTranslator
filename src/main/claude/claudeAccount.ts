@@ -5,8 +5,13 @@ import { CLAUDE_EFFORTS } from "../../shared/claudeTypes";
 import {
   CLAUDE_VERSION,
   claudeBinary,
+  ensureClaudeBinary,
   startClaudeRuntime,
 } from "./claudeRuntime";
+import {
+  CliNotInstalledError,
+  type CliInstallOptions,
+} from "../runtimeSupport/managedCliRuntime";
 
 export async function readClaudeAccount(
   paths: AppPaths,
@@ -15,6 +20,7 @@ export async function readClaudeAccount(
   if (!authenticated)
     return {
       authenticated: false,
+      runtimeInstalled: hasClaudeBinary(paths),
       email: null,
       plan: null,
       version: CLAUDE_VERSION,
@@ -28,6 +34,7 @@ export async function readClaudeAccount(
     ]);
     return {
       authenticated,
+      runtimeInstalled: true,
       email: account.email ?? null,
       plan: account.subscriptionType ?? null,
       version: CLAUDE_VERSION,
@@ -53,14 +60,21 @@ export async function authenticateClaude(
   paths: AppPaths,
   action: "logout" | "subscription" | "console",
   signal?: AbortSignal,
+  onProgress?: CliInstallOptions["onProgress"],
+  onAuthenticate?: () => void,
 ): Promise<ClaudeAccount> {
   signal?.throwIfAborted();
+  if (action === "logout" && !hasClaudeBinary(paths))
+    return readClaudeAccount(paths);
+  const executable = await ensureClaudeBinary(paths, { signal, onProgress });
+  signal?.throwIfAborted();
+  onAuthenticate?.();
   const args =
     action === "logout"
       ? ["auth", "logout"]
       : ["auth", "login", ...(action === "console" ? ["--console"] : [])];
   await new Promise<void>((resolve, reject) => {
-    const child = spawn(claudeBinary(paths), args, {
+    const child = spawn(executable, args, {
       windowsHide: true,
       signal,
       stdio: "ignore",
@@ -80,6 +94,7 @@ export async function authenticateClaude(
 }
 
 function readAuthentication(paths: AppPaths): Promise<boolean> {
+  if (!hasClaudeBinary(paths)) return Promise.resolve(false);
   return new Promise((resolve, reject) => {
     execFile(
       claudeBinary(paths),
@@ -106,4 +121,14 @@ function readAuthentication(paths: AppPaths): Promise<boolean> {
       },
     );
   });
+}
+
+function hasClaudeBinary(paths: AppPaths): boolean {
+  try {
+    claudeBinary(paths);
+    return true;
+  } catch (error) {
+    if (error instanceof CliNotInstalledError) return false;
+    throw error;
+  }
 }

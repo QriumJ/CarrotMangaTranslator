@@ -3,6 +3,7 @@ import { editPageOrganization } from "../library/pageOrganizationFacade";
 import { shell } from "electron";
 import {
   DeleteChapterRequestSchema,
+  DeleteChaptersRequestSchema,
   DeletePageRequestSchema,
   DeleteWorkRequestSchema,
   ImageDataUrlRequestSchema,
@@ -40,6 +41,7 @@ import {
   savePagesBlocksPatch,
 } from "../library";
 import { createLibraryImageUrl } from "../imageProtocol";
+import { deleteChaptersInWork } from "../application/chapterBatchDeletionService";
 import type { IpcContext } from "./context";
 import { tMain } from "./localization";
 import { trustedHandleContract } from "./trustedIpc";
@@ -48,6 +50,7 @@ export function registerLibraryIpc(context: IpcContext): void {
   registerLibraryReadIpc(context);
   registerLibraryRenameIpc(context);
   registerLibraryDeleteIpc(context);
+  registerChapterBatchDeleteIpc(context);
   registerLibraryReorderIpc(context);
   registerSoundEffectReviewIpc(context);
 }
@@ -181,13 +184,11 @@ function registerLibraryDeleteIpc(context: IpcContext): void {
         { chapterId },
         tMain("ipc.labels.chapterDelete"),
       );
-      return context.linkedWorkspaceSync
-        ? context.linkedWorkspaceSync.deleteLibraryTarget(
-            { kind: "chapter", id: request.chapterId },
-            removeCustomOutputs,
-            () => deleteChapter(request.chapterId),
-          )
-        : deleteChapter(request.chapterId);
+      return deleteChapterWithOutputs(
+        context,
+        request.chapterId,
+        removeCustomOutputs,
+      );
     },
   );
   trustedHandleContract(
@@ -218,6 +219,29 @@ function registerLibraryDeleteIpc(context: IpcContext): void {
         request.pageId,
         request.regionId,
       );
+    },
+  );
+}
+
+/** Several chapters of one work, each through the single-chapter path. */
+function registerChapterBatchDeleteIpc(context: IpcContext): void {
+  trustedHandleContract(
+    context,
+    chapterPageIpcContracts.deleteChapters,
+    async (_event, raw: unknown) => {
+      assertLibraryStructureMutationAvailable(context);
+      const request = parseIpcPayload(
+        DeleteChaptersRequestSchema,
+        raw,
+        tMain("ipc.labels.chapterDelete"),
+      );
+      return deleteChaptersInWork(request, {
+        listLibrary,
+        deleteChapter: (chapterId, removeCustomOutputs) =>
+          deleteChapterWithOutputs(context, chapterId, removeCustomOutputs),
+        selectionChangedError: () =>
+          new Error(tMain("ipc.errors.chapterSelectionChanged")),
+      });
     },
   );
 }
@@ -293,6 +317,20 @@ function registerSoundEffectReviewIpc(context: IpcContext): void {
       );
     },
   );
+}
+
+function deleteChapterWithOutputs(
+  context: IpcContext,
+  chapterId: string,
+  removeCustomOutputs: boolean,
+) {
+  return context.linkedWorkspaceSync
+    ? context.linkedWorkspaceSync.deleteLibraryTarget(
+        { kind: "chapter", id: chapterId },
+        removeCustomOutputs,
+        () => deleteChapter(chapterId),
+      )
+    : deleteChapter(chapterId);
 }
 
 function assertLibraryStructureMutationAvailable(context: IpcContext): void {

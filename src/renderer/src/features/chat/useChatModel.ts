@@ -3,15 +3,22 @@ import type { ChatSession } from "../../../../shared/chatTypes";
 import { useCodexConnection } from "../../hooks/useCodexConnection";
 import { useAccountConnection } from "../../hooks/useAccountConnection";
 import { claudeConnection } from "../../api/claudeConnection";
+import { grokConnection } from "../../api/grokConnection";
+import { isAccountRuntimeMissing } from "../../lib/accountRuntimePresentation";
 
 export function useChatModel(enabled: boolean, session: ChatSession | null) {
   const runtime = session?.runtime ?? "codex";
-  const codex = useCodexConnection(enabled && runtime !== "claude");
-  const claude = useAccountConnection(
-    claudeConnection,
-    enabled && runtime === "claude",
-  );
-  const account = runtime === "claude" ? claude.account : codex.account;
+  // Only the selected assistant's account is polled.
+  const accounts = {
+    codex: useCodexConnection(enabled && runtime === "codex").account,
+    claude: useAccountConnection(
+      claudeConnection,
+      enabled && runtime === "claude",
+    ).account,
+    grok: useAccountConnection(grokConnection, enabled && runtime === "grok")
+      .account,
+  };
+  const account = accounts[runtime];
   const [choices, setChoices] = useState<
     Record<string, { model: string; effort: string }>
   >({});
@@ -30,6 +37,7 @@ export function useChatModel(enabled: boolean, session: ChatSession | null) {
     model,
     effort,
     authenticated: Boolean(account?.authenticated),
+    runtimeMissing: isAccountRuntimeMissing(account),
     runtime,
     selectModel: (id: string) => {
       const next = models.find((entry) => entry.id === id);

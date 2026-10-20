@@ -40,7 +40,8 @@
   "fonts": {
     "registerFailed": "폰트를 등록하지 못했습니다. 앱에서 읽을 수 있는 원본 TTF/OTF 파일인지 확인하고 다시 시도해 주세요. 자세한 원인은 오류 보고서에서 확인할 수 있습니다.",
     "default": "기본",
-    "defaultSample": "가나다 Aa"
+    "defaultSample": "가나다 Aa",
+    "removeFailed": "폰트를 삭제하지 못했습니다. 다시 시도해 주세요."
   },
   "eta": {
     "seconds": "약 {{count}}초 남음",
@@ -61,9 +62,9 @@
       "total": "{{label}} · 전체 {{duration}}"
     },
     "failureGuidance": {
-      "maxOutputTokens": "최대 출력 토큰이 부족합니다. 설정 > LLM > 최대 출력 토큰을 늘려 주세요.",
-      "workContextBudget": "작품 정보 예산이 부족합니다. 설정 > LLM > 작품 정보 예산을 늘려 주세요.",
-      "contextLength": "컨텍스트 길이가 부족합니다. 설정 > LLM > 컨텍스트 길이를 늘려 주세요. VRAM 사용량이 늘 수 있습니다."
+      "maxOutputTokens": "최대 출력 토큰이 부족합니다. 설정 > 번역 > 최대 출력 토큰을 늘려 주세요.",
+      "workContextBudget": "작품 정보 예산이 부족합니다. 설정 > 번역 > 작품 정보 예산을 늘려 주세요.",
+      "contextLength": "컨텍스트 길이가 부족합니다. 설정 > 번역 > 컨텍스트 길이를 늘려 주세요. VRAM 사용량이 늘 수 있습니다."
     },
     "phase": {
       "booting": "모델 준비 중",
@@ -404,6 +405,15 @@
       "saveBeforePageOrderFailed": "현재 수정사항을 저장하지 못해 페이지 순서를 저장하지 않았습니다.",
       "pageRolledBack": "페이지 순서를 이전 순서로 되돌렸습니다.",
       "rolledBackAfterError": "{{message}} 이전 순서로 되돌렸습니다."
+    },
+    "bulkDelete": {
+      "confirmTitle": "화 {{count}}개 삭제",
+      "confirmMessageMore": "{{titles}} 외 {{count}}화",
+      "confirmDetail": "선택한 화의 데이터와 기본 폴더의 생성 파일을 삭제합니다. 작품과 용어/기억은 남습니다.",
+      "action": "{{count}}화 삭제",
+      "success": "{{count}}화를 삭제했습니다. 작품과 용어/기억은 유지됩니다.",
+      "partial": "{{deleted}}화를 삭제했고 {{failed}}화는 삭제하지 못했습니다.",
+      "failed": "선택한 화를 삭제하지 못했습니다."
     }
   },
   "inpainting": {
@@ -558,6 +568,7 @@
         "shareExport": "공유 파일 만들기",
         "modelTest": "모델·런타임 확인",
         "codexAuth": "ChatGPT 계정 연결",
+        "grokAuth": "Grok 계정 연결",
         "background": "백그라운드 작업",
         "environmentBackup": "백업 내보내기",
         "environmentRestore": "백업 가져오기",
@@ -596,6 +607,7 @@
         "model-test-checking": "모델 응답을 확인하는 중…",
         "codex-auth-opening-browser": "로그인 페이지를 여는 중…",
         "codex-auth-updating": "계정 연결을 변경하는 중…",
+        "cli-downloading": "AI 실행 파일을 내려받는 중…",
         "waiting-for-user": "브라우저 로그인을 기다리는 중…"
       },
       "status": {

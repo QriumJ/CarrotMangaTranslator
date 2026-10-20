@@ -23,6 +23,8 @@ import { TestSettingsPanel } from "./TestSettingsPanel";
 import { GeneralSettingsPanel } from "./GeneralSettingsPanel";
 import type { SettingsTabId } from "../settingsModalTypes";
 import type { SettingsSubmissionIssue } from "./settingsSubmissionIssue";
+import { Button } from "../ui/Button";
+import { Section } from "../ui/Section";
 import { InfoIcon } from "../ui/icons";
 import { LinkedWorkspaceSettingsPanel } from "./LinkedWorkspaceSettingsPanel";
 import { InternetResearchSettingsPanel } from "./InternetResearchSettingsPanel";
@@ -31,6 +33,7 @@ import { ImageSettingsPanel } from "./ImageSettingsPanel";
 export type SettingsModalViewProps = {
   activeTab: SettingsTabId;
   canSubmit: boolean;
+  isDirty?: boolean;
   submissionIssue?: SettingsSubmissionIssue;
   controlsBusy: boolean;
   defaultsPreviewActive: boolean;
@@ -64,28 +67,11 @@ export type SettingsModalViewProps = {
   };
 };
 
-export function SettingsModalView({
-  activeTab,
-  canSubmit,
-  submissionIssue,
-  controlsBusy,
-  defaultsPreviewActive,
-  generalPanelProps,
-  enginePanelProps,
-  researchPanelProps,
-  hardwarePanelProps,
-  library,
-  formatPanelTitle,
-  formatPanelProps,
-  onCancel,
-  onReset,
-  setActiveTab,
-  shortcutsPanelProps,
-  submit,
-  testPanelProps,
-  validationProps,
-  ...supportActions
-}: SettingsModalViewProps): React.JSX.Element {
+export function SettingsModalView(
+  props: SettingsModalViewProps,
+): React.JSX.Element {
+  const { activeTab, setActiveTab, submissionIssue, controlsBusy, onCancel } =
+    props;
   const [activeLlmTab, setActiveLlmTab] =
     React.useState<LlmSettingsTab>("translation");
   const navigation = { activeLlmTab, setActiveLlmTab };
@@ -105,19 +91,20 @@ export function SettingsModalView({
       closeDisabled={controlsBusy}
       footer={
         <SettingsModalFooter
-          canSubmit={canSubmit}
+          canSubmit={props.canSubmit}
           submissionIssue={submissionIssue}
           onRevealIssue={revealIssue}
           controlsBusy={controlsBusy}
           onCancel={onCancel}
-          {...supportActions}
-          onReset={onReset}
-          submit={submit}
+          immediate={["mcp", "results", "test"].includes(activeTab)}
+          isDirty={props.isDirty}
+          onReset={props.onReset}
+          submit={props.submit}
         />
       }
     >
       <div className="settings-layout">
-        {defaultsPreviewActive ? <SettingsDefaultsNotice /> : null}
+        {props.defaultsPreviewActive ? <SettingsDefaultsNotice /> : null}
         <SettingsTabs
           activeTab={activeTab}
           activeLlmTab={activeLlmTab}
@@ -125,18 +112,9 @@ export function SettingsModalView({
           onSelectLlmTab={setActiveLlmTab}
         />
         <SettingsModalTabPanel
-          activeTab={activeTab}
+          {...props}
           navigation={navigation}
-          generalPanelProps={generalPanelProps}
-          enginePanelProps={enginePanelProps}
-          researchPanelProps={researchPanelProps}
-          hardwarePanelProps={hardwarePanelProps}
-          library={library}
-          formatPanelTitle={formatPanelTitle}
-          formatPanelProps={formatPanelProps}
-          shortcutsPanelProps={shortcutsPanelProps}
-          testPanelProps={testPanelProps}
-          validationProps={validationProps}
+          supportActions={props}
         />
       </div>
     </Modal>
@@ -145,6 +123,7 @@ export function SettingsModalView({
 
 function SettingsModalTabPanel({
   activeTab,
+  supportActions,
   navigation,
   generalPanelProps,
   enginePanelProps,
@@ -169,7 +148,13 @@ function SettingsModalTabPanel({
   | "shortcutsPanelProps"
   | "testPanelProps"
   | "validationProps"
-> & { navigation: LlmNavigation }): React.JSX.Element {
+> & {
+  navigation: LlmNavigation;
+  supportActions: Pick<
+    SettingsModalViewProps,
+    "onOpenErrorReport" | "onOpenLogFolder" | "onOpenModelFolder"
+  >;
+}): React.JSX.Element {
   const ids = settingsPageIds(
     currentSettingsPage(activeTab, navigation.activeLlmTab),
   );
@@ -204,7 +189,34 @@ function SettingsModalTabPanel({
         testPanelProps={testPanelProps}
         validationProps={validationProps}
       />
+      {activeTab === "test" ? (
+        <SettingsSupportActions {...supportActions} />
+      ) : null}
     </div>
+  );
+}
+
+function SettingsSupportActions(
+  props: Pick<
+    SettingsModalViewProps,
+    "onOpenErrorReport" | "onOpenLogFolder" | "onOpenModelFolder"
+  >,
+) {
+  const { t } = useTranslation("components");
+  return (
+    <Section title={t("settings.support.title")} density="compact" divided>
+      <div className="settings-inline-actions">
+        <Button onClick={props.onOpenLogFolder}>
+          {t("settings.footer.openLogs")}
+        </Button>
+        <Button onClick={props.onOpenModelFolder}>
+          {t("settings.footer.openModels")}
+        </Button>
+        <Button onClick={props.onOpenErrorReport}>
+          {t("settings.footer.reportProblem")}
+        </Button>
+      </div>
+    </Section>
   );
 }
 

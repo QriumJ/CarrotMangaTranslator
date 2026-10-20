@@ -4,6 +4,7 @@ import { Button } from "../ui/Button";
 import { Tabs } from "../ui/Tabs";
 import { ChatgptGuide } from "./McpChatgptGuide";
 import { OpenCodeGuide, GenericMcpGuide } from "./McpOpenCodeGuide";
+import { GrokGuide, GrokBuildGuide } from "./McpGrokGuide";
 import {
   ClaudeCodeGuide,
   ClaudeGuide,
@@ -18,6 +19,8 @@ const MCP_CLIENTS = [
   "claude",
   "claude-code",
   "opencode",
+  "grok",
+  "grok-build",
   "generic",
 ] as const;
 type McpClient = (typeof MCP_CLIENTS)[number];
@@ -27,6 +30,8 @@ const CLIENT_LABELS: Record<McpClient, string> = {
   claude: "Claude",
   "claude-code": "Claude Code",
   opencode: "OpenCode",
+  grok: "Grok 웹",
+  "grok-build": "Grok Build",
   generic: "기타 MCP 앱",
 };
 const HELP_LABELS: Record<McpClient, string> = {
@@ -35,6 +40,8 @@ const HELP_LABELS: Record<McpClient, string> = {
   claude: "Claude 열기",
   "claude-code": "Claude Code 연결 문서",
   opencode: "OpenCode 연결 문서",
+  grok: "Grok 커넥터 열기",
+  "grok-build": "Grok Build 연결 문서",
   generic: "MCP 연결 문서",
 };
 
@@ -135,6 +142,10 @@ export function McpConnectionGuide({
       >
         {client === "opencode" ? (
           <OpenCodeGuide url={url} busy={busy} run={run} />
+        ) : client === "grok" ? (
+          <GrokGuide url={url} />
+        ) : client === "grok-build" ? (
+          <GrokBuildGuide url={url} busy={busy} run={run} />
         ) : client === "generic" ? (
           <GenericMcpGuide url={url} />
         ) : client === "claude-code" ? (

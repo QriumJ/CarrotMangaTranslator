@@ -1,6 +1,6 @@
 # MCP 연결·사용 가이드
 
-당근의 MCP 서버는 실행 중인 앱의 보관함·편집·처리·출력 기능을 외부 AI에 제공합니다. Codex·ChatGPT·Claude·Claude Code·OpenCode 등에서 작업을 요청하고, 당근 앱에서 결과를 확인하고 수정할 수 있습니다.
+당근의 MCP 서버는 실행 중인 앱의 보관함·편집·처리·출력 기능을 외부 AI에 제공합니다. Codex·ChatGPT·Claude·Claude Code·OpenCode 등의 연결 방법과 Grok 웹·Grok Build 등록 안내를 제공합니다. 외부 AI에서 작업을 요청하고, 당근 앱에서 결과를 확인하고 수정할 수 있습니다.
 
 [README](../README.md#ai-앱-연결--mcp) · [연결 준비](#1-당근에서-연결-준비) · [클라이언트 등록](#2-ai-클라이언트-등록) · [작업 요청](#3-작업-요청) · [권한](#4-권한과-연결-관리) · [문제 해결](#5-문제-해결)
 
@@ -122,6 +122,50 @@ opencode mcp list
 ```
 
 브라우저와 당근 앱의 코드가 같은지 확인하고 당근에서 승인합니다. `carrot connected (OAuth)`가 표시되면 OpenCode에서 요청하세요. [OpenCode MCP 문서](https://opencode.ai/docs/mcp-servers/)
+
+### Grok 웹
+
+1. 당근의 **설정 → AI 앱 연결 (MCP) → 연결 방법 및 도움말 → Grok 웹 → Grok 커넥터 열기**를 누르거나 [Grok 커넥터](https://grok.com/connectors)에 로그인합니다.
+2. **플러그인 → 커넥터 → 새 커넥터(New Connector) → 맞춤 모드(Custom)**를 선택합니다.
+3. 이름에 `당근망가번역기`, 서버 URL에 당근에서 복사한 `https://…ts.net/mcp` 전체를 입력하고 **커넥터 추가**를 누릅니다. 입력란의 `/sse` 예시로 바꾸지 말고 복사한 주소를 그대로 사용합니다.
+4. 브라우저와 당근 앱의 확인 코드·요청 권한을 비교하고 당근에서 승인합니다.
+5. Grok 대화의 **첨부 → 커넥터 → 당근망가번역기**가 켜져 있는지 확인하고, 당근 도구로 보관함을 조회합니다. 이어 실제 페이지·블록·원본 이미지를 읽어 번역을 확인한 뒤 필요한 저장·렌더링 작업을 명시적으로 요청하세요. 사용하는 동안 당근과 Tailscale을 켜 두세요.
+
+조직 계정은 관리자가 먼저 커넥터를 허용해야 할 수 있습니다. 로컬 주소 대신 당근이 제공하는 공개 HTTPS 주소를 사용하세요. [공식 커넥터 문서](https://docs.x.ai/grok/connectors)
+
+<details>
+<summary>Edge에서 확인한 Grok 웹 등록 화면 (2026-10-19)</summary>
+
+![커넥터 탭의 새 커넥터 버튼](../src/renderer/src/assets/images/mcp-grok/grok-connectors.png)
+
+![새 커넥터 창의 맞춤 모드](../src/renderer/src/assets/images/mcp-grok/grok-new-connector.png)
+
+![맞춤형 커넥터 이름·서버 URL 입력 · URL 입력 전](../src/renderer/src/assets/images/mcp-grok/grok-connector-form.png)
+
+</details>
+
+### Grok Build CLI
+
+[공식 설치 안내](https://docs.x.ai/build/overview)에 따라 Grok Build를 설치합니다. 당근 도움말의 **Grok Build → 명령 복사**에는 현재 MCP 주소가 채워집니다.
+
+```sh
+grok mcp add --transport http carrot "<복사한 MCP 주소>"
+grok mcp list
+```
+
+`grok`을 실행해 계정에 로그인한 뒤 **`/mcps` → carrot 선택 → `i`**로 OAuth 인증을 시작합니다. 최초 도구 사용 시 브라우저 인증이 자동으로 시작될 수도 있습니다. 브라우저와 당근 앱의 코드·권한을 확인해 당근에서 승인하고, 새 대화에서 요청하세요. 연결이 안 되면 `grok mcp doctor carrot`으로 진단합니다. [공식 MCP 문서](https://docs.x.ai/build/features/mcp-servers)
+
+Grok 계정 로그인과 당근 MCP 연결 승인은 별개입니다. 이 연결은 **Grok에서 당근 도구를 사용하는 방식**이며 당근의 번역 엔진 설정에 Grok API나 CLI를 내장하지 않습니다. 캡처는 계정명·대화 목록을 제외한 실제 화면이며 URL 입력 전 상태입니다.
+
+2026-10-19에 Edge의 Grok 웹에서 실제 개발 앱에 연결해 다음을 확인했습니다. Tailscale을 켠 직후 첫 등록은 연결 실패했으나 공개 주소가 준비된 뒤 재등록하여 성공했습니다. 인증을 우회하거나 서버 권한을 완화하지 않았습니다.
+
+- 동적 OAuth 등록 → 앱과 브라우저의 같은 코드 확인·승인 → 토큰 발급 → Grok의 커넥터 추가 완료.
+- MCP `2025-11-25` 초기화와 259개 도구 목록 수신, 서버의 인증된 `tools/call` HTTP 200 응답.
+- `carrot_list_works`로 실제 보관함 작품 3개 조회.
+- `carrot_list_chapters` → `carrot_get_chapter` → `carrot_get_page_blocks`로 한 페이지와 블록 13개 조회.
+- `carrot_inspect_translation_source`로 원본 이미지를 받고 Grok이 말풍선 2개의 원문과 한국어 번역을 응답.
+
+이 검증은 기존 작품·번역 데이터를 변경하거나 앱 모델을 실행하지 않았습니다. 번역 저장·렌더링, 앱 재시작 후 토큰 갱신, Grok Build CLI 실행은 이번 실제 계정 검증 범위에 포함하지 않았습니다.
 
 ### 기타 MCP 앱
 

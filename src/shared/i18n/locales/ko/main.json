@@ -37,13 +37,16 @@
     "saveText": "텍스트 저장",
     "openConditionalBatchYaml": "일괄 편집 YAML 가져오기",
     "saveConditionalBatchYaml": "일괄 편집 YAML 내보내기",
+    "openWorkGlossary": "용어 파일 가져오기",
+    "saveWorkGlossary": "용어 파일 내보내기",
     "conditionalBatchYamlTooLarge": "일괄 편집 YAML 파일이 2MiB를 초과합니다.",
     "exportOutputFolder": "결과물 출력 폴더 선택",
     "filters": {
       "images": "이미지 파일",
       "font": "폰트 파일",
       "yaml": "YAML 파일",
-      "text": "텍스트 파일"
+      "text": "텍스트 파일",
+      "json": "JSON 파일"
     }
   },
   "jobs": {
@@ -59,7 +62,8 @@
       "untrusted": "신뢰할 수 없는 IPC 요청입니다.",
       "invalidImportPreview": "만료되었거나 유효하지 않은 가져오기 미리보기입니다.",
       "invalidSharePreview": "만료되었거나 유효하지 않은 공유 파일 미리보기입니다.",
-      "libraryOperationBusy": "보관함 작업이 끝난 뒤 구조를 변경해 주세요."
+      "libraryOperationBusy": "보관함 작업이 끝난 뒤 구조를 변경해 주세요.",
+      "chapterSelectionChanged": "선택한 화 목록이 바뀌었습니다. 목록을 다시 확인한 뒤 삭제해 주세요."
     },
     "labels": {
       "translationJob": "번역 작업",

@@ -1,3 +1,4 @@
+import { buildWorkContextCommand } from "../lib/workContextCommand";
 import { buildInpaintingCommands } from "../lib/appInpaintingCommands";
 import { useMemo } from "react";
 import {
@@ -24,6 +25,7 @@ type UseAppCommandsOptions = {
   runAnalysis: (runMode: "pending" | "all") => void;
   openTranslateOptions: () => void;
   openChat?: () => void;
+  openWorkContext?: (workId: string) => void;
   runCurrentPageInpainting: () => void;
   cancelJob: () => void;
   openImportPreview: (mode: "zip-folder") => Promise<void>;
@@ -71,6 +73,7 @@ export function useAppCommands(
         openTextView: options.openTextView,
         openTranslateOptions: options.openTranslateOptions,
         openChat: options.openChat,
+        openWorkContext: options.openWorkContext,
         openTranslationSource: options.openTranslationSource,
         openAddChapterPages: options.openAddChapterPages,
         openPageEditor: options.openPageEditor,
@@ -101,6 +104,7 @@ export function useAppCommands(
       options.openTextView,
       options.openTranslateOptions,
       options.openChat,
+      options.openWorkContext,
       options.openTranslationSource,
       options.openAddChapterPages,
       options.openPageEditor,
@@ -137,6 +141,11 @@ function buildAppCommandRegistry(
       options.currentChapter,
       false,
       options.redactionPreparation,
+      options.componentText,
+    ),
+    "open-work-context": buildWorkContextCommand(
+      options.currentChapter?.workId ?? null,
+      options.openWorkContext,
       options.componentText,
     ),
   } satisfies AppCommandMap;

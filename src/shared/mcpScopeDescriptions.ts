@@ -3,6 +3,7 @@
 export function describeMcpScopes(
   scope: string,
   format: "full" | "compact" = "full",
+  localize?: (scope: string) => string | undefined,
 ): string {
   const labels: Record<string, string> = {
     "carrot.read": "보관함·텍스트·문맥 조회",
@@ -22,6 +23,10 @@ export function describeMcpScopes(
   return scope
     .split(/\s+/)
     .filter(Boolean)
-    .map((item) => (Object.hasOwn(selected, item) ? selected[item] : item))
+    .map(
+      (item) =>
+        localize?.(item) ??
+        (Object.hasOwn(selected, item) ? selected[item] : item),
+    )
     .join(" · ");
 }

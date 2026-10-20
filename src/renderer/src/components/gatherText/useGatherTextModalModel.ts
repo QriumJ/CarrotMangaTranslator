@@ -16,18 +16,20 @@ import {
 } from "./useGatherTextFileActions";
 import { useReviewTextActions } from "./useReviewTextActions";
 import { useGatherTextFormatSelection } from "./useGatherTextFormatSelection";
+import { formatGatheredTextFile } from "../../../../shared/gatherTextFile";
 
 type GatherTextModalModelProps = Pick<
   GatherTextModalProps,
   | "chapter"
   | "blockStylePresets"
   | "page"
-  | "onChapterUpdated"
+  | "onImportReviewText"
   | "onApplyTranslatedText"
   | "onApplyFormat"
   | "formatApplyDisabled"
   | "readingDirection"
 >;
+type TxtImportField = "both" | "translated";
 
 export function useGatherTextModalModel({
   blockStylePresets,
@@ -35,7 +37,7 @@ export function useGatherTextModalModel({
   formatApplyDisabled,
   onApplyFormat,
   page,
-  onChapterUpdated,
+  onImportReviewText,
   onApplyTranslatedText,
   readingDirection = "rtl",
 }: GatherTextModalModelProps) {
@@ -47,27 +49,25 @@ export function useGatherTextModalModel({
   );
   const [reviewWarnings, setReviewWarnings] = React.useState<string[]>([]);
   const [reviewBusy, setReviewBusy] = React.useState(false);
+  const [txtField, setTxtField] = React.useState<TxtImportField>("translated");
   const reviewFileInputRef = React.useRef<HTMLInputElement | null>(null);
   const txtFileInputRef = React.useRef<HTMLInputElement | null>(null);
-  const pages = React.useMemo(
-    () =>
-      filterPagesByField(
-        gatherText({ chapter, page, scope, direction: readingDirection }),
-        field,
-      ),
-    [chapter, field, page, readingDirection, scope],
-  );
-  const text = React.useMemo(
-    () => formatGatheredText(pages, field, !excludeHeaders),
-    [excludeHeaders, field, pages],
-  );
+  const { pages, text, fileText } = useGatheredTextContent({
+    chapter,
+    page,
+    scope,
+    readingDirection,
+    field,
+    excludeHeaders,
+  });
   const fileActions = useGatherTextActions(
     text,
     buildDefaultName(chapter, page, scope),
+    fileText,
   );
   const reviewActions = useReviewTextActions({
     chapter,
-    onChapterUpdated,
+    onImportReviewText,
     setReviewBusy,
     setReviewWarnings,
   });
@@ -76,6 +76,7 @@ export function useGatherTextModalModel({
     page,
     scope,
     readingDirection,
+    field: txtField,
     onApplyTranslatedText,
     setReviewWarnings,
   });
@@ -101,6 +102,7 @@ export function useGatherTextModalModel({
     reviewBusy,
     reviewFileInputRef,
     txtFileInputRef,
+    setTxtImportField: setTxtField,
     pages,
     formatSelection,
     hasContent: pages.length > 0,
@@ -135,4 +137,29 @@ function useGatherTextControlHandlers({
     [clearSelection, setField],
   );
   return { setScope: handleScopeChange, setField: handleFieldChange };
+}
+
+function useGatheredTextContent({
+  chapter,
+  page,
+  scope,
+  readingDirection,
+  field,
+  excludeHeaders,
+}: Pick<GatherTextModalProps, "chapter" | "page" | "readingDirection"> & {
+  scope: GatherScope;
+  field: GatherField;
+  excludeHeaders: boolean;
+}) {
+  return React.useMemo(() => {
+    const pages = filterPagesByField(
+      gatherText({ chapter, page, scope, direction: readingDirection }),
+      field,
+    );
+    return {
+      pages,
+      text: formatGatheredText(pages, field, !excludeHeaders),
+      fileText: formatGatheredTextFile(pages, field, !excludeHeaders),
+    };
+  }, [chapter, page, scope, readingDirection, field, excludeHeaders]);
 }

@@ -1,3 +1,6 @@
+import { GrokAccountSection } from "../../components/settingsModal/GrokAccountSection";
+import { Modal } from "../../components/ui/Modal";
+import { Button } from "../../components/ui/Button";
 import React from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -15,8 +18,8 @@ import {
   ChatHistoryControls,
   ChatModelControls,
   ChatViewContext,
-  ChatLogin,
 } from "./ChatControls";
+import { ChatLogin } from "./ChatLogin";
 import styles from "./ChatPanel.module.css";
 
 const LIBRARY_CONTEXT: CurrentViewContext = {
@@ -36,6 +39,7 @@ export function ChatPanel(props: {
   headerSlot?: HTMLElement | null;
 }) {
   const { t } = useTranslation("components");
+  const [accountOpen, setAccountOpen] = React.useState(false);
   const chat = useChat(props.enabled);
   const model = useChatModel(props.enabled, chat.session);
   const running = Boolean(
@@ -54,7 +58,27 @@ export function ChatPanel(props: {
   return (
     <section className={styles.panel} aria-label={t("chat.open")}>
       {props.headerSlot ? createPortal(history, props.headerSlot) : history}
-      {!model.authenticated && <ChatLogin chat={chat} />}
+      {model.runtime === "grok" ? (
+        <div>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setAccountOpen(true)}
+          >
+            {t("settings.grok.title")}
+          </Button>
+        </div>
+      ) : null}
+      {accountOpen && model.runtime === "grok" ? (
+        <Modal
+          title={t("settings.grok.title")}
+          size="sm"
+          onClose={() => setAccountOpen(false)}
+        >
+          <GrokAccountSection />
+        </Modal>
+      ) : null}
+      {!model.authenticated && <ChatLogin chat={chat} model={model} />}
       {chat.error && (
         <div role="alert" className={styles.error}>
           {chat.error}

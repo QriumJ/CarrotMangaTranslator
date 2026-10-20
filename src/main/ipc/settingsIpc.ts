@@ -1,6 +1,7 @@
 import { BrowserWindow } from "electron";
 import { saveExportPreferences } from "../settings/exportPreferencesStore";
 import { registerClaudeAccountIpc } from "./claudeAccountIpc";
+import { registerGrokAccountIpc } from "./grokAccountIpc";
 import { AppSettingsSchema, parseIpcPayload } from "../../shared/ipcSchemas";
 import {
   ipcEventContracts,
@@ -50,6 +51,7 @@ export function registerSettingsIpc(
   dependencies: SettingsIpcDependencies = {},
 ): void {
   registerClaudeAccountIpc(context);
+  registerGrokAccountIpc(context);
   registerCodexAccountIpc(context, dependencies.codexAccountRuntime);
   registerTavilyUsageIpc(
     context,

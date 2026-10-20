@@ -39,13 +39,10 @@ type RetouchInpaintingStepProps = {
 export function RetouchInpaintingStep(
   props: RetouchInpaintingStepProps,
 ): React.JSX.Element {
-  const { t } = useTranslation("components");
   const maskActive = props.tool === "mask" || props.maskStrokeCount > 0;
 
   return (
     <div className="inpaint-step-body">
-      <p className="inpaint-step-lead">{t("inpainting.retouch.description")}</p>
-
       <RetouchToolsBar {...props} />
 
       {maskActive ? <DrawnMaskActionGroup {...props} /> : null}

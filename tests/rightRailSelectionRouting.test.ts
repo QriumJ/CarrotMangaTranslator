@@ -87,6 +87,7 @@ describe("right rail block selection routing", () => {
         setShowBlockChrome: noop,
         setShowTextBlocks: noop,
         setStyleGuideOpen: noop,
+        setStyleGuideWorkId: noop,
         openTextView: noop,
         showBlockChrome: true,
         showTextBlocks: true,

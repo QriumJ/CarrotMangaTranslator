@@ -1,3 +1,4 @@
+import type { LibraryContextActions } from "../hooks/libraryActionTypes";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -55,6 +56,7 @@ type AppSidebarProps = {
   onOpenShareExport: () => void;
   onOpenShareImport: () => void;
   onOpenChapter: (chapterId: string) => void;
+  contextActions?: LibraryContextActions;
   onRenameWork: (workId: string) => void;
   onRenameChapter: (chapterId: string) => void;
   onReorderChapter: (
@@ -147,6 +149,7 @@ function LibrarySidebarContent({
       />
 
       <LibraryTree
+        contextActions={props.contextActions}
         collapsed={collapsedPanel === "library"}
         otherPanelCollapsed={collapsedPanel === "pages"}
         library={props.library}

@@ -5,17 +5,19 @@ import type { ReviewExportFormat } from "../../../../shared/reviewTypes";
 import { decodeImportedTextContent } from "../../../../shared/gatherText";
 import { toast } from "../../lib/toastStore";
 import { gatherTextGateway } from "./gatherTextGateway";
+import type { GatherTextModalProps } from "./gatherTextTypes";
+import { useMountedRef } from "../../hooks/useMountedRef";
 
 type ReviewActionOptions = {
   chapter: ChapterSnapshot | null;
-  onChapterUpdated?: (chapter: ChapterSnapshot) => void;
+  onImportReviewText?: GatherTextModalProps["onImportReviewText"];
   setReviewBusy: (busy: boolean) => void;
   setReviewWarnings: (warnings: string[]) => void;
 };
 
 export function useReviewTextActions({
   chapter,
-  onChapterUpdated,
+  onImportReviewText,
   setReviewBusy,
   setReviewWarnings,
 }: ReviewActionOptions): {
@@ -23,6 +25,7 @@ export function useReviewTextActions({
   handleImportReviewFile: (file: File) => Promise<void>;
 } {
   const { t } = useTranslation("components");
+  const mounted = useMountedRef();
   const handleExportReview = React.useCallback(
     async (format: ReviewExportFormat) => {
       if (!chapter) return;
@@ -45,20 +48,26 @@ export function useReviewTextActions({
 
   const handleImportReviewFile = React.useCallback(
     async (file: File) => {
-      if (!chapter || !window.confirm(t("gatherText.review.importConfirm"))) {
+      if (
+        !chapter ||
+        !onImportReviewText ||
+        !window.confirm(t("gatherText.review.importConfirm"))
+      ) {
         return;
       }
       setReviewBusy(true);
       setReviewWarnings([]);
       try {
-        const result = await gatherTextGateway.importReviewText({
+        const content = decodeImportedTextContent(await file.arrayBuffer());
+        if (!mounted.current) return;
+        const result = await onImportReviewText({
           chapterId: chapter.id,
-          content: decodeImportedTextContent(await file.arrayBuffer()),
+          content,
           format: file.name.toLowerCase().endsWith(".tsv") ? "tsv" : "csv",
           updateSourceText: false,
           requireSourceMatch: false,
         });
-        onChapterUpdated?.(result.chapter);
+        if (!mounted.current) return;
         setReviewWarnings(result.warnings);
         toast.success(
           t("gatherText.review.updated", {
@@ -74,12 +83,14 @@ export function useReviewTextActions({
         }
       } catch (error) {
         console.error(error);
+        if (mounted.current && error instanceof Error)
+          setReviewWarnings([error.message]);
         toast.error(t("gatherText.review.importFailed"));
       } finally {
-        setReviewBusy(false);
+        if (mounted.current) setReviewBusy(false);
       }
     },
-    [chapter, onChapterUpdated, setReviewBusy, setReviewWarnings, t],
+    [chapter, mounted, onImportReviewText, setReviewBusy, setReviewWarnings, t],
   );
   return { handleExportReview, handleImportReviewFile };
 }

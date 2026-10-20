@@ -1,4 +1,5 @@
 import { chatBridgeSource } from "./chat-bridge.mjs";
+import { workContextBridgeSource } from "./work-context-bridge.mjs";
 
 const bridgeTemplate = `(() => {
   const runtimeErrors = [];
@@ -118,8 +119,10 @@ const bridgeTemplate = `(() => {
     sequences: conditionalBatchSequences,
   });
   __CHAT_BRIDGE__
+  __WORK_CONTEXT_BRIDGE__
   const implementations = {
     ...chatApi,
+    ...workContextApi,
     getEnvironmentRestoreReceipt: async () => null,
     previewEnvironmentBackup: async () => ({ id: "11111111-1111-4111-8111-111111111111", createdAt: "2026-09-24T10:30:00.000Z", appVersion: "2.8.0", works: 12, pages: 842, bytes: 900000000, recoveryPath: "D:/CarrotData/.environment-backup/recovery/11111111-1111-4111-8111-111111111111", connections: ["E:/Manga/Originals"] }),
     discardEnvironmentBackup: async () => null,
@@ -271,5 +274,6 @@ const bridgeTemplate = `(() => {
 export function qaBridgeSource(buildChannel) {
   return bridgeTemplate
     .replace("__CHAT_BRIDGE__", chatBridgeSource)
+    .replace("__WORK_CONTEXT_BRIDGE__", workContextBridgeSource)
     .replace('"__BUILD_CHANNEL__"', JSON.stringify(buildChannel));
 }

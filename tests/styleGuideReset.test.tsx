@@ -281,7 +281,7 @@ describe("StyleGuideModal complete reset", () => {
     expect(
       await screen.findByRole("dialog", { name: "조사 변경안 검토" }),
     ).toBeTruthy();
-    expect(screen.getAllByRole("dialog")).toHaveLength(2);
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
     expect(gatewayMocks.saveWorkStyleGuide).not.toHaveBeenCalled();
     expect(gatewayMocks.researchWorkContext).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -824,3 +824,32 @@ function createDeferred<T>(): {
   });
   return { promise, resolve };
 }
+
+it("opens and saves a work glossary without inventing a chapter or loading chapter memory", async () => {
+  render(
+    <StyleGuideModal
+      chapter={null}
+      workId={WORK_ID}
+      workTitle="Empty work"
+      settings={makeSettings()}
+      notificationPort={notificationMocks}
+      onClose={() => {}}
+    />,
+  );
+  await waitFor(() =>
+    expect(gatewayMocks.getWorkStyleGuide).toHaveBeenCalledWith(WORK_ID),
+  );
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "저장" })).toHaveProperty(
+      "disabled",
+      false,
+    ),
+  );
+  expect(gatewayMocks.getChapterStoryMemory).not.toHaveBeenCalled();
+  expect(screen.queryByRole("tab", { name: "스토리 메모리" })).toBe(null);
+  fireEvent.click(screen.getByRole("button", { name: "저장" }));
+  await waitFor(() =>
+    expect(gatewayMocks.saveWorkStyleGuide).toHaveBeenCalled(),
+  );
+  expect(gatewayMocks.saveChapterStoryMemory).not.toHaveBeenCalled();
+});

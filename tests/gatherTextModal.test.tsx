@@ -74,19 +74,19 @@ describe("gather text modal", () => {
 
   it("uses the latest chapter callback when a review import finishes", async () => {
     vi.spyOn(window, "confirm").mockReturnValue(true);
-    const deferred = createDeferred<{
-      chapter: ChapterSnapshot;
-      updatedBlockCount: number;
-      warnings: string[];
-    }>();
-    gatewayMocks.importReviewText.mockReturnValue(deferred.promise);
+    const deferred = createDeferred<ArrayBuffer>();
     const initialCallback = vi.fn();
-    const latestCallback = vi.fn();
+    const latestCallback = vi.fn(async () => ({
+      chapter: CHAPTER,
+      updatedBlockCount: 1,
+      skippedRowCount: 0,
+      warnings: [],
+    }));
     const view = render(
       <GatherTextModal
         chapter={CHAPTER}
         page={PAGE}
-        onChapterUpdated={initialCallback}
+        onImportReviewText={initialCallback}
         onClose={vi.fn()}
       />,
     );
@@ -96,26 +96,19 @@ describe("gather text modal", () => {
     }
     const file = new File(["review"], "review.csv", { type: "text/csv" });
     Object.defineProperty(file, "arrayBuffer", {
-      value: vi.fn(async () => new ArrayBuffer(0)),
+      value: vi.fn(() => deferred.promise),
     });
 
     fireEvent.change(reviewInput, { target: { files: [file] } });
-    await vi.waitFor(() => {
-      expect(gatewayMocks.importReviewText).toHaveBeenCalledOnce();
-    });
     view.rerender(
       <GatherTextModal
         chapter={CHAPTER}
         page={PAGE}
-        onChapterUpdated={latestCallback}
+        onImportReviewText={latestCallback}
         onClose={vi.fn()}
       />,
     );
-    deferred.resolve({
-      chapter: CHAPTER,
-      updatedBlockCount: 1,
-      warnings: [],
-    });
+    deferred.resolve(new ArrayBuffer(0));
     await vi.waitFor(() => {
       expect(latestCallback).toHaveBeenCalledOnce();
     });

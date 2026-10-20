@@ -1,9 +1,33 @@
 import { existsSync, readFileSync } from "node:fs";
+import { spawn } from "node:child_process";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import type { AppPaths } from "./appPaths";
+import {
+  CliNotInstalledError,
+  ensureManagedCli,
+  findManagedCli,
+  type CliInstallOptions,
+} from "./runtimeSupport/managedCliRuntime";
 
 export const BUNDLED_CODEX_VERSION = "0.160.0";
+
+function spawnCodexAppServer(
+  executable: string,
+  args: readonly string[],
+  options: { cwd: string; env: NodeJS.ProcessEnv },
+) {
+  return spawn(executable, [...args], {
+    ...options,
+    stdio: ["pipe", "pipe", "pipe"],
+    windowsHide: true,
+  });
+}
+
+export const codexAppServerStartRuntime = {
+  resolveBinary: ensureCodexAppServerBinary,
+  spawnAppServer: spawnCodexAppServer,
+};
 
 type SupportedCodexTarget = {
   packageName: string;
@@ -49,11 +73,12 @@ const requireFromHere = createRequire(__filename);
 export type CodexAppServerBinary = SupportedCodexTarget & {
   executablePath: string;
   packageVersion: string;
-  source: "packaged" | "node_modules";
+  source: "packaged" | "node_modules" | "downloaded";
 };
 
 export function resolveCodexAppServerBinary(
-  paths: Pick<AppPaths, "isPackaged" | "resourcesDir">,
+  paths: Pick<AppPaths, "isPackaged" | "resourcesDir"> &
+    Partial<Pick<AppPaths, "dataRoot">>,
   platform = process.platform,
   arch = process.arch,
 ): CodexAppServerBinary {
@@ -79,7 +104,17 @@ export function resolveCodexAppServerBinary(
     };
   }
 
-  const packageJsonPath = resolvePlatformPackageJson(target.packageName);
+  const managed = findManagedCli(paths.dataRoot, "codex", platform, arch);
+  if (managed)
+    return {
+      ...target,
+      executablePath: managed,
+      packageVersion: BUNDLED_CODEX_VERSION,
+      source: "downloaded",
+    };
+  const packageJsonPath = paths.isPackaged
+    ? null
+    : resolvePlatformPackageJson(target.packageName);
   if (packageJsonPath) {
     const packageRoot = dirname(packageJsonPath);
     const executablePath = join(
@@ -99,9 +134,22 @@ export function resolveCodexAppServerBinary(
     }
   }
 
-  throw new Error(
-    `공식 Codex App Server 실행 파일을 찾지 못했습니다. 앱을 다시 설치해 주세요. (${target.packageName})`,
-  );
+  throw new CliNotInstalledError("codex");
+}
+
+export async function ensureCodexAppServerBinary(
+  paths: AppPaths,
+  options: CliInstallOptions = {},
+  install: typeof ensureManagedCli = ensureManagedCli,
+): Promise<CodexAppServerBinary> {
+  options.signal?.throwIfAborted();
+  try {
+    return resolveCodexAppServerBinary(paths);
+  } catch (error) {
+    if (!(error instanceof CliNotInstalledError)) throw error;
+  }
+  await install(paths.dataRoot, "codex", options);
+  return resolveCodexAppServerBinary(paths);
 }
 
 function resolvePlatformPackageJson(packageName: string): string | null {

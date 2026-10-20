@@ -55,3 +55,8 @@
     transition: none;
   }
 }
+
+.workDisclosure:disabled {
+  opacity: 1;
+  cursor: default;
+}

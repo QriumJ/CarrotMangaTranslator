@@ -18,6 +18,7 @@ import type {
 import { normalizeAppSettingsForRuntime } from "../src/main/settingsStore";
 import { normalizeCodexAuthenticationError } from "../src/main/codexAuthentication";
 import { SETTINGS_SECRET_PRESERVE_SENTINEL } from "../src/shared/settingsSecrets";
+import { CliNotInstalledError } from "../src/main/runtimeSupport/managedCliRuntime";
 
 type IpcHandler = (
   event: {
@@ -103,6 +104,102 @@ afterEach(() => {
 });
 
 describe("settings IPC Codex account", () => {
+  it.each([
+    new Error("Official CLI download failed"),
+    new CliNotInstalledError("codex"),
+  ])(
+    "reports first-use installation failures and allows retry: %s",
+    async (failure) => {
+      const client = createCodexAccountClient();
+      const runtime = createCodexAccountRuntime(client.client);
+      vi.mocked(runtime.startClient).mockRejectedValueOnce(failure);
+      const handler = registerAndGetCodexAccountHandler(
+        "settings:codex-login",
+        runtime,
+      );
+      await expect(handler(trustedEvent())).rejects.toThrow(failure.message);
+      expect(runtime.openExternal).not.toHaveBeenCalled();
+      expect(client.startChatGptLogin).not.toHaveBeenCalled();
+      await expect(handler(trustedEvent())).resolves.toMatchObject({
+        authenticated: false,
+      });
+      expect(client.startChatGptLogin).toHaveBeenCalledOnce();
+      expect(client.dispose).toHaveBeenCalledOnce();
+    },
+  );
+
+  it("passes download progress and cancellation through first-use login", async () => {
+    const client = createCodexAccountClient();
+    const runtime = createCodexAccountRuntime(client.client);
+    vi.mocked(runtime.startClient).mockImplementation(async (options) => {
+      expect(options.install).toBe(true);
+      expect(options.signal).toBeInstanceOf(AbortSignal);
+      options.onInstallProgress?.({
+        progressText: "Downloading",
+        progressBytes: 100,
+        progressTotalBytes: 200,
+      });
+      return client.client;
+    });
+    const handler = registerAndGetCodexAccountHandler(
+      "settings:codex-login",
+      runtime,
+    );
+    await handler(trustedEvent());
+    expect(client.startChatGptLogin).toHaveBeenCalledOnce();
+    expect(client.dispose).toHaveBeenCalledOnce();
+  });
+
+  it("keeps production read and logout handlers offline when neither CLI is installed", async () => {
+    const dataRoot = mkdtempSync(join(tmpdir(), "settings-empty-cli-"));
+    tempDirs.push(dataRoot);
+    const context = createContext(dataRoot, createRuntime({ cached: true }));
+    context.appPaths.isPackaged = true;
+    const network = vi
+      .spyOn(globalThis, "fetch")
+      .mockRejectedValue(new Error("Unexpected network request"));
+    try {
+      registerSettingsIpc(context);
+      for (const channel of [
+        "settings:codex-account",
+        "settings:codex-logout",
+        "claude:account",
+        "claude:logout",
+      ]) {
+        const handler = electronMock.handlers.get(channel);
+        if (!handler) throw new Error("Missing handler: " + channel);
+        await expect(handler(trustedEvent())).resolves.toMatchObject({
+          authenticated: false,
+          runtimeInstalled: false,
+        });
+      }
+      expect(network).not.toHaveBeenCalled();
+    } finally {
+      network.mockRestore();
+    }
+  });
+
+  it("reports a missing CLI without installing it during polling", async () => {
+    const runtime = createCodexAccountRuntime(
+      createCodexAccountClient().client,
+    );
+    vi.mocked(runtime.startClient).mockRejectedValue(
+      new CliNotInstalledError("codex"),
+    );
+    const handler = registerAndGetCodexAccountHandler(
+      "settings:codex-account",
+      runtime,
+    );
+    await expect(handler(trustedEvent())).resolves.toMatchObject({
+      authenticated: false,
+      runtimeInstalled: false,
+      models: [],
+    });
+    expect(runtime.startClient).toHaveBeenCalledWith(
+      expect.not.objectContaining({ install: true }),
+    );
+  });
+
   it("coalesces concurrent status reads without taking the global activity lock", async () => {
     const client = createCodexAccountClient();
     client.readAccount.mockResolvedValue({

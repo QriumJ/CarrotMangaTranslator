@@ -418,6 +418,19 @@
   line-height: 1.5;
   margin: 0 0 var(--sp-2);
 }
+.loginProgress {
+  display: grid;
+  gap: var(--sp-2);
+  justify-items: start;
+  margin-top: var(--sp-2);
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+.loginProgress > [role="progressbar"] {
+  justify-self: stretch;
+}
 .error {
   color: var(--danger-text);
   font-size: 12px;

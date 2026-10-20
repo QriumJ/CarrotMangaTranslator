@@ -54,6 +54,7 @@ describe("FontManagerModal", () => {
         <FontManagerModal onClose={vi.fn()} />
       </FontsProvider>,
     );
+    fireEvent.click(screen.getByRole("button", { name: "설치된 폰트" }));
     const button = await screen.findByRole("button", {
       name: /폰트.*추가|폰트.*등록/,
     });
@@ -70,6 +71,54 @@ describe("FontManagerModal", () => {
     );
     expect((button as HTMLButtonElement).disabled).toBe(false);
     expect(getToasts()[0]?.duration).toBe(0);
+  });
+  it("keeps a deletion failure visible and makes retry available", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const removeCustomFont = vi.fn(async () => {
+      throw Error("file busy");
+    });
+    const source = createTestMangaGatewayStub({
+      getFontLibrary: async () => ({
+        customFonts: [
+          {
+            id: "custom",
+            label: "Retry Font",
+            family: "RetryFont",
+            fileName: "retry.otf",
+          },
+        ],
+        preferences: {
+          hiddenIds: [],
+          favoriteIds: [],
+          orderedIds: [],
+          defaultFontId: DEFAULT_BLOCK_FONT_ID,
+        },
+      }),
+      onFontLibraryChanged: () => () => {},
+      removeCustomFont,
+    });
+    render(
+      <FontsProvider source={source}>
+        <FontManagerModal onClose={vi.fn()} />
+      </FontsProvider>,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "설치된 폰트" }));
+    const button = await screen.findByRole("button", {
+      name: "Retry Font 삭제",
+    });
+    fireEvent.click(button);
+    await waitFor(() =>
+      expect(getToasts()).toContainEqual(
+        expect.objectContaining({
+          variant: "error",
+          duration: 0,
+          message: expect.stringContaining("폰트를 삭제하지 못했습니다"),
+        }),
+      ),
+    );
+    expect(button).toHaveProperty("disabled", false);
+    fireEvent.click(button);
+    await waitFor(() => expect(removeCustomFont).toHaveBeenCalledTimes(2));
   });
   it("saves hidden fonts and keeps the default font visible", async () => {
     const saveFontPreferences = vi.fn(async (preferences) => ({
@@ -107,6 +156,9 @@ describe("FontManagerModal", () => {
     );
     expect(enabledHide).toBeTruthy();
     fireEvent.click(enabledHide as HTMLButtonElement);
+    expect(screen.getByRole("heading", { name: "숨긴 폰트" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "설치된 폰트" }));
+    fireEvent.click(screen.getByRole("button", { name: "뒤로" }));
     expect(screen.getByRole("heading", { name: "숨긴 폰트" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "저장" }));
 
@@ -162,6 +214,7 @@ describe("FontManagerModal", () => {
     expect(
       screen.getByRole("button", { name: "My Font 목록에서 숨기기" }),
     ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "설치된 폰트" }));
     fireEvent.click(screen.getByRole("button", { name: "My Font 삭제" }));
     await waitFor(() =>
       expect(removeCustomFont).toHaveBeenCalledWith(customId),

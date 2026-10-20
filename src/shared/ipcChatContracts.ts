@@ -24,7 +24,7 @@ export const chatIpcContracts = {
   createChat: defineIpcContract<[ChatSession["runtime"]?], ChatSession>({
     apiKey: "createChat",
     channel: "chat:create",
-    args: z.tuple([z.enum(["codex", "claude"]).optional()]),
+    args: z.tuple([z.enum(["codex", "claude", "grok"]).optional()]),
     result: ChatSessionSchema,
   }),
   readChat: defineIpcContract<[string], ChatSession>({

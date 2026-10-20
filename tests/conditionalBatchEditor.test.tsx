@@ -131,7 +131,7 @@ afterEach(() => {
 });
 
 describe("beginner conditional batch editor", () => {
-  it("keeps sequence and advanced tools independently open by default", () => {
+  it("starts secondary tools collapsed and opens them independently", () => {
     const draft = createEllipsisBatchSchemeDraft();
     const savedSchemes: ConditionalBatchSchemeV2[] = [
       { id: "rule-1", ...draft, name: "첫 규칙" },
@@ -220,8 +220,12 @@ describe("beginner conditional batch editor", () => {
 
     const sequenceToggle = screen.getByRole("button", { name: "연속 실행" });
     const advancedToggle = screen.getByRole("button", { name: "고급" });
+    expect(sequenceToggle.getAttribute("aria-expanded")).toBe("false");
+    expect(advancedToggle.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(sequenceToggle);
     expect(sequenceToggle.getAttribute("aria-expanded")).toBe("true");
-    expect(advancedToggle.getAttribute("aria-expanded")).toBe("true");
+    expect(advancedToggle.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(advancedToggle);
 
     fireEvent.click(sequenceToggle);
     expect(sequenceToggle.getAttribute("aria-expanded")).toBe("false");
@@ -233,6 +237,23 @@ describe("beginner conditional batch editor", () => {
     expect(sequenceToggle.getAttribute("aria-expanded")).toBe("true");
     fireEvent.click(advancedToggle);
 
+    view.rerender(
+      <FontsContext.Provider value={FONTS_CONTEXT}>
+        <ConditionalBatchRulePanel {...props} yamlOpen={false} />
+      </FontsContext.Provider>,
+    );
+    expect(screen.queryByLabelText("일괄 편집 YAML")).toBeNull();
+    view.rerender(
+      <FontsContext.Provider value={FONTS_CONTEXT}>
+        <ConditionalBatchRulePanel {...props} yamlError="잘못된 YAML" />
+      </FontsContext.Provider>,
+    );
+    expect(screen.getByText("잘못된 YAML")).toBeTruthy();
+    view.rerender(
+      <FontsContext.Provider value={FONTS_CONTEXT}>
+        <ConditionalBatchRulePanel {...props} />
+      </FontsContext.Provider>,
+    );
     fireEvent.click(screen.getByRole("button", { name: "규칙 내보내기" }));
     fireEvent.click(screen.getByRole("button", { name: "전체 내보내기" }));
     fireEvent.click(screen.getByRole("button", { name: "직접 편집" }));

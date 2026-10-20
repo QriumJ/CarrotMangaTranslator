@@ -8,6 +8,7 @@ export const CLAUDE_EFFORTS = [
 export type ClaudeEffort = (typeof CLAUDE_EFFORTS)[number];
 export type ClaudePreferences = { model: string; effort: ClaudeEffort };
 export type ClaudeAccount = {
+  runtimeInstalled?: boolean;
   authenticated: boolean;
   email: string | null;
   plan: string | null;

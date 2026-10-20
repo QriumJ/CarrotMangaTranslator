@@ -135,7 +135,7 @@ describe("sidebar list panel switching", () => {
     );
 
     expect(
-      ["원본 추가", "테스트 작품 이름 변경"].every(
+      ["원본 추가", "테스트 작품 작업"].every(
         (name) =>
           (screen.getByRole("button", { name }) as HTMLButtonElement).disabled,
       ),
@@ -197,7 +197,7 @@ describe("sidebar list panel switching", () => {
     expect(
       (
         screen.getByRole("button", {
-          name: "테스트 작품 이름 변경",
+          name: "테스트 작품 작업",
         }) as HTMLButtonElement
       ).disabled,
     ).toBe(false);

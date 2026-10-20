@@ -1,3 +1,4 @@
+import type { LibraryContextActions } from "../hooks/libraryActionTypes";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
@@ -21,9 +22,7 @@ import {
   LibraryBulkDisclosureButtons,
   LibraryWorkGroup,
 } from "./libraryTreeItems";
-import { LibrarySortMenu } from "./LibrarySortMenu";
-import { SidebarSectionCollapseButton } from "./SidebarSectionCollapseButton";
-import { Input } from "./ui/Field";
+import { LibraryPanelHeader } from "./LibraryPanelHeader";
 import {
   useLibraryWorkDisclosure,
   type LibraryWorkDisclosure,
@@ -41,6 +40,7 @@ type LibraryTreeProps = {
   currentChapterId: string | null;
   jobActive: boolean;
   onOpenChapter: (chapterId: string) => void;
+  contextActions?: LibraryContextActions;
   onRenameWork: (workId: string) => void;
   onRenameChapter: (chapterId: string) => void;
   onReorderChapter: (
@@ -65,26 +65,30 @@ type ChapterDragController = {
   sensors: ReturnType<typeof useStandardDndSensors>;
 };
 
-function LibraryTreeView({
-  collapsed,
-  otherPanelCollapsed,
-  library,
-  libraryComplete = false,
-  currentChapterId,
-  jobActive,
-  onOpenChapter,
-  onRenameWork,
-  onRenameChapter,
-  onReorderChapter,
-  onToggleOtherPanel,
-}: LibraryTreeProps): React.JSX.Element {
+function LibraryTreeView(props: LibraryTreeProps): React.JSX.Element {
+  const {
+    contextActions,
+    collapsed,
+    otherPanelCollapsed,
+    library,
+    libraryComplete = false,
+    currentChapterId,
+    jobActive,
+    onReorderChapter,
+    onToggleOtherPanel,
+  } = props;
   const [searchQuery, setSearchQuery] = React.useState("");
   const contentId = React.useId();
   const [sort, handleSortChange] = useStoredLibrarySort();
-  const visibleLibrary = useVisibleLibrary(library, searchQuery, sort);
+  const selecting = Boolean(contextActions?.selection.work);
+  const visibleLibrary = useVisibleLibrary(
+    library,
+    selecting ? "" : searchQuery,
+    sort,
+  );
   const searchActive = searchQuery.trim().length > 0;
   const drag = useChapterDragController({
-    jobActive,
+    jobActive: jobActive || selecting,
     onReorderChapter,
     searchActive,
     visibleLibrary,
@@ -111,39 +115,67 @@ function LibraryTreeView({
           />
         }
         otherPanelCollapsed={otherPanelCollapsed}
+        searchDisabled={selecting}
         onSearchChange={setSearchQuery}
         onSortChange={handleSortChange}
         onToggleOtherPanel={onToggleOtherPanel}
-        searchQuery={searchQuery}
+        searchQuery={selecting ? "" : searchQuery}
         sort={sort}
       />
-      <div className="library-panel-content" id={contentId} hidden={collapsed}>
-        <DndContext
-          sensors={drag.sensors}
-          collisionDetection={closestCenter}
-          onDragStart={drag.handleDragStart}
-          onDragCancel={drag.handleDragCancel}
-          onDragEnd={drag.handleDragEnd}
-        >
-          <LibraryWorksList
-            activeDrag={drag.activeDrag}
-            currentChapterId={currentChapterId}
-            disclosure={disclosure}
-            dragEnabled={drag.dragEnabled}
-            jobActive={jobActive}
-            onOpenChapter={onOpenChapter}
-            onRenameChapter={onRenameChapter}
-            onRenameWork={onRenameWork}
-            searchActive={searchActive}
-            visibleLibrary={visibleLibrary}
-          />
-          <ChapterDragPortal
-            activeDrag={drag.activeDrag}
-            currentChapterId={currentChapterId}
-          />
-        </DndContext>
-      </div>
+      <LibraryTreeContent
+        props={props}
+        contentId={contentId}
+        drag={drag}
+        disclosure={disclosure}
+        searchActive={searchActive}
+        visibleLibrary={visibleLibrary}
+      />
     </section>
+  );
+}
+
+function LibraryTreeContent({
+  props,
+  contentId,
+  drag,
+  disclosure,
+  searchActive,
+  visibleLibrary,
+}: {
+  props: LibraryTreeProps;
+  contentId: string;
+  drag: ChapterDragController;
+  disclosure: LibraryWorkDisclosure;
+  searchActive: boolean;
+  visibleLibrary: LibraryIndex;
+}) {
+  return (
+    <div
+      className="library-panel-content"
+      id={contentId}
+      hidden={props.collapsed}
+    >
+      <DndContext
+        sensors={drag.sensors}
+        collisionDetection={closestCenter}
+        onDragStart={drag.handleDragStart}
+        onDragCancel={drag.handleDragCancel}
+        onDragEnd={drag.handleDragEnd}
+      >
+        <LibraryWorksList
+          {...props}
+          activeDrag={drag.activeDrag}
+          disclosure={disclosure}
+          dragEnabled={drag.dragEnabled}
+          searchActive={searchActive}
+          visibleLibrary={visibleLibrary}
+        />
+        <ChapterDragPortal
+          activeDrag={drag.activeDrag}
+          currentChapterId={props.currentChapterId}
+        />
+      </DndContext>
+    </div>
   );
 }
 
@@ -234,62 +266,8 @@ function useChapterDragController({
   };
 }
 
-function LibraryPanelHeader({
-  collapsed,
-  disclosureActions,
-  otherPanelCollapsed,
-  onSearchChange,
-  onSortChange,
-  onToggleOtherPanel,
-  searchQuery,
-  sort,
-}: {
-  collapsed: boolean;
-  disclosureActions: React.ReactNode;
-  otherPanelCollapsed: boolean;
-  onSearchChange: (query: string) => void;
-  onSortChange: (sort: LibrarySort) => void;
-  onToggleOtherPanel: () => void;
-  searchQuery: string;
-  sort: LibrarySort;
-}): React.JSX.Element {
-  const { t } = useTranslation("components");
-  return (
-    <div className="panel-header library-panel-header">
-      <h2>{t("library.title")}</h2>
-      {!collapsed ? (
-        <>
-          <label
-            className="library-search-shell"
-            aria-label={t("library.searchLabel")}
-          >
-            <SearchIcon />
-            <Input
-              className="library-search-input"
-              type="text"
-              value={searchQuery}
-              onChange={(event) => onSearchChange(event.target.value)}
-              placeholder={t("library.searchPlaceholder")}
-              autoComplete="off"
-              spellCheck={false}
-            />
-          </label>
-          <LibrarySortMenu value={sort} onChange={onSortChange} />
-          {disclosureActions}
-        </>
-      ) : null}
-      <SidebarSectionCollapseButton
-        collapsed={otherPanelCollapsed}
-        controls="sidebar-page-panel"
-        direction={otherPanelCollapsed ? "up" : "down"}
-        onToggle={onToggleOtherPanel}
-        sectionTitle={t("common.pages")}
-      />
-    </div>
-  );
-}
-
 function LibraryWorksList({
+  contextActions,
   activeDrag,
   currentChapterId,
   disclosure,
@@ -301,6 +279,7 @@ function LibraryWorksList({
   searchActive,
   visibleLibrary,
 }: {
+  contextActions?: LibraryContextActions;
   activeDrag: ActiveChapterDrag | null;
   currentChapterId: string | null;
   disclosure: LibraryWorkDisclosure;
@@ -320,6 +299,7 @@ function LibraryWorksList({
       {visibleLibrary.works.length ? (
         visibleLibrary.works.map((work) => (
           <LibraryWorkGroup
+            contextActions={contextActions}
             key={work.id}
             currentChapterId={currentChapterId}
             dragEnabled={dragEnabled}
@@ -345,6 +325,7 @@ function ChapterDragPortal({
   activeDrag,
   currentChapterId,
 }: {
+  contextActions?: LibraryContextActions;
   activeDrag: ActiveChapterDrag | null;
   currentChapterId: string | null;
 }): React.ReactPortal {
@@ -358,30 +339,5 @@ function ChapterDragPortal({
       ) : null}
     </DragOverlay>,
     document.body,
-  );
-}
-
-function SearchIcon(): React.JSX.Element {
-  return (
-    <svg
-      className="library-search-icon"
-      viewBox="0 0 20 20"
-      fill="none"
-      aria-hidden="true"
-    >
-      <circle
-        cx="8.5"
-        cy="8.5"
-        r="5.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-      />
-      <path
-        d="M12.5 12.5L16.5 16.5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
-    </svg>
   );
 }

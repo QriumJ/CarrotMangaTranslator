@@ -20,6 +20,9 @@ export function initializeAppI18n(locale: UiLocale): Promise<void> {
           common: APP_I18N_RESOURCES[supportedLocale].common,
           components: APP_I18N_RESOURCES[supportedLocale].components,
           renderer: APP_I18N_RESOURCES[supportedLocale].renderer,
+          main: {
+            reviewImport: APP_I18N_RESOURCES[supportedLocale].main.reviewImport,
+          },
         },
       ]),
     );

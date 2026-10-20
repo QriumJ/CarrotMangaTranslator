@@ -1,5 +1,31 @@
 # 코드 경계와 품질 규칙
 
+## 2026-10-20 화 여러 개 삭제와 용어 파일 (이슈 #156)
+
+여러 화 삭제는 `application/chapterBatchDeletionService`가 소유한다. 요청한 화가 모두 그
+작품에 있는지 먼저 확인하고, 하나라도 없으면 아무것도 지우지 않는다. 이후 각 화를 기존
+단건 경로(연결 출력물 journal + `deleteChapter` 화 단위 transaction)로 보관함 순서대로
+지우며, 실패한 화는 그대로 두고 나머지를 계속한다. 작품 파일과 `style-guide.json`은 요청
+범위에 들어가지 않는다. 용어 파일 내보내기/가져오기는 `shared/workGlossaryFile`(형식·검증)과
+`shared/workGlossaryImportPlan`(병합 계획)이 소유하고, main은 기존 텍스트 파일 대화상자
+IPC에서 열기/저장만 한다. 가져오기는 용어/기억 초안만 바꾸며 기존 항목을 지우지 않고,
+저장은 기존 `saveWorkStyleGuide` 경로를 그대로 쓴다. 기존 권위를 직접 재사용한 데 따른
+측정 상한은 ipcSchemaPrimitives 35, ipcContractCore 27, ipcContracts runtime 18,
+ModalActionBar 29, libraryGateway 33, errorPresentation 31이며 범용 상한은 유지한다.
+실제 격리 보관함 삭제, 부분 실패, 오래된 선택, 병합 정책과 렌더러 흐름 테스트가 검증한다.
+
+## 2026-10-19 Grok Build 채팅
+
+Grok 계정·채팅은 기존 IPC 검증, 계정 작업 registry, managed CLI 설치 및 당근 MCP
+경계를 재사용한다. IPC composition의 개별 소비 상한과 공식 ACP 이미지·도구·복원
+검증은 [Grok 연결 기록](grok-build-integration.md)에 남긴다. 전역 의존 예산과 기존
+커버리지 기준은 낮추지 않는다. 새 13개 파일은 실제 Windows focused coverage에서
+측정했다. 출처는 `.tmp/grok-integration-audit/coverage/coverage-summary.json`, 최초 측정
+SHA-256은 `805fe9c2cb6d276fc7572622ba186f8afe6c845fa63e127208e27d491de70f9a`다.
+공용 CLI 진행 표시와 정상 종료/강제 종료 후속 측정은
+`.tmp/grok-integration-audit/coverage-final/coverage-summary.json`, SHA-256
+`6d4ca6715a6648297922f76233bdb3db7d740e40692c8ae7b78f6eff4040555a`다.
+
 ## 2026-10-13 원문 언어 자동 기본값
 
 효과음 응답 검증도 shared `translationLanguages`의 명시적 일본어 판정을 사용한다.

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import React from "react";
 import { ConditionalBatchActionCard } from "./ConditionalBatchActionCard";
 import { ConditionalBatchAdvancedTools } from "./ConditionalBatchAdvancedTools";
@@ -17,10 +18,11 @@ import styles from "./ConditionalBatchEditor.module.css";
 export function ConditionalBatchRulePanel(
   props: ConditionalBatchRulePanelProps,
 ): React.JSX.Element {
+  const { t } = useTranslation("components");
   const [conditionsExpanded, setConditionsExpanded] = React.useState(true);
   const [actionsExpanded, setActionsExpanded] = React.useState(true);
-  const [sequenceExpanded, setSequenceExpanded] = React.useState(true);
-  const [advancedExpanded, setAdvancedExpanded] = React.useState(true);
+  const [sequenceExpanded, setSequenceExpanded] = React.useState(false);
+  const [advancedExpanded, setAdvancedExpanded] = React.useState(false);
   const inheritedSpeakers = React.useContext(ConditionalBatchSpeakersContext);
   return (
     <ConditionalBatchSpeakersContext.Provider
@@ -28,7 +30,7 @@ export function ConditionalBatchRulePanel(
     >
       <aside
         className={styles.rulePanel}
-        aria-label="일괄 편집 규칙"
+        aria-label={t("conditionalBatch.tools.rules")}
         data-sequence-active={Boolean(props.activeSequence)}
       >
         {props.activeSequence ? null : (
@@ -83,21 +85,22 @@ function ScopeSection(
     "onChangeScope" | "scopeKind" | "selectedBlockCount"
   >,
 ): React.JSX.Element {
+  const { t } = useTranslation("components");
   return (
     <section className={styles.scopeCard}>
-      <strong>범위</strong>
+      <strong>{t("conditionalBatch.tools.scope")}</strong>
       <SegmentedControl
-        ariaLabel="적용 범위"
+        ariaLabel={t("conditionalBatch.tools.scopeLabel")}
         singleRow
         options={[
           {
             id: "selection",
-            label: "선택",
+            label: t("conditionalBatch.tools.selection"),
             badge: props.selectedBlockCount || undefined,
             disabled: props.selectedBlockCount === 0,
           },
-          { id: "page", label: "페이지" },
-          { id: "chapter", label: "화" },
+          { id: "page", label: t("conditionalBatch.tools.page") },
+          { id: "chapter", label: t("conditionalBatch.tools.chapter") },
         ]}
         value={props.scopeKind}
         onChange={props.onChangeScope}
@@ -112,19 +115,20 @@ function RuleNotices(
     "applyNotice" | "storageError" | "validationMessage"
   >,
 ): React.JSX.Element {
+  const { t } = useTranslation("components");
   return (
     <>
       {props.validationMessage ? (
         <InlineMessage
           variant="warning"
-          title="규칙 오류"
+          title={t("conditionalBatch.tools.ruleError")}
           detail={props.validationMessage}
         />
       ) : null}
       {props.storageError ? (
         <InlineMessage
           variant="danger"
-          title="저장 오류"
+          title={t("conditionalBatch.tools.storageError")}
           detail={props.storageError}
         />
       ) : null}

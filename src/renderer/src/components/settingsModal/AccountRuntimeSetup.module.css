@@ -1,0 +1,14 @@
+/* Spans the account row: first-use notice, sign-in progress or failure. */
+.setup {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.phase {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--font-sm);
+  overflow-wrap: anywhere;
+}

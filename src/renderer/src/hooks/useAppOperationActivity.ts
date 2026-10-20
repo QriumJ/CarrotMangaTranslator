@@ -180,7 +180,7 @@ function selectOperation(
     : ([...activities.values()].find(isAppOperationActive) ?? event);
 }
 
-function subscribeOperations(
+export function subscribeOperations(
   applyEvent: (event: AppOperationActivityEvent) => void,
 ): () => void {
   let unsubscribe = (): void => undefined;

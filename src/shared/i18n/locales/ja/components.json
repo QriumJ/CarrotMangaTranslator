@@ -30,7 +30,8 @@
     "selectAll": "すべて選択",
     "settings": "設定",
     "thisPage": "このページ",
-    "workTitle": "作品タイトル"
+    "workTitle": "作品タイトル",
+    "back": "戻る"
   },
   "select": {
     "placeholder": "項目を選択",
@@ -182,6 +183,27 @@
     "apply": {
       "included": "適用する変更：{{count}}件",
       "button": "{{count}}件の変更を適用"
+    },
+    "tools": {
+      "advanced": "詳細",
+      "exportRule": "ルールを書き出す",
+      "exportAll": "すべて書き出す",
+      "editYaml": "YAML を編集",
+      "import": "読み込む",
+      "yamlLabel": "一括編集 YAML",
+      "yamlError": "YAML エラー",
+      "reflect": "ルールに反映",
+      "importNew": "新規ルールとして読み込む",
+      "overwrite": "同じ ID を上書き",
+      "close": "閉じる",
+      "rules": "一括編集ルール",
+      "scope": "範囲",
+      "scopeLabel": "適用範囲",
+      "selection": "選択項目",
+      "page": "ページ",
+      "chapter": "話",
+      "ruleError": "ルールエラー",
+      "storageError": "保存エラー"
     }
   },
   "workspace": {
@@ -603,7 +625,9 @@
     "noSearchResults": "一致するフォントがありません。",
     "moveNamedFont": "{{label}}の順序を移動",
     "resetOrder": "順序をリセット",
-    "saveFailed": "フォント設定を保存できませんでした。"
+    "saveFailed": "フォント設定を保存できませんでした。",
+    "files": "インストール済みフォント",
+    "noCustomFonts": "追加したフォントはありません。"
   },
   "chapterPicker": {
     "prompt": "何を翻訳しますか？",
@@ -944,8 +968,9 @@
     "deleteWork": "作品を削除",
     "deleteChapter": "話を削除",
     "newName": "新しい名前",
-    "deleteWorkWarning": "作品を削除すると、含まれるすべての話・ページ・翻訳結果も削除されます。",
-    "deleteChapterWarning": "話を削除すると、含まれるページと翻訳結果も削除されます。"
+    "deleteWorkWarning": "作品を削除すると、含まれるすべての話・ページ・翻訳結果と用語/記憶も削除されます。",
+    "deleteChapterWarning": "話を削除すると、含まれるページと翻訳結果も削除されます。",
+    "deleteChapters": "話を選んで削除…"
   },
   "shareExport": {
     "title": "作業を書き出す",
@@ -1008,7 +1033,9 @@
         "asc": "昇順",
         "desc": "降順"
       }
-    }
+    },
+    "itemActions": "{{title}} の操作",
+    "selectChapters": "話を選択"
   },
   "pageList": {
     "empty": "読み込まれたページがありません。",
@@ -1398,14 +1425,15 @@
     "toggleOn": "オン",
     "toggleOff": "オフ",
     "importTxt": {
-      "button": ".txtを読み込む",
-      "title": "翻訳文のみの形式で保存したTXTから、行順に翻訳文を再読み込みします。",
+      "button": "翻訳文TXTを読み込む",
+      "title": "新しいTXTは保存した識別情報を使用します。旧形式は内容に合う形式を選んでください。",
       "noChanges": "変更された翻訳文はありません。",
       "noApplicableText": "適用できるテキストがありません。警告を確認してください。",
-      "confirm": "{{count}}件の翻訳文をTXTの内容で上書きしますか？\n行順に適用され、OCR原文は変更されません。",
+      "confirm": "{{count}}件の翻訳をTXTの内容に置き換えますか？OCR原文は保持されます。",
       "updated": "{{count}}ブロックの翻訳文を更新しました。",
       "warnings": "TXTの読み込みに{{count}}件の警告があります。",
-      "failed": "TXTファイルを読み込めませんでした。"
+      "failed": "TXTファイルを読み込めませんでした。",
+      "bothButton": "原文＋翻訳TXTを読み込む"
     },
     "review": {
       "title": "校正表",
@@ -1649,6 +1677,50 @@
       "visualSummary": "画像シーン要約",
       "visualSummaryPlaceholder": "場面・行動・重要な台詞を1～2文で記録します。",
       "textSummary": "既存のテキストメモ"
+    },
+    "exchange": {
+      "groupLabel": "用語ファイル",
+      "import": "読み込む",
+      "export": "書き出す",
+      "importHint": "JSON用語ファイルの用語集・キャラクターを現在の下書きに追加します。既存の項目は削除しません。",
+      "exportHint": "表示中の用語集・キャラクターをJSONファイルに保存します。バックアップや別の作品への読み込みに使えます。",
+      "fileName": "{{title}} 用語集",
+      "exported": "用語{{glossary}}件とキャラクター{{characters}}件を書き出しました。",
+      "exportFailed": "用語ファイルを保存できませんでした。",
+      "openFailed": "用語ファイルを開けませんでした。",
+      "errors": {
+        "invalid-json": "JSON形式のファイルではありません。書き出しで作成した用語ファイルを選んでください。",
+        "unrecognized": "用語集やキャラクター一覧が見つかりません。このアプリで書き出した用語ファイルか確認してください。",
+        "unsupported-version": "このバージョンのアプリでは読み込めない用語ファイルです。アプリを更新してから再試行してください。",
+        "empty": "ファイルに読み込める用語やキャラクターがありません。",
+        "emptyInvalid": "読み込める項目がありません。読み取れない項目{{count}}件をスキップしました。",
+        "too-large": "用語ファイルが16MiBを超えるため開きませんでした。"
+      },
+      "reviewTitle": "用語ファイルの読み込み",
+      "sourceWork": "書き出し元: {{title}}",
+      "summary": {
+        "added": "新規追加",
+        "unchanged": "同じ項目あり（変更なし）",
+        "conflicts": "訳が異なる項目",
+        "repeated": "ファイル内の重複（最初の項目のみ使用）",
+        "invalid": "読み取れずスキップ",
+        "overLimit": "件数上限を超えたためスキップ"
+      },
+      "split": "用語 {{glossary}} · キャラクター {{characters}}",
+      "count": "{{count}}件",
+      "conflictTitle": "訳が異なる項目",
+      "policy": {
+        "keepExisting": "現在の訳を維持",
+        "useImported": "ファイルの訳に置換"
+      },
+      "columns": {
+        "source": "原文",
+        "current": "現在",
+        "imported": "ファイル"
+      },
+      "emptyTarget": "（訳なし）",
+      "apply": "下書きに反映（{{count}}件）",
+      "applied": "{{added}}件を追加し、{{replaced}}件を置き換えました。保存すると作品に反映されます。"
     }
   },
   "inpainting": {
@@ -2536,7 +2608,7 @@
       "title": "バックアップと移行",
       "description": "ZIPファイル1つで別のパソコンに作業環境を移します。",
       "includes": "ライブラリの原本と編集データ、設定、追加フォント、プリセット、マスクの下書きを含みます。",
-      "excludes": "認証情報、モデル、実行ツール、外部フォルダーは含みません。移行先でログインし、必要なモデルを再取得してください。",
+      "excludes": "認証情報・モデル・実行ツール・外部フォルダーのファイルは含みません。",
       "counts": "作品 {{works}}件 · ページ {{pages}}枚",
       "dirty": "変更した設定を保存または取り消してから移行してください。",
       "export": "バックアップを書き出す",
@@ -2550,7 +2622,8 @@
       "progress": "作業環境を処理中です。完了するまで編集を一時停止します。",
       "cancel": "処理をキャンセル",
       "saved": "バックアップを保存しました: {{path}}",
-      "restored": "環境を復元しました。APIキー、ログイン、外部フォルダー、カスタムモデルのパスを確認してください。APIのカスタムヘッダーと追加リクエスト本文も再設定してください。"
+      "restored": "環境を復元しました。APIキー、ログイン、外部フォルダー、カスタムモデルのパスを確認してください。APIのカスタムヘッダーと追加リクエスト本文も再設定してください。",
+      "excludesHelp": "認証情報、モデル、実行ツール、外部フォルダーは含みません。移行先でログインし、必要なモデルを再取得してください。"
     },
     "claude": {
       "account": "Claude アカウント",
@@ -2562,6 +2635,37 @@
       "effort": "推論レベル",
       "error": "Claude に接続できませんでした。",
       "testing": "Claude Code の接続とモデルの応答を確認します。"
+    },
+    "accountRuntime": {
+      "missingTitle": "{{name}} ランタイムがまだありません",
+      "missingDetail": "初回接続時に公式の {{name}} ランタイムを一度だけダウンロードし、この PC に保存します。以降の接続や作業では保存したものをそのまま使います。",
+      "downloading": "ダウンロード中…",
+      "downloadFailed": "{{name}} ランタイムをダウンロードできませんでした",
+      "connectFailed": "{{name}} の接続を完了できませんでした",
+      "retryHint": "同じボタンをもう一度押すと再試行できます。",
+      "claudeLogin": "ダウンロードして Claude でログイン",
+      "claudeLoginRetry": "再ダウンロードして Claude でログイン",
+      "claudeConsole": "ダウンロードして API アカウントでログイン",
+      "claudeConsoleRetry": "再ダウンロードして API アカウントでログイン",
+      "codexLogin": "ダウンロードして ChatGPT でログイン",
+      "codexLoginRetry": "再ダウンロードして ChatGPT でログイン",
+      "grokLogin": "ダウンロードして Grok でログイン",
+      "grokLoginRetry": "再ダウンロードして Grok でログイン"
+    },
+    "grok": {
+      "title": "アプリ内チャット · Grok アカウント",
+      "description": "アプリ内のチャットで Grok をアシスタントとして使います。Grok は Carrot のツールでライブラリを読み、翻訳・編集します。このページの外部 AI アプリ接続（MCP）とは別で、ログインと認証情報は公式の Grok Build が管理します。",
+      "checking": "アカウントを確認しています…",
+      "signedOut": "ログインしていません",
+      "connected": "Grok に接続済み",
+      "connectedVersion": "Grok に接続済み · Grok Build {{version}}",
+      "login": "Grok でログイン",
+      "logout": "ログアウト",
+      "refresh": "更新",
+      "error": "Grok の接続を確認してください。"
+    },
+    "support": {
+      "title": "サポート"
     }
   },
   "pageBlocks": {
@@ -2637,6 +2741,7 @@
         "environment-restore": "環境の復元",
         "model-test": "モデル確認",
         "codex-auth": "ChatGPTアカウント",
+        "grok-auth": "Grok Build",
         "sound-effect-translation": "効果音翻訳",
         "claude-auth": "Claude Code"
       },
@@ -3263,6 +3368,89 @@
     "runtime": "AI",
     "claudeLoginHint": "Claude アカウントでログインしてください。",
     "claudeLogin": "Claude でログイン",
+    "claudeDownloadLogin": "ダウンロードして Claude でログイン",
+    "claudeDownloadLoginRetry": "再ダウンロードして Claude でログイン",
+    "grokLogin": "Grok でログイン",
+    "grokDownloadLogin": "ダウンロードして Grok でログイン",
+    "grokDownloadLoginRetry": "再ダウンロードして Grok でログイン",
+    "grokLoginHint": "Grok にログインするとチャットを開始できます。",
+    "downloadLogin": "ダウンロードして ChatGPT にログイン",
+    "downloadLoginRetry": "再ダウンロードして ChatGPT にログイン",
     "moreImages": "画像をあと{{count}}件表示"
+  },
+  "chapterBulkDelete": {
+    "title": "話を選んで削除",
+    "listLabel": "{{title}}の話一覧",
+    "selection": "{{total}}話中{{count}}話を選択 · {{pages}}ページ",
+    "selectChapter": "{{title}}を選択",
+    "currentTag": "表示中",
+    "failedTag": "削除失敗",
+    "delete": "選んだ{{count}}話を削除",
+    "deleting": "削除中…",
+    "jobActive": "実行中の作業が終わると削除できます。",
+    "partialTitle": "{{deleted}}話を削除し、{{failed}}話は削除できませんでした",
+    "partialDetail": "失敗した話だけが選択されています。再試行してください。",
+    "failedTitle": "選んだ話を削除できませんでした",
+    "failedDetail": "一覧を確認して再試行してください。"
+  },
+  "mcp": {
+    "title": "AI 接続",
+    "description": "MCP アプリから閲覧・翻訳・編集できます。",
+    "checking": "状態を確認中…",
+    "copy": "アドレスをコピー",
+    "connectedApps": "接続済みアプリ",
+    "emptyOnline": "接続済みアプリはありません。接続方法からアプリを選択してください。",
+    "emptyOffline": "接続済みアプリはありません。MCP を有効にしてください。",
+    "disconnect": "接続解除",
+    "disconnectNamed": "{{name}} の接続を解除",
+    "approved": "{{date}} に承認",
+    "permissions": "許可する操作",
+    "permissionsNote": "即時適用。変更すると実行中の処理が中止され、再承認が必要です。",
+    "readAccess": "テキスト・文脈の閲覧とテキスト出力は標準で許可されます。",
+    "permissionLabel": "MCP の権限",
+    "images": "画像・出力ファイルの送信",
+    "editing": "テキスト・書式・文脈の編集",
+    "processing": "ブロック・ライブラリ管理と OCR・翻訳",
+    "cost": "外部 AI にはテキスト・画像が送信され、料金が発生する場合があります。",
+    "help": "接続方法・ヘルプ",
+    "diagnose": "接続を診断",
+    "lifecycle": "アプリ終了で接続が停止します。接続解除で相手のアクセス権が取り消されます。",
+    "processingHelp": "画像を含むファイルも画像権限に従います。設定済みエンジンを使用し、接続承認だけでは処理を開始しません。",
+    "passed": "接続診断に成功",
+    "needsAttention": "接続の確認が必要",
+    "diagnosticNote": "公開接続設定のみ確認します。AI のログイン・ツール実行は対象外です。",
+    "pass": "成功",
+    "fail": "失敗",
+    "off": "オフ",
+    "starting": "接続準備中…",
+    "online": "接続可能",
+    "stopping": "停止中…",
+    "disable": "MCP を無効にする",
+    "enable": "MCP を有効にする",
+    "autoStart": "起動時に自動接続",
+    "openChatgpt": "ChatGPT を開く",
+    "allowTailscale": "Tailscale で接続を許可",
+    "pairing": "接続承認リクエスト",
+    "clientName": "リクエスト元アプリが申告した名前: {{name}}",
+    "code": "確認コード: {{code}}",
+    "verifyCode": "ブラウザーのコードと一致する場合のみ承認してください。",
+    "redirect": "承認後の戻り先:",
+    "requested": "要求された権限: {{scopes}}",
+    "approve": "コードを確認して承認",
+    "deny": "拒否",
+    "scopes": {
+      "carrot_read": "閲覧",
+      "carrot_images": "画像の送信",
+      "carrot_edit": "テキスト・書式の編集",
+      "carrot_process": "ライブラリ管理・モデル実行",
+      "offline_access": "承認を保持"
+    },
+    "scopeDetails": {
+      "carrot_read": "ライブラリ・テキスト・文脈の参照",
+      "carrot_images": "画像および画像を含むファイルの送信",
+      "carrot_edit": "テキスト・書式・文脈の編集",
+      "carrot_process": "ブロック・ライブラリの管理とアプリモデルの実行",
+      "offline_access": "次回起動時も承認を維持"
+    }
   }
 }

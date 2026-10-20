@@ -20,7 +20,7 @@ import { handoffActiveModalToWorkCenter } from "../../lib/modalWorkCenterHandoff
 import type { StyleGuideTab } from "./styleGuideTypes";
 
 type StyleGuideResearchInput = {
-  chapter: ChapterSnapshot;
+  chapter: ChapterSnapshot | null;
   guide: WorkStyleGuide | null;
   t: TFunction<"components">;
   setGuide: React.Dispatch<React.SetStateAction<WorkStyleGuide | null>>;
@@ -93,7 +93,7 @@ function useInternetResearchRunner(input: ResearchRunnerInput) {
   } = input;
   return React.useCallback(
     async (researchTitle: string) => {
-      if (!guide) return;
+      if (!guide || !chapter) return;
       const runId = crypto.randomUUID();
       handoffActiveModalToWorkCenter();
       setAnalyzing(true);
@@ -121,7 +121,7 @@ function useInternetResearchRunner(input: ResearchRunnerInput) {
       }
     },
     [
-      chapter.id,
+      chapter,
       guide,
       notificationPort,
       researchEngine,

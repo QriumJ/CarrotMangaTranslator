@@ -1,3 +1,4 @@
+import { useToolbarRovingFocus } from "./ui/useToolbarRovingFocus";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -97,9 +98,11 @@ function ExpandedStageToolbar({
   props: StageToolbarProps;
   rootRef: StageToolbarFlyout["rootRef"];
 }): React.JSX.Element {
+  const navigation = useToolbarRovingFocus(rootRef);
   const { t } = useTranslation("components");
   return (
     <div
+      {...navigation}
       className="stage-toolbar"
       onBlur={flyout.onToolbarBlur}
       ref={rootRef}

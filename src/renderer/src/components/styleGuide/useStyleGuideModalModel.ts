@@ -21,20 +21,22 @@ import type { NotificationPort } from "../../lib/notificationPort";
 import type { StyleGuideTab } from "./styleGuideTypes";
 import { normalizeGuideForSave } from "./styleGuideUtils";
 import { useStyleGuideInternetResearch } from "./useStyleGuideInternetResearch";
+import { useStyleGuideFileExchange } from "./useStyleGuideFileExchange";
 
 type ComponentsT = TFunction<"components">;
 export type WorkContextUsageStatus = "loading" | "ready" | "error";
 
 export function useStyleGuideModalModel(
-  chapter: ChapterSnapshot,
+  chapter: ChapterSnapshot | null,
   workTitle: string,
   settings: AppSettings | null,
   notificationPort: NotificationPort,
+  workId = chapter?.workId ?? "",
 ) {
   const { i18n, t } = useTranslation("components");
   const [tab, setTab] = React.useState<StyleGuideTab>("glossary");
   const resources = useStyleGuideResources(
-    chapter,
+    { workId, chapterId: chapter?.id ?? null },
     workTitle,
     t,
     notificationPort,
@@ -47,9 +49,20 @@ export function useStyleGuideModalModel(
     setTab,
     notificationPort,
   });
+  const exchange = useStyleGuideFileExchange({
+    files: mangaGateway,
+    guide: resources.guide,
+    setGuide: resources.setGuide,
+    setTab,
+    workTitle,
+    notificationPort,
+    t,
+  });
   return {
+    chapterAvailable: Boolean(chapter),
     ...resources,
     ...analysis,
+    exchange,
     tab,
     setTab,
     locale: i18n.resolvedLanguage ?? i18n.language,
@@ -58,12 +71,13 @@ export function useStyleGuideModalModel(
       resources.busy ||
       resources.saving ||
       resources.resetting ||
+      exchange.fileBusy ||
       analysis.analyzing,
   };
 }
 
 function useStyleGuideResources(
-  chapter: ChapterSnapshot,
+  chapter: { workId: string; chapterId: string | null },
   workTitle: string,
   t: ComponentsT,
   notificationPort: NotificationPort,
@@ -131,7 +145,7 @@ function useStyleGuideResourceMutations({
   setMemory,
   t,
 }: {
-  chapter: ChapterSnapshot;
+  chapter: { workId: string; chapterId: string | null };
   guide: WorkStyleGuide | null;
   memory: ChapterStoryMemory | null;
   notificationPort: NotificationPort;
@@ -166,10 +180,11 @@ function useStyleGuideResourceMutations({
     }
   }, [guide, memory, notificationPort, refreshUsage, setGuide, setMemory, t]);
   const resetAllWorkContext = React.useCallback(async () => {
+    if (!chapter.chapterId) return;
     setResetting(true);
     try {
       const result = await mangaGateway.resetWorkContext({
-        chapterId: chapter.id,
+        chapterId: chapter.chapterId,
       });
       setGuide(result.styleGuide);
       setMemory(result.storyMemory);
@@ -183,7 +198,14 @@ function useStyleGuideResourceMutations({
     } finally {
       setResetting(false);
     }
-  }, [chapter.id, notificationPort, refreshUsage, setGuide, setMemory, t]);
+  }, [
+    chapter.chapterId,
+    notificationPort,
+    refreshUsage,
+    setGuide,
+    setMemory,
+    t,
+  ]);
   return { resetAllWorkContext, resetting, saveGuide, saving };
 }
 
@@ -197,7 +219,7 @@ function useGuideMemoryLoader({
   setBusy,
   notificationPort,
 }: {
-  chapter: ChapterSnapshot;
+  chapter: { workId: string; chapterId: string | null };
   workTitle: string;
   t: ComponentsT;
   setGuide: React.Dispatch<React.SetStateAction<WorkStyleGuide | null>>;
@@ -211,7 +233,9 @@ function useGuideMemoryLoader({
     setBusy(true);
     Promise.all([
       mangaGateway.getWorkStyleGuide(chapter.workId),
-      mangaGateway.getChapterStoryMemory(chapter.id),
+      chapter.chapterId
+        ? mangaGateway.getChapterStoryMemory(chapter.chapterId)
+        : Promise.resolve(null),
       mangaGateway.getWorkResearchTitle(chapter.workId),
     ])
       .then(([nextGuide, nextMemory, titlePreference]) => {
@@ -232,7 +256,7 @@ function useGuideMemoryLoader({
       alive = false;
     };
   }, [
-    chapter.id,
+    chapter.chapterId,
     chapter.workId,
     notificationPort,
     setBusy,

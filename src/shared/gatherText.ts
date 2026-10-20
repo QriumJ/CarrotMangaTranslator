@@ -137,6 +137,7 @@ export type TranslatedTextImportUpdate = {
 };
 
 export type TranslatedTextImportResult = {
+  fatal?: boolean;
   updates: TranslatedTextImportUpdate[];
   matchedPageCount: number;
   warnings: string[];
@@ -217,11 +218,13 @@ function resolveSectionPage(
   if (section.pageNumber !== null) {
     const targetIndex = section.pageNumber - 1;
     const byIndex = pages.find((page) => page.index === targetIndex);
+    if (section.pageName) {
+      if (byIndex?.pageName === section.pageName) return byIndex;
+      const named = pages.filter((page) => page.pageName === section.pageName);
+      return named.length === 1 ? named[0] : null;
+    }
     if (byIndex) {
       return byIndex;
-    }
-    if (section.pageName) {
-      return pages.find((page) => page.pageName === section.pageName) ?? null;
     }
     return null;
   }
@@ -234,17 +237,31 @@ function resolveSectionPage(
  * optionally grouped under `# n쪽 · 이름` headers. Pages whose text shape no
  * longer matches the block list are skipped with a warning instead of guessing.
  */
-export function buildTranslatedTextImport(
+export function buildLegacyTranslatedTextImport(
   pages: GatheredPage[],
   content: string,
   t?: TFunction<"renderer">,
-  field?: "both" | "translated",
+  field: "both" | "translated" = "both",
 ): TranslatedTextImportResult {
-  if (field) pages = filterPagesByField(pages, field);
   const { sections, hasHeaders } = parseTextSections(content);
   const warnings: string[] = [];
   const updates: TranslatedTextImportUpdate[] = [];
   let matchedPageCount = 0;
+  const mappedPages = sections
+    .map((section) => resolveSectionPage(section, pages))
+    .filter((page) => page !== null);
+  if (
+    new Set(mappedPages.map((page) => page.pageId)).size !== mappedPages.length
+  ) {
+    return {
+      updates: [],
+      matchedPageCount: 0,
+      warnings: [
+        "TXT에 같은 페이지가 중복되어 있습니다. 중복 구간을 제거하세요.",
+      ],
+      fatal: true,
+    };
+  }
 
   if (sections.length === 0) {
     return {
@@ -321,17 +338,16 @@ function resolveImportedTranslatedTexts(
   page: GatheredPage,
   field?: "both" | "translated",
 ): string[] | null {
-  if (field === "both") return resolveBothFieldGroups(section, page, true);
+  if (field === "both")
+    return (
+      resolveBothFieldGroups(section, page, true) ??
+      resolveBothFieldLines(section.lines, page)
+    );
   if (field === "translated")
     return section.groups.length === page.blocks.length
       ? section.groups.map((group) => group.join("\n"))
-      : null;
-  return (
-    resolveBothFieldGroups(section, page) ??
-    resolveTranslatedFieldGroups(section, page) ??
-    resolveTranslatedFieldLines(section.lines, page) ??
-    resolveBothFieldLines(section.lines, page)
-  );
+      : resolveTranslatedFieldLines(section.lines, page);
+  return null;
 }
 
 function resolveBothFieldGroups(
@@ -355,23 +371,6 @@ function resolveBothFieldGroups(
     texts.push(translatedLines.join("\n"));
   }
   return texts;
-}
-
-function resolveTranslatedFieldGroups(
-  section: ParsedTextSection,
-  page: GatheredPage,
-): string[] | null {
-  if (section.groups.length !== page.blocks.length) {
-    return null;
-  }
-  if (
-    section.groups.every((group, index) =>
-      areSameLines(group, splitMeaningfulLines(page.blocks[index]?.sourceText)),
-    )
-  ) {
-    return null;
-  }
-  return section.groups.map((group) => group.join("\n"));
 }
 
 function resolveTranslatedFieldLines(

@@ -8,6 +8,7 @@ import { createPageRevision } from "../../../../shared/pageRevision";
 
 type RightRailProps = AppSessionViewProps["rightRailProps"];
 type RightRailViewModel = {
+  commandRegistry?: AppSessionViewModel["commandRegistry"];
   blockEditingActions: Pick<
     AppSessionViewModel["blockEditingActions"],
     "updateBlock"
@@ -109,6 +110,7 @@ type RightRailViewModel = {
     | "setShowBlockChrome"
     | "setShowTextBlocks"
     | "setStyleGuideOpen"
+    | "setStyleGuideWorkId"
     | "openTextView"
     | "showBlockChrome"
     | "showTextBlocks"
@@ -247,6 +249,7 @@ function isRightRailJobActive(model: RightRailViewModel): boolean {
 }
 
 function createRightRailActions({
+  commandRegistry,
   blockEditingActions,
   core,
   inpaintingActions,
@@ -288,7 +291,12 @@ function createRightRailActions({
     onOpenPsdExport: () => openExportOptions(uiState, "psd"),
     onReviewResults: () => uiState.setRightRailMode("page-blocks"),
     onRetryPage: (pageId: string) => void retranslatePage(pageId),
-    onOpenStyleGuide: () => uiState.setStyleGuideOpen(true),
+    onOpenStyleGuide:
+      commandRegistry?.byId["open-work-context"].run ??
+      (() => {
+        uiState.setStyleGuideWorkId(null);
+        uiState.setStyleGuideOpen(true);
+      }),
     onOpenTextView: () => uiState.openTextView(),
     onOpenTranslateOptions: () => uiState.openTranslateOptions(),
     onPeekToggle: inpainting.onPeekToggle,

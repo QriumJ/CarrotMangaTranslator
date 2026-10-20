@@ -1,3 +1,4 @@
+import { useToolbarRovingFocus } from "./ui/useToolbarRovingFocus";
 import React from "react";
 import {
   IconArrowBackUp,
@@ -44,8 +45,12 @@ export function ChapterQuickControls(
   props: ChapterQuickControlsProps,
 ): React.JSX.Element {
   const labels = useQuickControlLabels(props);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  const navigation = useToolbarRovingFocus(rootRef);
   return (
     <div
+      ref={rootRef}
+      {...navigation}
       className="chapter-quick-controls"
       id={props.id}
       role="toolbar"

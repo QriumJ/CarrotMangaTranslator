@@ -178,6 +178,6 @@ export function nowIso(): string {
   return new Date().toISOString();
 }
 
-function makeLocalId(prefix: string): string {
+export function makeLocalId(prefix: string): string {
   return `${prefix}-${crypto.randomUUID?.() ?? Math.random().toString(36).slice(2)}`;
 }

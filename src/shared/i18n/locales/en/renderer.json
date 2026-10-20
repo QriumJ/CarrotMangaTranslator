@@ -40,7 +40,8 @@
   "fonts": {
     "registerFailed": "Could not register the font. Check that it is an original TTF/OTF file supported by the app and try again. See the error report for details.",
     "default": "Default",
-    "defaultSample": "Abc 가나다"
+    "defaultSample": "Abc 가나다",
+    "removeFailed": "Could not remove the font. Please try again."
   },
   "eta": {
     "seconds": "About {{count}} sec remaining",
@@ -61,9 +62,9 @@
       "total": "{{label}} · Total {{duration}}"
     },
     "failureGuidance": {
-      "maxOutputTokens": "The maximum output token limit is too low. Increase Settings > LLM > Maximum output tokens.",
-      "workContextBudget": "The work-information budget is too low. Increase Settings > LLM > Work-information budget.",
-      "contextLength": "The context length is too low. Increase Settings > LLM > Context length. This may use more VRAM."
+      "maxOutputTokens": "The maximum output token limit is too low. Increase Settings > Translation > Maximum output tokens.",
+      "workContextBudget": "The work-information budget is too low. Increase Settings > Translation > Work-information budget.",
+      "contextLength": "The context length is too low. Increase Settings > Translation > Context length. This may use more VRAM."
     },
     "phase": {
       "booting": "Preparing model",
@@ -404,6 +405,15 @@
       "saveBeforePageOrderFailed": "The page order was not saved because current edits could not be saved.",
       "pageRolledBack": "Restored the previous page order.",
       "rolledBackAfterError": "{{message}} Restored the previous order."
+    },
+    "bulkDelete": {
+      "confirmTitle": "Delete {{count}} chapters",
+      "confirmMessageMore": "{{titles}} and {{count}} more",
+      "confirmDetail": "Delete the selected chapters and their default-folder outputs. Keep the work and its terminology/memory.",
+      "action": "Delete {{count}}",
+      "success": "Deleted {{count}} chapters. The work and its terminology/memory were kept.",
+      "partial": "Deleted {{deleted}} chapters; {{failed}} could not be deleted.",
+      "failed": "Could not delete the selected chapters."
     }
   },
   "inpainting": {
@@ -558,6 +568,7 @@
         "shareExport": "Create shared file",
         "modelTest": "Check model and runtime",
         "codexAuth": "Connect ChatGPT account",
+        "grokAuth": "Connect Grok account",
         "background": "Background task",
         "environmentBackup": "Export backup",
         "environmentRestore": "Import backup",
@@ -596,6 +607,7 @@
         "model-test-checking": "Checking the model response…",
         "codex-auth-opening-browser": "Opening the sign-in page…",
         "codex-auth-updating": "Updating the account connection…",
+        "cli-downloading": "Downloading the AI runtime…",
         "waiting-for-user": "Waiting for browser sign-in…"
       },
       "status": {

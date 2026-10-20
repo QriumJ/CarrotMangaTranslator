@@ -6,13 +6,13 @@
 
 **한국어** · [English](README.en.md) · [日本語](README.ja.md) · [简体中文](README.zh-Hans.md) · [繁體中文](README.zh-Hant.md)
 
-**[v3.4.2 다운로드](https://github.com/ucx0204/CarrotMangaTranslator/releases/tag/v3.4.2)** · [릴리스 노트](docs/release-notes/v3.4.2.md) · [오류·제안](https://github.com/ucx0204/CarrotMangaTranslator/issues)
+**[v3.6.0 다운로드](https://github.com/ucx0204/CarrotMangaTranslator/releases/tag/v3.6.0)** · [릴리스 노트](docs/release-notes/v3.6.0.md) · [오류·제안](https://github.com/ucx0204/CarrotMangaTranslator/issues)
 
 Windows 10/11 · Apple Silicon macOS 14+ · [GPL-3.0-only](LICENSE)
 
 ![새 작업 화면: 보관함, 원고, 도구 모음과 페이지 블록](docs/images/readme-current/workspace.png)
 
-**최근 추가된 기능:** [복제 도장·치유 브러시](#복제-도장과-치유-브러시), [패널 크기 조절](#작업-화면), [공유 색상 팔레트](#색상-선택과-공유-팔레트), [Codex·Claude 채팅](#채팅으로-번역), [단계별 작업 이력](#번역과-페이지-작업). 아래 화면은 실제 앱 컴포넌트를 QA 캡처 도구로 촬영한 예시입니다. [촬영 범위](docs/images/readme-current/README.md)
+**최근 추가된 기능:** [Codex·Claude·Grok 채팅](#채팅으로-번역), [CLI 첫 사용 시 다운로드](#설치), [복제 도장·치유 브러시](#복제-도장과-치유-브러시), [패널 크기 조절](#작업-화면), [공유 색상 팔레트](#색상-선택과-공유-팔레트). 아래 화면은 실제 앱 컴포넌트를 QA 캡처 도구로 촬영한 예시입니다. [촬영 범위](docs/images/readme-current/README.md)
 
 ## 성인용 만화에서 Gemma 4 사용이 어렵다면: OpenCode Go + DeepSeek V4.1 Flash Free
 
@@ -85,7 +85,11 @@ OpenCode Go의 공식 이용 범위는 코딩 에이전트 요청을 중심으�
 
 실행 경고가 나오면 해당 릴리스의 서명 상태와 체크섬을 확인하세요. macOS 첫 실행 승인은 **시스템 설정 → 개인정보 보호 및 보안**에서 할 수 있습니다. [서명 정책](CODE_SIGNING_POLICY.md)
 
-모델·런타임은 별도로 내려받습니다. 첫 준비에는 인터넷과 여유 저장 공간이 필요합니다. 로컬 Gemma·OCR·인페인팅은 준비 후 PC에서 실행되며, Codex·외부 API·인터넷 조사는 네트워크 연결이 필요합니다.
+Codex·Claude·Grok 실행 파일은 새 설치 패키지에 포함하지 않습니다. 처음 연결할 때 필요한 실행 파일만 공식 배포처에서 내려받고 검증한 뒤 로그인을 이어갑니다. 내려받은 파일은 데이터 폴더의 `cli-runtimes`에 보관하여 재사용합니다. 기존 앱에 남아 있는 호환 Codex·Claude 실행 파일도 우선 사용합니다. 구버전 업데이트 과정에서 기존 내장 파일이 제거되면 첫 연결 시 한 번 다시 내려받지만 계정 정보는 별도 위치에 유지됩니다.
+
+앱 채팅에서 **Grok**을 선택할 수 있습니다. **설정 → AI 앱 연결(MCP) → 앱 채팅 · Grok 계정**에서 공식 Grok 로그인을 연결하세요. 이미지 첨부와 기존 당근 MCP 도구를 통한 보관함 조회·번역·편집 요청을 지원합니다. [Grok 연결 및 검증 기록](docs/grok-build-integration.md)
+
+모델·런타임은 별도로 내려받습니다. 첫 준비에는 인터넷과 여유 저장 공간이 필요합니다. 로컬 Gemma·OCR·인페인팅은 준비 후 PC에서 실행되며, Codex·Claude·외부 API·인터넷 조사는 네트워크 연결이 필요합니다.
 
 ## 번역 엔진과 언어
 
@@ -95,12 +99,12 @@ OpenCode Go의 공식 이용 범위는 코딩 에이전트 요청을 중심으�
 
 ![번역 엔진·언어와 Codex 로그인·모델 설정](docs/images/readme-current/settings.png)
 
-| 엔진            | 준비·선택 항목                                                                                                           |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Gemma 로컬**  | Hugging Face 또는 로컬 모델 파일, 모델 계열·프리셋, 장치에 맞는 런타임. RAM/VRAM이 부족하면 작은 프리셋부터 사용         |
-| **Codex**       | 앱 안에서 ChatGPT 로그인 → 사용 가능한 모델·추론 강도 선택. 앱 내 번역에는 별도 Codex CLI 설치 불필요                    |
-| **Claude Code** | 앱 안에서 Claude 구독 또는 Console 계정으로 로그인 → 계정에서 제공하는 모델·추론 강도 선택. 내장 Claude Code 런타임 사용 |
-| **API**         | 제공자 빠른 설정 또는 Base URL·모델 ID·인증 정보 직접 입력. OpenAI 호환 로컬 서버도 연결 가능                            |
+| 엔진            | 준비·선택 항목                                                                                                                               |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Gemma 로컬**  | Hugging Face 또는 로컬 모델 파일, 모델 계열·프리셋, 장치에 맞는 런타임. RAM/VRAM이 부족하면 작은 프리셋부터 사용                             |
+| **Codex**       | 앱 안에서 ChatGPT 로그인 → 사용 가능한 모델·추론 강도 선택. 첫 연결 시 공식 실행 파일 자동 설치, 이후 재사용                                 |
+| **Claude Code** | 앱 안에서 Claude 구독 또는 Console 계정으로 로그인 → 계정에서 제공하는 모델·추론 강도 선택. 첫 연결 시 공식 실행 파일 자동 설치, 이후 재사용 |
+| **API**         | 제공자 빠른 설정 또는 Base URL·모델 ID·인증 정보 직접 입력. OpenAI 호환 로컬 서버도 연결 가능                                                |
 
 - **Gemma 메모리:** 프리셋의 메모리 표기는 선택 기준입니다. 문맥 길이·이미지·다른 프로그램 사용량도 영향을 줍니다. 여유 VRAM과 이미지 처리 위치를 조정할 수 있습니다.
 - **Gemma 생성 설정:** Temperature·Top P·Top K를 앱에서 조절합니다. 먼저 기본값으로 한 페이지를 확인하고, 결과의 다양성이나 일관성을 조절할 때 사용하세요. 기본값 복원도 지원합니다.
@@ -633,7 +637,7 @@ MCP(Model Context Protocol)는 AI 앱이 당근의 기능을 도구로 호출하
 
 **[클라이언트별 등록 화면·명령·권한·문제 해결 → MCP 상세 가이드](docs/mcp-user-guide.md)**
 
-설정의 **연결 방법 및 도움말**에서 Codex·ChatGPT·Claude·Claude Code·OpenCode·기타 MCP 앱의 등록 방법을 선택할 수 있습니다. OpenCode는 안내된 설정을 기존 `opencode.json`의 `mcp` 항목에 추가하고 `opencode mcp auth carrot`로 인증합니다. 이 연결은 OpenCode 앱에서 당근을 조작하는 기능이며, 번역 설정의 **OpenCode GO API 빠른 설정**과는 별개입니다.
+설정의 **연결 방법 및 도움말**에서 Codex·ChatGPT·Claude·Claude Code·OpenCode·Grok 웹·Grok Build·기타 MCP 앱의 등록 방법을 선택할 수 있습니다. Grok 웹은 Custom 커넥터에 주소를 등록하고, Grok Build는 복사한 등록 명령을 실행한 뒤 `/mcps`에서 OAuth 인증합니다. Grok 웹은 실제 계정의 OAuth 연결·보관함 조회·페이지 블록 및 원본 이미지 수신을 확인했습니다. [검증 범위](docs/mcp-user-guide.md#grok-build-cli)에서 미검증 작업도 확인할 수 있습니다. OpenCode는 안내된 설정을 기존 `opencode.json`의 `mcp` 항목에 추가하고 `opencode mcp auth carrot`로 인증합니다. 이 연결은 외부 AI 앱에서 당근을 조작하는 기능이며, 당근 내부의 번역 엔진 설정과는 별개입니다.
 
 <details>
 <summary>OpenCode MCP 연결 도움말</summary>

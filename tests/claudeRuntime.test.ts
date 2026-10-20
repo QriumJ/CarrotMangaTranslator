@@ -1,6 +1,6 @@
 import { Readable } from "node:stream";
 import { createRequire } from "node:module";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -9,6 +9,7 @@ import type { AppPaths } from "../src/main/appPaths";
 import type { ChatSession } from "../src/shared/chatTypes";
 import { ClaudeChatRuntime } from "../src/main/chat/claudeChatRuntime";
 import { runClaudeCompletion } from "../src/main/claude/claudeCompletion";
+import { startClaudeRuntime } from "../src/main/claude/claudeRuntime";
 import { createChatService } from "../src/main/chat/createChatService";
 
 const sdk = vi.hoisted(() => ({ query: vi.fn() }));
@@ -61,6 +62,17 @@ async function fixture() {
   };
   return { root, stream, output, paths, events, runtime, session };
 }
+it("respects an explicitly provided executable without invoking automatic installation", async () => {
+  const f = await fixture();
+  const runtime = await startClaudeRuntime(
+    { ...f.paths, isPackaged: true },
+    { pathToClaudeCodeExecutable: "custom-claude" },
+  );
+  expect(sdk.query.mock.calls[0][0].options.pathToClaudeCodeExecutable).toBe(
+    "custom-claude",
+  );
+  runtime.close();
+});
 it("stops queued input and resumes the same native conversation without changing the active model", async () => {
   const f = await fixture();
   const thread = await f.runtime.prepare(f.session);
@@ -315,10 +327,35 @@ it("accepts one native completion for coalesced follow-up messages", async () =>
   );
 });
 
-it.each(["claude", "codex"] as const)(
+it.each(["claude", "codex", "grok"] as const)(
   "connects the shared MCP with %s identity and releases failed starts",
   async (provider) => {
     const f = await fixture();
+    // A legacy packaged runtime fixture; SDK execution is mocked, so this
+    // integration test must not download executables from the network.
+    await mkdir(join(f.root, "claude"), { recursive: true });
+    await writeFile(
+      join(
+        f.root,
+        "claude",
+        process.platform === "win32" ? "claude.exe" : "claude",
+      ),
+      "fixture",
+    );
+    await mkdir(join(f.root, "c", "bin"), { recursive: true });
+    await writeFile(
+      join(
+        f.root,
+        "c",
+        "bin",
+        process.platform === "win32" ? "codex.exe" : "codex",
+      ),
+      "fixture",
+    );
+    await writeFile(
+      join(f.root, "c", "codex-package.json"),
+      JSON.stringify({ version: "0.160.0" }),
+    );
     const close = vi.fn();
     const connectChat = vi.fn(async () => ({
       url: "http://127.0.0.1:1234/mcp",
@@ -359,11 +396,17 @@ it.each(["claude", "codex"] as const)(
       expect(connectChat).toHaveBeenCalledWith(
         session.id,
         expect.any(Function),
-        provider === "claude" ? "Claude Code" : "Codex",
+        { claude: "Claude Code", codex: "Codex", grok: "Grok Build" }[provider],
       ),
     );
     if (provider === "claude") {
       await vi.waitFor(() => expect(sdk.query).toHaveBeenCalled());
+      await service.dispose();
+    } else if (provider === "grok") {
+      await vi.waitFor(async () =>
+        expect((await service.read(session.id)).state).toBe("failed"),
+      );
+      expect(sdk.query).not.toHaveBeenCalled();
       await service.dispose();
     } else {
       await vi.waitFor(() => expect(close).toHaveBeenCalled());

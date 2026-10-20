@@ -1,3 +1,4 @@
+import styles from "./AppRightQuickRail.module.css";
 import React from "react";
 import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
@@ -110,23 +111,29 @@ export function AppRightQuickRail(
   }, []);
 
   return (
-    <aside className="right-quick-rail">
-      <TopQuickRailGroup
-        collapsed={topCollapsed}
-        controlsId={controlsId}
-        disabled={disabled}
-        label={t(
-          topCollapsed
-            ? "workspace.quickRail.showTop"
-            : "workspace.quickRail.hideTop",
-        )}
-        quickRailProps={props}
-        onToggle={() => setTopCollapsed((collapsed) => !collapsed)}
-      />
+    <aside
+      className={`right-quick-rail ${props.currentChapter ? "" : styles.withoutChapter}`}
+    >
+      {props.currentChapter ? (
+        <TopQuickRailGroup
+          collapsed={topCollapsed}
+          controlsId={controlsId}
+          disabled={disabled}
+          label={t(
+            topCollapsed
+              ? "workspace.quickRail.showTop"
+              : "workspace.quickRail.hideTop",
+          )}
+          quickRailProps={props}
+          onToggle={() => setTopCollapsed((collapsed) => !collapsed)}
+        />
+      ) : null}
       <BottomQuickRailGroup
         collapsed={bottomCollapsed}
         currentToolLabel={currentToolLabel}
-        showCurrentToolLabel={props.stageToolbarHidden}
+        showCurrentToolLabel={
+          Boolean(props.currentChapter) && props.stageToolbarHidden
+        }
         label={t(
           bottomCollapsed
             ? "workspace.quickRail.showBottom"
@@ -251,17 +258,24 @@ function BottomQuickRailControls(
       })) ?? [];
   return (
     <div className="right-quick-rail-bottom-controls">
-      <div className="right-quick-bottom-group" data-right-quick-group="view">
-        <WorkspaceViewControls {...props.workspaceViewControls} />
-      </div>
-      <div
-        className="right-quick-bottom-group"
-        data-right-quick-group="original-opacity"
-      >
-        <WorkspaceOriginalOpacityControl
-          {...props.workspaceOriginalOpacityControl}
-        />
-      </div>
+      {props.currentChapter ? (
+        <>
+          <div
+            className="right-quick-bottom-group"
+            data-right-quick-group="view"
+          >
+            <WorkspaceViewControls {...props.workspaceViewControls} />
+          </div>
+          <div
+            className="right-quick-bottom-group"
+            data-right-quick-group="original-opacity"
+          >
+            <WorkspaceOriginalOpacityControl
+              {...props.workspaceOriginalOpacityControl}
+            />
+          </div>
+        </>
+      ) : null}
       <div className="right-quick-bottom-group" data-right-quick-group="status">
         <StatusDockButton
           completionSoundMuted={props.completionSoundMuted}

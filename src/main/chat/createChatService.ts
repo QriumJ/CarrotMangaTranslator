@@ -6,6 +6,7 @@ import { ChatService } from "../application/chatService";
 import { ChatRepository } from "./chatRepository";
 import { CodexChatRuntime } from "./codexChatRuntime";
 import { ClaudeChatRuntime } from "./claudeChatRuntime";
+import { GrokChatRuntime } from "./grokChatRuntime";
 
 export function createChatService(options: {
   paths: AppPaths;
@@ -22,18 +23,22 @@ export function createChatService(options: {
       const connection = await options.mcp.connectChat(
         session.id,
         observe,
-        session.runtime === "claude" ? "Claude Code" : "Codex",
+        { claude: "Claude Code", codex: "Codex", grok: "Grok Build" }[
+          session.runtime
+        ],
       );
       try {
         const runtime =
           session.runtime === "claude"
             ? new ClaudeChatRuntime(options.paths, connection, events)
-            : await CodexChatRuntime.start(
-                options.paths,
-                options.appVersion,
-                connection,
-                events,
-              );
+            : session.runtime === "grok"
+              ? new GrokChatRuntime(options.paths, connection, events)
+              : await CodexChatRuntime.start(
+                  options.paths,
+                  options.appVersion,
+                  connection,
+                  events,
+                );
         return {
           runtime,
           release: connection.close,

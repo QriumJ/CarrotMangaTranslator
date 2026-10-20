@@ -70,6 +70,12 @@ const macTargetConfig =
   process.platform === "darwin" || process.env.MGT_TARGET_PLATFORM === "darwin";
 describe("Windows installer clean uninstall option", () => {
   it("exposes the intended electron-builder behavior as configuration", () => {
+    const resources = (
+      electronBuilderConfig as { extraResources: { to: string }[] }
+    ).extraResources;
+    expect(
+      resources.some((entry) => entry.to === "c" || entry.to === "claude"),
+    ).toBe(false);
     expect(electronBuilderConfig).toMatchObject({
       publish: [
         {
@@ -120,10 +126,6 @@ describe("Windows installer clean uninstall option", () => {
         "!node_modules/@openai/codex-*{,/**/*}",
       ]),
       extraResources: expect.arrayContaining([
-        expect.objectContaining({
-          to: "c",
-          filter: ["**/*"],
-        }),
         {
           from: "out/app-runtime",
           to: "app-runtime",
@@ -280,10 +282,10 @@ describe("Windows installer clean uninstall option", () => {
     // official Codex and Claude native payloads while keeping the external
     // font bundle and training data out of the installer.
     expect(packagedRuntimeVerifier).toContain(
-      "const MAX_PACKAGED_BYTES = 1695 * 1024 * 1024;",
+      "const MAX_PACKAGED_BYTES = 1080 * 1024 * 1024;",
     );
     expect(packagedRuntimeVerifier).toContain(
-      "const MAX_PACKAGED_FILES = 379;",
+      "const MAX_PACKAGED_FILES = 330;",
     );
     expect(packagedRuntimeVerifier).toContain(
       "const mainRuntimeSmokeMessage = runPackagedMainRuntimeSmoke();",

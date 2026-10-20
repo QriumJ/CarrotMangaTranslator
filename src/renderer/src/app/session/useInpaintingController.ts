@@ -103,6 +103,7 @@ function useSessionCommands(
     setShowTextBlocks: chapter.uiState.setShowTextBlocks,
     openTranslateOptions: chapter.uiState.openTranslateOptions,
     openChat: chapter.uiState.openChat,
+    openWorkContext: chapter.uiState.openWorkContext,
     setTranslationSourceOpen: chapter.importShareModal.setTranslationSourceOpen,
     setAddPagesChapter: chapter.importShareModal.setAddPagesChapter,
   });

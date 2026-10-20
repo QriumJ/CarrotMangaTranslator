@@ -1,3 +1,7 @@
+import { createPortal } from "react-dom";
+import { useAnchoredMenuPosition } from "./useAnchoredMenuPosition";
+import type { MenuPosition } from "./selectTypes";
+import { menuPositionStyle } from "./selectUtilities";
 import React from "react";
 import { IconChevronDown, IconDots } from "@tabler/icons-react";
 import { Button } from "./Button";
@@ -11,6 +15,7 @@ export type ActionMenuItem = {
   label: string;
   run: () => void;
   disabled?: boolean;
+  destructive?: boolean;
 };
 
 export type ActionMenuProps = {
@@ -39,13 +44,25 @@ export function ActionMenu({
 }: ActionMenuProps): React.JSX.Element {
   const [open, setOpen] = React.useState(false);
   const id = React.useId();
+  const [position, setPosition] = React.useState<MenuPosition | null>(null);
   const { rootRef, triggerRef, contentRef, toggle, close, openPopup } =
     usePopupController({
       open,
+      isInsidePopup: (target) =>
+        document.getElementById(id)?.contains(target) ?? false,
       onOpenChange: setOpen,
       disabled,
       initialFocus: '[role="menuitem"]:not([disabled])',
     });
+  useAnchoredMenuPosition({
+    open,
+    triggerRef,
+    menuRef: contentRef,
+    setPosition,
+    contentVersion: items.map((item) => item.label).join("|"),
+    align: align ?? (iconOnly ? "end" : "start"),
+    fitContent: true,
+  });
   const trigger = {
     ref: triggerRef,
     disabled,
@@ -73,30 +90,21 @@ export function ActionMenu({
         triggerIcon={triggerIcon}
         tooltipPlacement={tooltipPlacement}
       />
-      {open ? (
-        <MenuSurface
-          ref={contentRef}
-          id={id}
-          ariaLabel={label}
-          className={styles.actionMenuSurface}
-          onClose={close}
-        >
-          {items.map((item) => (
-            <Button
-              key={item.label}
-              role="menuitem"
-              variant="ghost"
-              disabled={item.disabled}
-              onClick={() => {
-                close(true);
-                item.run();
-              }}
+      {open
+        ? createPortal(
+            <MenuSurface
+              ref={contentRef}
+              id={id}
+              ariaLabel={label}
+              className={styles.actionMenuSurface}
+              style={menuPositionStyle(position)}
+              onClose={close}
             >
-              {item.label}
-            </Button>
-          ))}
-        </MenuSurface>
-      ) : null}
+              <ActionMenuItems items={items} close={close} />
+            </MenuSurface>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
@@ -132,5 +140,32 @@ function ActionMenuTrigger({
     >
       {label}
     </Button>
+  );
+}
+
+function ActionMenuItems({
+  items,
+  close,
+}: {
+  items: readonly ActionMenuItem[];
+  close: (restoreFocus?: boolean) => void;
+}): React.JSX.Element {
+  return (
+    <>
+      {items.map((item) => (
+        <Button
+          key={item.label}
+          role="menuitem"
+          variant={item.destructive ? "danger" : "ghost"}
+          disabled={item.disabled}
+          onClick={() => {
+            close(true);
+            item.run();
+          }}
+        >
+          {item.label}
+        </Button>
+      ))}
+    </>
   );
 }

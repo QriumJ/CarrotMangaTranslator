@@ -8,22 +8,17 @@ const {
   statSync,
 } = require("node:fs");
 const { tmpdir } = require("node:os");
-const { basename, join, relative, sep } = require("node:path");
-const {
-  CODEX_APP_SERVER_VERSION,
-  CODEX_APP_SERVER_SMOKE_TIMEOUT_MS,
-} = require("./codex-app-server-runtime.cjs");
+const { basename, join, relative, resolve, sep } = require("node:path");
 const {
   WINDOWS_EXECUTABLE_FILENAME,
   assertFastZipPayload,
 } = require("./installer-zip-safety.cjs");
 
 const root = join(__dirname, "..");
-const unpackedDir = join(root, "dist", "win-unpacked");
+const unpackedDir = process.argv[2]
+  ? resolve(process.argv[2])
+  : join(root, "dist", "win-unpacked");
 const resourcesDir = join(unpackedDir, "resources");
-const codexRuntimeDir = join(resourcesDir, "c");
-const codexExecutablePath = join(codexRuntimeDir, "bin", "codex.exe");
-const codexManifestPath = join(codexRuntimeDir, "codex-package.json");
 const asarUnpackedNodeModules = join(
   resourcesDir,
   "app.asar.unpacked",
@@ -34,7 +29,6 @@ const forbiddenPackagedFontRuntimeDirs = [
   join(resourcesDir, "app-runtime", "font-matching-crossscript-proxy"),
 ];
 const appExecutable = join(unpackedDir, WINDOWS_EXECUTABLE_FILENAME);
-const codexSmokeScript = join(__dirname, "smoke-codex-app-server-runtime.cjs");
 const onnxSmokeScript = join(__dirname, "smoke-packaged-onnx-runtime.cjs");
 const onnxNodeSmokeScript = join(
   __dirname,
@@ -147,31 +141,15 @@ const allowedElectronLocales = new Set([
 // scripts, and API request pacing adds one transport leaf. v2.6.3 adds
 // font-chapter-c18/hayai-pool.py for the reusable CPU OCR pool. Keep the
 // resulting thin payload ceiling exact so unrelated growth fails closed.
-// Codex 0.156.1 adds 39 official voice runtime/license files (6 -> 45 files)
-// below resources/c. Preserve the upstream native layout; no app voice feature
-// is enabled. The audited Windows payload therefore grows from 331 to 370.
-// v2.8.6 adds one MTP fit-cache module; the audited payload is 371 files.
-// The current payload adds native-inference-manifest.json, the Hayai build-tools
-// lock, api-conversation.cjs, api-http-failure.cjs and ffmpeg-runtime.json (+5).
-// Electron 44 removes libEGL.dll and libGLESv2.dll (-2); ONNX/Python lock version
-// replacements do not change the count. The audited thin payload is 374 files.
-// v3.2.2 adds font-chapter-c18/glyph-fast-verification.py for optional CPU
-// glyph verification. This single runtime leaf makes the thin payload 375 files.
-// v3.3.0 adds exactly four official Claude runtime files under resources/claude:
-// claude.exe, LICENSE.md, package.json and README.md (256,156,384 bytes total).
-const MAX_PACKAGED_FILES = 379;
-// The trained font matching runtime bundle (~467 MiB) is externalized out of
-// the installer and downloaded into the data-root cache on first use. Guard
-// the complete UNPACKED payload, including Electron, app.asar and native tools,
-// while rejecting that bundle or training datasets / QA artifacts returning.
-// The official Codex native distribution adds its App Server, code-mode host,
-// rg, and Windows sandbox helpers (~370 MiB) under resources/c.
-// The official Claude runtime adds 244.3 MiB. Reserve its rounded 245 MiB
-// alongside the existing 1450 MiB budget; external model/training bundles
-// remain excluded and the previous headroom is not otherwise expanded.
-const MAX_PACKAGED_BYTES = 1695 * 1024 * 1024;
+// CLI runtimes are downloaded from pinned official assets on first use.
+// Remove their former 49-file / 615 MiB allowance from the payload ceiling.
+const MAX_PACKAGED_FILES = 330;
+const MAX_PACKAGED_BYTES = 1080 * 1024 * 1024;
 
-assertPackagedCodexInventory();
+for (const name of ["c", "claude"]) {
+  if (existsSync(join(resourcesDir, name)))
+    throw new Error("CLI runtimes must be downloaded on demand: " + name);
+}
 if (existsSync(asarUnpackedNodeModules)) {
   throw new Error(
     `Unexpected unpacked node_modules payload: ${asarUnpackedNodeModules}`,
@@ -236,20 +214,6 @@ for (const localeFile of packagedElectronLocales) {
   }
 }
 
-const codexResult = spawnSync(
-  appExecutable,
-  [codexSmokeScript, codexExecutablePath],
-  {
-    encoding: "utf8",
-    env: {
-      ...process.env,
-      ELECTRON_RUN_AS_NODE: "1",
-    },
-    timeout: CODEX_APP_SERVER_SMOKE_TIMEOUT_MS,
-    windowsHide: true,
-  },
-);
-assertSmokeSucceeded(codexResult, "Packaged Codex App Server runtime");
 const onnxResult = spawnSync(
   appExecutable,
   [
@@ -333,7 +297,6 @@ if (packageStats.bytes > MAX_PACKAGED_BYTES) {
     ).toFixed(1)} MiB > ${MAX_PACKAGED_BYTES / 1024 / 1024} MiB`,
   );
 }
-console.log(codexResult.stdout.trim());
 console.log(onnxResult.stdout.trim());
 console.log(onnxNodeResult.stdout.trim());
 console.log(mainRuntimeSmokeMessage);
@@ -369,35 +332,6 @@ function countFiles(directory) {
     }
   }
   return { files, bytes };
-}
-
-function assertPackagedCodexInventory() {
-  const requiredFiles = [
-    "bin/codex.exe",
-    "bin/codex-code-mode-host.exe",
-    "codex-package.json",
-    "codex-path/rg.exe",
-    "codex-resources/codex-command-runner.exe",
-    "codex-resources/codex-windows-sandbox-setup.exe",
-  ];
-  for (const relativePath of requiredFiles) {
-    const filePath = join(codexRuntimeDir, ...relativePath.split("/"));
-    if (!existsSync(filePath) || !statSync(filePath).isFile()) {
-      throw new Error(
-        `Packaged Codex runtime file is missing: ${relativePath}`,
-      );
-    }
-  }
-  const manifest = JSON.parse(readFileSync(codexManifestPath, "utf8"));
-  if (
-    manifest.version !== CODEX_APP_SERVER_VERSION ||
-    manifest.target !== "x86_64-pc-windows-msvc" ||
-    manifest.entrypoint !== "bin/codex.exe"
-  ) {
-    throw new Error(
-      "Packaged Codex runtime manifest does not match the pinned target.",
-    );
-  }
 }
 
 function assertPackagedOnnxNodeInventory() {

@@ -30,7 +30,8 @@
     "selectAll": "全選",
     "settings": "設定",
     "thisPage": "本頁",
-    "workTitle": "作品標題"
+    "workTitle": "作品標題",
+    "back": "返回"
   },
   "select": {
     "placeholder": "請選擇",
@@ -182,6 +183,27 @@
     "apply": {
       "included": "包含 {{count}} 項修改",
       "button": "套用 {{count}} 項修改"
+    },
+    "tools": {
+      "advanced": "進階",
+      "exportRule": "匯出規則",
+      "exportAll": "全部匯出",
+      "editYaml": "編輯 YAML",
+      "import": "匯入",
+      "yamlLabel": "批次編輯 YAML",
+      "yamlError": "YAML 錯誤",
+      "reflect": "套用至規則",
+      "importNew": "匯入為新規則",
+      "overwrite": "覆寫相同 ID",
+      "close": "關閉",
+      "rules": "批次編輯規則",
+      "scope": "範圍",
+      "scopeLabel": "套用範圍",
+      "selection": "選取項目",
+      "page": "頁面",
+      "chapter": "章節",
+      "ruleError": "規則錯誤",
+      "storageError": "儲存錯誤"
     }
   },
   "workspace": {
@@ -603,7 +625,9 @@
     "noSearchResults": "沒有相符的字體。",
     "moveNamedFont": "移動{{label}}的順序",
     "resetOrder": "重設順序",
-    "saveFailed": "無法儲存字體設定。"
+    "saveFailed": "無法儲存字體設定。",
+    "files": "已安裝字型",
+    "noCustomFonts": "尚未新增字型。"
   },
   "chapterPicker": {
     "prompt": "要翻譯哪些內容？",
@@ -944,8 +968,9 @@
     "deleteWork": "刪除作品",
     "deleteChapter": "刪除章節",
     "newName": "新名稱",
-    "deleteWorkWarning": "刪除作品時，其中所有章節、頁面和翻譯結果也會一併刪除。",
-    "deleteChapterWarning": "刪除章節時，其中所有頁面和翻譯結果也會一併刪除。"
+    "deleteWorkWarning": "刪除作品時，其中所有章節、頁面、翻譯結果和術語／記憶也會一併刪除。",
+    "deleteChapterWarning": "刪除章節時，其中所有頁面和翻譯結果也會一併刪除。",
+    "deleteChapters": "選擇章節刪除…"
   },
   "shareExport": {
     "title": "匯出專案",
@@ -1008,7 +1033,9 @@
         "asc": "升序",
         "desc": "降序"
       }
-    }
+    },
+    "itemActions": "{{title}} 操作",
+    "selectChapters": "選擇章節"
   },
   "pageList": {
     "empty": "沒有已載入的頁面。",
@@ -1398,14 +1425,15 @@
     "toggleOn": "開啟",
     "toggleOff": "關閉",
     "importTxt": {
-      "button": "匯入 .txt",
-      "title": "依行序從僅含譯文的 TXT 檔案重新匯入譯文。",
+      "button": "匯入譯文 TXT",
+      "title": "新 TXT 使用儲存的識別資訊。舊檔案請選擇對應的文字格式。",
       "noChanges": "沒有已更改的譯文。",
       "noApplicableText": "沒有可套用的文字，請檢查警告。",
-      "confirm": "要用 TXT 內容覆寫{{count}}筆譯文嗎？\n文字將依行序套用，OCR 原文不會變更。",
+      "confirm": "將 {{count}} 條譯文替換為 TXT 內容？OCR 原文將保留。",
       "updated": "已更新{{count}}個文字區塊的譯文。",
       "warnings": "TXT 匯入有{{count}}則警告。",
-      "failed": "無法匯入 TXT 檔案。"
+      "failed": "無法匯入 TXT 檔案。",
+      "bothButton": "匯入原文＋譯文 TXT"
     },
     "review": {
       "title": "校對表",
@@ -1649,6 +1677,50 @@
       "visualSummary": "影像場景摘要",
       "visualSummaryPlaceholder": "用一兩句話記錄場景、動作和關鍵對白。",
       "textSummary": "現有文字記憶"
+    },
+    "exchange": {
+      "groupLabel": "術語檔案",
+      "import": "匯入",
+      "export": "匯出",
+      "importHint": "將 JSON 術語檔案中的術語表和角色加入目前草稿。不會刪除現有項目。",
+      "exportHint": "將此處顯示的術語表和角色儲存為 JSON 檔案，可用於備份或匯入其他作品。",
+      "fileName": "{{title}} 術語表",
+      "exported": "已匯出 {{glossary}} 個術語和 {{characters}} 個角色。",
+      "exportFailed": "無法儲存術語檔案。",
+      "openFailed": "無法開啟術語檔案。",
+      "errors": {
+        "invalid-json": "此檔案不是 JSON 格式。請選擇透過匯出建立的術語檔案。",
+        "unrecognized": "找不到術語表或角色列表。請確認該檔案由本應用程式匯出。",
+        "unsupported-version": "目前應用程式版本無法讀取此術語檔案。請更新後重試。",
+        "empty": "檔案中沒有可匯入的術語或角色。",
+        "emptyInvalid": "沒有可匯入的項目。已略過 {{count}} 個無法讀取的項目。",
+        "too-large": "術語檔案超過 16 MiB，未開啟。"
+      },
+      "reviewTitle": "匯入術語檔案",
+      "sourceWork": "匯出來源：{{title}}",
+      "summary": {
+        "added": "新增",
+        "unchanged": "已有相同項目（不變）",
+        "conflicts": "譯文不同的項目",
+        "repeated": "檔案內重複（僅使用第一個）",
+        "invalid": "無法讀取，已略過",
+        "overLimit": "超出數量上限，已略過"
+      },
+      "split": "術語 {{glossary}} · 角色 {{characters}}",
+      "count": "{{count}} 個",
+      "conflictTitle": "譯文不同的項目",
+      "policy": {
+        "keepExisting": "保留目前譯文",
+        "useImported": "改用檔案譯文"
+      },
+      "columns": {
+        "source": "原文",
+        "current": "目前",
+        "imported": "檔案"
+      },
+      "emptyTarget": "（留空）",
+      "apply": "加入草稿（{{count}} 個）",
+      "applied": "已新增 {{added}} 個並取代 {{replaced}} 個。儲存後才會存入作品。"
     }
   },
   "inpainting": {
@@ -2536,7 +2608,7 @@
       "title": "備份與移轉",
       "description": "使用一個 ZIP 檔案將工作環境移轉到另一台電腦。",
       "includes": "包含資料庫原圖與編輯資料、設定、自訂字型、預設和遮蓋草稿。",
-      "excludes": "不包含憑證、模型、執行工具及外部資料夾。請在新電腦登入並重新下載所需模型。",
+      "excludes": "不包含憑證、模型、執行工具及外部資料夾中的檔案。",
       "counts": "{{works}} 部作品 · {{pages}} 頁",
       "dirty": "請先儲存或取消設定變更，再開始移轉。",
       "export": "匯出備份",
@@ -2550,7 +2622,8 @@
       "progress": "正在處理工作環境。完成前將暫停編輯。",
       "cancel": "取消操作",
       "saved": "備份已儲存：{{path}}",
-      "restored": "環境已還原。請檢查 API 金鑰、登入、外部資料夾、自訂模型路徑，並重新設定 API 自訂標頭與附加請求本文。"
+      "restored": "環境已還原。請檢查 API 金鑰、登入、外部資料夾、自訂模型路徑，並重新設定 API 自訂標頭與附加請求本文。",
+      "excludesHelp": "不包含憑證、模型、執行工具及外部資料夾。請在新電腦登入並重新下載所需模型。"
     },
     "claude": {
       "account": "Claude 帳戶",
@@ -2562,6 +2635,37 @@
       "effort": "推理等級",
       "error": "無法連線至 Claude。",
       "testing": "檢查 Claude Code 連線與模型回應。"
+    },
+    "accountRuntime": {
+      "missingTitle": "尚未安裝 {{name}} 執行階段",
+      "missingDetail": "首次連線時會下載一次官方 {{name}} 執行階段並儲存在這台電腦上，之後的連線與工作會直接重複使用已儲存的檔案。",
+      "downloading": "正在下載…",
+      "downloadFailed": "無法下載 {{name}} 執行階段",
+      "connectFailed": "未能完成 {{name}} 連線",
+      "retryHint": "再次點按同一個按鈕即可重試。",
+      "claudeLogin": "下載並登入 Claude",
+      "claudeLoginRetry": "重新下載並登入 Claude",
+      "claudeConsole": "下載並登入 API 帳戶",
+      "claudeConsoleRetry": "重新下載並登入 API 帳戶",
+      "codexLogin": "下載並使用 ChatGPT 登入",
+      "codexLoginRetry": "重新下載並使用 ChatGPT 登入",
+      "grokLogin": "下載並登入 Grok",
+      "grokLoginRetry": "重新下載並登入 Grok"
+    },
+    "grok": {
+      "title": "應用程式內聊天 · Grok 帳戶",
+      "description": "在應用程式內的聊天中使用 Grok 作為助理。Grok 透過 Carrot 工具讀取資料庫並進行翻譯與編輯。這與本頁的外部 AI 應用程式（MCP）連線各自獨立，登入與認證資訊由官方 Grok Build 管理。",
+      "checking": "正在檢查帳戶…",
+      "signedOut": "尚未登入",
+      "connected": "已連線 Grok",
+      "connectedVersion": "已連線 Grok · Grok Build {{version}}",
+      "login": "登入 Grok",
+      "logout": "登出",
+      "refresh": "重新整理",
+      "error": "請檢查 Grok 連線。"
+    },
+    "support": {
+      "title": "支援"
     }
   },
   "pageBlocks": {
@@ -2637,6 +2741,7 @@
         "environment-restore": "環境還原",
         "model-test": "模型檢查",
         "codex-auth": "ChatGPT 帳戶",
+        "grok-auth": "Grok Build",
         "sound-effect-translation": "音效翻譯",
         "claude-auth": "Claude Code"
       },
@@ -3263,6 +3368,89 @@
     "runtime": "AI",
     "claudeLoginHint": "請登入 Claude 帳戶。",
     "claudeLogin": "登入 Claude",
+    "claudeDownloadLogin": "下載並登入 Claude",
+    "claudeDownloadLoginRetry": "重新下載並登入 Claude",
+    "grokLogin": "登入 Grok",
+    "grokDownloadLogin": "下載並登入 Grok",
+    "grokDownloadLoginRetry": "重新下載並登入 Grok",
+    "grokLoginHint": "登入 Grok 後即可開始聊天。",
+    "downloadLogin": "下載並登入 ChatGPT",
+    "downloadLoginRetry": "重新下載並登入 ChatGPT",
     "moreImages": "再顯示 {{count}} 張圖片"
+  },
+  "chapterBulkDelete": {
+    "title": "選擇章節刪除",
+    "listLabel": "{{title}} 的章節列表",
+    "selection": "已選擇 {{count}}/{{total}} 章節 · {{pages}} 頁",
+    "selectChapter": "選擇 {{title}}",
+    "currentTag": "已開啟",
+    "failedTag": "刪除失敗",
+    "delete": "刪除所選 {{count}} 章",
+    "deleting": "正在刪除…",
+    "jobActive": "正在進行的工作結束後才能刪除。",
+    "partialTitle": "已刪除 {{deleted}} 章，{{failed}} 章未能刪除",
+    "partialDetail": "僅保留失敗章節的選取。請重試。",
+    "failedTitle": "未能刪除所選章節",
+    "failedDetail": "請檢查清單後重試。"
+  },
+  "mcp": {
+    "title": "AI 連線",
+    "description": "透過 MCP 應用程式瀏覽、翻譯與編輯。",
+    "checking": "正在檢查狀態…",
+    "copy": "複製位址",
+    "connectedApps": "已連線的應用程式",
+    "emptyOnline": "尚無已連線的應用程式，請在連線說明中選取。",
+    "emptyOffline": "尚無已連線的應用程式，請開啟 MCP。",
+    "disconnect": "中斷連線",
+    "disconnectNamed": "中斷 {{name}} 連線",
+    "approved": "核准於 {{date}}",
+    "permissions": "允許的操作",
+    "permissionsNote": "立即生效。變更會取消執行中的工作，並要求重新核准。",
+    "readAccess": "預設允許讀取文字、上下文和匯出文字檔。",
+    "permissionLabel": "MCP 權限",
+    "images": "傳送影像及輸出檔案",
+    "editing": "編輯文字、格式和上下文",
+    "processing": "管理文字區塊與書庫，執行 OCR 和翻譯",
+    "cost": "使用外部 AI 會傳送文字及影像，並可能產生費用。",
+    "help": "連線說明",
+    "diagnose": "檢查連線",
+    "lifecycle": "關閉本應用程式會停止連線，中斷連線會撤銷對方的存取權限。",
+    "processingHelp": "包含影像的檔案也受影像權限控制。處理使用已設定的引擎，僅核准連線不會啟動工作。",
+    "passed": "連線檢查通過",
+    "needsAttention": "請檢查連線",
+    "diagnosticNote": "僅檢查公開連線設定，不檢查 AI 登入和工具執行。",
+    "pass": "通過",
+    "fail": "失敗",
+    "off": "已關閉",
+    "starting": "正在啟動…",
+    "online": "可連線",
+    "stopping": "正在停止…",
+    "disable": "關閉 MCP",
+    "enable": "開啟 MCP",
+    "autoStart": "啟動時自動連線",
+    "openChatgpt": "開啟 ChatGPT",
+    "allowTailscale": "在 Tailscale 中允許連線",
+    "pairing": "連線要求",
+    "clientName": "請求應用程式自行提供的名稱：{{name}}",
+    "code": "驗證碼：{{code}}",
+    "verifyCode": "僅在代碼與瀏覽器一致時核准。",
+    "redirect": "核准後的返回位址：",
+    "requested": "要求權限：{{scopes}}",
+    "approve": "代碼一致 · 核准",
+    "deny": "拒絕",
+    "scopes": {
+      "carrot_read": "讀取",
+      "carrot_images": "傳送影像",
+      "carrot_edit": "編輯文字及格式",
+      "carrot_process": "管理書庫及執行模型",
+      "offline_access": "保留授權"
+    },
+    "scopeDetails": {
+      "carrot_read": "讀取書庫、文字和上下文",
+      "carrot_images": "傳輸圖片和包含圖片的檔案",
+      "carrot_edit": "編輯文字、格式和上下文",
+      "carrot_process": "管理文字區塊及書庫並執行應用程式模型",
+      "offline_access": "下次啟動時保留授權"
+    }
   }
 }

@@ -1,3 +1,4 @@
+import { buildTranslatedTextImport } from "../../../../shared/gatherTextFile";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type {
@@ -6,21 +7,21 @@ import type {
 } from "../../../../shared/libraryTypes";
 import { toast } from "../../lib/toastStore";
 import {
-  buildTranslatedTextImport,
   decodeImportedTextContent,
-  filterPagesByField,
   gatherText,
   type GatherScope,
-  type TranslatedTextImportUpdate,
 } from "../../../../shared/gatherText";
 import { gatherTextGateway } from "./gatherTextGateway";
+import { useMountedRef } from "../../hooks/useMountedRef";
+import type { GatherTextModalProps } from "./gatherTextTypes";
 
 type TxtImportOptions = {
   chapter: ChapterSnapshot | null;
   page: MangaPage | null;
   scope: GatherScope;
   readingDirection: "ltr" | "rtl";
-  onApplyTranslatedText?: (updates: TranslatedTextImportUpdate[]) => void;
+  field?: "both" | "translated";
+  onApplyTranslatedText?: GatherTextModalProps["onApplyTranslatedText"];
   setReviewWarnings: (warnings: string[]) => void;
 };
 
@@ -29,24 +30,26 @@ export function useTxtImportAction({
   page,
   scope,
   readingDirection,
+  field = "translated",
   onApplyTranslatedText,
   setReviewWarnings,
 }: TxtImportOptions): (file: File) => Promise<void> {
   const { t } = useTranslation("components");
   const { t: tRenderer } = useTranslation("renderer");
+  const mounted = useMountedRef();
   return React.useCallback(
     async (file: File) => {
       if (!chapter || !onApplyTranslatedText) {
         return;
       }
       try {
+        const content = decodeImportedTextContent(await file.arrayBuffer());
+        if (!mounted.current) return;
         const result = buildTranslatedTextImport(
-          filterPagesByField(
-            gatherText({ chapter, page, scope, direction: readingDirection }),
-            "translated",
-          ),
-          decodeImportedTextContent(await file.arrayBuffer()),
+          gatherText({ chapter, page, scope, direction: readingDirection }),
+          content,
           tRenderer,
+          field,
         );
         setReviewWarnings(result.warnings);
         if (!result.updates.length) {
@@ -64,7 +67,7 @@ export function useTxtImportAction({
         ) {
           return;
         }
-        onApplyTranslatedText(result.updates);
+        onApplyTranslatedText(result.updates, chapter);
         toast.success(
           t("gatherText.importTxt.updated", { count: result.updates.length }),
         );
@@ -77,14 +80,18 @@ export function useTxtImportAction({
         }
       } catch (error) {
         console.error(error);
+        if (mounted.current && error instanceof Error)
+          setReviewWarnings([error.message]);
         toast.error(t("gatherText.importTxt.failed"));
       }
     },
     [
       chapter,
+      mounted,
       onApplyTranslatedText,
       page,
       readingDirection,
+      field,
       scope,
       setReviewWarnings,
       t,
@@ -96,6 +103,7 @@ export function useTxtImportAction({
 export function useGatherTextActions(
   text: string,
   defaultName: string,
+  fileText = text,
 ): { handleCopy: () => Promise<void>; handleSave: () => Promise<void> } {
   const { t } = useTranslation("components");
   const handleCopy = React.useCallback(async () => {
@@ -113,13 +121,13 @@ export function useGatherTextActions(
     try {
       const result = await gatherTextGateway.saveTextFile({
         defaultName,
-        content: text,
+        content: fileText,
       });
       if (result?.saved) toast.success(t("gatherText.saveSuccess"));
     } catch (_error) {
       toast.error(t("gatherText.saveFailed"));
     }
-  }, [defaultName, t, text]);
+  }, [defaultName, fileText, t, text]);
   return { handleCopy, handleSave };
 }
 

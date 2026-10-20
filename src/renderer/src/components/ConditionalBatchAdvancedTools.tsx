@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { IconFileExport, IconFileImport } from "@tabler/icons-react";
 import React from "react";
 import { ConditionalBatchCollapsibleTrigger } from "./ConditionalBatchControls";
@@ -27,13 +28,14 @@ type ConditionalBatchAdvancedToolsProps = Pick<
 export function ConditionalBatchAdvancedTools(
   props: ConditionalBatchAdvancedToolsProps,
 ): React.JSX.Element {
+  const { t } = useTranslation("components");
   const bodyId = React.useId();
   return (
     <section className={styles.advancedTools} data-expanded={props.expanded}>
       <ConditionalBatchCollapsibleTrigger
         bodyId={bodyId}
         expanded={props.expanded}
-        title="고급"
+        title={t("conditionalBatch.tools.advanced")}
         onToggle={props.onToggle}
       />
       {props.expanded ? <YamlToolsBody {...props} id={bodyId} /> : null}
@@ -44,6 +46,7 @@ export function ConditionalBatchAdvancedTools(
 function YamlToolsBody(
   props: ConditionalBatchAdvancedToolsProps & { id: string },
 ): React.JSX.Element {
+  const { t } = useTranslation("components");
   return (
     <div className={styles.advancedBody} id={props.id}>
       <div className={styles.advancedButtons}>
@@ -52,24 +55,24 @@ function YamlToolsBody(
           iconLeft={<IconFileExport size={15} />}
           onClick={() => props.onExportYaml(false)}
         >
-          규칙 내보내기
+          {t("conditionalBatch.tools.exportRule")}
         </Button>
         <Button
           size="sm"
           iconLeft={<IconFileExport size={15} />}
           onClick={() => props.onExportYaml(true)}
         >
-          전체 내보내기
+          {t("conditionalBatch.tools.exportAll")}
         </Button>
         <Button size="sm" onClick={props.onOpenYaml}>
-          직접 편집
+          {t("conditionalBatch.tools.editYaml")}
         </Button>
         <Button
           size="sm"
           iconLeft={<IconFileImport size={15} />}
           onClick={props.onOpenYamlFile}
         >
-          가져오기
+          {t("conditionalBatch.tools.import")}
         </Button>
       </div>
       {props.yamlOpen ? <YamlEditor {...props} /> : null}
@@ -88,10 +91,11 @@ function YamlEditor(
     | "yamlText"
   >,
 ): React.JSX.Element {
+  const { t } = useTranslation("components");
   return (
     <div className={styles.yamlEditor}>
       <Textarea
-        aria-label="일괄 편집 YAML"
+        aria-label={t("conditionalBatch.tools.yamlLabel")}
         spellCheck={false}
         value={props.yamlText}
         onChange={(event) => props.onSetYamlText(event.target.value)}
@@ -99,34 +103,34 @@ function YamlEditor(
       {props.yamlError ? (
         <InlineMessage
           variant="danger"
-          title="YAML 오류"
+          title={t("conditionalBatch.tools.yamlError")}
           detail={props.yamlError}
         />
       ) : null}
       <div className={styles.yamlActions}>
         <Button size="sm" onClick={props.onReflectYaml}>
-          카드에 반영
+          {t("conditionalBatch.tools.reflect")}
         </Button>
         <Button
           size="sm"
           iconLeft={<IconFileImport size={15} />}
           onClick={() => props.onImportYaml("duplicate")}
         >
-          새 규칙으로 가져오기
+          {t("conditionalBatch.tools.importNew")}
         </Button>
         <Button
           size="sm"
           variant="danger"
           onClick={() => props.onImportYaml("overwrite")}
         >
-          같은 ID 덮어쓰기
+          {t("conditionalBatch.tools.overwrite")}
         </Button>
         <Button
           size="sm"
           variant="ghost"
           onClick={() => props.onSetYamlOpen(false)}
         >
-          닫기
+          {t("conditionalBatch.tools.close")}
         </Button>
       </div>
     </div>

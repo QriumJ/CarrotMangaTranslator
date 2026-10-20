@@ -79,6 +79,7 @@ export function buildSettingsModalViewProps({
   });
   return {
     activeTab,
+    isDirty,
     canSubmit,
     submissionIssue: getSettingsSubmissionIssue(form.values, draft, t),
     controlsBusy,

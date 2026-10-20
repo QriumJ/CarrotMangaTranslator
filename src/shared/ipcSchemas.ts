@@ -25,6 +25,7 @@ export {
   ChapterSnapshotSchema,
   CreateImportRequestSchema,
   DeleteChapterRequestSchema,
+  DeleteChaptersRequestSchema,
   DeletePageRequestSchema,
   DeleteWorkRequestSchema,
   ImageDataUrlRequestSchema,

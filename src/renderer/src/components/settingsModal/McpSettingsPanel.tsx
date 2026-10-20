@@ -1,5 +1,7 @@
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
+import { localizedMcpScopes as localizedScopes } from "./mcpScopeLabels";
 import React from "react";
-import { describeMcpScopes } from "../../../../shared/mcpScopeDescriptions";
 import type {
   McpDesktopStatus,
   McpDiagnostics,
@@ -35,17 +37,18 @@ export function McpSettingsView(props: Props): React.JSX.Element {
   );
 }
 function McpServerSection({ status, error, busy, run }: Props) {
+  const { t } = useTranslation("components");
   return (
     <Section
-      title="AI 연결"
-      description="MCP를 지원하는 AI 앱에서 보관함을 조회하고 번역·편집합니다."
+      title={t("mcp.title")}
+      description={t("mcp.description")}
       density="compact"
       bodyClassName={styles.body}
       actions={<McpServerActions status={status} busy={busy} run={run} />}
     >
       <p className={styles.status} data-state={status?.state} role="status">
         <span className={styles.dot} aria-hidden="true" />
-        {status ? stateLabel(status.state) : "상태 확인 중…"}
+        {status ? stateLabel(status.state, t) : t("mcp.checking")}
       </p>
       {status?.message && (
         <p className={styles.note} role="status">
@@ -69,7 +72,7 @@ function McpServerSection({ status, error, busy, run }: Props) {
             disabled={busy}
             onClick={() => void run(() => mcpGateway.copyMcpUrl())}
           >
-            주소 복사
+            {t("mcp.copy")}
           </Button>
         </div>
       )}
@@ -82,12 +85,13 @@ function McpConnections({
   busy,
   run,
 }: Props & { status: McpDesktopStatus }) {
+  const { t, i18n } = useTranslation("components");
   const connections = status.connections.filter(
     (connection) => !connection.revoked,
   );
   return (
     <Section
-      title="연결된 앱"
+      title={t("mcp.connectedApps")}
       density="compact"
       divided
       bodyClassName={styles.body}
@@ -103,8 +107,8 @@ function McpConnections({
       {connections.length === 0 && status.pending.length === 0 && (
         <p className={styles.note}>
           {status.state === "online"
-            ? "아직 연결된 앱이 없습니다. 위 연결 방법에서 사용할 AI 앱을 선택하세요."
-            : "연결된 앱이 없습니다. MCP를 켜고 사용할 AI 앱을 연결하세요."}
+            ? t("mcp.emptyOnline")
+            : t("mcp.emptyOffline")}
         </p>
       )}
       {connections.map((connection) => (
@@ -113,26 +117,32 @@ function McpConnections({
             <strong>{connection.clientName}</strong>
             <p
               className={styles.note}
-              title={describeMcpScopes(connection.scope)}
+              title={localizedScopes(connection.scope, t)}
             >
-              {describeMcpScopes(connection.scope, "compact")}
+              {localizedScopes(connection.scope, t, "compact")}
             </p>
             <time
               className={styles.timestamp}
               dateTime={new Date(connection.createdAt).toISOString()}
             >
-              {new Date(connection.createdAt).toLocaleString("ko-KR")} 승인
+              {t("mcp.approved", {
+                date: new Date(connection.createdAt).toLocaleString(
+                  i18n.resolvedLanguage ?? i18n.language,
+                ),
+              })}
             </time>
           </div>
           <Button
             size="sm"
             disabled={busy}
-            aria-label={`${connection.clientName} 연결 해제`}
+            aria-label={t("mcp.disconnectNamed", {
+              name: connection.clientName,
+            })}
             onClick={() =>
               void run(() => mcpGateway.revokeMcpConnection(connection.id))
             }
           >
-            연결 해제
+            {t("mcp.disconnect")}
           </Button>
         </div>
       ))}
@@ -144,25 +154,24 @@ function McpPermissions({
   busy,
   run,
 }: Props & { status: McpDesktopStatus }) {
+  const { t } = useTranslation("components");
   return (
     <Section
-      title="허용할 기능"
+      title={t("mcp.permissions")}
       density="compact"
       divided
       bodyClassName={styles.body}
-      description="즉시 적용됩니다. 권한 변경 시 진행 중인 작업이 취소되며 재승인이 필요합니다."
+      description={t("mcp.permissionsNote")}
     >
-      <p className={styles.note}>
-        보관함 전체의 텍스트·문맥 조회와 텍스트 파일 출력은 기본으로 허용됩니다.
-      </p>
+      <p className={styles.note}>{t("mcp.readAccess")}</p>
       <div
         className={styles.permissions}
         role="group"
-        aria-label="MCP 권한 설정"
+        aria-label={t("mcp.permissionLabel")}
       >
         <CheckboxField
           className={styles.permission}
-          label="이미지·출력 파일 전송"
+          label={t("mcp.images")}
           checked={status.preferences.allowImages}
           disabled={busy}
           onCheckedChange={(allowImages) =>
@@ -173,7 +182,7 @@ function McpPermissions({
         />
         <CheckboxField
           className={styles.permission}
-          label="텍스트·서식·문맥 편집"
+          label={t("mcp.editing")}
           checked={status.preferences.allowEditing}
           disabled={busy}
           onCheckedChange={(allowEditing) =>
@@ -184,7 +193,7 @@ function McpPermissions({
         />
         <CheckboxField
           className={styles.permission}
-          label="블록·보관함 관리 및 OCR·번역 실행"
+          label={t("mcp.processing")}
           checked={status.preferences.allowProcessing === true}
           disabled={busy}
           onCheckedChange={(allowProcessing) =>
@@ -198,18 +207,17 @@ function McpPermissions({
         />
       </div>
       {status.preferences.allowProcessing && (
-        <p className={styles.note}>
-          외부 AI로 처리하면 텍스트·이미지가 전송되며 요금이 발생할 수 있습니다.
-        </p>
+        <p className={styles.note}>{t("mcp.cost")}</p>
       )}
     </Section>
   );
 }
 function McpHelp({ status, error, busy, run, diagnose, diagnostics }: Props) {
+  const { t } = useTranslation("components");
   const [expanded, setExpanded] = React.useState<boolean | null>(null);
   return (
     <CollapsibleSection
-      title="연결 방법 및 도움말"
+      title={t("mcp.help")}
       density="compact"
       divided
       expanded={
@@ -224,33 +232,24 @@ function McpHelp({ status, error, busy, run, diagnose, diagnostics }: Props) {
           disabled={status?.state !== "online" || busy}
           onClick={() => void diagnose()}
         >
-          연결 진단
+          {t("mcp.diagnose")}
         </Button>
       </div>
-      <p className={styles.note}>
-        앱을 종료하면 연결이 꺼집니다. 주소와 승인은 유지되며, 연결을 해제하면
-        해당 앱의 접근 권한이 즉시 철회됩니다.
-      </p>
-      <p className={styles.note}>
-        이미지 전송에는 이미지가 포함된 출력 파일도 해당하며, 기존 가리기 보호를
-        유지합니다. 처리 권한은 앱에 설정된 엔진으로 OCR·번역·원문 제거·이미지
-        작업을 실행합니다. 연결 승인만으로 작업이 시작되지는 않습니다.
-      </p>
+      <p className={styles.note}>{t("mcp.lifecycle")}</p>
+      <p className={styles.note}>{t("mcp.processingHelp")}</p>
       {diagnostics && (
         <div className={styles.body} role="status">
           <strong>
-            {diagnostics.ok ? "연결 진단 통과" : "연결 확인 필요"}
+            {diagnostics.ok ? t("mcp.passed") : t("mcp.needsAttention")}
           </strong>
-          <p className={styles.note}>
-            공개 연결 설정을 확인한 결과입니다. 실제 AI 앱 로그인이나 도구
-            실행은 검사하지 않습니다.
-          </p>
+          <p className={styles.note}>{t("mcp.diagnosticNote")}</p>
           {diagnostics.checks.map((check) => (
             <p
               className={check.passed ? styles.note : styles.error}
               key={check.name}
             >
-              {check.passed ? "통과" : "실패"} · {check.name}: {check.message}
+              {check.passed ? t("mcp.pass") : t("mcp.fail")} · {check.name}:{" "}
+              {check.message}
             </p>
           ))}
         </div>
@@ -263,13 +262,16 @@ function McpHelp({ status, error, busy, run, diagnose, diagnostics }: Props) {
     </CollapsibleSection>
   );
 }
-function stateLabel(state: McpDesktopStatus["state"]) {
+function stateLabel(
+  state: McpDesktopStatus["state"],
+  t: TFunction<"components">,
+) {
   return {
-    off: "꺼짐",
-    starting: "연결 준비 중…",
-    online: "연결 가능",
-    stopping: "종료 중…",
-    error: "연결 확인 필요",
+    off: t("mcp.off"),
+    starting: t("mcp.starting"),
+    online: t("mcp.online"),
+    stopping: t("mcp.stopping"),
+    error: t("mcp.needsAttention"),
   }[state];
 }
 
@@ -278,6 +280,7 @@ function McpServerActions({
   busy,
   run,
 }: Pick<Props, "status" | "busy" | "run">) {
+  const { t } = useTranslation("components");
   const enabled =
     status !== null &&
     ["online", "starting", "stopping"].includes(status.state);
@@ -287,7 +290,7 @@ function McpServerActions({
       disabled={!status || (busy && !enabled)}
       onClick={() => void run(() => mcpGateway.setMcpEnabled(!enabled))}
     >
-      {enabled ? "MCP 끄기" : "MCP 켜기"}
+      {enabled ? t("mcp.disable") : t("mcp.enable")}
     </Button>
   );
 }
@@ -297,11 +300,12 @@ function McpStartupOptions({
   busy,
   run,
 }: Pick<Props, "status" | "busy" | "run">) {
+  const { t } = useTranslation("components");
   return (
     <>
       <div className={styles.actions}>
         <CheckboxField
-          label="앱 시작 시 자동 연결"
+          label={t("mcp.autoStart")}
           className={styles.permission}
           checked={status?.preferences.autoStart ?? false}
           disabled={!status || busy}
@@ -318,7 +322,7 @@ function McpStartupOptions({
           disabled={busy}
           onClick={() => void run(() => mcpGateway.openMcpHelp("chatgpt"))}
         >
-          ChatGPT 열기
+          {t("mcp.openChatgpt")}
         </Button>
       </div>
       {status?.setupUrl && (
@@ -326,7 +330,7 @@ function McpStartupOptions({
           disabled={busy}
           onClick={() => void run(() => mcpGateway.openMcpHelp("setup"))}
         >
-          Tailscale에서 연결 허용
+          {t("mcp.allowTailscale")}
         </Button>
       )}
     </>
@@ -340,31 +344,32 @@ function McpPairingRequestView({
 }: Pick<Props, "busy" | "run"> & {
   request: McpDesktopStatus["pending"][number];
 }) {
+  const { t } = useTranslation("components");
   return (
     <div className={styles.request}>
       <div className={styles.row}>
         <div className={styles.identity}>
-          <strong>연결 승인 요청</strong>
+          <strong>{t("mcp.pairing")}</strong>
           <span className={styles.note}>
-            요청 앱이 표시한 이름: {request.clientName}
+            {t("mcp.clientName", { name: request.clientName })}
           </span>
         </div>
         <strong
           className={styles.code}
-          aria-label={`확인 코드: ${request.code}`}
+          aria-label={t("mcp.code", { code: request.code })}
         >
           {request.code}
         </strong>
       </div>
-      <p className={styles.note}>브라우저의 코드와 일치할 때만 승인하세요.</p>
+      <p className={styles.note}>{t("mcp.verifyCode")}</p>
       {request.redirectUri && (
         <p className={styles.note}>
-          승인 후 돌아갈 주소:{" "}
+          {t("mcp.redirect")}{" "}
           <span className={styles.address}>{request.redirectUri}</span>
         </p>
       )}
       <p className={styles.note}>
-        요청 권한: {describeMcpScopes(request.scope)}
+        {t("mcp.requested", { scopes: localizedScopes(request.scope, t) })}
       </p>
       <div className={styles.actions}>
         <Button
@@ -374,7 +379,7 @@ function McpPairingRequestView({
             void run(() => mcpGateway.resolveMcpPairing(request.id, true))
           }
         >
-          같은 코드 확인 · 승인
+          {t("mcp.approve")}
         </Button>
         <Button
           disabled={busy}
@@ -382,7 +387,7 @@ function McpPairingRequestView({
             void run(() => mcpGateway.resolveMcpPairing(request.id, false))
           }
         >
-          거절
+          {t("mcp.deny")}
         </Button>
       </div>
     </div>

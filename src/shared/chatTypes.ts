@@ -36,7 +36,7 @@ export type ChatSession = {
   version: 1;
   id: string;
   title: string;
-  runtime: "codex" | "claude";
+  runtime: "codex" | "claude" | "grok";
   nativeThreadId: string | null;
   model: string | null;
   effort: string | null;

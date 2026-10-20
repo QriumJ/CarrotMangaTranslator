@@ -47,7 +47,7 @@ export function planMcpReviewFile(
   const format = input.source.options.format;
   if (format === "txt")
     throw new McpEditError("invalid_edit", "Review tables require CSV or TSV.");
-  const document = parseReviewDocument(content, format);
+  const document = parseReviewFile(content, format);
   if (
     document.rows.length > 1000 ||
     document.ignoredColumns.length > 100 ||
@@ -90,6 +90,16 @@ export function planMcpReviewFile(
       changes.set(blockKey(row.pageId, row.blockId), row.after);
   }
   return { changes, diagnostics };
+}
+function parseReviewFile(content: string, format: "csv" | "tsv") {
+  try {
+    return parseReviewDocument(content, format);
+  } catch (error) {
+    throw new McpEditError(
+      "invalid_edit",
+      error instanceof Error ? error.message : String(error),
+    );
+  }
 }
 function admittedRow(
   row: ReviewRow,

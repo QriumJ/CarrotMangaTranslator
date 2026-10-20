@@ -15,6 +15,53 @@ import type { SelectOption } from "../src/renderer/src/components/ui/selectTypes
 afterEach(cleanup);
 
 describe("Select", () => {
+  it("dismisses a portaled menu on outside interaction without committing a value", () => {
+    const onValueChange = vi.fn();
+    render(
+      <Select
+        ariaLabel="대상"
+        value="one"
+        options={[{ value: "one", label: "하나" }]}
+        onValueChange={onValueChange}
+      />,
+    );
+    fireEvent.click(screen.getByRole("combobox", { name: "대상" }));
+    fireEvent.pointerDown(screen.getByRole("option"));
+    expect(screen.getByRole("listbox")).toBeTruthy();
+    fireEvent.pointerDown(document.body);
+    expect(screen.queryByRole("listbox")).toBeNull();
+    expect(onValueChange).not.toHaveBeenCalled();
+  });
+
+  it.each(["disabled", "empty"] as const)(
+    "closes an open menu when it becomes %s",
+    (reason) => {
+      const options = [{ value: "one", label: "하나" }];
+      const onValueChange = vi.fn();
+      const view = render(
+        <Select
+          ariaLabel="대상"
+          value="one"
+          options={options}
+          onValueChange={onValueChange}
+        />,
+      );
+      fireEvent.click(screen.getByRole("combobox", { name: "대상" }));
+      expect(screen.getByRole("listbox")).toBeTruthy();
+      view.rerender(
+        <Select
+          ariaLabel="대상"
+          value="one"
+          options={reason === "empty" ? [] : options}
+          disabled={reason === "disabled"}
+          onValueChange={onValueChange}
+        />,
+      );
+      expect(screen.queryByRole("listbox")).toBeNull();
+      expect(onValueChange).not.toHaveBeenCalled();
+    },
+  );
+
   it("opens an app-owned listbox and commits a pointer selection", () => {
     const onValueChange = vi.fn();
     render(

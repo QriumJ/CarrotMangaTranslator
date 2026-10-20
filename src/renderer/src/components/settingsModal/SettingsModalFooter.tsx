@@ -10,9 +10,8 @@ type SettingsModalFooterProps = {
   submissionIssue?: SettingsSubmissionIssue;
   controlsBusy: boolean;
   onCancel: () => void;
-  onOpenErrorReport: () => void;
-  onOpenLogFolder: () => void;
-  onOpenModelFolder: () => void;
+  immediate?: boolean;
+  isDirty?: boolean;
   onReset: () => void;
   submit: () => void;
   onRevealIssue: () => void;
@@ -23,9 +22,8 @@ export function SettingsModalFooter({
   submissionIssue,
   controlsBusy,
   onCancel,
-  onOpenErrorReport,
-  onOpenLogFolder,
-  onOpenModelFolder,
+  immediate = false,
+  isDirty = false,
   onReset,
   submit,
   onRevealIssue,
@@ -42,52 +40,37 @@ export function SettingsModalFooter({
         </div>
       ) : null}
       <ModalActionBar
-        leading={
-          <>
-            <Button
-              variant="ghost"
-              onClick={onOpenLogFolder}
-              disabled={controlsBusy}
-            >
-              {t("settings.footer.openLogs")}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={onOpenModelFolder}
-              disabled={controlsBusy}
-            >
-              {t("settings.footer.openModels")}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={onOpenErrorReport}
-              disabled={controlsBusy}
-            >
-              {t("settings.footer.reportProblem")}
-            </Button>
-          </>
-        }
         actions={
-          <>
-            <Button onClick={onReset} disabled={controlsBusy}>
-              {t("settings.footer.restoreDefaults")}
+          immediate && !isDirty ? (
+            <Button onClick={onCancel} disabled={controlsBusy}>
+              {t("common.close")}
             </Button>
-            <Button variant="ghost" onClick={onCancel} disabled={controlsBusy}>
-              {t("settings.footer.cancel")}
-            </Button>
-            <Button
-              variant="primary"
-              onClick={submit}
-              disabled={controlsBusy || !canSubmit}
-              title={
-                !canSubmit && !submissionIssue
-                  ? t("settings.validation.unchanged")
-                  : undefined
-              }
-            >
-              {t("settings.footer.save")}
-            </Button>
-          </>
+          ) : (
+            <>
+              <Button onClick={onReset} disabled={controlsBusy}>
+                {t("settings.footer.restoreDefaults")}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={onCancel}
+                disabled={controlsBusy}
+              >
+                {t("settings.footer.cancel")}
+              </Button>
+              <Button
+                variant="primary"
+                onClick={submit}
+                disabled={controlsBusy || !canSubmit}
+                title={
+                  !canSubmit && !submissionIssue
+                    ? t("settings.validation.unchanged")
+                    : undefined
+                }
+              >
+                {t("settings.footer.save")}
+              </Button>
+            </>
+          )
         }
       />
     </div>

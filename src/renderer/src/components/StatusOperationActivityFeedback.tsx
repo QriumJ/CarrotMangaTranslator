@@ -1,8 +1,11 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { AppOperationActivityEvent } from "../../../shared/appOperationTypes";
-import { isAppOperationActive } from "../lib/appOperationPresentation";
-import { formatBytes } from "../lib/jobProgressFormatting";
+import {
+  formatAppOperationProgress,
+  isAppOperationActive,
+  resolveAppOperationProgress,
+} from "../lib/appOperationPresentation";
 import { JobCancelButton } from "./RunStatusPanels";
 import { ProgressBar } from "./ui/ProgressBar";
 
@@ -15,13 +18,13 @@ export function StatusOperationActivityFeedback({
 }): React.JSX.Element | null {
   const { i18n, t } = useTranslation("components");
   if (!isAppOperationActive(activity)) return null;
-  const progress = resolveOperationProgress(activity);
+  const progress = resolveAppOperationProgress(activity);
   const valueText = progress
-    ? formatOperationProgressValue(
+    ? formatAppOperationProgress(
         activity,
         progress,
         i18n.resolvedLanguage ?? i18n.language,
-        t,
+        (value) => t("statusDock.operation.percent", { value }),
       )
     : t("common.inProgress");
   const waitingText = activity.waitingForUser
@@ -66,44 +69,4 @@ function OperationCancelControl({
       onCancel={onCancel}
     />
   );
-}
-
-function resolveOperationProgress(
-  activity: AppOperationActivityEvent,
-): { current: number; total: number } | null {
-  const current = activity.progressCurrent;
-  const total = activity.progressTotal;
-  if (
-    typeof current !== "number" ||
-    !Number.isFinite(current) ||
-    typeof total !== "number" ||
-    !Number.isFinite(total) ||
-    total <= 0
-  ) {
-    return null;
-  }
-  return {
-    current: Math.min(total, Math.max(0, current)),
-    total,
-  };
-}
-
-function formatOperationProgressValue(
-  activity: AppOperationActivityEvent,
-  progress: { current: number; total: number },
-  locale: string,
-  t: ReturnType<typeof useTranslation<"components">>["t"],
-): string {
-  const { current, total } = progress;
-  if (activity.progressUnit === "bytes") {
-    return `${formatBytes(current, locale) ?? current} / ${
-      formatBytes(total, locale) ?? total
-    }`;
-  }
-  if (activity.progressUnit === "percent") {
-    return t("statusDock.operation.percent", {
-      value: Math.round((current / Math.max(1, total)) * 100),
-    });
-  }
-  return `${Math.floor(current)} / ${Math.floor(total)}`;
 }

@@ -23,7 +23,7 @@ export function GatherTextModal({
   onApplyFormat,
   page,
   onClose,
-  onChapterUpdated,
+  onImportReviewText,
   onApplyTranslatedText,
   onNavigateToBlock,
   onOpenBatchEdit,
@@ -31,12 +31,15 @@ export function GatherTextModal({
 }: GatherTextModalProps): React.JSX.Element {
   const { t } = useTranslation("components");
   const applyTranslatedText = useEventCallback(
-    (updates: Parameters<NonNullable<typeof onApplyTranslatedText>>[0]) =>
-      onApplyTranslatedText?.(updates),
+    (...args: Parameters<NonNullable<typeof onApplyTranslatedText>>) =>
+      onApplyTranslatedText?.(...args),
   );
-  const applyChapterUpdate = useEventCallback(
-    (updatedChapter: Parameters<NonNullable<typeof onChapterUpdated>>[0]) =>
-      onChapterUpdated?.(updatedChapter),
+  const importReviewText = useEventCallback(
+    (request: Parameters<NonNullable<typeof onImportReviewText>>[0]) => {
+      if (!onImportReviewText)
+        throw new Error("검수표 가져오기를 사용할 수 없습니다.");
+      return onImportReviewText(request);
+    },
   );
   const model = useGatherTextModalModel({
     blockStylePresets,
@@ -44,7 +47,7 @@ export function GatherTextModal({
     formatApplyDisabled,
     onApplyFormat,
     page,
-    onChapterUpdated: onChapterUpdated ? applyChapterUpdate : undefined,
+    onImportReviewText: onImportReviewText ? importReviewText : undefined,
     onApplyTranslatedText: onApplyTranslatedText
       ? applyTranslatedText
       : undefined,
@@ -103,7 +106,10 @@ function GatherTextModalFooter({
       onCopy={() => void model.handleCopy()}
       onExportReview={(format) => void model.handleExportReview(format)}
       onImportReview={() => model.reviewFileInputRef.current?.click()}
-      onImportTxt={() => model.txtFileInputRef.current?.click()}
+      onImportTxt={(field) => {
+        model.setTxtImportField(field);
+        model.txtFileInputRef.current?.click();
+      }}
     />
   );
 }

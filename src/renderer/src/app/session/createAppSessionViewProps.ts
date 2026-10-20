@@ -147,7 +147,6 @@ function createModalsProps({
     jobActive: derivedState.modelResourceBusy,
     library: core.library,
     onWebImportBackgroundStateChange: importShareModal.setWebImportBackgrounded,
-    onDeleteRename: () => void libraryActions.deleteRenameTarget(),
     onOpenLogFolder: bridgeActions.openLogFolder,
     onOpenModelFolder: bridgeActions.openModelFolder,
     onOpenErrorReport: openManualErrorReport,
@@ -271,6 +270,11 @@ function createSidebarProps({
     onRenameChapter: (chapterId) =>
       void libraryActions.renameChapter(chapterId),
     onRenameWork: (workId) => void libraryActions.renameWork(workId),
+    contextActions: {
+      selection: libraryActions.chapterBulkDelete,
+      openContext: uiState.openWorkContext,
+      deleteTarget: (target) => void libraryActions.deleteRenameTarget(target),
+    },
     onReorderChapter: libraryActions.reorderChapterInLibrary,
     onReorderPage: libraryActions.reorderPageInChapter,
     onRetranslatePage: (pageId) => void retranslatePage(pageId),
@@ -288,18 +292,23 @@ function createStyleGuideProps({
   uiState,
 }: AppSessionViewModel): AppSessionViewProps["styleGuideProps"] {
   const currentWork = core.library.works.find(
-    (work) => work.id === core.currentChapter?.workId,
+    (work) =>
+      work.id === (uiState.styleGuideWorkId ?? core.currentChapter?.workId),
   );
-  return uiState.styleGuideOpen && core.currentChapter
+  return uiState.styleGuideOpen && currentWork
     ? {
-        chapter: core.currentChapter,
+        chapter:
+          core.currentChapter?.workId === currentWork.id
+            ? core.currentChapter
+            : null,
+        workId: currentWork.id,
         jobActive: derivedState.activities
           ? derivedState.activities.activities.some((activity) =>
               activityResourcesConflict(
                 [
                   {
                     kind: "work-context",
-                    scope: core.currentChapter?.workId ?? "*",
+                    scope: currentWork.id,
                     access: "write",
                   },
                 ],

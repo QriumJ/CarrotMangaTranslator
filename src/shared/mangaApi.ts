@@ -44,11 +44,14 @@ import type {
   ChapterPageMetadata,
   ChapterPagesPatch,
   CustomFont,
+  DeleteChaptersRequest,
+  DeleteChaptersResult,
   FontLibrarySnapshot,
   FontPreferences,
   LibraryIndex,
 } from "./libraryTypes";
 import type { PanelCommand, PanelId, PanelSyncState } from "./panelBridgeTypes";
+import type { WorkGlossaryFileOpenResult } from "./workGlossaryFile";
 import type {
   PrepareSoundEffectTranslationRequest,
   PrepareSoundEffectTranslationResult,
@@ -134,6 +137,7 @@ import type {
 import type { CodexAccountSnapshot } from "./codexAccountTypes";
 import type { ChatApi } from "./chatTypes";
 import type { ClaudeApi } from "./claudeTypes";
+import type { GrokApi } from "./grokTypes";
 import type {
   FinishPageTimingSessionRequest,
   FinishPageTimingSessionResult,
@@ -192,12 +196,14 @@ type McpApi = {
       | "claude"
       | "claude-code"
       | "opencode"
+      | "grok"
+      | "grok-build"
       | "generic",
   ) => Promise<{ completed: boolean }>;
   copyMcpUrl: () => Promise<{ completed: boolean }>;
 };
 
-export interface MangaApi extends McpApi, ChatApi, ClaudeApi {
+export interface MangaApi extends McpApi, ChatApi, ClaudeApi, GrokApi {
   discardEnvironmentBackup: (id: string) => Promise<null>;
   getEnvironmentRestoreReceipt: () => Promise<
     import("./environmentBackup").BackupStatus["restored"]
@@ -375,6 +381,11 @@ export interface MangaApi extends McpApi, ChatApi, ClaudeApi {
     request: ResetWorkContextRequest,
   ) => Promise<ResetWorkContextResult>;
   getWorkContextUsage: (workId: string) => Promise<WorkContextUsage>;
+  openWorkGlossaryFile: () => Promise<WorkGlossaryFileOpenResult>;
+  saveWorkGlossaryFile: (request: {
+    defaultName: string;
+    content: string;
+  }) => Promise<{ saved: true; path: string } | null>;
   researchWorkContext: (
     request: ResearchWorkContextRequest,
   ) => Promise<WorkContextResearchProposal>;
@@ -406,6 +417,9 @@ export interface MangaApi extends McpApi, ChatApi, ClaudeApi {
     chapterId: string,
     removeCustomOutputs?: boolean,
   ) => Promise<LibraryIndex>;
+  deleteChapters: (
+    request: DeleteChaptersRequest,
+  ) => Promise<DeleteChaptersResult>;
   reorderChapters: (
     workId: string,
     chapterIds: string[],

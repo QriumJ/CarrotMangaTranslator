@@ -3,6 +3,7 @@ import type {
   AppOperationActivityEvent,
   AppOperationPhase,
 } from "../../../shared/appOperationTypes";
+import { formatBytes } from "./jobProgressFormatting";
 
 type AppOperationActivityPresentation = Pick<
   AppOperationActivityEvent,
@@ -56,6 +57,7 @@ function resolveAppOperationKindLabel(
   const authenticationLabels = {
     "claude-auth": "statusDock.operation.kind.claudeAuth",
     "codex-auth": "statusDock.operation.kind.codexAuth",
+    "grok-auth": "statusDock.operation.kind.grokAuth",
   } as const;
   return t(
     authenticationLabels[activity.kind as keyof typeof authenticationLabels] ??
@@ -74,4 +76,47 @@ export function isAppOperationActive(
   activity: AppOperationActivityEvent | null,
 ): boolean {
   return activity?.status === "running" || activity?.status === "cancelling";
+}
+
+export type AppOperationProgress = { current: number; total: number };
+
+export function resolveAppOperationProgress(
+  activity: Pick<
+    AppOperationActivityEvent,
+    "progressCurrent" | "progressTotal"
+  >,
+): AppOperationProgress | null {
+  const current = activity.progressCurrent;
+  const total = activity.progressTotal;
+  if (
+    typeof current !== "number" ||
+    !Number.isFinite(current) ||
+    typeof total !== "number" ||
+    !Number.isFinite(total) ||
+    total <= 0
+  ) {
+    return null;
+  }
+  return {
+    current: Math.min(total, Math.max(0, current)),
+    total,
+  };
+}
+
+export function formatAppOperationProgress(
+  activity: Pick<AppOperationActivityEvent, "progressUnit">,
+  progress: AppOperationProgress,
+  locale: string,
+  formatPercent: (value: number) => string,
+): string {
+  const { current, total } = progress;
+  if (activity.progressUnit === "bytes") {
+    return `${formatBytes(current, locale) ?? current} / ${
+      formatBytes(total, locale) ?? total
+    }`;
+  }
+  if (activity.progressUnit === "percent") {
+    return formatPercent(Math.round((current / Math.max(1, total)) * 100));
+  }
+  return `${Math.floor(current)} / ${Math.floor(total)}`;
 }

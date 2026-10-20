@@ -68,7 +68,13 @@ export function parseReviewTable(
   content: string,
   format: "csv" | "tsv" | "auto",
 ): ReviewRow[] {
-  return parseReviewDocument(content, format).rows;
+  const document = parseReviewDocument(content, format);
+  if (document.duplicateColumns.length) {
+    throw new Error(
+      `검수표 컬럼이 중복되었습니다: ${document.duplicateColumns.join(", ")}`,
+    );
+  }
+  return document.rows;
 }
 
 /** Canonical parsed columns are exposed so explicit import surfaces can report unsupported fields. */
@@ -90,9 +96,16 @@ export function parseReviewDocument(
   assertRequiredColumns(header);
   const columnIndex = new Map(header.map((column, index) => [column, index]));
 
-  const rows = records.slice(1).flatMap((record) => {
+  const rows = records.slice(1).flatMap((record, index) => {
     if (record.every((cell) => cell.trim() === "")) {
       return [];
+    }
+    if (
+      REVIEW_COLUMNS.some(
+        (column) => (columnIndex.get(column) ?? -1) >= record.length,
+      )
+    ) {
+      throw new Error(`검수표 ${index + 2}행의 필수 셀이 누락되었습니다.`);
     }
     const row = Object.fromEntries(
       REVIEW_COLUMNS.map((column) => [

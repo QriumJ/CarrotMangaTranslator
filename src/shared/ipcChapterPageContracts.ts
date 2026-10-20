@@ -1,7 +1,16 @@
 import { z } from "zod";
-import { defineIpcContract, MAX_PAGES_PER_REQUEST } from "./ipcContractCore";
+import {
+  defineIpcContract,
+  diagnosticString,
+  MAX_ID_LIST_LENGTH,
+  MAX_PAGES_PER_REQUEST,
+  stringArg,
+  titleString,
+} from "./ipcContractCore";
 import {
   ChapterSnapshotSchema,
+  DeleteChaptersRequestSchema,
+  LibraryIndexSchema,
   OpenChapterRequestSchema,
   SavePageBlocksRequestSchema,
   SavePagesBlocksRequestSchema,
@@ -10,6 +19,8 @@ import type {
   ChapterSnapshot,
   ChapterPageMetadata,
   ChapterPagesPatch,
+  DeleteChaptersRequest,
+  DeleteChaptersResult,
 } from "./libraryTypes";
 import type {
   SavePageBlocksRequest,
@@ -38,7 +49,30 @@ const ChapterPagesPatchSchema = ChapterSnapshotSchema.pick({
   pages: true,
 }).strict();
 
+const DeleteChaptersFailureSchema = z
+  .object({
+    chapterId: stringArg,
+    title: titleString,
+    message: diagnosticString,
+  })
+  .strict();
+
 export const chapterPageIpcContracts = {
+  deleteChapters: defineIpcContract<
+    [DeleteChaptersRequest],
+    DeleteChaptersResult
+  >({
+    apiKey: "deleteChapters",
+    channel: "library:delete-chapters",
+    args: z.tuple([DeleteChaptersRequestSchema]),
+    result: z
+      .object({
+        library: LibraryIndexSchema,
+        deletedChapterIds: z.array(stringArg).max(MAX_ID_LIST_LENGTH),
+        failures: z.array(DeleteChaptersFailureSchema).max(MAX_ID_LIST_LENGTH),
+      })
+      .strict(),
+  }),
   getChapterPageMetadata: defineIpcContract<
     [string, string],
     ChapterPageMetadata[]

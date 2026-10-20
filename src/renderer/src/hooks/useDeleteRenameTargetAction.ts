@@ -87,7 +87,7 @@ async function confirmDeletion(
   target: RenameTarget,
   t: TFunction<"renderer">,
 ): Promise<boolean | null> {
-  let removeCustomOutputs = true;
+  let removeCustomOutputs = false;
   const confirmed = await askConfirm(
     target.kind === "work"
       ? t("library.delete.workTitle")
@@ -118,64 +118,68 @@ export function useDeleteRenameTargetAction({
   setLibrary,
   setRenameBusy,
   setRenameTarget,
-}: DeleteRenameTargetActionOptions): () => Promise<void> {
+}: DeleteRenameTargetActionOptions): (target?: RenameTarget) => Promise<void> {
   const { t } = useTranslation("renderer");
   const currentChapterId = currentChapter?.id ?? null;
   const currentWorkId = currentChapter?.workId ?? null;
 
-  return useCallback(async () => {
-    if (!renameTarget) {
-      return;
-    }
+  return useCallback(
+    async (target?: RenameTarget) => {
+      const selectedTarget = target ?? renameTarget;
+      if (!selectedTarget) {
+        return;
+      }
 
-    const context = resolveDeleteContext(
+      const context = resolveDeleteContext(
+        currentChapterId,
+        currentWorkId,
+        selectedTarget,
+      );
+      const removeCustomOutputs = await confirmDeletion(
+        askConfirm,
+        selectedTarget,
+        t,
+      );
+      if (removeCustomOutputs === null) return;
+
+      setRenameBusy(true);
+      try {
+        if ((context.isCurrentChapter || context.isCurrentWork) && dirty) {
+          await saveNow();
+        }
+        await deleteLibraryRenameTarget(
+          selectedTarget,
+          setLibrary,
+          removeCustomOutputs,
+        );
+        clearCurrentSelectionAfterDelete(
+          selectedTarget,
+          context,
+          clearCurrentChapter,
+        );
+        pushStatus(deleteSuccessStatus(selectedTarget, t));
+        setRenameTarget(null);
+      } catch (error) {
+        pushStatus(
+          formatErrorMessage(error, deleteFailureStatus(selectedTarget, t)),
+        );
+      } finally {
+        setRenameBusy(false);
+      }
+    },
+    [
+      askConfirm,
+      clearCurrentChapter,
       currentChapterId,
       currentWorkId,
+      dirty,
+      pushStatus,
       renameTarget,
-    );
-    const removeCustomOutputs = await confirmDeletion(
-      askConfirm,
-      renameTarget,
+      saveNow,
+      setLibrary,
+      setRenameBusy,
+      setRenameTarget,
       t,
-    );
-    if (removeCustomOutputs === null) return;
-
-    setRenameBusy(true);
-    try {
-      if ((context.isCurrentChapter || context.isCurrentWork) && dirty) {
-        await saveNow();
-      }
-      await deleteLibraryRenameTarget(
-        renameTarget,
-        setLibrary,
-        removeCustomOutputs,
-      );
-      clearCurrentSelectionAfterDelete(
-        renameTarget,
-        context,
-        clearCurrentChapter,
-      );
-      pushStatus(deleteSuccessStatus(renameTarget, t));
-      setRenameTarget(null);
-    } catch (error) {
-      pushStatus(
-        formatErrorMessage(error, deleteFailureStatus(renameTarget, t)),
-      );
-    } finally {
-      setRenameBusy(false);
-    }
-  }, [
-    askConfirm,
-    clearCurrentChapter,
-    currentChapterId,
-    currentWorkId,
-    dirty,
-    pushStatus,
-    renameTarget,
-    saveNow,
-    setLibrary,
-    setRenameBusy,
-    setRenameTarget,
-    t,
-  ]);
+    ],
+  );
 }

@@ -13,11 +13,12 @@ import { IconButton } from "../../components/ui/IconButton";
 import { Select } from "../../components/ui/Select";
 import { SegmentedControl } from "../../components/ui/SegmentedControl";
 import { usePopupController } from "../../components/ui/usePopupController";
-import { codexConnection } from "../../api/codexConnection";
-import { settingsGateway } from "../../api/settingsGateway";
-import { claudeGateway } from "../../api/claudeGateway";
-import { claudeConnection } from "../../api/claudeConnection";
 import type { useChat } from "./useChat";
+import {
+  CHAT_RUNTIME_LABELS,
+  CHAT_RUNTIMES,
+  type ChatRuntime,
+} from "./chatRuntimes";
 import type { useChatModel } from "./useChatModel";
 import styles from "./ChatPanel.module.css";
 
@@ -37,7 +38,7 @@ export function ChatHistoryControls({
         value={chat.session?.id ?? ""}
         options={chat.history.map((entry) => ({
           value: entry.id,
-          label: `${entry.runtime === "claude" ? "Claude" : "Codex"} · ${entry.title}`,
+          label: `${CHAT_RUNTIME_LABELS[entry.runtime]} · ${entry.title}`,
         }))}
         onValueChange={(id) => void chat.select(id)}
         disabled={chat.busy}
@@ -67,7 +68,6 @@ export function ChatHistoryControls({
     </header>
   );
 }
-const RUNTIME_LABELS = { codex: "Codex", claude: "Claude" } as const;
 
 /**
  * One chip under the composer. The assistant, model and effort pickers open
@@ -80,7 +80,7 @@ export function ChatModelControls({
 }: {
   model: ReturnType<typeof useChatModel>;
   disabled: boolean;
-  onRuntimeChange: (runtime: "codex" | "claude") => void;
+  onRuntimeChange: (runtime: ChatRuntime) => void;
 }) {
   const { t } = useTranslation("components");
   const [open, setOpen] = React.useState(false);
@@ -96,7 +96,7 @@ export function ChatModelControls({
   const effortLabel = (value: string) =>
     t(`settings.options.reasoning.${value}.label`, { defaultValue: value });
   const summary = [
-    RUNTIME_LABELS[model.runtime],
+    CHAT_RUNTIME_LABELS[model.runtime],
     model.model?.displayName,
     model.effort
       ? t("chat.effortChip", { level: effortLabel(model.effort) })
@@ -146,7 +146,7 @@ function ChatModelPopover({
   panelId: string;
   model: ReturnType<typeof useChatModel>;
   effortLabel: (value: string) => string;
-  onRuntimeChange: (runtime: "codex" | "claude") => void;
+  onRuntimeChange: (runtime: ChatRuntime) => void;
 }) {
   const { t } = useTranslation("components");
   return (
@@ -163,10 +163,10 @@ function ChatModelPopover({
           ariaLabel={t("chat.runtime")}
           singleRow
           value={model.runtime}
-          options={[
-            { id: "codex", label: RUNTIME_LABELS.codex },
-            { id: "claude", label: RUNTIME_LABELS.claude },
-          ]}
+          options={CHAT_RUNTIMES.map((id) => ({
+            id,
+            label: CHAT_RUNTIME_LABELS[id],
+          }))}
           onChange={(runtime) => {
             if (runtime !== model.runtime) onRuntimeChange(runtime);
           }}
@@ -224,41 +224,6 @@ export function ChatViewContext({ context }: { context?: CurrentViewContext }) {
     <div className={styles.context} title={label}>
       <IconFileText size={13} aria-hidden="true" />
       <span>{label}</span>
-    </div>
-  );
-}
-export function ChatLogin({ chat }: { chat: Controller }) {
-  const { t } = useTranslation("components");
-  return (
-    <div className={styles.login}>
-      <p>
-        {t(
-          chat.session?.runtime === "claude"
-            ? "chat.claudeLoginHint"
-            : "chat.loginHint",
-        )}
-      </p>
-      <Button
-        onClick={() =>
-          void chat.perform(async () => {
-            if (chat.session?.runtime === "claude")
-              claudeConnection.publish(
-                await claudeGateway.loginClaudeAccount(),
-              );
-            else
-              codexConnection.publish(
-                await settingsGateway.loginCodexAccount(),
-              );
-          })
-        }
-        disabled={chat.busy}
-      >
-        {t(
-          chat.session?.runtime === "claude"
-            ? "chat.claudeLogin"
-            : "chat.login",
-        )}
-      </Button>
     </div>
   );
 }

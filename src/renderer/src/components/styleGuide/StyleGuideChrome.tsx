@@ -207,9 +207,11 @@ export function StyleGuideAnalysisActions({
 }
 
 export function StyleGuideTabs({
+  chapterAvailable = true,
   active,
   onChange,
 }: {
+  chapterAvailable?: boolean;
   active: StyleGuideTab;
   onChange: (tab: StyleGuideTab) => void;
 }): React.JSX.Element {
@@ -224,12 +226,14 @@ export function StyleGuideTabs({
     <Tabs
       className="style-guide-tabs"
       ariaLabel={t("styleGuide.tabs.ariaLabel")}
-      items={tabs.map((item) => ({
-        value: item.id,
-        label: item.label,
-        id: `style-guide-tab-${item.id}`,
-        panelId: `style-guide-panel-${item.id}`,
-      }))}
+      items={tabs
+        .filter((item) => chapterAvailable || item.id !== "memory")
+        .map((item) => ({
+          value: item.id,
+          label: item.label,
+          id: `style-guide-tab-${item.id}`,
+          panelId: `style-guide-panel-${item.id}`,
+        }))}
       value={active}
       onChange={onChange}
     />

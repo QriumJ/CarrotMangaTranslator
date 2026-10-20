@@ -146,6 +146,24 @@ describe("settings draft safety", () => {
     expect(screen.queryByRole("heading", { name: "번역 엔진" })).toBeNull();
   });
 
+  it("keeps pending preferences available when switching to immediate MCP management", () => {
+    const onSubmit = vi.fn();
+    renderSettings({ onSubmit });
+    fireEvent.click(screen.getByRole("tab", { name: "AI 앱 연결 (MCP)" }));
+    expect(screen.queryByRole("button", { name: "저장" })).toBeNull();
+    fireEvent.click(screen.getByRole("tab", { name: "일반" }));
+    chooseCustomSelectOption("앱 언어", "English");
+    fireEvent.click(screen.getByRole("tab", { name: "AI 앱 연결 (MCP)" }));
+    const save = screen.getByRole("button", { name: "저장" });
+    expect(save).toHaveProperty("disabled", false);
+    fireEvent.click(save);
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ui: expect.objectContaining({ locale: "en" }),
+      }),
+    );
+  });
+
   it("disables Save until the draft changes and protects dirty close", () => {
     const onCancel = vi.fn();
     renderSettings({ onCancel });
@@ -236,6 +254,8 @@ describe("settings draft safety", () => {
     const onOpenModelFolder = vi.fn();
     const onOpenErrorReport = vi.fn();
     renderSettings({ onOpenErrorReport, onOpenLogFolder, onOpenModelFolder });
+    expect(screen.queryByRole("button", { name: "로그 폴더 열기" })).toBe(null);
+    fireEvent.click(screen.getByRole("tab", { name: "확인 · 업데이트" }));
 
     fireEvent.click(screen.getByRole("button", { name: "로그 폴더 열기" }));
     expect(onOpenLogFolder).toHaveBeenCalledOnce();

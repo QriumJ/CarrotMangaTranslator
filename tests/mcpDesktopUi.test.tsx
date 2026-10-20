@@ -160,9 +160,7 @@ it("approves the selected comparison code through the app, without a password fi
   expect(resolveMcpPairing).not.toHaveBeenCalled();
   expect(screen.getByText("요청 권한: 보관함·텍스트·문맥 조회")).toBeTruthy();
   expect(document.querySelector('input[type="password"]')).toBeNull();
-  fireEvent.click(
-    screen.getByRole("button", { name: "같은 코드 확인 · 승인" }),
-  );
+  fireEvent.click(screen.getByRole("button", { name: "코드 확인 · 승인" }));
   await waitFor(() =>
     expect(resolveMcpPairing).toHaveBeenCalledWith("a".repeat(43), true),
   );
@@ -332,7 +330,7 @@ it("renders human-readable permissions and preserves unrecognized scope text saf
   expect(document.querySelector("img")).toBeNull();
   expect(screen.queryByText(/외부 AI로 처리하면/)).toBeNull();
   expect(
-    screen.getByText(/보관함 전체의 텍스트·문맥 조회와 텍스트 파일 출력/),
+    screen.getByText(/보관함 텍스트·문맥 조회와 텍스트 파일 출력/),
   ).toBeTruthy();
   expect(
     screen.getByRole("checkbox", {
@@ -418,6 +416,58 @@ it("copies OpenCode-only settings and explains generic HTTP OAuth without a shar
   await waitFor(() => expect(openMcpHelp).toHaveBeenCalledWith("generic"));
 });
 
+it("connects Grok web and Build through their own help routes and copies the live CLI address", async () => {
+  const copy = vi.fn<(text: string) => Promise<void>>().mockResolvedValue();
+  const openMcpHelp = vi.fn(async () => ({ completed: true }));
+  window.mangaApi = createTestMangaGatewayStub({ openMcpHelp });
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: { writeText: copy },
+  });
+  show();
+  fireEvent.click(screen.getByRole("button", { name: "연결 방법 및 도움말" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Grok 웹" }));
+  expect(screen.getByText(/OAuth 인증/)).toBeTruthy();
+  expect(screen.getByText(/맞춤 모드\(Custom\)/)).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "명령 복사" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Grok 커넥터 열기" }));
+  await waitFor(() => expect(openMcpHelp).toHaveBeenCalledWith("grok"));
+  fireEvent.keyDown(screen.getByRole("tab", { name: "Grok 웹" }), {
+    key: "ArrowRight",
+  });
+  expect(
+    screen
+      .getByRole("tab", { name: "Grok Build" })
+      .getAttribute("aria-selected"),
+  ).toBe("true");
+  fireEvent.click(screen.getByRole("button", { name: "명령 복사" }));
+  await waitFor(() =>
+    expect(copy).toHaveBeenCalledWith(
+      'grok mcp add --transport http carrot "https://carrot.tail-test.ts.net/mcp"\ngrok mcp list',
+    ),
+  );
+  expect(screen.getByText(/grok mcp doctor carrot/)).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Grok Build 연결 문서" }));
+  await waitFor(() => expect(openMcpHelp).toHaveBeenCalledWith("grok-build"));
+});
+
+it("does not offer Grok commands without a server address and disables actions while busy", () => {
+  const view = show({ ...status(), state: "off", url: null });
+  fireEvent.click(screen.getByRole("tab", { name: "Grok Build" }));
+  expect(screen.queryByRole("button", { name: "명령 복사" })).toBeNull();
+  fireEvent.click(screen.getByRole("tab", { name: "Grok 웹" }));
+  expect(screen.getByText("MCP를 켜면 표시됩니다.")).toBeTruthy();
+  view.unmount();
+  show(status(), true);
+  fireEvent.click(screen.getByRole("button", { name: "연결 방법 및 도움말" }));
+  fireEvent.click(screen.getByRole("tab", { name: "Grok Build" }));
+  for (const name of ["명령 복사", "Grok Build 연결 문서"]) {
+    expect(screen.getByRole("button", { name }).hasAttribute("disabled")).toBe(
+      true,
+    );
+  }
+});
+
 it("shows the actual OAuth callback next to the unverified client name", () => {
   const current = status();
   const redirectUri = "http://127.0.0.1:19876/mcp/oauth/callback";
@@ -443,13 +493,11 @@ it("shows all first-use options checked and receives requests online without an 
   expect(options).toHaveLength(4);
   expect(options.every((option) => option.checked)).toBe(true);
   expect(screen.queryByRole("button", { name: /새 연결 허용/ })).toBeNull();
-  expect(
-    screen.getByText(/위 연결 방법에서 사용할 AI 앱을 선택하세요/),
-  ).toBeTruthy();
+  expect(screen.getByText(/연결 방법에서 앱을 선택하세요/)).toBeTruthy();
   view.unmount();
   show({ ...current, state: "off" });
   expect(screen.queryByText(/새 연결 요청을 항상 받습니다/)).toBeNull();
-  expect(screen.getByText(/MCP를 켜고 사용할 AI 앱을 연결하세요/)).toBeTruthy();
+  expect(screen.getByText(/MCP를 켜세요/)).toBeTruthy();
 });
 
 it("hides historical revoked grants and removes a newly revoked connection after the action refresh", async () => {
@@ -488,10 +536,10 @@ it("hides historical revoked grants and removes a newly revoked connection after
   fireEvent.click(disconnect);
   await waitFor(() => expect(screen.queryByText("Current ChatGPT")).toBeNull());
   expect(revokeMcpConnection).toHaveBeenCalledWith("active");
-  expect(screen.getByText(/아직 연결된 앱이 없습니다/)).toBeTruthy();
+  expect(screen.getByText(/연결된 앱이 없습니다/)).toBeTruthy();
   first.unmount();
   render(<McpSettingsPanel />);
-  await screen.findByText(/아직 연결된 앱이 없습니다/);
+  await screen.findByText(/연결된 앱이 없습니다/);
   expect(screen.queryByRole("button", { name: /연결 해제/ })).toBeNull();
 });
 

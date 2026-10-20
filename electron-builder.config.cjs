@@ -9,26 +9,12 @@ const {
   WINDOWS_EXECUTABLE_BASENAME,
   assertFastZipPayload,
 } = require("./scripts/installer-zip-safety.cjs");
-const {
-  assertCodexRuntimeReady,
-  resolveCodexRuntime,
-} = require("./scripts/codex-app-server-runtime.cjs");
 
 const thinInstaller = process.env.MGT_THIN_INSTALLER === "1";
 const bundleFluxNvidiaRunners =
   process.env.MGT_BUNDLE_FLUX_NVIDIA_RUNNERS === "1";
 const isMacBuild =
   process.platform === "darwin" || process.env.MGT_TARGET_PLATFORM === "darwin";
-const codexRuntime = resolveCodexRuntime(
-  __dirname,
-  isMacBuild ? "darwin" : "win32",
-  isMacBuild ? "arm64" : "x64",
-);
-const claudeRuntimeDir = join(
-  __dirname,
-  "node_modules",
-  `@anthropic-ai/claude-agent-sdk-${isMacBuild ? "darwin-arm64" : "win32-x64"}`,
-);
 const requestedBuildChannel = String(
   process.env.MANGA_TRANSLATOR_BUILD_CHANNEL ||
     process.env.MGT_RELEASE_CHANNEL ||
@@ -54,19 +40,6 @@ const onnxRuntimeWebVersion = "1.30.0";
 const onnxWasmModuleFile = "ort-wasm-simd-threaded.mjs";
 const onnxWasmBinaryFile = "ort-wasm-simd-threaded.wasm";
 const extraResources = [
-  {
-    from: claudeRuntimeDir,
-    to: "claude",
-    filter: ["claude", "claude.exe", "package.json", "LICENSE.md", "README.md"],
-  },
-  {
-    // Keep the official native package layout intact under a short resource
-    // root. Codex discovers its sibling runners and bundled rg relative to
-    // bin/codex, while the short path remains safe for the Windows installer.
-    from: codexRuntime.sourceDir,
-    to: codexRuntime.resourceDirectory,
-    filter: ["**/*"],
-  },
   {
     from: "out/app-runtime",
     to: "app-runtime",
@@ -233,7 +206,6 @@ function verifyBuildRuntimeReady(context) {
         `Missing ${importSourceRunnerPath}. Run npm run build:import-source-runner before packaging.`,
       );
     }
-    verifyClaudeRuntimeReady();
     return;
   }
   if (context.electronPlatformName !== "darwin") return;
@@ -242,24 +214,6 @@ function verifyBuildRuntimeReady(context) {
       `Missing staged Apple Silicon runtime: ${stagedMacTools}. Run npm run prepare:mac:runtime first.`,
     );
   }
-  assertCodexRuntimeReady(codexRuntime);
-  verifyClaudeRuntimeReady();
-}
-
-function verifyClaudeRuntimeReady() {
-  const claudeName = isMacBuild ? "claude" : "claude.exe";
-  if (!existsSync(join(claudeRuntimeDir, claudeName)))
-    throw new Error(`Official Claude Code runtime missing: ${claudeName}`);
-  if (
-    require(join(claudeRuntimeDir, "package.json")).version !==
-    require(
-      join(
-        __dirname,
-        "node_modules/@anthropic-ai/claude-agent-sdk/package.json",
-      ),
-    ).version
-  )
-    throw new Error("Claude SDK and native runtime versions differ.");
 }
 
 /**
@@ -374,6 +328,8 @@ module.exports = {
     "!linked-workspaces.json",
     "!linked-sync-queue.json",
     "!codex{,/**/*}",
+    "!grok{,/**/*}",
+    "!cli-runtimes{,/**/*}",
     "!.codex-workspace{,/**/*}",
     "!ocr-runtime{,/**/*}",
     "!hf-cache{,/**/*}",

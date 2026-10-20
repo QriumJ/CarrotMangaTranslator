@@ -27,6 +27,7 @@ export const AppActivityStateSchema: z.ZodType<AppActivityState> = z
                   kind: z.enum([
                     "model-runtime",
                     "claude-auth",
+                    "grok-auth",
                     "codex-auth",
                     "page-content",
                     "library-structure",

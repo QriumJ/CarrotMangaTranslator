@@ -48,10 +48,14 @@ export function safeDomId(value: string): string {
 export function resolveMenuPosition(
   trigger: HTMLButtonElement,
   menu: HTMLDivElement,
+  options: { align?: "start" | "end"; minWidth?: number } = {},
 ): MenuPosition {
   const rect = trigger.getBoundingClientRect();
-  const width = resolveMenuWidth(rect.width);
-  const left = resolveMenuLeft(rect.left, width);
+  const width = resolveMenuWidth(Math.max(rect.width, options.minWidth ?? 0));
+  const left = resolveMenuLeft(
+    options.align === "end" ? rect.right - width : rect.left,
+    width,
+  );
   const measuredHeight = Math.min(menu.scrollHeight, MENU_MAX_HEIGHT);
   const below = window.innerHeight - rect.bottom - MENU_GAP - VIEWPORT_MARGIN;
   const above = rect.top - MENU_GAP - VIEWPORT_MARGIN;

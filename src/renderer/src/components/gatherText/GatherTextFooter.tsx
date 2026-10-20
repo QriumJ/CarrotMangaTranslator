@@ -23,7 +23,7 @@ type GatherTextFooterProps = {
   onCopy: () => void;
   onExportReview: (format: ReviewExportFormat) => void;
   onImportReview: () => void;
-  onImportTxt: () => void;
+  onImportTxt: (field: "both" | "translated") => void;
 };
 
 function GatherTextPrimaryButton(
@@ -205,11 +205,48 @@ function GatherTextExchangeMenuItems({
   menuRef: React.RefObject<HTMLDivElement | null>;
   onClose: (restoreFocus?: boolean) => void;
 }): React.JSX.Element {
+  const actions = useExchangeMenuActions(props);
+  const { t } = useTranslation("components");
+  return (
+    <MenuSurface
+      ref={menuRef}
+      className="gather-text-exchange-menu"
+      ariaLabel={t("gatherText.exchangeMenu")}
+      onClose={onClose}
+    >
+      {actions.map((action, index) => (
+        <React.Fragment key={action.id}>
+          {index === 3 ? (
+            <span className="gather-text-menu-separator" role="separator" />
+          ) : null}
+          <Button
+            type="button"
+            role="menuitem"
+            disabled={action.disabled}
+            title={action.title}
+            onClick={() => {
+              action.run();
+              onClose(false);
+            }}
+            variant="bare"
+          >
+            {action.label}
+          </Button>
+        </React.Fragment>
+      ))}
+    </MenuSurface>
+  );
+}
+
+function useExchangeMenuActions(
+  props: GatherTextExchangeMenuProps,
+): ExchangeMenuAction[] {
   const { t } = useTranslation("components");
   const reviewDisabled = !props.hasChapter || props.reviewBusy;
   const importReviewDisabled =
     reviewDisabled || Boolean(props.mutationDisabled);
-  const actions: ExchangeMenuAction[] = [
+  const importTxtDisabled = importReviewDisabled || !props.canImportTxt;
+  return [
     {
       id: "save",
       label: t("gatherText.saveTxt"),
@@ -220,11 +257,14 @@ function GatherTextExchangeMenuItems({
       id: "import-txt",
       label: t("gatherText.importTxt.button"),
       title: t("gatherText.importTxt.title"),
-      disabled:
-        !props.hasChapter ||
-        !props.canImportTxt ||
-        Boolean(props.mutationDisabled),
-      run: props.onImportTxt,
+      disabled: importTxtDisabled,
+      run: () => props.onImportTxt("translated"),
+    },
+    {
+      id: "import-txt-both",
+      label: t("gatherText.importTxt.bothButton"),
+      disabled: importTxtDisabled,
+      run: () => props.onImportTxt("both"),
     },
     {
       id: "export-csv",
@@ -245,33 +285,4 @@ function GatherTextExchangeMenuItems({
       run: props.onImportReview,
     },
   ];
-  return (
-    <MenuSurface
-      ref={menuRef}
-      className="gather-text-exchange-menu"
-      ariaLabel={t("gatherText.exchangeMenu")}
-      onClose={onClose}
-    >
-      {actions.map((action, index) => (
-        <React.Fragment key={action.id}>
-          {index === 2 ? (
-            <span className="gather-text-menu-separator" role="separator" />
-          ) : null}
-          <Button
-            type="button"
-            role="menuitem"
-            disabled={action.disabled}
-            title={action.title}
-            onClick={() => {
-              action.run();
-              onClose(false);
-            }}
-            variant="bare"
-          >
-            {action.label}
-          </Button>
-        </React.Fragment>
-      ))}
-    </MenuSurface>
-  );
 }

@@ -1,10 +1,8 @@
+import { useAnchoredMenuPosition } from "./useAnchoredMenuPosition";
 import React from "react";
 import { useEscapeStackEntry } from "./popupStack";
 import type { MenuPosition, SelectOption } from "./selectTypes";
-import {
-  resolveInitialActiveValue,
-  resolveMenuPosition,
-} from "./selectUtilities";
+import { resolveInitialActiveValue } from "./selectUtilities";
 
 export type SelectLifecycleProps = {
   activeOptionId: string | undefined;
@@ -36,39 +34,11 @@ export function useSelectLifecycle(props: SelectLifecycleProps): void {
   useActiveOptionScroll(props);
 }
 
-function useMenuPosition({
-  hasMenuHeader,
-  menuRef,
-  open,
-  query,
-  setPosition,
-  triggerRef,
-  visibleOptions,
-}: SelectLifecycleProps): void {
-  React.useLayoutEffect(() => {
-    if (!open) return;
-    const update = (): void => {
-      if (!triggerRef.current || !menuRef.current) return;
-      setPosition(resolveMenuPosition(triggerRef.current, menuRef.current));
-    };
-    update();
-    const frame = requestAnimationFrame(update);
-    window.addEventListener("resize", update);
-    window.addEventListener("scroll", update, true);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("resize", update);
-      window.removeEventListener("scroll", update, true);
-    };
-  }, [
-    hasMenuHeader,
-    menuRef,
-    open,
-    query,
-    setPosition,
-    triggerRef,
-    visibleOptions.length,
-  ]);
+function useMenuPosition(props: SelectLifecycleProps): void {
+  useAnchoredMenuPosition({
+    ...props,
+    contentVersion: `${props.hasMenuHeader}:${props.query}:${props.visibleOptions.length}`,
+  });
 }
 
 function useOutsideDismiss({

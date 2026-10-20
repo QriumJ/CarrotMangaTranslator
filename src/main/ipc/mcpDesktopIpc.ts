@@ -12,6 +12,8 @@ const MCP_HELP_URLS = {
   claude: "https://claude.ai/",
   "claude-code": "https://code.claude.com/docs/en/mcp",
   opencode: "https://opencode.ai/docs/mcp-servers/",
+  grok: "https://grok.com/connectors",
+  "grok-build": "https://docs.x.ai/build/features/mcp-servers",
   generic: "https://modelcontextprotocol.io/docs/learn/client-concepts",
 } as const;
 

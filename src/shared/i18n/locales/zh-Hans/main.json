@@ -37,13 +37,16 @@
     "saveText": "保存文本",
     "openConditionalBatchYaml": "导入批量编辑 YAML",
     "saveConditionalBatchYaml": "导出批量编辑 YAML",
+    "openWorkGlossary": "导入术语文件",
+    "saveWorkGlossary": "导出术语文件",
     "conditionalBatchYamlTooLarge": "批量编辑 YAML 文件超过 2 MiB。",
     "exportOutputFolder": "选择结果导出文件夹",
     "filters": {
       "images": "图像文件",
       "font": "字体文件",
       "yaml": "YAML 文件",
-      "text": "文本文件"
+      "text": "文本文件",
+      "json": "JSON 文件"
     }
   },
   "jobs": {
@@ -59,7 +62,8 @@
       "untrusted": "不受信任的 IPC 请求。",
       "invalidImportPreview": "导入预览已过期或无效。",
       "invalidSharePreview": "共享文件预览已过期或无效。",
-      "libraryOperationBusy": "请等待资料库任务完成后再更改其结构。"
+      "libraryOperationBusy": "请等待资料库任务完成后再更改其结构。",
+      "chapterSelectionChanged": "章节列表已变化。请重新确认后再删除。"
     },
     "labels": {
       "translationJob": "翻译任务",

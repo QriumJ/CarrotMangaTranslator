@@ -1,12 +1,9 @@
+import { formatGatheredTextFile } from "../src/shared/gatherTextFile";
 import { readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { expect, it, vi } from "vitest";
 import { typographyAnalysisAppFixture } from "./mcpTypographyAnalysisApp.fixture";
-import {
-  gatherText,
-  filterPagesByField,
-  formatGatheredText,
-} from "../src/shared/gatherText";
+import { gatherText, filterPagesByField } from "../src/shared/gatherText";
 import {
   buildReviewRows,
   serializeReviewRows,
@@ -63,7 +60,7 @@ it.each(options)(
       const chapter = hydrateChapter(stored);
       const expected =
         option.format === "txt"
-          ? formatGatheredText(
+          ? formatGatheredTextFile(
               filterPagesByField(
                 gatherText({
                   chapter,

@@ -45,7 +45,7 @@ function Subject({ kind }: { kind: "work" | "chapter" }) {
 }
 
 it.each(["work", "chapter"] as const)(
-  "includes custom output by default and honors deselection for %s",
+  "preserves custom output by default and honors explicit selection for %s",
   async (kind) => {
     const remove = vi.fn(async () => ({ works: [], workOrder: [] }));
     window.mangaApi = createTestMangaGatewayStub({
@@ -55,22 +55,22 @@ it.each(["work", "chapter"] as const)(
     render(<Subject kind={kind} />);
     fireEvent.click(screen.getByText("삭제 열기"));
     const checkbox = await screen.findByRole("checkbox");
-    expect((checkbox as HTMLInputElement).checked).toBe(true);
+    expect((checkbox as HTMLInputElement).checked).toBe(false);
     fireEvent.click(screen.getByRole("button", { name: "삭제" }));
-    await waitFor(() => expect(remove).toHaveBeenCalledWith(id, true));
+    await waitFor(() => expect(remove).toHaveBeenCalledWith(id, false));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     fireEvent.click(screen.getByText("삭제 열기"));
     expect(
       ((await screen.findByRole("checkbox")) as HTMLInputElement).checked,
-    ).toBe(true);
+    ).toBe(false);
     fireEvent.click(screen.getByRole("checkbox"));
     fireEvent.click(screen.getByRole("button", { name: "삭제" }));
-    await waitFor(() => expect(remove).toHaveBeenLastCalledWith(id, false));
+    await waitFor(() => expect(remove).toHaveBeenLastCalledWith(id, true));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     fireEvent.click(screen.getByText("삭제 열기"));
     expect(
       ((await screen.findByRole("checkbox")) as HTMLInputElement).checked,
-    ).toBe(true);
+    ).toBe(false);
   },
 );
 

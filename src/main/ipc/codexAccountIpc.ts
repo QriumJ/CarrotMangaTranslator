@@ -14,6 +14,14 @@ import { settingsIpcContracts } from "../../shared/ipcContextSettingsContracts";
 import { runManagedAppOperation } from "../appOperationRegistry";
 import type { AppOperationActivityUpdate } from "../appOperationRegistry";
 import { CodexAppServerClient } from "../codexAppServerClient";
+import {
+  BUNDLED_CODEX_VERSION,
+  resolveCodexAppServerBinary,
+} from "../codexAppServerBinary";
+import {
+  CliNotInstalledError,
+  type CliInstallOptions,
+} from "../runtimeSupport/managedCliRuntime";
 import type {
   CodexAppServerAccountResult,
   CodexAppServerModel,
@@ -25,6 +33,9 @@ export type CodexAccountIpcRuntime = {
   startClient: (options: {
     paths: IpcContext["appPaths"];
     appVersion: string;
+    install?: boolean;
+    signal?: AbortSignal;
+    onInstallProgress?: CliInstallOptions["onProgress"];
   }) => Promise<CodexAccountClient>;
   openExternal: (url: string) => Promise<void>;
   appVersion: () => string;
@@ -43,7 +54,10 @@ export type CodexAccountClient = Pick<
 >;
 
 const productionRuntime: CodexAccountIpcRuntime = {
-  startClient: CodexAppServerClient.start,
+  startClient: async (options) => {
+    if (!options.install) resolveCodexAppServerBinary(options.paths);
+    return CodexAppServerClient.start(options);
+  },
   openExternal: (url) => shell.openExternal(url),
   appVersion: () => app.getVersion(),
 };
@@ -100,7 +114,20 @@ async function runCodexAccountRead(
   context: IpcContext,
   runtime: CodexAccountIpcRuntime,
 ): Promise<CodexAccountSnapshot> {
-  const client = await startAccountClient(context, runtime);
+  let client: CodexAccountClient;
+  try {
+    client = await startAccountClient(context, runtime);
+  } catch (error) {
+    if (!(error instanceof CliNotInstalledError)) throw error;
+    return {
+      ...toSnapshot(
+        { account: null, requiresOpenaiAuth: true },
+        BUNDLED_CODEX_VERSION,
+        [],
+      ),
+      runtimeInstalled: false,
+    };
+  }
   try {
     return await readAccount(client);
   } catch (error) {
@@ -145,10 +172,38 @@ async function runCodexAccountOperation(
       },
     },
     async (signal, lease) => {
-      const client = await startAccountClient(context, runtime);
+      let client: CodexAccountClient;
+      try {
+        client = await runtime.startClient({
+          paths: context.appPaths,
+          appVersion: runtime.appVersion(),
+          install: mode === "login",
+          signal,
+          onInstallProgress: (progress) =>
+            lease.updateActivity({
+              phase: "cli-downloading",
+              waitingForUser: false,
+              progressCurrent: progress.progressBytes,
+              progressTotal: progress.progressTotalBytes,
+              progressUnit: "bytes",
+            }),
+        });
+      } catch (error) {
+        if (!(error instanceof CliNotInstalledError) || mode !== "logout")
+          throw error;
+        return {
+          ...toSnapshot(
+            { account: null, requiresOpenaiAuth: true },
+            BUNDLED_CODEX_VERSION,
+            [],
+          ),
+          runtimeInstalled: false,
+        };
+      }
       const abort = () => void client.dispose();
       signal.addEventListener("abort", abort, { once: true });
       try {
+        signal.throwIfAborted();
         return await operation(client, signal, runtime, lease.updateActivity);
       } finally {
         signal.removeEventListener("abort", abort);
@@ -182,6 +237,12 @@ async function loginAccount(
   runtime: CodexAccountIpcRuntime,
   updateActivity: (update: AppOperationActivityUpdate) => void,
 ): Promise<CodexAccountSnapshot> {
+  updateActivity({
+    phase: "codex-auth-opening-browser",
+    progressCurrent: undefined,
+    progressTotal: undefined,
+    progressUnit: undefined,
+  });
   const login = await client.startChatGptLogin();
   try {
     assertOfficialLoginUrl(login.authUrl);

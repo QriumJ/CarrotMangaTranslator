@@ -40,7 +40,8 @@
   "fonts": {
     "registerFailed": "フォントを登録できませんでした。アプリで読み込める元のTTF/OTFファイルか確認し、再試行してください。詳細はエラーレポートで確認できます。",
     "default": "デフォルト",
-    "defaultSample": "あいう Aa"
+    "defaultSample": "あいう Aa",
+    "removeFailed": "フォントを削除できませんでした。もう一度お試しください。"
   },
   "eta": {
     "seconds": "残り約{{count}}秒",
@@ -61,9 +62,9 @@
       "total": "{{label}}・合計 {{duration}}"
     },
     "failureGuidance": {
-      "maxOutputTokens": "最大出力トークンが不足しています。設定 > LLM > 最大出力トークンを増やしてください。",
-      "workContextBudget": "作品情報予算が不足しています。設定 > LLM > 作品情報予算を増やしてください。",
-      "contextLength": "コンテキスト長が不足しています。設定 > LLM > コンテキスト長を増やしてください。VRAM使用量が増える場合があります。"
+      "maxOutputTokens": "最大出力トークンが不足しています。設定 > 翻訳 > 最大出力トークンを増やしてください。",
+      "workContextBudget": "作品情報予算が不足しています。設定 > 翻訳 > 作品情報予算を増やしてください。",
+      "contextLength": "コンテキスト長が不足しています。設定 > 翻訳 > コンテキスト長を増やしてください。VRAM使用量が増える場合があります。"
     },
     "phase": {
       "booting": "モデルを準備中",
@@ -404,6 +405,15 @@
       "saveBeforePageOrderFailed": "現在の変更を保存できなかったため、ページ順序は保存されませんでした。",
       "pageRolledBack": "ページを以前の順序に戻しました。",
       "rolledBackAfterError": "{{message}} 以前の順序に戻しました。"
+    },
+    "bulkDelete": {
+      "confirmTitle": "{{count}}話を削除",
+      "confirmMessageMore": "{{titles}} ほか{{count}}話",
+      "confirmDetail": "選択した話のデータと既定フォルダーの出力を削除します。作品と用語/記憶は残ります。",
+      "action": "{{count}}話を削除",
+      "success": "{{count}}話を削除しました。作品と用語/記憶は残っています。",
+      "partial": "{{deleted}}話を削除し、{{failed}}話は削除できませんでした。",
+      "failed": "選んだ話を削除できませんでした。"
     }
   },
   "inpainting": {
@@ -558,6 +568,7 @@
         "shareExport": "共有ファイルを作成",
         "modelTest": "モデルとランタイムを確認",
         "codexAuth": "ChatGPTアカウント接続",
+        "grokAuth": "Grok アカウント接続",
         "background": "バックグラウンド処理",
         "environmentBackup": "バックアップを書き出す",
         "environmentRestore": "バックアップを読み込む",
@@ -596,6 +607,7 @@
         "model-test-checking": "モデルの応答を確認中…",
         "codex-auth-opening-browser": "ログインページを開いています…",
         "codex-auth-updating": "アカウント接続を更新中…",
+        "cli-downloading": "AI ランタイムをダウンロード中…",
         "waiting-for-user": "ブラウザーでのログインを待機中…"
       },
       "status": {

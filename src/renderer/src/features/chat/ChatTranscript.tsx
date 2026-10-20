@@ -8,6 +8,7 @@ import {
 } from "@tabler/icons-react";
 import type { ChatItem, ChatSession } from "../../../../shared/chatTypes";
 import { Button } from "../../components/ui/Button";
+import { CHAT_RUNTIME_LABELS } from "./chatRuntimes";
 import styles from "./ChatPanel.module.css";
 import { ChatMarkdown } from "./ChatMarkdown";
 import { ChatImages } from "./ChatImages";
@@ -148,9 +149,7 @@ function ChatMessage({
       {user ? null : (
         <strong className={styles.author}>
           {item.role === "assistant"
-            ? runtime === "claude"
-              ? "Claude"
-              : "Codex"
+            ? CHAT_RUNTIME_LABELS[runtime]
             : t("chat.roles.status")}
         </strong>
       )}

@@ -1,13 +1,10 @@
+import { formatGatheredTextFile } from "../../shared/gatherTextFile";
 import type { ChapterSnapshot, MangaPage } from "../../shared/libraryTypes";
 import { hashStableValue } from "../../shared/blockFingerprint";
 import { createPageRevision } from "../../shared/pageRevision";
 import { resolveReadingDirection } from "../../shared/blockReadingOrder";
 import { resolveSourceReadingDirection } from "../../shared/translationLanguages";
-import {
-  gatherText,
-  filterPagesByField,
-  formatGatheredText,
-} from "../../shared/gatherText";
+import { gatherText, filterPagesByField } from "../../shared/gatherText";
 import { buildReviewRows, serializeReviewRows } from "../../shared/reviewTable";
 import {
   MCP_EXCHANGE_BYTES,
@@ -172,7 +169,7 @@ function reviewForBinding(
       binding.options.format === "txt"
         ? [
             "native_txt_trims_text_and_filters_empty_fields",
-            "txt_import_uses_reviewed_positional_mapping",
+            "txt_import_preserves_block_ids_and_framing",
           ]
         : [
             "native_review_table_preserves_literal_cells",
@@ -208,7 +205,7 @@ function serializeSelection(
     );
     const selected = filterPagesByField(gathered, options.field);
     return {
-      content: formatGatheredText(
+      content: formatGatheredTextFile(
         selected,
         options.field,
         options.includeHeaders,

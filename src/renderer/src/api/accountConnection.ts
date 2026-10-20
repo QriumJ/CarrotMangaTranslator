@@ -24,7 +24,8 @@ export function createAccountConnection<T>(read: () => Promise<T>) {
     refresh: (): Promise<T | null> => {
       if (pending) return pending;
       const started = revision;
-      pending = read()
+      // A read that throws synchronously still settles as a rejection.
+      pending = (async () => read())()
         .then((next) => {
           if (revision === started) connection.publish(next);
           return snapshot;

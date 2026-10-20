@@ -1,0 +1,157 @@
+.tabBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+  padding-right: var(--sp-6);
+}
+
+.fileActions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.reviewBody {
+  gap: var(--sp-5);
+}
+
+.source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-1) var(--sp-3);
+  margin: 0;
+  min-width: 0;
+  font-size: var(--font-sm);
+  color: var(--text-dim);
+}
+
+.source strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-head);
+  font-weight: 600;
+}
+
+.summary {
+  display: grid;
+  margin: 0;
+  border-top: 1px solid var(--border-soft);
+}
+
+.summaryRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-2) 0;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: var(--font-sm);
+}
+
+.summaryRow dt {
+  color: var(--text);
+}
+
+.summaryRow dd {
+  margin: 0;
+  color: var(--text-head);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.summaryRow[data-empty="true"] dd,
+.summaryRow[data-tone="muted"] dt,
+.summaryRow[data-tone="muted"] dd {
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.conflicts {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.conflictHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+}
+
+.conflictHeader h3 {
+  margin: 0;
+  font-size: var(--font-md);
+  color: var(--text-head);
+}
+
+.conflictTable {
+  display: grid;
+  grid-auto-rows: max-content;
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  background: var(--bg-sunken);
+}
+
+.conflictRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--border-soft);
+  font-size: var(--font-sm);
+}
+
+.conflictRow:last-child {
+  border-bottom: 0;
+}
+
+.conflictRow > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+}
+
+.conflictRow[data-head="true"] {
+  position: sticky;
+  top: 0;
+  background: var(--bg-raised);
+}
+
+.conflictRow[data-head="true"] > span {
+  color: var(--text-dim);
+  font-size: var(--font-xs);
+  font-weight: 700;
+}
+
+/* The value that the chosen policy keeps reads as the result; the other is struck. */
+.conflictRow[data-policy="keep-existing"] > [data-side="current"],
+.conflictRow[data-policy="use-imported"] > [data-side="imported"] {
+  color: var(--text-head);
+  font-weight: 600;
+}
+
+.conflictRow[data-policy="keep-existing"] > [data-side="imported"],
+.conflictRow[data-policy="use-imported"] > [data-side="current"] {
+  color: var(--text-dim);
+  text-decoration: line-through;
+}
+
+@media (max-width: 720px) {
+  .fileActions {
+    margin: 0 0 var(--sp-3) var(--sp-6);
+  }
+}

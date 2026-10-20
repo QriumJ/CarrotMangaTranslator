@@ -147,12 +147,14 @@ function useFontLibraryActions(
         await source.removeCustomFont(id);
         await refresh();
       } catch (error) {
-        console.error(error);
+        toast.error(formatErrorMessage(error, t("fonts.removeFailed")), {
+          duration: 0,
+        });
       } finally {
         setBusy(false);
       }
     },
-    [refresh, source],
+    [refresh, source, t],
   );
 
   const savePreferences = React.useCallback(

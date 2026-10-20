@@ -1,3 +1,4 @@
+import { ControlTooltip } from "../ui/ControlTooltip";
 import React from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -35,24 +36,30 @@ export function EnvironmentBackupView({
   const blocked = disabled || dirty || model.busy;
   const confirming = Boolean(model.preview || model.recoveryId);
   return (
-    <SettingsSection
-      title={t("settings.backup.title")}
-      description={t("settings.backup.description")}
-    >
+    <SettingsSection title={t("settings.backup.title")}>
       <div className={styles.content}>
-        <p>{t("settings.backup.includes")}</p>
         <p className={styles.muted}>{t("settings.backup.excludes")}</p>
         {model.status && (
           <p>{t("settings.backup.counts", model.status.summary)}</p>
         )}
         {dirty && <p role="status">{t("settings.backup.dirty")}</p>}
         <div className={styles.actions}>
-          <Button disabled={blocked} onClick={() => void model.exportBackup()}>
-            {t("settings.backup.export")}
-          </Button>
-          <Button disabled={blocked} onClick={() => void model.inspectBackup()}>
-            {t("settings.backup.import")}
-          </Button>
+          <ControlTooltip content={t("settings.backup.includes")}>
+            <Button
+              disabled={blocked}
+              onClick={() => void model.exportBackup()}
+            >
+              {t("settings.backup.export")}
+            </Button>
+          </ControlTooltip>
+          <ControlTooltip content={t("settings.backup.excludesHelp")}>
+            <Button
+              disabled={blocked}
+              onClick={() => void model.inspectBackup()}
+            >
+              {t("settings.backup.import")}
+            </Button>
+          </ControlTooltip>
         </div>
         {model.status?.restored && (
           <p role="status">{t("settings.backup.restored")}</p>

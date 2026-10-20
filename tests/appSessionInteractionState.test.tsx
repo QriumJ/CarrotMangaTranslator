@@ -8,6 +8,19 @@ import { useAppSessionUiState } from "../src/renderer/src/app/session/useAppSess
 import { toast } from "../src/renderer/src/lib/toastStore";
 
 describe("unified workspace interaction state", () => {
+  it("binds context to the requested work and clears that identity on chapter reset", () => {
+    const { result } = renderHook(() => useAppSessionUiState());
+    act(() => result.current.openWorkContext("empty-work"));
+    expect(result.current.styleGuideWorkId).toBe("empty-work");
+    expect(result.current.styleGuideOpen).toBe(true);
+    act(() => result.current.setStyleGuideOpen(false));
+    act(() => result.current.openWorkContext("another-work"));
+    expect(result.current.styleGuideWorkId).toBe("another-work");
+    act(() => result.current.resetChapterScopedUi());
+    expect(result.current.styleGuideWorkId).toBeNull();
+    expect(result.current.styleGuideOpen).toBe(false);
+  });
+
   it("increments the editor text-tab request token for each new block", () => {
     const { result } = renderHook(() => useAppSessionUiState());
 
@@ -314,7 +327,7 @@ describe("unified workspace interaction state", () => {
     rerender({ status: "failed" });
 
     expect(errorToast).toHaveBeenCalledWith(
-      "최대 출력 토큰이 부족합니다. 설정 > LLM > 최대 출력 토큰을 늘려 주세요.",
+      "최대 출력 토큰이 부족합니다. 설정 > 번역 > 최대 출력 토큰을 늘려 주세요.",
     );
     expect(errorToast.mock.calls[0]?.[1]).toBeUndefined();
     expect(openErrorReport).not.toHaveBeenCalled();

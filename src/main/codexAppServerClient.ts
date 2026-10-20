@@ -1,11 +1,12 @@
-import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
+import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import type { AppPaths } from "./appPaths";
 import {
-  resolveCodexAppServerBinary,
+  codexAppServerStartRuntime,
   type CodexAppServerBinary,
 } from "./codexAppServerBinary";
+import type { CliInstallOptions } from "./runtimeSupport/managedCliRuntime";
 import {
   asRecord,
   extractCompletedTurn,
@@ -40,23 +41,14 @@ type Workspace = ReturnType<typeof createCodexAppServerWorkspace>;
 
 export type CodexAppServerClientStartRuntime = {
   resolveBinary: (
-    paths: Pick<AppPaths, "isPackaged" | "resourcesDir">,
-  ) => CodexAppServerBinary;
+    paths: AppPaths,
+    options?: CliInstallOptions,
+  ) => CodexAppServerBinary | Promise<CodexAppServerBinary>;
   spawnAppServer: (
     executablePath: string,
     args: readonly string[],
     options: { cwd: string; env: NodeJS.ProcessEnv },
   ) => ChildProcessWithoutNullStreams;
-};
-
-const productionStartRuntime: CodexAppServerClientStartRuntime = {
-  resolveBinary: resolveCodexAppServerBinary,
-  spawnAppServer: (executablePath, args, options) =>
-    spawn(executablePath, [...args], {
-      ...options,
-      stdio: ["pipe", "pipe", "pipe"],
-      windowsHide: true,
-    }),
 };
 
 export class CodexAppServerClient {
@@ -74,19 +66,25 @@ export class CodexAppServerClient {
       capability = "isolated",
       chatConnection,
       signal,
+      onInstallProgress,
     }: {
       paths: AppPaths;
       appVersion: string;
       capability?: CodexAppServerCapability;
       chatConnection?: { url: string; token: string };
       signal?: AbortSignal;
+      onInstallProgress?: CliInstallOptions["onProgress"];
     },
-    runtime: CodexAppServerClientStartRuntime = productionStartRuntime,
+    runtime: CodexAppServerClientStartRuntime = codexAppServerStartRuntime,
   ): Promise<CodexAppServerClient> {
     signal?.throwIfAborted();
     const codexHomeDir = paths.codexHomeDir ?? join(paths.dataRoot, "codex");
     mkdirSync(codexHomeDir, { recursive: true });
-    const binary = runtime.resolveBinary(paths);
+    const binary = await runtime.resolveBinary(paths, {
+      signal,
+      onProgress: onInstallProgress,
+    });
+    signal?.throwIfAborted();
     const workspace = createCodexAppServerWorkspace();
     let child: ChildProcessWithoutNullStreams;
     try {

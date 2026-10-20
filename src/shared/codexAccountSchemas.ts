@@ -23,6 +23,7 @@ export const codexAccountSnapshotSchema = z
     planType: z.string().max(120).nullable(),
     requiresOpenaiAuth: z.boolean(),
     appServerVersion: z.string().min(1).max(120),
+    runtimeInstalled: z.boolean().optional(),
     models: z.array(codexAccountModelSchema).max(500),
   })
   .strict();

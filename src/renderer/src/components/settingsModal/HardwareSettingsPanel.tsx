@@ -146,6 +146,7 @@ export function InpaintingSettingsSection({
   detectedGpuName,
   supportsFluxZluda,
 }: HardwareSettingsPanelProps): React.JSX.Element {
+  if (inpaintingModel !== "flux-klein") return <></>;
   return (
     <div className="settings-subsection-stack">
       <FluxBackendSettings

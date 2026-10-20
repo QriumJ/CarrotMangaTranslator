@@ -4,6 +4,7 @@ import type { IpcContext } from "./context";
 import { trustedHandleContract } from "./trustedIpc";
 import { randomUUID } from "node:crypto";
 import { runManagedAppOperation } from "../appOperationRegistry";
+import { cliAccountProgress } from "./cliAccountProgress";
 
 export function registerClaudeAccountIpc(context: IpcContext) {
   trustedHandleContract(context, claudeIpcContracts.getClaudeAccount, () =>
@@ -19,7 +20,13 @@ export function registerClaudeAccountIpc(context: IpcContext) {
         resources: [{ kind: "claude-auth", scope: "*", access: "write" }],
         presentation: { phase: "waiting-for-user", cancellable: true },
       },
-      (signal) => authenticateClaude(context.appPaths, action, signal),
+      (signal, lease) =>
+        authenticateClaude(
+          context.appPaths,
+          action,
+          signal,
+          ...cliAccountProgress(lease, action !== "logout"),
+        ),
     );
   trustedHandleContract(
     context,

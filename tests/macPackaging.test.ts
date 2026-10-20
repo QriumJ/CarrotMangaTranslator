@@ -697,24 +697,11 @@ describe("Apple Silicon Alpha packaging", () => {
       ).not.toThrow();
 
       mkdirSync(join(temporaryRoot, "tools"), { recursive: true });
-      const macCodexRuntimeAvailable = existsSync(
-        join(
-          repoRoot,
-          "node_modules",
-          "@openai",
-          "codex-darwin-arm64",
-          "package.json",
-        ),
-      );
-      const verifyDarwinRuntime = () =>
-        alphaConfig.beforePack({ electronPlatformName: "darwin" });
-      if (macCodexRuntimeAvailable) {
-        expect(verifyDarwinRuntime).not.toThrow();
-      } else {
-        expect(verifyDarwinRuntime).toThrow(
-          "Bundled Codex runtime input is missing",
-        );
-      }
+      // CLI runtimes are fetched on first use, so building the app no longer
+      // requires either platform's native CLI package to be installed.
+      expect(() =>
+        alphaConfig.beforePack({ electronPlatformName: "darwin" }),
+      ).not.toThrow();
 
       const stableConfig = loadMacBuilderConfig(
         temporaryRoot,

@@ -66,9 +66,9 @@ it("passes image bytes and composed context without local-file or slash-command 
   ).toThrow();
   expect(claudeEffort("ultra")).toBe("high");
   expect(claudeEffort("max")).toBe("max");
-  expect(
-    claudeBinary({ isPackaged: true, resourcesDir: "C:/app/resources" }),
-  ).toMatch(/claude[\\/]claude(?:\.exe)?$/);
+  expect(() =>
+    claudeBinary({ isPackaged: true, resourcesDir: "C:/missing/resources" }),
+  ).toThrow("아직 설치되지 않았습니다");
 });
 
 it("preserves separate native conversations and remembers per-runtime model choices", async () => {

@@ -30,7 +30,8 @@
     "selectAll": "全选",
     "settings": "设置",
     "thisPage": "本页",
-    "workTitle": "作品标题"
+    "workTitle": "作品标题",
+    "back": "返回"
   },
   "select": {
     "placeholder": "请选择",
@@ -182,6 +183,27 @@
     "apply": {
       "included": "包含 {{count}} 项修改",
       "button": "应用 {{count}} 项修改"
+    },
+    "tools": {
+      "advanced": "高级",
+      "exportRule": "导出规则",
+      "exportAll": "全部导出",
+      "editYaml": "编辑 YAML",
+      "import": "导入",
+      "yamlLabel": "批量编辑 YAML",
+      "yamlError": "YAML 错误",
+      "reflect": "应用到规则",
+      "importNew": "导入为新规则",
+      "overwrite": "覆盖相同 ID",
+      "close": "关闭",
+      "rules": "批量编辑规则",
+      "scope": "范围",
+      "scopeLabel": "应用范围",
+      "selection": "已选内容",
+      "page": "页面",
+      "chapter": "章节",
+      "ruleError": "规则错误",
+      "storageError": "保存错误"
     }
   },
   "workspace": {
@@ -603,7 +625,9 @@
     "noSearchResults": "没有匹配的字体。",
     "moveNamedFont": "移动{{label}}的顺序",
     "resetOrder": "重置顺序",
-    "saveFailed": "无法保存字体设置。"
+    "saveFailed": "无法保存字体设置。",
+    "files": "已安装字体",
+    "noCustomFonts": "尚未添加字体。"
   },
   "chapterPicker": {
     "prompt": "要翻译哪些内容？",
@@ -944,8 +968,9 @@
     "deleteWork": "删除作品",
     "deleteChapter": "删除章节",
     "newName": "新名称",
-    "deleteWorkWarning": "删除作品时，其中所有章节、页面和翻译结果也会一并删除。",
-    "deleteChapterWarning": "删除章节时，其中所有页面和翻译结果也会一并删除。"
+    "deleteWorkWarning": "删除作品时，其中所有章节、页面、翻译结果和术语/记忆也会一并删除。",
+    "deleteChapterWarning": "删除章节时，其中所有页面和翻译结果也会一并删除。",
+    "deleteChapters": "选择章节删除…"
   },
   "shareExport": {
     "title": "导出项目",
@@ -1008,7 +1033,9 @@
         "asc": "升序",
         "desc": "降序"
       }
-    }
+    },
+    "itemActions": "{{title}} 操作",
+    "selectChapters": "选择章节"
   },
   "pageList": {
     "empty": "没有已加载的页面。",
@@ -1398,14 +1425,15 @@
     "toggleOn": "开启",
     "toggleOff": "关闭",
     "importTxt": {
-      "button": "导入.txt",
-      "title": "按行顺序从仅译文格式的TXT文件重新导入译文。",
+      "button": "导入译文 TXT",
+      "title": "新 TXT 使用保存的标识信息。旧文件请选择对应的文本格式。",
       "noChanges": "没有已更改的译文。",
       "noApplicableText": "没有可应用的文本，请检查警告。",
-      "confirm": "要用TXT内容覆盖{{count}}条译文吗？\n文本将按行顺序应用，OCR原文不会改变。",
+      "confirm": "将 {{count}} 条译文替换为 TXT 内容？OCR 原文将保留。",
       "updated": "已更新{{count}}个文本块的译文。",
       "warnings": "TXT导入有{{count}}条警告。",
-      "failed": "无法导入TXT文件。"
+      "failed": "无法导入TXT文件。",
+      "bothButton": "导入原文＋译文 TXT"
     },
     "review": {
       "title": "校对表",
@@ -1649,6 +1677,50 @@
       "visualSummary": "图像场景摘要",
       "visualSummaryPlaceholder": "用一两句话记录场景、动作和关键对白。",
       "textSummary": "现有文本记忆"
+    },
+    "exchange": {
+      "groupLabel": "术语文件",
+      "import": "导入",
+      "export": "导出",
+      "importHint": "将 JSON 术语文件中的术语表和角色添加到当前草稿。不会删除现有条目。",
+      "exportHint": "将此处显示的术语表和角色保存为 JSON 文件，可用于备份或导入其他作品。",
+      "fileName": "{{title}} 术语表",
+      "exported": "已导出 {{glossary}} 个术语和 {{characters}} 个角色。",
+      "exportFailed": "无法保存术语文件。",
+      "openFailed": "无法打开术语文件。",
+      "errors": {
+        "invalid-json": "此文件不是 JSON 格式。请选择通过导出创建的术语文件。",
+        "unrecognized": "未找到术语表或角色列表。请确认该文件由本应用导出。",
+        "unsupported-version": "当前应用版本无法读取此术语文件。请更新应用后重试。",
+        "empty": "文件中没有可导入的术语或角色。",
+        "emptyInvalid": "没有可导入的条目。已跳过 {{count}} 个无法读取的条目。",
+        "too-large": "术语文件超过 16 MiB，未打开。"
+      },
+      "reviewTitle": "导入术语文件",
+      "sourceWork": "导出来源：{{title}}",
+      "summary": {
+        "added": "新增",
+        "unchanged": "已有相同条目（不变）",
+        "conflicts": "译文不同的条目",
+        "repeated": "文件内重复（仅使用第一个）",
+        "invalid": "无法读取，已跳过",
+        "overLimit": "超出数量上限，已跳过"
+      },
+      "split": "术语 {{glossary}} · 角色 {{characters}}",
+      "count": "{{count}} 个",
+      "conflictTitle": "译文不同的条目",
+      "policy": {
+        "keepExisting": "保留当前译文",
+        "useImported": "改用文件译文"
+      },
+      "columns": {
+        "source": "原文",
+        "current": "当前",
+        "imported": "文件"
+      },
+      "emptyTarget": "（留空）",
+      "apply": "加入草稿（{{count}} 个）",
+      "applied": "已添加 {{added}} 个并替换 {{replaced}} 个。保存后才会存入作品。"
     }
   },
   "inpainting": {
@@ -2536,7 +2608,7 @@
       "title": "备份与迁移",
       "description": "使用一个 ZIP 文件将工作环境迁移到另一台电脑。",
       "includes": "包含资料库原图与编辑数据、设置、自定义字体、预设和遮盖草稿。",
-      "excludes": "不包含凭据、模型、运行工具及外部文件夹。请在新电脑登录并重新下载所需模型。",
+      "excludes": "不包括凭据、模型、运行工具及外部文件夹中的文件。",
       "counts": "{{works}} 部作品 · {{pages}} 页",
       "dirty": "请先保存或取消设置更改，再开始迁移。",
       "export": "导出备份",
@@ -2550,7 +2622,8 @@
       "progress": "正在处理工作环境。完成前将暂停编辑。",
       "cancel": "取消操作",
       "saved": "备份已保存：{{path}}",
-      "restored": "环境已恢复。请检查 API 密钥、登录、外部文件夹、自定义模型路径，并重新设置 API 自定义请求头和附加请求正文。"
+      "restored": "环境已恢复。请检查 API 密钥、登录、外部文件夹、自定义模型路径，并重新设置 API 自定义请求头和附加请求正文。",
+      "excludesHelp": "不包含凭据、模型、运行工具及外部文件夹。请在新电脑登录并重新下载所需模型。"
     },
     "claude": {
       "account": "Claude 账户",
@@ -2562,6 +2635,37 @@
       "effort": "推理级别",
       "error": "无法连接到 Claude。",
       "testing": "检查 Claude Code 连接和模型响应。"
+    },
+    "accountRuntime": {
+      "missingTitle": "尚未安装 {{name}} 运行时",
+      "missingDetail": "首次连接时会下载一次官方 {{name}} 运行时并保存在这台电脑上，之后的连接和任务会直接复用已保存的文件。",
+      "downloading": "正在下载…",
+      "downloadFailed": "无法下载 {{name}} 运行时",
+      "connectFailed": "未能完成 {{name}} 连接",
+      "retryHint": "再次点击同一按钮即可重试。",
+      "claudeLogin": "下载并登录 Claude",
+      "claudeLoginRetry": "重新下载并登录 Claude",
+      "claudeConsole": "下载并登录 API 账户",
+      "claudeConsoleRetry": "重新下载并登录 API 账户",
+      "codexLogin": "下载并使用 ChatGPT 登录",
+      "codexLoginRetry": "重新下载并使用 ChatGPT 登录",
+      "grokLogin": "下载并登录 Grok",
+      "grokLoginRetry": "重新下载并登录 Grok"
+    },
+    "grok": {
+      "title": "应用内聊天 · Grok 账户",
+      "description": "在应用内聊天中使用 Grok 作为助手。Grok 通过 Carrot 工具读取资料库并进行翻译和编辑。这与本页的外部 AI 应用（MCP）连接相互独立，登录和凭据由官方 Grok Build 管理。",
+      "checking": "正在检查账户…",
+      "signedOut": "未登录",
+      "connected": "已连接 Grok",
+      "connectedVersion": "已连接 Grok · Grok Build {{version}}",
+      "login": "登录 Grok",
+      "logout": "退出登录",
+      "refresh": "刷新",
+      "error": "请检查 Grok 连接。"
+    },
+    "support": {
+      "title": "支持"
     }
   },
   "pageBlocks": {
@@ -2637,6 +2741,7 @@
         "environment-restore": "环境恢复",
         "model-test": "模型检查",
         "codex-auth": "ChatGPT 账户",
+        "grok-auth": "Grok Build",
         "sound-effect-translation": "音效翻译",
         "claude-auth": "Claude Code"
       },
@@ -3263,6 +3368,89 @@
     "runtime": "AI",
     "claudeLoginHint": "请登录 Claude 账户。",
     "claudeLogin": "登录 Claude",
+    "claudeDownloadLogin": "下载并登录 Claude",
+    "claudeDownloadLoginRetry": "重新下载并登录 Claude",
+    "grokLogin": "登录 Grok",
+    "grokDownloadLogin": "下载并登录 Grok",
+    "grokDownloadLoginRetry": "重新下载并登录 Grok",
+    "grokLoginHint": "登录 Grok 后即可开始聊天。",
+    "downloadLogin": "下载并登录 ChatGPT",
+    "downloadLoginRetry": "重新下载并登录 ChatGPT",
     "moreImages": "再显示 {{count}} 张图片"
+  },
+  "chapterBulkDelete": {
+    "title": "选择章节删除",
+    "listLabel": "{{title}} 的章节列表",
+    "selection": "已选择 {{count}}/{{total}} 章节 · {{pages}} 页",
+    "selectChapter": "选择 {{title}}",
+    "currentTag": "已打开",
+    "failedTag": "删除失败",
+    "delete": "删除所选 {{count}} 章",
+    "deleting": "正在删除…",
+    "jobActive": "正在进行的任务结束后才能删除。",
+    "partialTitle": "已删除 {{deleted}} 章，{{failed}} 章未能删除",
+    "partialDetail": "仅保留失败章节的选择。请重试。",
+    "failedTitle": "未能删除所选章节",
+    "failedDetail": "请检查列表后重试。"
+  },
+  "mcp": {
+    "title": "AI 连接",
+    "description": "通过 MCP 应用浏览、翻译和编辑。",
+    "checking": "正在检查状态…",
+    "copy": "复制地址",
+    "connectedApps": "已连接的应用",
+    "emptyOnline": "暂无已连接的应用，请在连接帮助中选择应用。",
+    "emptyOffline": "暂无已连接的应用，请开启 MCP。",
+    "disconnect": "断开连接",
+    "disconnectNamed": "断开 {{name}}",
+    "approved": "批准于 {{date}}",
+    "permissions": "允许的操作",
+    "permissionsNote": "立即生效。更改会取消运行中的任务，并要求重新批准。",
+    "readAccess": "默认允许读取文本、上下文和导出文本文件。",
+    "permissionLabel": "MCP 权限",
+    "images": "发送图像和输出文件",
+    "editing": "编辑文本、格式和上下文",
+    "processing": "管理文本块与书库，运行 OCR 和翻译",
+    "cost": "使用外部 AI 会发送文本和图像，并可能产生费用。",
+    "help": "连接帮助",
+    "diagnose": "检查连接",
+    "lifecycle": "关闭本应用会停止连接，断开连接会撤销对方的访问权限。",
+    "processingHelp": "含图像的文件也受图像权限控制。处理使用已配置的引擎，仅批准连接不会启动任务。",
+    "passed": "连接检查通过",
+    "needsAttention": "请检查连接",
+    "diagnosticNote": "仅检查公开连接设置，不检查 AI 登录和工具执行。",
+    "pass": "通过",
+    "fail": "失败",
+    "off": "已关闭",
+    "starting": "正在启动…",
+    "online": "可连接",
+    "stopping": "正在停止…",
+    "disable": "关闭 MCP",
+    "enable": "开启 MCP",
+    "autoStart": "启动时自动连接",
+    "openChatgpt": "打开 ChatGPT",
+    "allowTailscale": "在 Tailscale 中允许连接",
+    "pairing": "连接请求",
+    "clientName": "请求应用自报的名称：{{name}}",
+    "code": "验证码：{{code}}",
+    "verifyCode": "仅在代码与浏览器一致时批准。",
+    "redirect": "批准后的返回地址：",
+    "requested": "请求权限：{{scopes}}",
+    "approve": "代码一致 · 批准",
+    "deny": "拒绝",
+    "scopes": {
+      "carrot_read": "读取",
+      "carrot_images": "发送图像",
+      "carrot_edit": "编辑文本和格式",
+      "carrot_process": "管理书库及运行模型",
+      "offline_access": "保留授权"
+    },
+    "scopeDetails": {
+      "carrot_read": "读取书库、文本和上下文",
+      "carrot_images": "传输图片和包含图片的文件",
+      "carrot_edit": "编辑文本、格式和上下文",
+      "carrot_process": "管理文本块及书库并运行应用模型",
+      "offline_access": "下次启动时保留授权"
+    }
   }
 }

@@ -37,6 +37,7 @@ import {
 } from "../src/renderer/src/panels/panelSession";
 import {
   makeRightRailProps,
+  makeQuickRailChromeProps,
   makeBlock,
   makeChapter,
 } from "./unifiedInpaintingUiFixtures";
@@ -89,6 +90,17 @@ afterEach(() => {
 });
 
 describe("unified workspace toolbar", () => {
+  it("keeps global activity available without putting editor tools over the empty workspace", () => {
+    renderQuickRail(makeRightRailProps({ currentChapter: null }));
+    expect(screen.queryByRole("toolbar")).toBeNull();
+    expect(
+      document.querySelector('[data-right-quick-group="view"]'),
+    ).toBeNull();
+    expect(screen.getByRole("button", { name: "작업 센터 열기" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "작업 센터 열기" }));
+    expect(screen.getByRole("region", { name: "작업 센터" })).toBeTruthy();
+  });
+
   it("keeps the collapsed toolbar available as a compact restore control", () => {
     const onToggleHidden = vi.fn();
     render(
@@ -1180,34 +1192,6 @@ function renderQuickRail(props: RightRailProps) {
       wrapper: RightRailTestProviders,
     },
   );
-}
-
-function makeQuickRailChromeProps(): Pick<
-  React.ComponentProps<typeof AppRightQuickRail>,
-  | "regionTranslationActive"
-  | "stageToolbarHidden"
-  | "workspaceOriginalOpacityControl"
-  | "workspaceViewControls"
-> {
-  return {
-    regionTranslationActive: false,
-    stageToolbarHidden: false,
-    workspaceOriginalOpacityControl: {
-      available: true,
-      opacity: 0,
-      pageId: "page-1",
-      onChange: () => undefined,
-    },
-    workspaceViewControls: {
-      effectiveScale: 1,
-      fitMode: "contain",
-      zoom: 1,
-      onChangeFitMode: () => undefined,
-      onResetZoom: () => undefined,
-      onZoomIn: () => undefined,
-      onZoomOut: () => undefined,
-    },
-  };
 }
 
 function RightRailTestProviders({

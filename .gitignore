@@ -105,3 +105,7 @@ mcp-private/
 /tools/ffmpeg/ffmpeg
 /tools/ffmpeg/*.tmp
 /tools/ffmpeg/ffmpeg-runtime.json
+
+# Downloaded official AI executables (user cache)
+/cli-runtimes/
+/grok/

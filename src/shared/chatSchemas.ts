@@ -54,7 +54,7 @@ export const ChatSessionSchema = z
     version: z.literal(1),
     id,
     title: z.string(),
-    runtime: z.enum(["codex", "claude"]),
+    runtime: z.enum(["codex", "claude", "grok"]),
     nativeThreadId: z.string().nullable(),
     model: z.string().nullable(),
     effort: z.string().nullable(),

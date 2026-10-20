@@ -8,6 +8,8 @@ const FORBIDDEN_ROOT_DIRECTORIES = Object.freeze([
   ".settings-pairs",
   ".environment-backup",
   "codex",
+  "grok",
+  "cli-runtimes",
   "cache",
   "external-image-copies",
   "font-chapter-c18",

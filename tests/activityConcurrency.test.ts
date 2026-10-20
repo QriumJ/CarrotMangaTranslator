@@ -411,37 +411,43 @@ describe("activity ownership across concurrent work", () => {
     expect(ready).toBe(true);
   });
 
-  it("does not let one job or operation cancellation release another owner's resources", async () => {
-    start("translation", [model]);
-    start("remote", [{ ...auth, access: "read" }]);
-    expect(() => gate.assertAvailable([auth])).toThrow(/ChatGPT/);
-    jobs.clearIfCurrent("translation");
-    jobs.clearIfCurrent("translation");
-    expect(jobs.all.map((job) => job.id)).toEqual(["remote"]);
-    const registry = new AppOperationRegistry(gate);
-    const first = registry.begin({
-      id: "export-1",
-      kind: "work-share-export",
-      mutatesLibrary: false,
-      resources: [],
-      presentation: { cancellable: true },
-    });
-    const second = registry.begin({
-      id: "export-2",
-      kind: "work-share-export",
-      mutatesLibrary: false,
-      resources: [],
-      presentation: { cancellable: true },
-    });
-    registry.requestCancel(first.id);
-    expect(first.signal.aborted).toBe(true);
-    expect(second.signal.aborted).toBe(false);
-    first.finish("cancelled");
-    expect(registry.activities.map((event) => event.id)).toEqual(["export-2"]);
-    second.finish();
-    jobs.clearIfCurrent("remote");
-    expect(gate.activities).toEqual([]);
-  });
+  it.each(["claude-auth", "codex-auth", "grok-auth"] as const)(
+    "does not let one job or operation cancellation release another owner's %s resources",
+    async (kind) => {
+      const accountResource: AppActivityResource = { ...auth, kind };
+      start("translation", [model]);
+      start("remote", [{ ...accountResource, access: "read" }]);
+      expect(() => gate.assertAvailable([accountResource])).toThrow(/AI 계정/);
+      jobs.clearIfCurrent("translation");
+      jobs.clearIfCurrent("translation");
+      expect(jobs.all.map((job) => job.id)).toEqual(["remote"]);
+      const registry = new AppOperationRegistry(gate);
+      const first = registry.begin({
+        id: "export-1",
+        kind: "work-share-export",
+        mutatesLibrary: false,
+        resources: [],
+        presentation: { cancellable: true },
+      });
+      const second = registry.begin({
+        id: "export-2",
+        kind: "work-share-export",
+        mutatesLibrary: false,
+        resources: [],
+        presentation: { cancellable: true },
+      });
+      registry.requestCancel(first.id);
+      expect(first.signal.aborted).toBe(true);
+      expect(second.signal.aborted).toBe(false);
+      first.finish("cancelled");
+      expect(registry.activities.map((event) => event.id)).toEqual([
+        "export-2",
+      ]);
+      second.finish();
+      jobs.clearIfCurrent("remote");
+      expect(gate.activities).toEqual([]);
+    },
+  );
 
   it("protects a chapter from deletion for the whole duration of a manual image edit", async () => {
     await withLibraryContentEdit(

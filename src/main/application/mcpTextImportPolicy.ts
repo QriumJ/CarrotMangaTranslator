@@ -1,8 +1,12 @@
+import {
+  formatGatheredTextFile,
+  buildTranslatedTextImport,
+} from "../../shared/gatherTextFile";
 import type { ChapterSnapshot, MangaPage } from "../../shared/libraryTypes";
 import {
   gatherText,
-  buildTranslatedTextImport,
   formatGatheredText,
+  filterPagesByField,
 } from "../../shared/gatherText";
 import {
   McpTextImportPreviewSchema,
@@ -269,18 +273,25 @@ function parseTxt(saved: McpContextSnapshot, input: Input, content: string) {
       "A translated or both-field TXT export is required.",
     );
   if (
-    formatGatheredText(gathered, options.field, options.includeHeaders).replace(
-      /\r\n/g,
-      "\n",
-    ) === content.replace(/\r\n/g, "\n")
+    [formatGatheredTextFile, formatGatheredText].some(
+      (format) =>
+        format(gathered, options.field, options.includeHeaders).replace(
+          /\r\n/g,
+          "\n",
+        ) === content.replace(/\r\n/g, "\n"),
+    )
   )
     return { updates: new Map<string, string>(), diagnostics: [] };
   const parsed = buildTranslatedTextImport(
-    gathered,
+    content.replace(/^\uFEFF/, "").startsWith("#@carrot-text")
+      ? gathered
+      : filterPagesByField(gathered, options.field),
     content,
     undefined,
     options.field,
   );
+  if (parsed.fatal)
+    throw new McpEditError("invalid_edit", parsed.warnings.join("\n"));
   if (parsed.updates.length > 1000 || parsed.warnings.length > 1000)
     throw new McpEditError(
       "invalid_edit",

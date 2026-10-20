@@ -4,7 +4,7 @@ import { closestCenter, DndContext } from "@dnd-kit/core";
 import { Button } from "./ui/Button";
 import { Modal } from "./ui/Modal";
 import { ModalActionBar } from "./ui/ModalActionBar";
-import { FontManagerGroup } from "./FontManagerList";
+import { FontManagerGroup, FontFileList } from "./FontManagerList";
 import { Select } from "./ui/Select";
 import styles from "./FontManagerModal.module.css";
 import {
@@ -20,27 +20,50 @@ export function FontManagerModal({
 }): React.JSX.Element {
   const { t } = useTranslation("components");
   const model = useFontManagerModel(onClose);
+  const [managingFiles, setManagingFiles] = React.useState(false);
+  const closeFiles = () => setManagingFiles(false);
 
   return (
     <Modal
-      title={t("fontManager.title")}
-      onClose={onClose}
+      title={t(managingFiles ? "fontManager.files" : "fontManager.title")}
+      onClose={managingFiles ? closeFiles : onClose}
       // Holds an unsaved font draft: keep the close button visible but inert
       // while saving, and never discard the draft on a stray backdrop click.
       closeDisabled={model.disabled}
       size="lg"
       maxHeight="760px"
       bodyClassName={styles.body}
-      footer={<FontManagerFooter model={model} onClose={onClose} />}
+      footer={
+        managingFiles ? (
+          <ModalActionBar
+            actions={
+              <Button disabled={model.disabled} onClick={closeFiles}>
+                {t("common.back")}
+              </Button>
+            }
+          />
+        ) : (
+          <FontManagerFooter model={model} onClose={onClose} />
+        )
+      }
     >
-      <FontManagerControls model={model} />
-      <DndContext
-        sensors={model.sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={model.handleDragEnd}
-      >
-        <FontManagerGroups model={model} />
-      </DndContext>
+      {managingFiles ? (
+        <FontFileList model={model} />
+      ) : (
+        <>
+          <FontManagerControls
+            model={model}
+            onManageFiles={() => setManagingFiles(true)}
+          />
+          <DndContext
+            sensors={model.sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={model.handleDragEnd}
+          >
+            <FontManagerGroups model={model} />
+          </DndContext>
+        </>
+      )}
     </Modal>
   );
 }
@@ -88,8 +111,10 @@ function FontManagerFooter({
 }
 
 function FontManagerControls({
+  onManageFiles,
   model,
 }: {
+  onManageFiles: () => void;
   model: FontManagerModel;
 }): React.JSX.Element {
   const { t } = useTranslation("components");
@@ -119,11 +144,8 @@ function FontManagerControls({
         placeholder={t("fontManager.searchPlaceholder")}
         onChange={(event) => model.setQuery(event.target.value)}
       />
-      <Button
-        disabled={model.disabled}
-        onClick={() => void model.registerFont()}
-      >
-        {t("fontSelect.addFont")}
+      <Button disabled={model.disabled} onClick={onManageFiles}>
+        {t("fontManager.files")}
       </Button>
     </div>
   );
@@ -142,7 +164,7 @@ function FontManagerGroups({
     <>
       {model.favoriteOptions.length || !model.normalizedQuery ? (
         <FontManagerGroup
-          customIds={model.customIds}
+          customIds={NO_REMOVABLE_FONTS}
           defaultFontId={model.draft.defaultFontId}
           disabled={model.disabled}
           dragDisabled={model.dragDisabled}
@@ -157,7 +179,7 @@ function FontManagerGroups({
       ) : null}
       {model.otherOptions.length ? (
         <FontManagerGroup
-          customIds={model.customIds}
+          customIds={NO_REMOVABLE_FONTS}
           defaultFontId={model.draft.defaultFontId}
           disabled={model.disabled}
           dragDisabled={model.dragDisabled}
@@ -171,7 +193,7 @@ function FontManagerGroups({
       ) : null}
       {model.hiddenOptions.length ? (
         <FontManagerGroup
-          customIds={model.customIds}
+          customIds={NO_REMOVABLE_FONTS}
           defaultFontId={model.draft.defaultFontId}
           disabled={model.disabled}
           dragDisabled
@@ -187,3 +209,5 @@ function FontManagerGroups({
     </>
   );
 }
+
+const NO_REMOVABLE_FONTS: ReadonlySet<string> = new Set();

@@ -1,3 +1,4 @@
+import type { FontManagerModel } from "./useFontManagerModel";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -213,6 +214,50 @@ function FontRowPreview({
       <span className={styles.sample} style={{ fontFamily: option.cssFamily }}>
         {option.sample}
       </span>
+    </div>
+  );
+}
+
+/** File operations are immediate and have a separate view from preference drafts. */
+export function FontFileList({
+  model,
+}: {
+  model: FontManagerModel;
+}): React.JSX.Element {
+  const { t } = useTranslation("components");
+  const options = model.orderedOptions.filter((option) =>
+    model.customIds.has(option.id),
+  );
+  return (
+    <div className={styles.group}>
+      <div>
+        <Button
+          disabled={model.disabled}
+          onClick={() => void model.registerFont()}
+        >
+          {t("fontSelect.addFont")}
+        </Button>
+      </div>
+      {options.length ? (
+        options.map((option) => (
+          <div className={styles.fileRow} key={option.id}>
+            <FontRowPreview option={option} />
+            <Button
+              size="sm"
+              variant="danger"
+              disabled={model.disabled}
+              aria-label={t("fontSelect.deleteNamedFont", {
+                label: option.label,
+              })}
+              onClick={() => void model.removeFont(option.id)}
+            >
+              {t("fontSelect.deleteFont")}
+            </Button>
+          </div>
+        ))
+      ) : (
+        <p className={styles.empty}>{t("fontManager.noCustomFonts")}</p>
+      )}
     </div>
   );
 }

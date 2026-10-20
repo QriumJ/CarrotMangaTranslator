@@ -3,10 +3,8 @@
   min-width: 0;
 }
 .actionMenuSurface {
-  position: absolute;
-  inset-block-start: calc(100% + var(--sp-1));
-  inset-inline-start: 0;
-  z-index: var(--layer-popover);
+  position: fixed;
+  z-index: var(--layer-select-menu);
   display: flex;
   flex-direction: column;
   gap: var(--sp-1);
@@ -19,10 +17,6 @@
   border-radius: var(--r-md);
   background: var(--bg-modal);
   box-shadow: var(--shadow-overlay);
-}
-.actionMenu[data-align="end"] .actionMenuSurface {
-  inset-inline-start: auto;
-  inset-inline-end: 0;
 }
 .actionMenuSurface > button {
   justify-content: flex-start;

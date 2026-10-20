@@ -137,6 +137,25 @@ export type LibraryIndex = {
   works: LibraryWorkSummary[];
 };
 
+export type DeleteChaptersRequest = {
+  workId: string;
+  chapterIds: string[];
+  removeCustomOutputs: boolean;
+};
+
+/** A chapter left in place; each chapter is deleted in its own transaction. */
+export type DeleteChaptersFailure = {
+  chapterId: string;
+  title: string;
+  message: string;
+};
+
+export type DeleteChaptersResult = {
+  library: LibraryIndex;
+  deletedChapterIds: string[];
+  failures: DeleteChaptersFailure[];
+};
+
 /** Display metadata only. No editor blocks or inline generated artwork. */
 export type ChapterPageMetadata = Pick<
   MangaPage,

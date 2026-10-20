@@ -115,7 +115,6 @@ it("opens, closes, and reopens the page editor through the header and inactive a
           onCancelShareImport={noop}
           onSubmitShareImport={noop}
           onCancelRename={noop}
-          onDeleteRename={noop}
           onSubmitRename={noop}
           onCancelSettings={noop}
           onOpenErrorReport={noop}

@@ -36,7 +36,12 @@ export function useAppSessionUiState() {
   const [conditionalBatchOpen, setConditionalBatchOpen] = useState(false);
   const [batchInitialFind, setBatchInitialFind] = useState("");
   const [batchInitialReplace, setBatchInitialReplace] = useState("");
+  const [styleGuideWorkId, setStyleGuideWorkId] = useState<string | null>(null);
   const [styleGuideOpen, setStyleGuideOpen] = useState(false);
+  const openWorkContext = useCallback((workId: string) => {
+    setStyleGuideWorkId(workId);
+    setStyleGuideOpen(true);
+  }, []);
   const [styleGuideBackgrounded, setStyleGuideBackgrounded] = useState(false);
   const translateModals = useTranslateModalUiState();
   const jobFlow = useJobFlowState();
@@ -65,6 +70,7 @@ export function useAppSessionUiState() {
     setBatchInitialFind("");
     setBatchInitialReplace("");
     setStyleGuideOpen(false);
+    setStyleGuideWorkId(null);
     setStyleGuideBackgrounded(false);
     setTextViewOpen(false);
     setRightRailMode("page-blocks");
@@ -119,6 +125,9 @@ export function useAppSessionUiState() {
     showTextBlocks,
     stageToolbarHidden,
     styleGuideOpen,
+    styleGuideWorkId,
+    openWorkContext,
+    setStyleGuideWorkId,
     styleGuideBackgrounded,
     textViewOpen,
   };

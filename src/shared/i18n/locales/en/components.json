@@ -30,7 +30,8 @@
     "selectAll": "Select all",
     "settings": "Settings",
     "thisPage": "This page",
-    "workTitle": "Work title"
+    "workTitle": "Work title",
+    "back": "Back"
   },
   "select": {
     "placeholder": "Choose an option",
@@ -182,6 +183,27 @@
     "apply": {
       "included": "{{count}} changes included",
       "button": "Apply {{count}} changes"
+    },
+    "tools": {
+      "advanced": "Advanced",
+      "exportRule": "Export rule",
+      "exportAll": "Export all",
+      "editYaml": "Edit YAML",
+      "import": "Import",
+      "yamlLabel": "Batch edit YAML",
+      "yamlError": "YAML error",
+      "reflect": "Apply to rule",
+      "importNew": "Import as new rule",
+      "overwrite": "Replace matching IDs",
+      "close": "Close",
+      "rules": "Batch edit rules",
+      "scope": "Scope",
+      "scopeLabel": "Apply to",
+      "selection": "Selection",
+      "page": "Page",
+      "chapter": "Chapter",
+      "ruleError": "Rule error",
+      "storageError": "Save error"
     }
   },
   "workspace": {
@@ -603,7 +625,9 @@
     "noSearchResults": "No matching fonts.",
     "moveNamedFont": "Move {{label}}",
     "resetOrder": "Reset order",
-    "saveFailed": "Could not save font settings."
+    "saveFailed": "Could not save font settings.",
+    "files": "Installed fonts",
+    "noCustomFonts": "No custom fonts installed."
   },
   "chapterPicker": {
     "prompt": "What would you like to translate?",
@@ -944,8 +968,9 @@
     "deleteWork": "Delete work",
     "deleteChapter": "Delete chapter",
     "newName": "New name",
-    "deleteWorkWarning": "Deleting this work also removes all of its chapters, pages, and translation results.",
-    "deleteChapterWarning": "Deleting this chapter also removes all of its pages and translation results."
+    "deleteWorkWarning": "Deleting this work also removes all of its chapters, pages, translation results, and terminology/memory.",
+    "deleteChapterWarning": "Deleting this chapter also removes all of its pages and translation results.",
+    "deleteChapters": "Delete selected chapters…"
   },
   "shareExport": {
     "title": "Export work",
@@ -1008,7 +1033,9 @@
         "asc": "Ascending",
         "desc": "Descending"
       }
-    }
+    },
+    "itemActions": "Actions for {{title}}",
+    "selectChapters": "Select chapters"
   },
   "pageList": {
     "empty": "No pages loaded.",
@@ -1398,14 +1425,15 @@
     "toggleOn": "On",
     "toggleOff": "Off",
     "importTxt": {
-      "button": "Import .txt",
-      "title": "Re-import translations from a translation-only TXT file in line order.",
+      "button": "Import translation TXT",
+      "title": "New TXT files use saved identities. For legacy files, select the matching text format.",
       "noChanges": "There are no changed translations.",
       "noApplicableText": "No text can be applied. Check the warnings.",
-      "confirm": "Translations to overwrite: {{count}}. Continue with the TXT contents?\nLines are applied in order, and OCR source text is not changed.",
+      "confirm": "Replace {{count}} translations with the TXT contents? OCR source text is preserved.",
       "updated": "Updated translation blocks: {{count}}.",
       "warnings": "TXT import warnings: {{count}}.",
-      "failed": "Could not import the TXT file."
+      "failed": "Could not import the TXT file.",
+      "bothButton": "Import source + translation TXT"
     },
     "review": {
       "title": "Review table",
@@ -1649,6 +1677,50 @@
       "visualSummary": "Visual scene summary",
       "visualSummaryPlaceholder": "Summarize the scene, actions, and key dialogue in one or two sentences.",
       "textSummary": "Existing text memory"
+    },
+    "exchange": {
+      "groupLabel": "Terminology file",
+      "import": "Import",
+      "export": "Export",
+      "importHint": "Adds the glossary and characters from a JSON terminology file to this draft. Existing entries are never removed.",
+      "exportHint": "Saves the glossary and characters shown here as a JSON file, for backup or for importing into another work.",
+      "fileName": "{{title}} glossary",
+      "exported": "Exported {{glossary}} terms and {{characters}} characters.",
+      "exportFailed": "Could not save the terminology file.",
+      "openFailed": "Could not open the terminology file.",
+      "errors": {
+        "invalid-json": "This file is not JSON. Choose a terminology file created with Export.",
+        "unrecognized": "No glossary or character list was found. Check that the file was exported from this app.",
+        "unsupported-version": "This app version cannot read this terminology file. Update the app and try again.",
+        "empty": "The file has no terms or characters to import.",
+        "emptyInvalid": "Nothing could be imported. {{count}} unreadable entries were skipped.",
+        "too-large": "The terminology file is larger than 16 MiB and was not opened."
+      },
+      "reviewTitle": "Import terminology file",
+      "sourceWork": "Exported from: {{title}}",
+      "summary": {
+        "added": "New",
+        "unchanged": "Already the same (no change)",
+        "conflicts": "Different translation",
+        "repeated": "Repeated in the file (first one used)",
+        "invalid": "Unreadable, skipped",
+        "overLimit": "Over the entry limit, skipped"
+      },
+      "split": "Terms {{glossary}} · Characters {{characters}}",
+      "count": "{{count}}",
+      "conflictTitle": "Entries with a different translation",
+      "policy": {
+        "keepExisting": "Keep current",
+        "useImported": "Use file"
+      },
+      "columns": {
+        "source": "Source",
+        "current": "Current",
+        "imported": "File"
+      },
+      "emptyTarget": "(left blank)",
+      "apply": "Add to draft ({{count}})",
+      "applied": "Added {{added}} and replaced {{replaced}}. Save to keep them in this work."
     }
   },
   "inpainting": {
@@ -2536,7 +2608,7 @@
       "title": "Backup and transfer",
       "description": "Move your workspace to another computer with one ZIP file.",
       "includes": "Includes library originals and edits, settings, custom fonts, presets and redaction drafts.",
-      "excludes": "Credentials, models, runtime tools and external folders are excluded. Sign in and download the required models on the new computer.",
+      "excludes": "Excludes credentials, models, runtimes and files in external folders.",
       "counts": "{{works}} works · {{pages}} pages",
       "dirty": "Save or discard your settings changes before transferring your environment.",
       "export": "Export backup",
@@ -2550,7 +2622,8 @@
       "progress": "Processing your environment. Editing is paused until this finishes.",
       "cancel": "Cancel operation",
       "saved": "Backup saved: {{path}}",
-      "restored": "Environment restored. Check API keys, account sign-in, external folders and custom model paths. Reconfigure custom API headers and extra request bodies."
+      "restored": "Environment restored. Check API keys, account sign-in, external folders and custom model paths. Reconfigure custom API headers and extra request bodies.",
+      "excludesHelp": "Credentials, models, runtime tools and external folders are excluded. Sign in and download the required models on the new computer."
     },
     "claude": {
       "account": "Claude account",
@@ -2562,6 +2635,37 @@
       "effort": "Reasoning effort",
       "error": "Check your Claude connection.",
       "testing": "Checking Claude Code connection and model response."
+    },
+    "accountRuntime": {
+      "missingTitle": "The {{name}} runtime isn't installed yet",
+      "missingDetail": "The first time you connect, the official {{name}} runtime is downloaded once and kept on this PC. Later connections and tasks reuse the stored copy.",
+      "downloading": "Downloading…",
+      "downloadFailed": "Couldn't download the {{name}} runtime",
+      "connectFailed": "Couldn't finish connecting {{name}}",
+      "retryHint": "Press the same button again to retry.",
+      "claudeLogin": "Download and sign in",
+      "claudeLoginRetry": "Retry download and sign in",
+      "claudeConsole": "Download and connect API account",
+      "claudeConsoleRetry": "Retry download and connect API account",
+      "codexLogin": "Download and sign in with ChatGPT",
+      "codexLoginRetry": "Retry download and sign in with ChatGPT",
+      "grokLogin": "Download and sign in to Grok",
+      "grokLoginRetry": "Retry download and sign in to Grok"
+    },
+    "grok": {
+      "title": "App chat · Grok account",
+      "description": "Use Grok as an assistant in the in-app chat. Grok reads, translates and edits your library through Carrot's tools. This is separate from the external AI app (MCP) connections on this page; the official Grok Build manages sign-in and credentials.",
+      "checking": "Checking account…",
+      "signedOut": "Not signed in",
+      "connected": "Grok connected",
+      "connectedVersion": "Grok connected · Grok Build {{version}}",
+      "login": "Sign in to Grok",
+      "logout": "Sign out",
+      "refresh": "Refresh",
+      "error": "Check your Grok connection."
+    },
+    "support": {
+      "title": "Support"
     }
   },
   "pageBlocks": {
@@ -2637,6 +2741,7 @@
         "environment-restore": "Environment restore",
         "model-test": "Model check",
         "codex-auth": "ChatGPT account",
+        "grok-auth": "Grok Build",
         "sound-effect-translation": "Sound effect translation",
         "claude-auth": "Claude Code"
       },
@@ -3263,6 +3368,89 @@
     "runtime": "Assistant",
     "claudeLoginHint": "Sign in to Claude to start chatting.",
     "claudeLogin": "Sign in to Claude",
+    "claudeDownloadLogin": "Download and sign in to Claude",
+    "claudeDownloadLoginRetry": "Retry download and sign in to Claude",
+    "grokLogin": "Sign in to Grok",
+    "grokDownloadLogin": "Download and sign in to Grok",
+    "grokDownloadLoginRetry": "Retry download and sign in to Grok",
+    "grokLoginHint": "Sign in to Grok to start chatting.",
+    "downloadLogin": "Download and sign in to ChatGPT",
+    "downloadLoginRetry": "Retry download and sign in to ChatGPT",
     "moreImages": "Show {{count}} more images"
+  },
+  "chapterBulkDelete": {
+    "title": "Delete selected chapters",
+    "listLabel": "Chapters of {{title}}",
+    "selection": "{{count}} of {{total}} chapters selected · {{pages}} pages",
+    "selectChapter": "Select {{title}}",
+    "currentTag": "Open",
+    "failedTag": "Not deleted",
+    "delete": "Delete {{count}} chapters",
+    "deleting": "Deleting…",
+    "jobActive": "You can delete after the running task finishes.",
+    "partialTitle": "Deleted {{deleted}} chapters; {{failed}} could not be deleted",
+    "partialDetail": "Only failed chapters remain selected. Try again.",
+    "failedTitle": "The selected chapters could not be deleted",
+    "failedDetail": "Check the list and try again."
+  },
+  "mcp": {
+    "title": "AI connections",
+    "description": "Browse, translate and edit from an MCP app.",
+    "checking": "Checking status…",
+    "copy": "Copy address",
+    "connectedApps": "Connected apps",
+    "emptyOnline": "No connected apps. Choose an app in Connection help.",
+    "emptyOffline": "No connected apps. Turn on MCP to connect.",
+    "disconnect": "Disconnect",
+    "disconnectNamed": "Disconnect {{name}}",
+    "approved": "Approved {{date}}",
+    "permissions": "Allowed actions",
+    "permissionsNote": "Applies immediately. Changes cancel running tasks and require approval again.",
+    "readAccess": "Library text, context and text-file exports are allowed by default.",
+    "permissionLabel": "MCP permissions",
+    "images": "Send images and output files",
+    "editing": "Edit text, formatting and context",
+    "processing": "Manage blocks and library; run OCR and translation",
+    "cost": "External AI processing sends text and images and may incur charges.",
+    "help": "Connection help",
+    "diagnose": "Check connection",
+    "lifecycle": "Closing this app stops the connection. Disconnecting revokes that app’s access.",
+    "processingHelp": "Image-containing files follow image permissions. Processing uses your configured engines; approval alone does not start tasks.",
+    "passed": "Connection check passed",
+    "needsAttention": "Connection needs attention",
+    "diagnosticNote": "Checks public connection settings only, excluding AI sign-in and tool execution.",
+    "pass": "Pass",
+    "fail": "Fail",
+    "off": "Off",
+    "starting": "Starting…",
+    "online": "Ready to connect",
+    "stopping": "Stopping…",
+    "disable": "Turn off MCP",
+    "enable": "Turn on MCP",
+    "autoStart": "Connect on startup",
+    "openChatgpt": "Open ChatGPT",
+    "allowTailscale": "Allow connection in Tailscale",
+    "pairing": "Connection request",
+    "clientName": "Name supplied by the requesting app: {{name}}",
+    "code": "Verification code: {{code}}",
+    "verifyCode": "Approve only if the code matches your browser.",
+    "redirect": "Return address after approval:",
+    "requested": "Requested permissions: {{scopes}}",
+    "approve": "Code matches · Approve",
+    "deny": "Deny",
+    "scopes": {
+      "carrot_read": "Read",
+      "carrot_images": "Send images",
+      "carrot_edit": "Edit text and formatting",
+      "carrot_process": "Manage library and run models",
+      "offline_access": "Keep authorization"
+    },
+    "scopeDetails": {
+      "carrot_read": "Read library, text and context",
+      "carrot_images": "Transfer images and files containing images",
+      "carrot_edit": "Edit text, formatting and context",
+      "carrot_process": "Manage blocks and library; run app models",
+      "offline_access": "Keep approval across sessions"
+    }
   }
 }

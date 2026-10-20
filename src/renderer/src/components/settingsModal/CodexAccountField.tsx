@@ -4,7 +4,14 @@ import { useTranslation } from "react-i18next";
 import type { CodexAccountSnapshot } from "../../../../shared/codexAccountTypes";
 import { settingsGateway } from "../../api/settingsGateway";
 import { formatSettingsErrorMessage } from "../settingsModalHelpers";
+import { useAccountAuthOperation } from "../../hooks/useAccountAuthOperation";
+import {
+  type AccountConnectStage,
+  isAccountRuntimeMissing,
+  resolveAccountConnectStage,
+} from "../../lib/accountRuntimePresentation";
 import { Button } from "../ui/Button";
+import { AccountRuntimeSetup } from "./AccountRuntimeSetup";
 
 type AccountAction = "login" | "logout";
 
@@ -17,6 +24,7 @@ type CodexAccountController = {
   loading: boolean;
   action: AccountAction | null;
   error: string | null;
+  failedAction: AccountAction | null;
   runAction: (action: AccountAction) => Promise<void>;
 };
 
@@ -27,10 +35,19 @@ export function CodexAccountField({
   controlsBusy: boolean;
   onSnapshotChange?: (snapshot: CodexAccountSnapshot | null) => void;
 }): React.JSX.Element {
+  const operation = useAccountAuthOperation("codex-auth");
   const controller = useCodexAccountController(controlsBusy, onSnapshotChange);
   const authenticated = controller.snapshot?.authenticated === true;
+  const runtimeMissing = isAccountRuntimeMissing(controller.snapshot);
+  const { loginError, otherError } = readAccountFailure(
+    controller,
+    operation.cancelled,
+  );
   const disabled =
-    controlsBusy || controller.loading || controller.action !== null;
+    controlsBusy ||
+    controller.loading ||
+    controller.action !== null ||
+    operation.activity !== null;
   return (
     <section
       className="codex-account-card"
@@ -43,16 +60,47 @@ export function CodexAccountField({
       <CodexAccountActionButton
         authenticated={authenticated}
         action={controller.action}
+        stage={resolveAccountConnectStage({
+          runtimeMissing,
+          activity: operation.activity,
+          pending: controller.action === "login",
+          failed: loginError !== null,
+        })}
         disabled={disabled}
         runAction={controller.runAction}
       />
-      {controller.error || controller.snapshot?.authenticationError ? (
+      <AccountRuntimeSetup
+        runtime="codex"
+        runtimeMissing={runtimeMissing}
+        activity={operation.activity}
+        signInError={loginError}
+        onCancel={operation.cancel}
+      />
+      {otherError ? (
         <p className="codex-account-error" role="alert">
-          {controller.error || controller.snapshot?.authenticationError}
+          {otherError}
         </p>
       ) : null}
     </section>
   );
+}
+
+/**
+ * Sign-in failures get the retryable first-use message; a cancelled sign-in
+ * also rejects but is the user's choice. Other errors keep the plain alert.
+ */
+function readAccountFailure(
+  controller: CodexAccountController,
+  cancelled: boolean,
+): { loginError: string | null; otherError: string | null } {
+  const login = controller.failedAction === "login";
+  return {
+    loginError: login && !cancelled ? controller.error : null,
+    otherError:
+      (login ? null : controller.error) ||
+      controller.snapshot?.authenticationError ||
+      null,
+  };
 }
 
 function CodexAccountSummary({
@@ -90,14 +138,24 @@ function CodexAccountSummary({
   );
 }
 
+const LOGIN_LABELS: Record<AccountConnectStage, string> = {
+  connect: "settings.codex.account.signIn",
+  download: "settings.accountRuntime.codexLogin",
+  "retry-download": "settings.accountRuntime.codexLoginRetry",
+  downloading: "settings.accountRuntime.downloading",
+  "signing-in": "settings.codex.account.signingIn",
+};
+
 function CodexAccountActionButton({
   authenticated,
   action,
+  stage,
   disabled,
   runAction,
 }: {
   authenticated: boolean;
   action: AccountAction | null;
+  stage: AccountConnectStage;
   disabled: boolean;
   runAction: (action: AccountAction) => Promise<void>;
 }): React.JSX.Element {
@@ -109,12 +167,11 @@ function CodexAccountActionButton({
       disabled={disabled}
       onClick={() => void runAction(nextAction)}
     >
-      {readActionLabel(action, authenticated, {
-        signingIn: t("settings.codex.account.signingIn"),
-        signingOut: t("settings.codex.account.signingOut"),
-        signIn: t("settings.codex.account.signIn"),
-        signOut: t("settings.codex.account.signOut"),
-      })}
+      {action === "logout"
+        ? t("settings.codex.account.signingOut")
+        : authenticated
+          ? t("settings.codex.account.signOut")
+          : t(LOGIN_LABELS[stage])}
     </Button>
   );
 }
@@ -130,6 +187,9 @@ function useCodexAccountController(
   const [loading, setLoading] = React.useState(true);
   const [action, setAction] = React.useState<AccountAction | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [failedAction, setFailedAction] = React.useState<AccountAction | null>(
+    null,
+  );
   const refreshState = React.useRef<AccountRefreshState>({
     lastReadAt: null,
     revision: 0,
@@ -157,22 +217,26 @@ function useCodexAccountController(
       refreshState.current.revision += 1;
       setAction(nextAction);
       setError(null);
+      setFailedAction(null);
       try {
         publishSnapshot(await performAccountAction(nextAction));
       } catch (caught) {
+        setFailedAction(nextAction);
         setError(
           formatSettingsErrorMessage(
             caught,
             t(accountActionFailureKey(nextAction)),
           ),
         );
+        // A failed first sign-in may still have installed the CLI.
+        if (nextAction === "login") await rereadAccount(publishSnapshot);
       } finally {
         setAction(null);
       }
     },
     [publishSnapshot, t],
   );
-  return { snapshot, loading, action, error, runAction };
+  return { snapshot, loading, action, error, failedAction, runAction };
 }
 
 function useCodexAccountRefresh(
@@ -235,6 +299,16 @@ function useCodexAccountRefresh(
   }, [paused, refreshState, publishSnapshot, setError, setLoading, t]);
 }
 
+async function rereadAccount(
+  publishSnapshot: (snapshot: CodexAccountSnapshot) => void,
+): Promise<void> {
+  try {
+    publishSnapshot(await settingsGateway.getCodexAccount());
+  } catch (error) {
+    console.warn("Could not re-read the Codex account", error);
+  }
+}
+
 async function performAccountAction(
   action: AccountAction,
 ): Promise<CodexAccountSnapshot> {
@@ -257,19 +331,4 @@ function readAccountStatus(
   if (loading) return labels.loading;
   if (!snapshot?.authenticated) return labels.signedOut;
   return snapshot.email || labels.connected;
-}
-
-function readActionLabel(
-  action: AccountAction | null,
-  authenticated: boolean,
-  labels: {
-    signingIn: string;
-    signingOut: string;
-    signIn: string;
-    signOut: string;
-  },
-): string {
-  if (action === "login") return labels.signingIn;
-  if (action === "logout") return labels.signingOut;
-  return authenticated ? labels.signOut : labels.signIn;
 }

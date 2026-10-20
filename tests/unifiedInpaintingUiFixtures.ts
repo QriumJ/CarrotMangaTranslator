@@ -1,5 +1,6 @@
 import { vi } from "vitest";
 import type { ComponentProps } from "react";
+import type { AppRightQuickRail } from "../src/renderer/src/components/AppRightQuickRail";
 import type { AppRightRail } from "../src/renderer/src/components/AppRightRail";
 import type { ChapterSnapshot, MangaPage } from "../src/shared/libraryTypes";
 import type { TranslationBlock } from "../src/shared/textTypes";
@@ -119,5 +120,33 @@ export function makeRightRailProps(
     rightRailMode: "block-editor",
     saveStatus: "idle",
     ...overrides,
+  };
+}
+
+export function makeQuickRailChromeProps(): Pick<
+  ComponentProps<typeof AppRightQuickRail>,
+  | "regionTranslationActive"
+  | "stageToolbarHidden"
+  | "workspaceOriginalOpacityControl"
+  | "workspaceViewControls"
+> {
+  return {
+    regionTranslationActive: false,
+    stageToolbarHidden: false,
+    workspaceOriginalOpacityControl: {
+      available: true,
+      opacity: 0,
+      pageId: "page-1",
+      onChange: () => undefined,
+    },
+    workspaceViewControls: {
+      effectiveScale: 1,
+      fitMode: "contain",
+      zoom: 1,
+      onChangeFitMode: () => undefined,
+      onResetZoom: () => undefined,
+      onZoomIn: () => undefined,
+      onZoomOut: () => undefined,
+    },
   };
 }

@@ -5,6 +5,7 @@ import type {
   LibraryRenameActions,
   UseLibraryActionsOptions,
 } from "./libraryActionTypes";
+import { useChapterBulkDelete } from "./useChapterBulkDelete";
 import { useDeleteRenameTargetAction } from "./useDeleteRenameTargetAction";
 import { useRenameTargetState } from "./useRenameTargetState";
 import { useSubmitRenameAction } from "./useSubmitRenameAction";
@@ -20,9 +21,11 @@ export function useLibraryRenameActions(
   const [renameTarget, setRenameTarget] = useState<RenameTarget | null>(null);
   const [renameBusy, setRenameBusy] = useState(false);
   const targetActions = useRenameTargetState({ ...options, setRenameTarget });
+  const chapterBulkDelete = useChapterBulkDelete(options);
 
   return {
     ...targetActions,
+    chapterBulkDelete,
     deleteRenameTarget: useDeleteRenameTargetAction({
       ...options,
       renameTarget,

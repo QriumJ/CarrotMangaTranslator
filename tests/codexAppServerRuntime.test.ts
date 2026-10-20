@@ -14,6 +14,8 @@ import {
   resolveCodexAppServerBinary,
 } from "../src/main/codexAppServerBinary";
 import { CODEX_APP_SERVER_ARGUMENTS } from "../src/main/codexAppServerPolicy";
+import { CodexAppServerClient } from "../src/main/codexAppServerClient";
+import type { AppPaths } from "../src/main/appPaths";
 
 type CodexRuntimePlan = {
   sourceDir: string;
@@ -47,6 +49,25 @@ afterEach(() => {
 });
 
 describeWindows("official Codex App Server runtime", () => {
+  it("starts through the production adapter with an isolated unsigned-in home", async () => {
+    const dataRoot = mkdtempSync(join(tmpdir(), "mgt-codex-production-"));
+    temporaryDirectories.push(dataRoot);
+    const client = await CodexAppServerClient.start({
+      paths: {
+        dataRoot,
+        resourcesDir: dataRoot,
+        isPackaged: false,
+      } as AppPaths,
+      appVersion: "on-demand-test",
+    });
+    try {
+      expect(client.version).toBe(BUNDLED_CODEX_VERSION);
+      expect((await client.readAccount()).account).toBeNull();
+    } finally {
+      await client.dispose();
+    }
+  }, 30_000);
+
   it("resolves the exact pinned native npm distribution", () => {
     const runtime = runtimeHelpers.resolveCodexRuntime(
       repoRoot,

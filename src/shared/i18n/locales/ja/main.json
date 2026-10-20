@@ -37,13 +37,16 @@
     "saveText": "テキストを保存",
     "openConditionalBatchYaml": "一括編集 YAML を読み込む",
     "saveConditionalBatchYaml": "一括編集 YAML を書き出す",
+    "openWorkGlossary": "用語ファイルを読み込む",
+    "saveWorkGlossary": "用語ファイルを書き出す",
     "conditionalBatchYamlTooLarge": "一括編集 YAML ファイルが 2 MiB を超えています。",
     "exportOutputFolder": "結果の出力フォルダーを選択",
     "filters": {
       "images": "画像ファイル",
       "font": "フォントファイル",
       "yaml": "YAML ファイル",
-      "text": "テキストファイル"
+      "text": "テキストファイル",
+      "json": "JSONファイル"
     }
   },
   "jobs": {
@@ -59,7 +62,8 @@
       "untrusted": "信頼できないIPC要求です。",
       "invalidImportPreview": "インポートプレビューの期限切れ、または無効です。",
       "invalidSharePreview": "共有ファイルのプレビューの期限切れ、または無効です。",
-      "libraryOperationBusy": "ライブラリ処理が完了してから構成を変更してください。"
+      "libraryOperationBusy": "ライブラリ処理が完了してから構成を変更してください。",
+      "chapterSelectionChanged": "話の一覧が変わりました。一覧を確認してから削除してください。"
     },
     "labels": {
       "translationJob": "翻訳ジョブ",

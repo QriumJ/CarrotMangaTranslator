@@ -1,6 +1,6 @@
+import { buildTranslatedTextImport } from "../src/shared/gatherTextFile";
 import { describe, expect, it } from "vitest";
 import {
-  buildTranslatedTextImport,
   decodeImportedTextContent,
   formatGatheredText,
   type GatheredPage,
@@ -68,6 +68,8 @@ describe("buildTranslatedTextImport", () => {
         "# 2쪽 · b.png",
         "고마워",
       ].join("\n"),
+      undefined,
+      "translated",
     );
     expect(result.warnings).toEqual([]);
     expect(result.matchedPageCount).toBe(2);
@@ -89,6 +91,8 @@ describe("buildTranslatedTextImport", () => {
         "# 2쪽 · b.png",
         "새 고마워",
       ].join("\n"),
+      undefined,
+      "translated",
     );
 
     expect(result.warnings).toEqual([]);
@@ -107,6 +111,8 @@ describe("buildTranslatedTextImport", () => {
     const result = buildTranslatedTextImport(
       pages,
       ["# 1쪽 · a.png", "한 줄뿐", "", "# 2쪽 · b.png", "새 번역"].join("\n"),
+      undefined,
+      "translated",
     );
     expect(result.matchedPageCount).toBe(1);
     expect(result.warnings).toHaveLength(1);
@@ -120,13 +126,20 @@ describe("buildTranslatedTextImport", () => {
     const result = buildTranslatedTextImport(
       pages,
       ["# 9쪽 · missing.png", "떠도는 줄"].join("\n"),
+      undefined,
+      "translated",
     );
     expect(result.updates).toEqual([]);
     expect(result.warnings[0]).toContain("9쪽");
   });
 
   it("accepts a headerless file only when exactly one page is shown", () => {
-    const single = buildTranslatedTextImport([pages[1]], "고마워요");
+    const single = buildTranslatedTextImport(
+      [pages[1]],
+      "고마워요",
+      undefined,
+      "translated",
+    );
     expect(single.updates).toEqual([
       { pageId: "p2", blockId: "b3", translatedText: "고마워요" },
     ]);

@@ -13,7 +13,8 @@ export function registerChatIpc(context: IpcContext) {
   trustedHandleContract(
     context,
     chatIpcContracts.createChat,
-    (_event, runtime?: "codex" | "claude") => service().create(runtime),
+    (_event, runtime?: "codex" | "claude" | "grok") =>
+      service().create(runtime),
   );
   trustedHandleContract(context, chatIpcContracts.readChat, (_event, id) =>
     service().read(id),

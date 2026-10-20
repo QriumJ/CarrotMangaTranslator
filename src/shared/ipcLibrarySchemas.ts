@@ -306,6 +306,21 @@ export const DeleteWorkRequestSchema = z.object({ workId: uuid }).strict();
 export const DeleteChapterRequestSchema = z
   .object({ chapterId: uuid })
   .strict();
+const MAX_CHAPTERS_PER_DELETE = 1000;
+export const DeleteChaptersRequestSchema = z
+  .object({
+    workId: uuid,
+    chapterIds: z
+      .array(uuid)
+      .min(1)
+      .max(MAX_CHAPTERS_PER_DELETE)
+      .refine(
+        (ids) => new Set(ids).size === ids.length,
+        "Use distinct chapter IDs.",
+      ),
+    removeCustomOutputs: z.boolean(),
+  })
+  .strict();
 export const OpenChapterRequestSchema = z
   .object({ chapterId: uuid, workId: uuid.optional() })
   .strict();

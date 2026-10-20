@@ -5,6 +5,8 @@ import { applyGatherTextFormatRequest } from "./applyGatherTextFormatRequest";
 import type { AppSessionViewProps } from "./AppSessionView";
 import type { AppSessionViewModel } from "./appSessionViewModel";
 import { isChapterMutationBlocked } from "./workspaceActivity";
+import { pendingPageEdits } from "../../lib/pageEditBarrier";
+import { applyReviewTextImport } from "./applyReviewTextImport";
 
 export function createGatherTextProps(
   model: AppSessionViewModel,
@@ -12,12 +14,11 @@ export function createGatherTextProps(
   const {
     core,
     derivedState,
-    libraryActions,
+    persistence,
     pageNavigationHandlers,
     settingsDialog,
     uiState,
     updateCurrentChapter,
-    workspaceHistory,
   } = model;
   const mutationDisabled = isChapterMutationBlocked(model);
   return uiState.textViewOpen
@@ -33,14 +34,26 @@ export function createGatherTextProps(
             updateCurrentChapter,
           );
         },
-        onApplyTranslatedText: (updates) => {
-          if (isChapterMutationBlocked(model)) return;
+        onApplyTranslatedText: (updates, expectedChapter) => {
+          if (isChapterMutationBlocked(model))
+            throw new Error("페이지 처리 중에는 가져올 수 없습니다.");
+          if (core.currentChapterRef.current !== expectedChapter)
+            throw new Error(
+              "가져오는 동안 회차 또는 편집 내용이 변경되었습니다. 다시 불러오세요.",
+            );
           applyTranslatedTextUpdates(updates, updateCurrentChapter);
         },
-        onChapterUpdated: (updatedChapter) => {
-          if (isChapterMutationBlocked(model)) return;
-          workspaceHistory.reset();
-          libraryActions.applyChapter(updatedChapter);
+        onImportReviewText: async (request) => {
+          await pendingPageEdits.flushEnvironment();
+          if (isChapterMutationBlocked(model))
+            throw new Error("페이지 처리 중에는 가져올 수 없습니다.");
+          const result = applyReviewTextImport(
+            core.currentChapterRef.current,
+            request,
+            updateCurrentChapter,
+          );
+          await persistence.saveNow();
+          return result;
         },
         onClose: () => uiState.setTextViewOpen(false),
         onOpenBatchEdit: (initialFind) => {

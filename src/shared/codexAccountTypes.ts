@@ -11,6 +11,7 @@ export type CodexAccountModel = {
 };
 
 export type CodexAccountSnapshot = {
+  runtimeInstalled?: boolean;
   authenticationError?: string;
   authenticated: boolean;
   accountKind: CodexAccountKind;

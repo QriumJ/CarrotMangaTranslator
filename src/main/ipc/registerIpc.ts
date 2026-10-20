@@ -16,7 +16,10 @@ import { registerPanelWindowsIpc } from "./panelWindowsIpc";
 import { registerAppOperationIpc } from "./appOperationIpc";
 import { registerPageImageExportIpc } from "./pageImageExportIpc";
 import { registerSettingsIpc } from "./settingsIpc";
-import { registerTextExportIpc } from "./textExportIpc";
+import {
+  registerTextExportIpc,
+  registerWorkGlossaryFileIpc,
+} from "./textExportIpc";
 import { registerTranslationJobIpc } from "./translationJobIpc";
 import { registerReviewTextIpc } from "./reviewTextIpc";
 import { registerWorkContextIpc } from "./workContextIpc";
@@ -89,6 +92,7 @@ export function registerIpc(context: IpcContext): void {
   registerImportShareIpc(context);
   registerWebImportIpc(context);
   registerTextExportIpc(context);
+  registerWorkGlossaryFileIpc(context);
   registerReviewTextIpc(context);
   registerWorkContextIpc(context);
   registerTranslationJobIpc(context);

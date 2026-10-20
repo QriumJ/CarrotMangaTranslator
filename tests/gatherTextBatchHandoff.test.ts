@@ -46,7 +46,7 @@ describe("gathered-text to conditional-batch handoff", () => {
     expect(setTextViewOpen).not.toHaveBeenCalled();
   });
 
-  it("blocks chapter mutation callbacks when their target page is processing", () => {
+  it("blocks chapter mutation callbacks when their target page is processing", async () => {
     const updateCurrentChapter = vi.fn();
     const reset = vi.fn();
     const applyChapter = vi.fn();
@@ -89,14 +89,25 @@ describe("gathered-text to conditional-batch handoff", () => {
 
     expect(props.formatApplyDisabled).toBe(true);
     props.onApplyFormat?.({ targets: [], patch: {} });
-    props.onApplyTranslatedText?.([
-      {
-        pageId: PAGE.id,
-        blockId: "block-1",
-        translatedText: "경합 변경",
-      },
-    ]);
-    props.onChapterUpdated?.(CHAPTER);
+    expect(() =>
+      props.onApplyTranslatedText?.(
+        [
+          {
+            pageId: PAGE.id,
+            blockId: "block-1",
+            translatedText: "경합 변경",
+          },
+        ],
+        CHAPTER,
+      ),
+    ).toThrow();
+    await expect(
+      props.onImportReviewText?.({
+        chapterId: CHAPTER.id,
+        content: "",
+        format: "csv",
+      }),
+    ).rejects.toThrow();
 
     expect(updateCurrentChapter).not.toHaveBeenCalled();
     expect(reset).not.toHaveBeenCalled();

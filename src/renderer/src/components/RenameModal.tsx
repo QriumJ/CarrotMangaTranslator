@@ -10,7 +10,6 @@ type RenameModalProps = {
   initialTitle: string;
   busy: boolean;
   onCancel: () => void;
-  onDelete: () => void;
   onSubmit: (title: string) => void;
 };
 
@@ -19,7 +18,6 @@ export function RenameModal({
   initialTitle,
   busy,
   onCancel,
-  onDelete,
   onSubmit,
 }: RenameModalProps): React.JSX.Element {
   const { t } = useTranslation("components");
@@ -35,13 +33,6 @@ export function RenameModal({
   const heading = t(
     kind === "work" ? "rename.workTitle" : "rename.chapterTitle",
   );
-  const deleteLabel = t(
-    kind === "work" ? "rename.deleteWork" : "rename.deleteChapter",
-  );
-  const deleteNote =
-    kind === "work"
-      ? t("rename.deleteWorkWarning")
-      : t("rename.deleteChapterWarning");
 
   return (
     <Modal
@@ -51,11 +42,6 @@ export function RenameModal({
       closeDisabled={busy}
       footer={
         <ModalActionBar
-          leading={
-            <Button variant="danger" onClick={onDelete} disabled={busy}>
-              {deleteLabel}
-            </Button>
-          }
           actions={
             <>
               <Button variant="ghost" onClick={onCancel} disabled={busy}>
@@ -85,7 +71,6 @@ export function RenameModal({
           }
         }}
       />
-      <p className="muted-line modal-note">{deleteNote}</p>
     </Modal>
   );
 }

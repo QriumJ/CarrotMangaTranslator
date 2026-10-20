@@ -39,7 +39,7 @@ describe("gather text footer", () => {
     ).not.toBeNull();
     expect(screen.getByRole("menuitem", { name: ".txt 저장" })).not.toBeNull();
     expect(
-      screen.getByRole("menuitem", { name: ".txt 불러오기" }),
+      screen.getByRole("menuitem", { name: "번역문 TXT 불러오기" }),
     ).not.toBeNull();
     expect(
       screen.getByRole("menuitem", { name: "검수표 가져오기" }),
@@ -76,7 +76,7 @@ describe("gather text footer", () => {
     );
 
     expect(
-      screen.getByRole("menuitem", { name: ".txt 불러오기" }),
+      screen.getByRole("menuitem", { name: "번역문 TXT 불러오기" }),
     ).toHaveProperty("disabled", true);
     expect(
       screen.getByRole("menuitem", { name: "검수표 가져오기" }),

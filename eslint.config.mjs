@@ -37,6 +37,8 @@ export default tseslint.config(
       ".agents/**",
       ".bug-hunter/**",
       "codex/**",
+      "grok/**",
+      "cli-runtimes/**",
       "**/__pycache__/**",
     ],
   },

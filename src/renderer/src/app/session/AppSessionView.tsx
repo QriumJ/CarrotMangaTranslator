@@ -305,7 +305,12 @@ function SessionFloatingOverlays({
         <ExportOptionsModal {...exportOptionsProps} />
       ) : null}
       {gatherTextProps ? <GatherTextModal {...gatherTextProps} /> : null}
-      {styleGuideProps ? <StyleGuideModal {...styleGuideProps} /> : null}
+      {styleGuideProps ? (
+        <StyleGuideModal
+          key={styleGuideProps.workId ?? styleGuideProps.chapter?.workId}
+          {...styleGuideProps}
+        />
+      ) : null}
       <TranslationDialogs
         region={regionTranslationProps}
         whole={translationOptionsProps}
