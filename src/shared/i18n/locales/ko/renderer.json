@@ -52,6 +52,10 @@
   "job": {
     "pageProgress": "{{current}} / {{total}} 페이지 {{status}}",
     "pageStatus": "페이지 {{status}}",
+    "workflowProgress": {
+      "scope": "{{pages}}페이지 · {{stages}}단계",
+      "operations": "단계 작업 {{current}} / {{total}}"
+    },
     "pageRetry": "{{current}} / {{total}} 페이지 재시도 {{attempt}} / {{attemptTotal}}",
     "elapsed": {
       "lessThanSecond": "1초 미만",
@@ -466,6 +470,7 @@
       "success": "현재 페이지의 번역 블록을 말풍선에 맞췄습니다.",
       "selectedBlockSuccess": "선택한 번역 블록을 말풍선에 맞췄습니다.",
       "selectedBlockNoMatch": "선택한 블록에서 맞출 말풍선 영역을 찾지 못했습니다.",
+      "selectionChanged": "선택한 블록 {{count}}개 · 말풍선 배치 {{changed}}개 변경",
       "failedTitle": "말풍선 맞춤 실패",
       "failed": "번역 블록을 말풍선에 맞추지 못했습니다."
     },

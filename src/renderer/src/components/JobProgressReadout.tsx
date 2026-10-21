@@ -5,6 +5,7 @@ import type { ProgressSnapshot } from "../lib/jobProgress";
 import { useEtaText } from "../hooks/useEtaText";
 import { ProgressBar } from "./ui/ProgressBar";
 import { CodexJobPreview } from "./CodexJobPreview";
+import { formatWorkflowProgress } from "../lib/workflowJobProgress";
 
 export type JobProgressReadoutProps = {
   jobState: JobState;
@@ -43,11 +44,12 @@ export function JobProgressReadout({
   const counts = resolveProgressCounts(jobState, progressSnapshot);
   const etaText = useEtaText(jobState.codexProgress ? null : progressSnapshot);
   const headline = resolveProgressHeadline(jobState.progressText, counts);
-  const valueText = resolveCountLabel(
+  const { valueText, detail } = resolveReadoutText(jobState, counts, {
+    indeterminateLabel: indeterminateLabel ?? t("common.inProgress"),
+    showDetail,
     valueTextOverride,
-    counts,
-    indeterminateLabel ?? t("common.inProgress"),
-  );
+    rendererT,
+  });
 
   return (
     <>
@@ -55,10 +57,7 @@ export function JobProgressReadout({
         <span>{headline}</span>
         <strong>{valueText}</strong>
       </div>
-      <ProgressNotes
-        detail={showDetail ? progressDetail(jobState, rendererT) : undefined}
-        etaText={showEta ? etaText : null}
-      />
+      <ProgressNotes detail={detail} etaText={showEta ? etaText : null} />
       <ProgressBar
         label={headline}
         mode={counts ? "determinate" : "indeterminate"}
@@ -74,6 +73,33 @@ export function JobProgressReadout({
       />
     </>
   );
+}
+
+/** Count label and detail line; page workflows count stage operations. */
+function resolveReadoutText(
+  jobState: JobState,
+  counts: { current: number; total: number } | null,
+  options: {
+    indeterminateLabel: string;
+    showDetail: boolean;
+    valueTextOverride: string | undefined;
+    rendererT: ReturnType<typeof useTranslation<"renderer">>["t"];
+  },
+): { valueText: string; detail: string | undefined } {
+  const workflow = formatWorkflowProgress(jobState, counts, options.rendererT);
+  const detail = options.showDetail
+    ? progressDetail(jobState, options.rendererT)
+    : undefined;
+  return {
+    valueText: resolveCountLabel(
+      options.valueTextOverride ?? workflow?.operations ?? undefined,
+      counts,
+      options.indeterminateLabel,
+    ),
+    detail: workflow
+      ? [workflow.scope, detail?.trim()].filter(Boolean).join(" · ")
+      : detail,
+  };
 }
 
 function resolveProgressHeadline(

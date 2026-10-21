@@ -22,6 +22,17 @@ const STATE = {
 } as InpaintingJobState;
 
 describe("inpainting job page completion", () => {
+  it("does not turn an ineligible explicit selection into full-page completion", () => {
+    const page = makePage();
+    page.blocks[0].inpaintExcluded = true;
+    expect(
+      canCompleteTranslationWorkflowWithoutTargets(page, STATE, {
+        ...TARGET,
+        layoutOnly: true,
+        blockIds: [page.blocks[0].id],
+      }),
+    ).toBe(false);
+  });
   it("does not trust partial erased ids without their saved artifact", () => {
     const page = makePage();
     page.translationCompletion = {

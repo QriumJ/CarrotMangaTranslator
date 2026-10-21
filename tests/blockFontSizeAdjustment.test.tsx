@@ -1875,13 +1875,17 @@ describe("selected block font-size adjustment", () => {
     );
 
     expect(screen.getByRole("button", { name: "패널 분리" })).not.toBeNull();
-    expect(screen.getByText("자동 지우기에서 제외")).not.toBeNull();
+    // The header badge still names the state; the toggle moved to 블록 전체
+    // 설정 so it covers every selected block, not just the active one.
+    expect(screen.getAllByText("자동 지우기에서 제외").length).toBeGreaterThan(
+      0,
+    );
     openBlockMenu();
-    const exclusion = screen.getByRole("menuitemcheckbox", {
-      name: "자동 지우기에서 제외",
-    });
-    expect(exclusion.getAttribute("aria-checked")).toBe("true");
-    fireEvent.click(exclusion);
+    expect(screen.queryByRole("menuitemcheckbox")).toBeNull();
+    openBlockMenu();
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: "자동 지우기에서 제외" }),
+    );
     expect(onUpdate).toHaveBeenCalledWith({ inpaintExcluded: false });
 
     openBlockMenu();
@@ -2092,7 +2096,9 @@ describe("selected block font-size adjustment", () => {
     expect(
       screen.getByRole("heading", { name: "블록 배경 일괄 적용" }),
     ).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "적용" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: "적용" }),
+    );
 
     fireEvent.click(
       within(displayGroup as HTMLElement).getByRole("button", {
@@ -2100,7 +2106,9 @@ describe("selected block font-size adjustment", () => {
       }),
     );
     fireEvent.click(screen.getByRole("button", { name: "이 화 전체" }));
-    fireEvent.click(screen.getByRole("button", { name: "적용" }));
+    fireEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: "적용" }),
+    );
     expect(onApplyBlockBackgroundOpacity.mock.calls).toEqual([
       ["page"],
       ["chapter"],

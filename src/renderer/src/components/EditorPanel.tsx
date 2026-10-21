@@ -68,7 +68,6 @@ function SelectedEditorPanel(
           onSaveToLibrary={props.onSaveToLibrary ?? NOOP_ACTION}
           onRemoveBubbleLayout={props.onRemoveBubbleLayout ?? NOOP_ACTION}
           onSelect={setActiveTab}
-          onUpdate={props.onUpdate}
         />
       )}
       <EditorPanelBody

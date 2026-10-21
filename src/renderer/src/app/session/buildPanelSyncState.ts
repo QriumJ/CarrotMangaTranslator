@@ -3,6 +3,7 @@ import {
   createPanelSelectionKey,
   type PanelSyncState,
 } from "../../../../shared/panelBridgeTypes";
+import { resolveSelectionBubblePadding } from "../../lib/bubblePaddingSelection";
 import type { TranslationBlock } from "../../../../shared/textTypes";
 import type { AppSessionViewModel } from "./appSessionViewModel";
 import { isWorkspaceImageReadyForSelectedPage } from "./appSessionSelectors";
@@ -14,6 +15,7 @@ export function buildPanelSyncState({
   core,
   derivedState,
   inpaintingBridge,
+  settingsDialog,
   uiState,
   workspaceHistory,
 }: Pick<
@@ -22,9 +24,11 @@ export function buildPanelSyncState({
   | "core"
   | "derivedState"
   | "inpaintingBridge"
+  | "settingsDialog"
   | "uiState"
   | "workspaceHistory"
 >): PanelSyncState {
+  const global = settingsDialog.settings?.inpainting?.bubbleLayoutPaddingRatio;
   const interactionBusy = isAreaTranslationBusy(
     derivedState,
     uiState,
@@ -69,6 +73,7 @@ export function buildPanelSyncState({
     selectedBlockCount: selectedIds.length,
     selectionKey: createPanelSelectionKey(selectedIds),
     formatSelection: buildPanelFormatSelection(selectedBlocks),
+    bubblePaddingRatio: resolveSelectionBubblePadding(selectedBlocks, global),
     editorTextTabRequestToken: uiState.editorTextTabRequestToken,
     editorTextResetToken: uiState.editorTextResetToken,
     transformMode:

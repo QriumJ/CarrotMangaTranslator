@@ -52,6 +52,8 @@ export type JobState = {
   installLogLines?: string[];
   progressCurrent?: number;
   progressTotal?: number;
+  /** Aggregate counters count page-stage operations, not distinct pages. */
+  workflowProgress?: { pageCount: number; stageCount: number };
   pageIndex?: number;
   pageTotal?: number;
   attempt?: number;

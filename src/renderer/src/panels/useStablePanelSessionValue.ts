@@ -15,6 +15,7 @@ type EditingCallbacks = Pick<
   | "onDuplicateBlock"
   | "onEraseBlockOriginal"
   | "onFitBlockBubble"
+  | "onApplyBubblePadding"
   | "onRemoveBubbleLayout"
   | "onUpdateBlock"
   | "onUpdateFormat"
@@ -72,6 +73,7 @@ export function useStablePanelSessionValue(
       editorTextTabRequestToken: value.editorTextTabRequestToken,
       editorTextResetToken: value.editorTextResetToken,
       formatSelection,
+      bubblePaddingRatio: value.bubblePaddingRatio,
       selectionKey: value.selectionKey,
       selectedBlock: value.selectedBlock,
       selectedBlockCount: value.selectedBlockCount,
@@ -86,6 +88,7 @@ export function useStablePanelSessionValue(
       callbacks,
       formatSelection,
       selectedPageSize,
+      value.bubblePaddingRatio,
       value.letteringTool,
       value.onChangeLetteringTool,
       value.areaTranslateAvailable,
@@ -141,6 +144,13 @@ function useStableEditingCallbacks(value: PanelSessionValue): EditingCallbacks {
   const onDuplicateBlock = useEventCallback(value.onDuplicateBlock);
   const onEraseBlockOriginal = useEventCallback(value.onEraseBlockOriginal);
   const onFitBlockBubble = useEventCallback(value.onFitBlockBubble);
+  const applyBubblePadding = useEventCallback((paddingRatio: number) =>
+    value.onApplyBubblePadding?.(paddingRatio),
+  );
+  // Editors without a live page (library/templates) have no handler.
+  const onApplyBubblePadding = value.onApplyBubblePadding
+    ? applyBubblePadding
+    : undefined;
   const onRemoveBubbleLayout = useEventCallback(value.onRemoveBubbleLayout);
   const onUpdateBlock = useEventCallback(value.onUpdateBlock);
   const onPreviewTextSelection = useEventCallback(
@@ -162,6 +172,7 @@ function useStableEditingCallbacks(value: PanelSessionValue): EditingCallbacks {
       onDuplicateBlock,
       onEraseBlockOriginal,
       onFitBlockBubble,
+      onApplyBubblePadding,
       onRemoveBubbleLayout,
       onUpdateBlock,
       onUpdateFormat,
@@ -178,6 +189,7 @@ function useStableEditingCallbacks(value: PanelSessionValue): EditingCallbacks {
       onDuplicateBlock,
       onEraseBlockOriginal,
       onFitBlockBubble,
+      onApplyBubblePadding,
       onRemoveBubbleLayout,
       onUpdateBlock,
       onUpdateFormat,

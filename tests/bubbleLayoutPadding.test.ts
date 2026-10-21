@@ -10,10 +10,18 @@ import {
 } from "../src/shared/bubbleLayoutPadding";
 
 describe("bubble layout padding", () => {
-  it("leaves the existing safe shape untouched at zero padding", () => {
+  it("leaves the detected shape and its bounds untouched at zero padding", () => {
     const layout = makeLayout();
 
     expect(applyBubbleLayoutPadding(layout, 0)).toBe(layout);
+    const padded = applyBubbleLayoutPaddingToBounds(layout, 0);
+    expect(padded.bubbleLayout).toBe(layout);
+    expect(padded.envelope).toEqual({
+      blockStart: 0,
+      blockEnd: 1,
+      inlineStart: 0,
+      inlineEnd: 1,
+    });
   });
 
   it("uses the default 12% as a total axis reduction around each region", () => {

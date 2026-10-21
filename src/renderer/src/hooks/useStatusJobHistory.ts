@@ -70,7 +70,8 @@ function toHistoryEntry(
       status: job.status,
       completedAt: Date.now(),
       progressText: job.progressText,
-      pageTotal: job.pageTotal ?? job.progressTotal,
+      pageTotal:
+        job.workflowProgress?.pageCount ?? job.pageTotal ?? job.progressTotal,
     };
   const event = task.operation;
   if (!event || isAppOperationActive(event)) return null;

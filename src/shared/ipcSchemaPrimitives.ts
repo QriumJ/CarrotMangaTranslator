@@ -310,6 +310,7 @@ export const TranslationBlockObjectSchema = z
     bboxSpace: z.enum(["normalized_1000", "pixels"]).optional(),
     renderBboxSpace: z.enum(["normalized_1000", "pixels"]).optional(),
     bubbleLayout: BubbleLayoutSchema.optional(),
+    bubbleLayoutPaddingRatio: finiteNumber.min(0).max(0.7).optional(),
     textDisplayMode: z.literal("translation-only").optional(),
     workflowOrigin: WorkflowBlockMetadataSchema.optional(),
     sourceText: boundedText,

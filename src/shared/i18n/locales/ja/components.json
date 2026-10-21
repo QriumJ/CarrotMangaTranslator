@@ -390,6 +390,11 @@
       "title": "ブロック全体の設定",
       "description": "文字の選択に関係なく、常にブロック全体に適用されます。",
       "descriptionMultiple": "選択した{{count}}個のブロック全体に適用されます。"
+    },
+    "bubblePadding": {
+      "label": "吹き出しの余白",
+      "apply": "適用",
+      "applyMultiple": "{{count}}個のブロックに適用"
     }
   },
   "transform": {

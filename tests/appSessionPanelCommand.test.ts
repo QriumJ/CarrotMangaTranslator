@@ -27,6 +27,7 @@ function createTarget(): PanelCommandTarget {
     insertBlockLibraryEntry: vi.fn(),
     eraseBlockOriginal: vi.fn(),
     fitBlockBubble: vi.fn(),
+    applySelectionBubblePadding: vi.fn(),
     removeSelectedBlockBubbleLayout: vi.fn(),
     selectWorkspaceTool: vi.fn(),
     startAreaTranslate: vi.fn(),

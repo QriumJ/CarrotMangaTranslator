@@ -30,6 +30,8 @@ export type PanelSessionValue = {
   selectedBlockCount: number;
   selectionKey: string;
   formatSelection: PanelFormatSelection;
+  /** Effective selection padding; `null` when blocks differ. */
+  bubblePaddingRatio?: number | null;
   editorTextTabRequestToken: number;
   editorTextResetToken?: number;
   /** True when block edits are disabled (locked page or busy inpainting). */
@@ -79,6 +81,8 @@ export type PanelSessionValue = {
   onInsertBlockLibraryEntry: (entry: BlockLibraryEntryV1) => void;
   onEraseBlockOriginal: () => void;
   onFitBlockBubble: () => void;
+  /** Re-detects every selected block's bubble with this text padding. */
+  onApplyBubblePadding?: (paddingRatio: number) => void;
   onRemoveBubbleLayout: () => void;
   onChangeLetteringTool?: (
     tool: import("../../../shared/generatedLetteringMaskTypes").LetteringTool,

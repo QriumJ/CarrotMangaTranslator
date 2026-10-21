@@ -390,6 +390,11 @@
       "title": "Whole-block settings",
       "description": "Always applies to the whole block, regardless of the selected characters.",
       "descriptionMultiple": "Applies to all {{count}} selected blocks."
+    },
+    "bubblePadding": {
+      "label": "Bubble padding",
+      "apply": "Apply",
+      "applyMultiple": "Apply to {{count}} blocks"
     }
   },
   "transform": {

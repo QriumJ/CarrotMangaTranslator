@@ -6,6 +6,7 @@ import type { PanelFormatFieldKey } from "../../../shared/panelBridgeTypes";
 import { resolveBlockTextWordBreak } from "../../../shared/textWrapping";
 import { FormatBatchApplyModal } from "./FormatBatchApplyModal";
 import type { FormatApplyScope } from "../hooks/blockEditingStatus";
+import { EditorBubbleLayoutSettings } from "./EditorBubbleLayoutSettings";
 import { TextBackgroundField } from "./EditorColorGroup";
 import { Button } from "./ui/Button";
 import { CheckboxField } from "./ui/CheckboxField";
@@ -36,14 +37,20 @@ type BlockSectionProps = {
 export function FormatEditorGroup({
   disableChapterApply,
   model,
+  bubblePaddingRatio,
+  onApplyBubblePadding,
   onApplyFormat,
   selectedBlockCount,
+  selectionKey,
   ...props
 }: BlockSectionProps & {
   disableChapterApply: boolean;
   model: EditorPanelModel;
+  bubblePaddingRatio?: number | null;
+  onApplyBubblePadding?: (paddingRatio: number) => void;
   onApplyFormat?: ApplyFormatHandler;
   selectedBlockCount: number;
+  selectionKey?: string;
 }): React.JSX.Element {
   const { t } = useTranslation("components");
   const titleId = React.useId();
@@ -95,6 +102,13 @@ export function FormatEditorGroup({
       <div className="editor-appearance-list">
         <TextBackgroundField {...props} />
       </div>
+      <EditorBubbleLayoutSettings
+        {...props}
+        selectedBlockCount={selectedBlockCount}
+        selectionKey={selectionKey}
+        effectivePaddingRatio={bubblePaddingRatio}
+        onApplyBubblePadding={onApplyBubblePadding}
+      />
     </section>
   );
 }

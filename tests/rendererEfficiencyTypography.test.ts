@@ -38,6 +38,7 @@ type PanelProjectionFixture = {
     "stageTool" | "editorTextTabRequestToken"
   >;
   workspaceHistory: Pick<PanelInput["workspaceHistory"], "busy">;
+  settingsDialog: Pick<PanelInput["settingsDialog"], "settings">;
 };
 
 beforeEach(() => {
@@ -150,6 +151,7 @@ describe("renderer typography work reuse", () => {
       inpaintingBridge: { contextValue: {} },
       uiState: { stageTool: "select", editorTextTabRequestToken: 0 },
       workspaceHistory: { busy: false },
+      settingsDialog: { settings: null },
     };
     const input = model as PanelInput;
     const state = buildPanelSyncState(input);

@@ -28,6 +28,8 @@ export type EditorPanelProps = {
   selectedBlockCount?: number;
   selectionKey?: string;
   formatSelection?: PanelFormatSelection;
+  /** Effective selection padding from the page session; `null` = mixed. */
+  bubblePaddingRatio?: number | null;
   editorTextTabRequestToken?: number;
   editorTextResetToken?: number;
   pageSize?: { width: number; height: number } | null;
@@ -67,6 +69,8 @@ export type EditorPanelProps = {
   aiUnavailable?: boolean;
   onEraseOriginal?: () => void;
   onFitBubble?: () => void;
+  /** Selection-wide bubble re-detection; absent without a live page. */
+  onApplyBubblePadding?: (paddingRatio: number) => void;
   onRemoveBubbleLayout?: () => void;
   onSelectTransformMode?: (mode: TransformEditorMode) => void;
 };

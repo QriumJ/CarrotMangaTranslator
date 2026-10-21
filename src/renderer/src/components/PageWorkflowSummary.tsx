@@ -23,10 +23,7 @@ export function PageWorkflowSummary({
   return (
     <section className={styles.summary} aria-live="polite">
       <div className={styles.summaryHeading}>
-        <strong>
-          {state.preflight ? `${state.preflight.pageCount}페이지 · ` : ""}
-          {state.plan.stages.length}개 작업
-        </strong>
+        <strong>{workflowScopeLabel(state)}</strong>
         <span>
           {state.plan.overwrite.length
             ? "선택한 기존 값 덮어쓰기"
@@ -78,6 +75,14 @@ export function PageWorkflowSummary({
       )}
     </section>
   );
+}
+
+/** "80페이지 × 7단계 = 단계 작업 560개", matching the progress counter. */
+function workflowScopeLabel(state: Props["state"]): string {
+  const stages = state.plan.stages.length;
+  if (!state.preflight) return `${stages}단계`;
+  const pages = state.preflight.pageCount;
+  return `${pages}페이지 × ${stages}단계 = 단계 작업 ${pages * stages}개`;
 }
 
 function requiresFontOcr(plan: Props["state"]["plan"]) {

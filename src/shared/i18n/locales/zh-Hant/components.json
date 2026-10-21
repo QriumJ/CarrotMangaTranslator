@@ -390,6 +390,11 @@
       "title": "整個文字區塊設定",
       "description": "無論選取哪些字元，一律套用至整個文字區塊。",
       "descriptionMultiple": "套用至選取的全部 {{count}} 個文字區塊。"
+    },
+    "bubblePadding": {
+      "label": "對話框邊距",
+      "apply": "套用",
+      "applyMultiple": "套用到 {{count}} 個文字區塊"
     }
   },
   "transform": {

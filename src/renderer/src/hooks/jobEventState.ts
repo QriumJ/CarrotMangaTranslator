@@ -21,6 +21,7 @@ type NextProgressState = Pick<
   | "progressBytes"
   | "progressTotalBytes"
   | "progressBytesPerSecond"
+  | "workflowProgress"
 >;
 
 export function reduceJobEventBatch(
@@ -155,6 +156,11 @@ function resolveNextProgressState(
   preserveCurrentStatus: boolean,
 ): NextProgressState {
   return {
+    workflowProgress: keepOrFallback(
+      preserveCurrentStatus,
+      current.workflowProgress,
+      event.workflowProgress,
+    ),
     progressMode: keepOrEvent(
       preserveCurrentStatus,
       current.progressMode,

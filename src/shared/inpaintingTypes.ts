@@ -52,6 +52,8 @@ type StartInpaintingTargetRequest =
       mode: "page-bubble-layout";
       pageId: string;
       blockId?: string;
+      blockIds?: string[];
+      paddingRatio?: number;
       policy: BubbleLayoutPolicy;
     }
   | {

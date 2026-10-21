@@ -585,7 +585,7 @@ describe("production cleanup coverage floor gate", () => {
     expect(Object.keys(manifest.floors)).toEqual(scope.existing);
     expect(Object.keys(manifest.introducedFloors)).toEqual(scope.added);
     expect(manifest.deletedFiles).toEqual(scope.deleted);
-    expect(scope.existing).toHaveLength(859);
+    expect(scope.existing).toHaveLength(862);
     // Includes global chat, shared actions, OpenCode help, MCP event streams, shared
     // translation instructions and image budget; inherited floors remain unchanged.
     // inherited floors remain unchanged.
@@ -603,7 +603,8 @@ describe("production cleanup coverage floor gate", () => {
     // Issue #156 adds chapter selection/deletion and glossary file exchange owners.
     // Hunyuan adds 11 OCR runtime, domain and production UI owners.
     // Integrated formatting replaces four inline owners with 23 shared owners.
-    expect(scope.added).toHaveLength(1567);
+    // Balloon padding and workflow progress add three owners and touch three baseline owners.
+    expect(scope.added).toHaveLength(1570);
     expect(scope.deleted).toHaveLength(12);
   });
 });

@@ -86,6 +86,8 @@ export type BubbleLayoutRunnerFactory = (
 export type BubbleLayoutPostprocessConfig = {
   policy: BubbleLayoutPolicy;
   paddingRatio?: number;
+  /** Explicit selection edit; existing per-block preferences otherwise win. */
+  paddingRatioOverride?: number;
   sharedOwnershipGapPx?: number;
   /**
    * Only the explicit "detect again" command may replace user-authored
@@ -165,14 +167,15 @@ export async function runBubbleLayoutPostprocess({
   // Never expose the page instance that will be committed to an adapter.
   // Returned data is applied through the render-only patch allowlist below.
   const baselinePage = clonePageWithBlocks(page);
-  const runnerPage = clonePageWithBlocks(baselinePage);
+  const override = sourceEraseMask ? undefined : config.paddingRatioOverride;
+  const targetIds = blockId ? [blockId] : blockIds;
   let result: BubbleLayoutRunnerResult;
   try {
     result = await runner.runPage({
       failureMode,
-      targetBlockIds: blockId ? [blockId] : blockIds,
+      targetBlockIds: targetIds,
       imagePath,
-      page: runnerPage,
+      page: clonePageWithPaddingOverride(baselinePage, override, targetIds),
       policy: config.policy,
       paddingRatio: resolveBubbleLayoutPaddingRatio(config.paddingRatio),
       sharedOwnershipGapPx: config.sharedOwnershipGapPx,
@@ -255,6 +258,22 @@ function clonePageWithBlocks(page: MangaPage): MangaPage {
   };
 }
 
+function clonePageWithPaddingOverride(
+  page: MangaPage,
+  paddingRatio: number | undefined,
+  targetIds: readonly string[] | undefined,
+): MangaPage {
+  const clone = clonePageWithBlocks(page);
+  if (paddingRatio === undefined) return clone;
+  const selected = targetIds ? new Set(targetIds) : null;
+  for (const block of clone.blocks) {
+    if (!selected || selected.has(block.id))
+      block.bubbleLayoutPaddingRatio =
+        resolveBubbleLayoutPaddingRatio(paddingRatio);
+  }
+  return clone;
+}
+
 function applyRunnerPatchesToPage(
   page: MangaPage,
   patches: readonly BubbleLayoutBlockPatch[],
@@ -275,6 +294,8 @@ function applyRunnerPatchToState(
   page: MangaPage,
 ): InpaintingBlockLayoutState {
   const after = applyRunnerRenderPatch(structuredClone(before), patch, page);
+  if (patch.bubbleLayoutPaddingRatio !== undefined)
+    after.bubbleLayoutPaddingRatio = patch.bubbleLayoutPaddingRatio;
   return applyRunnerBubblePatch(before, after, patch);
 }
 

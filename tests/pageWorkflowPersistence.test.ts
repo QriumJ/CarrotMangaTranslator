@@ -155,6 +155,17 @@ describe("page content and receipt transaction", () => {
       .filter((event) => event.status === "completed");
     expect(terminal).toHaveLength(1);
     expect(terminal[0].executionId).toBe(saved.attemptId);
+    expect(terminal[0].workflowProgress).toEqual({
+      pageCount: 1,
+      stageCount: 1,
+    });
+    expect(
+      events.mock.calls.every(
+        ([, event]) =>
+          event.workflowProgress?.pageCount === 1 &&
+          event.workflowProgress.stageCount === 1,
+      ),
+    ).toBe(true);
     const second = await startPageWorkflowJob(
       context,
       { ...request, resumeRunId: first.runId },
@@ -172,6 +183,8 @@ describe("page content and receipt transaction", () => {
   });
   it("persists source and stage receipt together while retaining analysis status", async () => {
     const f = await fixture();
+    f.after.blocks[0].bubbleLayoutPaddingRatio = 0;
+    f.after.blocks[0].inpaintExcluded = true;
     await f.mutation.savePageWorkflowResultUnlocked(
       f.chapterId,
       f.page,
@@ -179,6 +192,12 @@ describe("page content and receipt transaction", () => {
     );
     const saved = JSON.parse(await readFile(f.file, "utf8")).pages[0];
     expect(saved.blocks[0].sourceText).toBe("새 원문");
+    expect(saved.blocks[0].bubbleLayoutPaddingRatio).toBe(0);
+    expect(saved.blocks[0].inpaintExcluded).toBe(true);
+    const { openChapter } = await import("../src/main/library");
+    const reopened = await openChapter(f.chapterId);
+    expect(reopened.pages[0].blocks[0].bubbleLayoutPaddingRatio).toBe(0);
+    expect(reopened.pages[0].blocks[0].inpaintExcluded).toBe(true);
     expect(saved.pageWorkflow.steps.ocr.status).toBe("completed");
     expect(saved.analysisStatus).toBe("idle");
     expect(saved.dataUrl).toBeUndefined();

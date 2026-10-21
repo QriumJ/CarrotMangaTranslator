@@ -26,6 +26,9 @@ export const PANEL_FORMAT_FIELD_KEYS = [
   ...BLOCK_FORMAT_FIELD_KEYS,
   "backgroundColor",
   "opacity",
+  // Block settings outside text styles; style presets never copy them.
+  "inpaintExcluded",
+  "bubbleLayoutPaddingRatio",
 ] as const satisfies readonly (keyof TranslationBlock)[];
 
 export type PanelFormatFieldKey = (typeof PANEL_FORMAT_FIELD_KEYS)[number];
@@ -54,6 +57,11 @@ export type PanelSyncState = {
   selectedBlockCount: number;
   selectionKey: string;
   formatSelection: PanelFormatSelection;
+  /**
+   * Effective bubble padding of the selection: a block's own value, else the
+   * global setting. `null` when the selected blocks differ.
+   */
+  bubblePaddingRatio?: number | null;
   editorTextTabRequestToken: number;
   editorTextResetToken?: number;
   editorDisabled: boolean;
@@ -110,6 +118,12 @@ export type PanelCommand =
   | { type: "insertBlockLibraryEntry"; entry: BlockLibraryEntryV1 }
   | { type: "eraseBlockOriginal"; blockId: string }
   | { type: "fitBlockBubble"; blockId: string }
+  | {
+      /** Re-detects every selected block's bubble with this padding. */
+      type: "applySelectionBubblePadding";
+      selectionKey: string;
+      paddingRatio: number;
+    }
   | { type: "removeBubbleLayout"; blockId: string }
   | {
       type: "setLetteringTool";
@@ -174,11 +188,14 @@ export function buildPanelFormatSelection(
   const first = blocks[0];
   if (!first) return { common: {}, mixedFields };
   for (const key of PANEL_FORMAT_FIELD_KEYS) {
-    const value = first[key];
+    const value = readPanelFormatValue(first, key);
     if (
       blocks
         .slice(1)
-        .some((block) => !panelFormatValuesEqual(value, block[key]))
+        .some(
+          (block) =>
+            !panelFormatValuesEqual(value, readPanelFormatValue(block, key)),
+        )
     ) {
       mixedFields.push(key);
     } else if (value !== undefined) {
@@ -199,4 +216,11 @@ function panelFormatValuesEqual(left: unknown, right: unknown): boolean {
     return false;
   }
   return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function readPanelFormatValue(
+  block: TranslationBlock,
+  key: PanelFormatFieldKey,
+): unknown {
+  return key === "inpaintExcluded" ? Boolean(block[key]) : block[key];
 }

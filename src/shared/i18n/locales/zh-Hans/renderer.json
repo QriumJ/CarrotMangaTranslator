@@ -52,6 +52,10 @@
   "job": {
     "pageProgress": "第 {{current}} / {{total}} 页 · {{status}}",
     "pageStatus": "页面 · {{status}}",
+    "workflowProgress": {
+      "scope": "{{pages}} 页 · {{stages}} 个阶段",
+      "operations": "阶段任务 {{current}} / {{total}}"
+    },
     "pageRetry": "第 {{current}} / {{total}} 页 · 重试 {{attempt}} / {{attemptTotal}}",
     "elapsed": {
       "lessThanSecond": "不到 1 秒",
@@ -466,6 +470,7 @@
       "success": "已将当前页的译文文本块适配到气泡内。",
       "selectedBlockSuccess": "已将所选译文文本块适配到气泡内。",
       "selectedBlockNoMatch": "未找到与所选文本块匹配的气泡区域。",
+      "selectionChanged": "所选 {{count}} 个文本块 · {{changed}} 个气泡布局已更改",
       "failedTitle": "气泡适配失败",
       "failed": "无法将译文文本块适配到气泡内。"
     },

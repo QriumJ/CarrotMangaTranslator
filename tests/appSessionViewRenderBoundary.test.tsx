@@ -27,6 +27,37 @@ afterEach(cleanup);
 const EMPTY_STYLE_PRESETS: PanelSessionValue["blockStylePresets"] = [];
 
 describe("AppSessionView render boundaries", () => {
+  it("keeps padding actions current across selection updates and unavailable editors", () => {
+    const first = vi.fn();
+    const latest = vi.fn();
+    const { result, rerender } = renderHook(
+      ({ value }) => useStablePanelSessionValue(value),
+      {
+        initialProps: {
+          value: makePanelSessionValue({ onApplyBubblePadding: first }),
+        },
+      },
+    );
+    const apply = result.current.onApplyBubblePadding;
+    rerender({
+      value: makePanelSessionValue({
+        onApplyBubblePadding: latest,
+        bubblePaddingRatio: 0.3,
+      }),
+    });
+    expect(result.current.bubblePaddingRatio).toBe(0.3);
+    expect(result.current.onApplyBubblePadding).toBe(apply);
+    apply?.(0);
+    expect(first).not.toHaveBeenCalled();
+    expect(latest).toHaveBeenCalledExactlyOnceWith(0);
+    rerender({
+      value: makePanelSessionValue({ onApplyBubblePadding: undefined }),
+    });
+    expect(result.current.onApplyBubblePadding).toBeUndefined();
+    expect(() => apply?.(0)).not.toThrow();
+    expect(latest).toHaveBeenCalledTimes(1);
+  });
+
   it("forwards previews to the latest callback without changing callback identity", () => {
     const first = vi.fn();
     const latest = vi.fn();

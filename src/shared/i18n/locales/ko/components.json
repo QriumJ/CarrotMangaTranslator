@@ -390,6 +390,11 @@
       "title": "블록 전체 설정",
       "description": "글자 선택과 관계없이 항상 블록 전체에 적용됩니다.",
       "descriptionMultiple": "선택한 블록 {{count}}개 전체에 적용됩니다."
+    },
+    "bubblePadding": {
+      "label": "말풍선 여백",
+      "apply": "적용",
+      "applyMultiple": "블록 {{count}}개에 적용"
     }
   },
   "transform": {

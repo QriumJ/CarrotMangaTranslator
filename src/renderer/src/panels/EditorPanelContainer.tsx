@@ -12,24 +12,8 @@ import { usePanelSession, type PanelSessionValue } from "./panelSession";
 
 export function EditorPanelContainer(): React.JSX.Element {
   const session = usePanelSession();
-  const { catalog } = useFonts();
   const [saveOpen, setSaveOpen] = React.useState(false);
-  const resolvedFontSizePx = React.useMemo(() => {
-    if (!session.selectedBlock || !session.selectedPageSize) return null;
-    return resolveBlockFontSizeAtNaturalPageScale(
-      session.selectedBlock,
-      session.selectedPageSize,
-      catalog,
-      session.selectedBlockSourceFontFaceFallbackPx ?? undefined,
-      session.selectedPageBlocks,
-    );
-  }, [
-    catalog,
-    session.selectedBlock,
-    session.selectedBlockSourceFontFaceFallbackPx,
-    session.selectedPageSize,
-    session.selectedPageBlocks,
-  ]);
+  const resolvedFontSizePx = useResolvedPanelFontSize(session);
   return (
     <>
       <EditorPanel
@@ -46,6 +30,7 @@ export function EditorPanelContainer(): React.JSX.Element {
         selectedBlockCount={session.selectedBlockCount}
         selectionKey={session.selectionKey}
         formatSelection={session.formatSelection}
+        bubblePaddingRatio={session.bubblePaddingRatio}
         editorTextTabRequestToken={session.editorTextTabRequestToken}
         editorTextResetToken={session.editorTextResetToken}
         pageSize={session.selectedPageSize}
@@ -78,6 +63,7 @@ export function EditorPanelContainer(): React.JSX.Element {
         onSuggestConsistentEdit={session.onSuggestConsistentEdit}
         onEraseOriginal={session.onEraseBlockOriginal}
         onFitBubble={session.onFitBlockBubble}
+        onApplyBubblePadding={session.onApplyBubblePadding}
         onRemoveBubbleLayout={session.onRemoveBubbleLayout}
         onSelectTransformMode={session.onSelectTransformMode}
       />
@@ -88,6 +74,26 @@ export function EditorPanelContainer(): React.JSX.Element {
       />
     </>
   );
+}
+
+function useResolvedPanelFontSize(session: PanelSessionValue): number | null {
+  const { catalog } = useFonts();
+  return React.useMemo(() => {
+    if (!session.selectedBlock || !session.selectedPageSize) return null;
+    return resolveBlockFontSizeAtNaturalPageScale(
+      session.selectedBlock,
+      session.selectedPageSize,
+      catalog,
+      session.selectedBlockSourceFontFaceFallbackPx ?? undefined,
+      session.selectedPageBlocks,
+    );
+  }, [
+    catalog,
+    session.selectedBlock,
+    session.selectedBlockSourceFontFaceFallbackPx,
+    session.selectedPageSize,
+    session.selectedPageBlocks,
+  ]);
 }
 
 function EditorPanelHeaderActions({

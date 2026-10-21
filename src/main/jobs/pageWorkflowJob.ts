@@ -109,6 +109,10 @@ export async function startPageWorkflowJob(
     emitJobEvent(context.jobs, context.getMainWindow(), {
       ...event,
       executionId: timing.record.attemptId,
+      workflowProgress: {
+        pageCount: preflight.pageCount,
+        stageCount: run.request.plan.stages.length,
+      },
     });
   emit({
     id: run.id,

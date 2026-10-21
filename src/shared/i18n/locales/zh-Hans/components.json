@@ -390,6 +390,11 @@
       "title": "整个文本块设置",
       "description": "无论选中哪些字符，始终应用于整个文本块。",
       "descriptionMultiple": "应用于所选的全部 {{count}} 个文本块。"
+    },
+    "bubblePadding": {
+      "label": "气泡边距",
+      "apply": "应用",
+      "applyMultiple": "应用到 {{count}} 个文本块"
     }
   },
   "transform": {

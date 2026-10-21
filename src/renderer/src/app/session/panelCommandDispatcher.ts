@@ -68,6 +68,7 @@ export type PanelCommandTarget = {
   ) => void;
   eraseBlockOriginal: (blockId: string) => void;
   fitBlockBubble: (blockId: string) => void;
+  applySelectionBubblePadding: (paddingRatio: number) => void;
   removeSelectedBlockBubbleLayout: () => void;
   applyFormatToScope: (
     scope: ApplyFormatCommand["scope"],
@@ -217,6 +218,7 @@ function applyBasicPanelCommand(
   >,
 ): void {
   if (applyPanelToolCommand(actions, command)) return;
+  if (applyBubbleLayoutCommand(actions, command)) return;
   switch (command.type) {
     case "updateBlock":
       actions.updateBlock(command.blockId, command.patch);
@@ -233,12 +235,6 @@ function applyBasicPanelCommand(
     case "eraseBlockOriginal":
       actions.eraseBlockOriginal(command.blockId);
       return;
-    case "fitBlockBubble":
-      actions.fitBlockBubble(command.blockId);
-      return;
-    case "removeBubbleLayout":
-      actions.removeSelectedBlockBubbleLayout();
-      return;
     case "applyFormat":
       actions.applyFormatToScope(command.scope, command.groupIds);
       return;
@@ -248,6 +244,26 @@ function applyBasicPanelCommand(
     case "startAreaTranslate":
       actions.startAreaTranslate();
   }
+}
+
+/** Active-block fit/removal, plus the selection-wide padding re-detect. */
+function applyBubbleLayoutCommand(
+  actions: PanelCommandTarget,
+  command: PanelCommand,
+): boolean {
+  if (command.type === "fitBlockBubble") {
+    actions.fitBlockBubble(command.blockId);
+    return true;
+  }
+  if (command.type === "applySelectionBubblePadding") {
+    actions.applySelectionBubblePadding(command.paddingRatio);
+    return true;
+  }
+  if (command.type === "removeBubbleLayout") {
+    actions.removeSelectedBlockBubbleLayout();
+    return true;
+  }
+  return false;
 }
 
 function isSelectionEditCommand(
@@ -265,6 +281,7 @@ function isStaleSelectionCommand(
 ): boolean {
   return command.type === "updateSelectionFormat" ||
     command.type === "adjustSelectionFontSize" ||
+    command.type === "applySelectionBubblePadding" ||
     command.type === "applyStylePreset" ||
     command.type === "createStylePreset" ||
     command.type === "overwriteStylePreset"

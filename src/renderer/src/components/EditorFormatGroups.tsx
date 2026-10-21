@@ -38,6 +38,9 @@ type EditorFormatGroupsProps = {
   onUpdate: (patch: Partial<TranslationBlock>) => void;
   resolvedFontSizePx?: number | null;
   selectedBlockCount: number;
+  selectionKey?: string;
+  bubblePaddingRatio?: number | null;
+  onApplyBubblePadding?: (paddingRatio: number) => void;
   showStylePresets?: boolean;
   stylePresets?: readonly BlockStylePresetSummary[];
 };
@@ -62,6 +65,9 @@ export function EditorFormatGroups(
         onApplyFormat={props.onApplyFormat}
         onUpdate={onUpdate}
         selectedBlockCount={props.selectedBlockCount}
+        selectionKey={props.selectionKey}
+        bubblePaddingRatio={props.bubblePaddingRatio}
+        onApplyBubblePadding={props.onApplyBubblePadding}
       />
       <BlockDisplayGroup
         block={block}

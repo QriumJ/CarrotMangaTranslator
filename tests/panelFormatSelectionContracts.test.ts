@@ -13,6 +13,20 @@ import type { TranslationBlock } from "../src/shared/textTypes";
 import { BLOCK_FORMAT_FIELD_KEYS } from "../src/shared/blockFormat";
 
 describe("panel multi-selection format contracts", () => {
+  it("treats missing and explicitly cleared erasure exclusion as the same state", () => {
+    const selection = buildPanelFormatSelection([
+      makeBlock("a", {}),
+      makeBlock("b", { inpaintExcluded: false }),
+    ]);
+    expect(selection.mixedFields).not.toContain("inpaintExcluded");
+    expect(selection.common.inpaintExcluded).toBe(false);
+    expect(
+      buildPanelFormatSelection([
+        makeBlock("a", {}),
+        makeBlock("b", { inpaintExcluded: true }),
+      ]).mixedFields,
+    ).toContain("inpaintExcluded");
+  });
   it("validates logical selection ranges before accepting a detached preview", () => {
     const command = {
       type: "previewTextSelection",
@@ -155,6 +169,8 @@ describe("panel multi-selection format contracts", () => {
         opacity: 0.5,
       },
       textGlow: glow,
+      inpaintExcluded: true,
+      bubbleLayoutPaddingRatio: 0.2,
     });
     const patch = pickPanelFormatPatch(source);
 

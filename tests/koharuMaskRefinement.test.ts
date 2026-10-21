@@ -1,11 +1,45 @@
 import { describe, expect, it } from "vitest";
-import {
-  refineKoharuBubbleMask,
-  resolveKoharuSafeInsetPx,
-} from "../src/main/bubbleLayout/koharuMaskRefinement";
+import { refineKoharuBubbleMask } from "../src/main/bubbleLayout/koharuMaskRefinement";
 import type { KoharuInstanceMask } from "../src/main/bubbleLayout/contracts";
 
 describe("Koharu bubble mask refinement", () => {
+  it("rejects a mask that does not overlap the source text", () => {
+    expect(
+      refineKoharuBubbleMask({
+        mask: filledMask(80, 80, 1),
+        imageWidth: 80,
+        imageHeight: 80,
+        bubbleBox: { x: 0, y: 0, w: 30, h: 30 },
+        promptBoxes: [{ x: 50, y: 50, w: 20, h: 20 }],
+        fontSizePx: 12,
+        outlineWidthPx: 1,
+        policy: "balanced",
+      }),
+    ).toBeNull();
+  });
+
+  it.each(["safe", "balanced", "maximize"] as const)(
+    "keeps erasure bounds and mask bytes independent of %s typography",
+    (policy) => {
+      const mask = filledMask(80, 80, 1);
+      const original = mask.logits.slice();
+      const input = {
+        mask,
+        imageWidth: 80,
+        imageHeight: 80,
+        bubbleBox: { x: 0, y: 0, w: 80, h: 80 },
+        promptBoxes: [{ x: 25, y: 25, w: 30, h: 30 }],
+        fontSizePx: 200,
+        outlineWidthPx: 30,
+        policy,
+        sourceEraseMask: true,
+      };
+      const result = refineKoharuBubbleMask(input);
+      expect(result?.insetPx).toBe(1);
+      expect(result?.regions[0].bounds).toEqual({ x: 2, y: 2, w: 76, h: 76 });
+      expect(mask.logits).toEqual(original);
+    },
+  );
   it("does not shrink source erasure when the translated font or outline is enlarged", () => {
     const input = {
       mask: filledMask(80, 80, 1),
@@ -18,7 +52,7 @@ describe("Koharu bubble mask refinement", () => {
       policy: "balanced" as const,
     };
     const render = refineKoharuBubbleMask(input);
-    expect(render?.regions[0].bounds).toEqual({ x: 4, y: 4, w: 72, h: 72 });
+    expect(render?.regions[0].bounds).toEqual({ x: 0, y: 0, w: 80, h: 80 });
     const erased = refineKoharuBubbleMask({ ...input, sourceEraseMask: true });
     expect(
       refineKoharuBubbleMask({
@@ -80,10 +114,10 @@ describe("Koharu bubble mask refinement", () => {
     expect(result?.promptCoverage).toBe(1);
     expect(result?.regions).toHaveLength(1);
     const bounds = result?.regions[0]?.bounds;
-    expect(bounds?.x).toBeGreaterThan(4);
-    expect(bounds?.y).toBeGreaterThan(4);
-    expect((bounds?.x ?? 0) + (bounds?.w ?? 0)).toBeLessThan(60);
-    expect((bounds?.y ?? 0) + (bounds?.h ?? 0)).toBeLessThan(44);
+    expect(bounds?.x).toBe(4);
+    expect(bounds?.y).toBe(4);
+    expect((bounds?.x ?? 0) + (bounds?.w ?? 0)).toBe(60);
+    expect((bounds?.y ?? 0) + (bounds?.h ?? 0)).toBe(44);
   });
 
   it("preserves the spatial boundary of a partial Koharu mask", () => {
@@ -137,18 +171,23 @@ describe("Koharu bubble mask refinement", () => {
     ).toThrow("KoharuLayout instance mask");
   });
 
-  it("keeps the policy inset ordering explicit", () => {
-    const input = { fontSizePx: 20, outlineWidthPx: 1 };
-    expect(resolveKoharuSafeInsetPx({ ...input, policy: "safe" })).toBeCloseTo(
-      4.32,
-    );
-    expect(
-      resolveKoharuSafeInsetPx({ ...input, policy: "balanced" }),
-    ).toBeCloseTo(3.6);
-    expect(
-      resolveKoharuSafeInsetPx({ ...input, policy: "maximize" }),
-    ).toBeCloseTo(2.7);
-  });
+  it.each(["safe", "balanced", "maximize"] as const)(
+    "does not add render inset for %s policy or large glyphs",
+    (policy) => {
+      const result = refineKoharuBubbleMask({
+        mask: filledMask(80, 80, 1),
+        imageWidth: 80,
+        imageHeight: 80,
+        bubbleBox: { x: 0, y: 0, w: 80, h: 80 },
+        promptBoxes: [{ x: 25, y: 25, w: 30, h: 30 }],
+        fontSizePx: 200,
+        outlineWidthPx: 30,
+        policy,
+      });
+      expect(result?.insetPx).toBe(0);
+      expect(result?.regions[0].bounds).toEqual({ x: 0, y: 0, w: 80, h: 80 });
+    },
+  );
 });
 
 function filledMask(

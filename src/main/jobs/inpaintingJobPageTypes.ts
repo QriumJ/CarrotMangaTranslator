@@ -34,6 +34,7 @@ export type InpaintingJobState = {
 
 export type InpaintingTarget = {
   blockId?: string;
+  blockIds?: readonly string[];
   drawnPatternMode: boolean;
   layoutOnly: boolean;
   drawnStrokes: InpaintingMaskStroke[];
