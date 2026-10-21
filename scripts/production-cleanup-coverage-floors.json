@@ -1316,6 +1316,28 @@
         "pct": 43.93
       }
     },
+    "src/main/inpainting/fluxAssets/pythonRuntimePackages.ts": {
+      "lines": {
+        "total": 47,
+        "covered": 24,
+        "pct": 51.06
+      },
+      "statements": {
+        "total": 48,
+        "covered": 24,
+        "pct": 50
+      },
+      "functions": {
+        "total": 17,
+        "covered": 9,
+        "pct": 52.94
+      },
+      "branches": {
+        "total": 35,
+        "covered": 15,
+        "pct": 42.85
+      }
+    },
     "src/main/inpainting/fluxAssets/rocmPrebuiltRuntime.ts": {
       "lines": {
         "covered": 0,

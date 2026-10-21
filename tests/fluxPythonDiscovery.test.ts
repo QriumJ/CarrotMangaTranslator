@@ -6,7 +6,9 @@ import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
 import { PassThrough } from "node:stream";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ZipFile } from "yazl";
 import { findPythonCommand } from "../src/main/inpainting/fluxAssets/pythonBootstrap";
+import { RUNTIME_INTEGRITY_MANIFEST } from "../src/main/runtimeSupport/runtimeIntegrity";
 import { ensureMissingFluxPythonRuntime } from "../src/main/inpainting/fluxAssets/pythonRuntimeInstaller";
 import {
   findFluxPythonWorkerSource,
@@ -78,6 +80,59 @@ afterEach(async () => {
 });
 
 describe("Windows Flux Python discovery", () => {
+  it.each([false, true])(
+    "uses the pinned bootstrap URL and rejects changed bytes: tampered=%s",
+    async (tampered) => {
+      const runtimeDir = await emptyRuntime();
+      const zip = new ZipFile();
+      zip.addBuffer(Buffer.from("fixture python"), "python.exe");
+      zip.addBuffer(Buffer.from(".\n#import site\n"), "python314._pth");
+      zip.end();
+      const chunks: Buffer[] = [];
+      for await (const chunk of zip.outputStream)
+        chunks.push(Buffer.from(chunk));
+      const archive = Buffer.concat(chunks);
+      const script = Buffer.from("fixture bootstrap script");
+      vi.stubEnv(
+        "MGT_FLUX_PYTHON_SHA256",
+        createHash("sha256").update(archive).digest("hex"),
+      );
+      vi.stubEnv(
+        "MGT_FLUX_GET_PIP_SHA256",
+        createHash("sha256").update(script).digest("hex"),
+      );
+      vi.stubEnv("MANGA_TRANSLATOR_DOWNLOAD_RETRY_COUNT", "1");
+      const manifest = RUNTIME_INTEGRITY_MANIFEST.fluxManagedPython;
+      fetchBoundary.mockImplementation(async (input) => {
+        const url = String(input);
+        if (url === manifest.archive.url) return new Response(archive);
+        expect(url).toBe(manifest.getPip.url);
+        return new Response(
+          tampered ? Buffer.from("upstream changed") : script,
+        );
+      });
+      const result = findPythonCommand({ runtimeDir });
+      if (tampered) {
+        await expect(result).rejects.toThrow(/체크섬|checksum/i);
+        expect(boundary.spawn).not.toHaveBeenCalled();
+      } else {
+        await expect(result).resolves.toMatchObject({ args: [] });
+        const calls = boundary.spawn.mock.calls;
+        expect(calls[0]?.[1]?.[0]).toBe(
+          join(runtimeDir, ".downloads", "python", "get-pip.py"),
+        );
+        const downloads = fetchBoundary.mock.calls.length;
+        await findPythonCommand({ runtimeDir });
+        expect(fetchBoundary).toHaveBeenCalledTimes(downloads);
+        expect(
+          boundary.spawn.mock.calls.filter(([, args]) =>
+            args[0]?.endsWith("get-pip.py"),
+          ),
+        ).toHaveLength(1);
+      }
+    },
+  );
+
   it("selects a configured interpreter without provisioning the managed runtime", async () => {
     const runtimeDir = await emptyRuntime();
     vi.stubEnv("MGT_FLUX_PYTHON", "configured-python");

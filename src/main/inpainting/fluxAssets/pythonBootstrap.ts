@@ -4,7 +4,6 @@ import { basename, join, normalize } from "node:path";
 import {
   FLUX_BOOTSTRAP_PYTHON_MARKER,
   FLUX_EMBED_PYTHON_VERSION,
-  FLUX_GET_PIP_URL,
   resolveFluxRuntimeTempDir,
 } from "./constants";
 import type { FluxAssetProgress, PythonCommand } from "./types";
@@ -141,7 +140,7 @@ function resolveManagedBootstrapPythonConfig(): ManagedBootstrapPythonConfig {
   const getPipUrl =
     process.env.MANGA_TRANSLATOR_FLUX_GET_PIP_URL ??
     process.env.MGT_FLUX_GET_PIP_URL ??
-    FLUX_GET_PIP_URL;
+    RUNTIME_INTEGRITY_MANIFEST.fluxManagedPython.getPip.url;
   const pythonAsset = resolvePinnedRemoteAsset({
     defaultUrl: RUNTIME_INTEGRITY_MANIFEST.fluxManagedPython.archive.url,
     defaultSha256: RUNTIME_INTEGRITY_MANIFEST.fluxManagedPython.archive.sha256,

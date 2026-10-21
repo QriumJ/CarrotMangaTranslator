@@ -1,7 +1,11 @@
+import {
+  FLUX_DIFFUSERS_MODEL_ID,
+  FLUX_DIFFUSERS_MODEL_REVISION,
+} from "../src/main/inpainting/fluxAssets/constants";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { buildFluxWorkerEnv } from "../src/main/inpainting/fluxWorkerEnv";
 import { buildFluxPythonLaunchSpec } from "../src/main/inpainting/fluxAssets/pythonRuntimeLaunchSpec";
@@ -11,9 +15,11 @@ import {
 } from "../src/main/inpainting/fluxAssets/pythonRuntimePackages";
 
 const tempDirs: string[] = [];
+const revision = "e7b7dc27f91deacad38e78976d1f2b499d76a294";
 
 describe("Flux Python Hugging Face environment", () => {
   afterEach(async () => {
+    vi.unstubAllEnvs();
     while (tempDirs.length > 0) {
       const dir = tempDirs.pop();
       if (dir) {
@@ -90,6 +96,7 @@ describe("Flux Python Hugging Face environment", () => {
       }),
       modelDir,
       modelId: "example/flux-model",
+      revision,
     });
 
     const probe = JSON.parse(await readFile(outputPath, "utf8")) as {
@@ -98,6 +105,8 @@ describe("Flux Python Hugging Face environment", () => {
     };
     expect(probe.args[0]).toBe("-c");
     expect(probe.args).toContain("example/flux-model");
+    expect(probe.args.at(-1)).toBe(revision);
+    expect(probe.args[1]).toContain("revision=sys.argv[4]");
     expect(probe.env).toMatchObject({
       HF_HOME: modelDir,
       HF_HUB_CACHE: join(modelDir, "hub"),
@@ -111,14 +120,17 @@ describe("Flux Python Hugging Face environment", () => {
     const modelDir = await createTempModelDir();
     const modelId = "example/flux-model";
     const downloadGuardPath = join(modelDir, "fail-on-download.cjs");
+    const previousRevision =
+      process.env.MANGA_TRANSLATOR_FLUX_PYTHON_MODEL_REVISION;
     const previousModelId = process.env.MANGA_TRANSLATOR_FLUX_PYTHON_MODEL_ID;
     await writeFile(downloadGuardPath, "process.exitCode = 99;\n", "utf8");
     await writeFile(
       join(modelDir, ".mgt-flux-diffusers-model.json"),
-      JSON.stringify({ modelId, ignorePatterns: [] }),
+      JSON.stringify({ modelId, revision, ignorePatterns: [] }),
       "utf8",
     );
     process.env.MANGA_TRANSLATOR_FLUX_PYTHON_MODEL_ID = modelId;
+    process.env.MANGA_TRANSLATOR_FLUX_PYTHON_MODEL_REVISION = revision;
 
     try {
       const launch = await buildFluxPythonLaunchSpec({
@@ -132,6 +144,8 @@ describe("Flux Python Hugging Face environment", () => {
         workerPath: join(modelDir, "flux-worker.py"),
       });
 
+      expect(launch.args).toContain("--revision");
+      expect(launch.args).toContain(revision);
       expect(buildFluxWorkerEnv(launch)).toMatchObject({
         HF_HOME: modelDir,
         HF_HUB_CACHE: join(modelDir, "hub"),
@@ -141,7 +155,118 @@ describe("Flux Python Hugging Face environment", () => {
       });
     } finally {
       restoreEnv("MANGA_TRANSLATOR_FLUX_PYTHON_MODEL_ID", previousModelId);
+      restoreEnv(
+        "MANGA_TRANSLATOR_FLUX_PYTHON_MODEL_REVISION",
+        previousRevision,
+      );
     }
+  });
+  it.each([undefined, "a".repeat(40)])(
+    "invalidates an old or different revision marker (%s)",
+    async (previous) => {
+      const modelDir = await createTempModelDir();
+      const probePath = join(modelDir, "count.cjs");
+      const countPath = join(modelDir, "count.txt");
+      await writeFile(
+        probePath,
+        'require("node:fs").appendFileSync(process.argv[2], "download\\n");',
+      );
+      const options = {
+        modelDir,
+        modelId: "example/model",
+        revision,
+        pythonRuntime: createPythonRuntime({
+          executable: process.execPath,
+          args: [probePath, countPath],
+        }),
+      };
+      await writeFile(
+        join(modelDir, ".mgt-flux-diffusers-model.json"),
+        JSON.stringify({
+          modelId: options.modelId,
+          revision: previous,
+          ignorePatterns: [],
+        }),
+      );
+      await ensureFluxPythonModelCache(options);
+      await ensureFluxPythonModelCache(options);
+      expect(await readFile(countPath, "utf8")).toBe("download\n");
+      expect(
+        JSON.parse(
+          await readFile(
+            join(modelDir, ".mgt-flux-diffusers-model.json"),
+            "utf8",
+          ),
+        ).revision,
+      ).toBe(revision);
+    },
+  );
+
+  it.each(["", "main", "abcd"])(
+    "rejects unpinned revision %s before starting Python",
+    async (unpinned) => {
+      await expect(
+        ensureFluxPythonModelCache({
+          modelDir: await createTempModelDir(),
+          modelId: "custom/model",
+          revision: unpinned,
+          pythonRuntime: createPythonRuntime({ executable: "must-not-run" }),
+        }),
+      ).rejects.toThrow(/full commit revision/);
+    },
+  );
+  it.each(["default", "alias"])(
+    "pins the %s model through cache and worker launch",
+    async (selection) => {
+      for (const key of [
+        "MANGA_TRANSLATOR_FLUX_PYTHON_MODEL_ID",
+        "MANGA_TRANSLATOR_FLUX_PYTHON_MODEL_REVISION",
+        "MGT_FLUX_PYTHON_MODEL_ID",
+        "MGT_FLUX_PYTHON_MODEL_REVISION",
+      ])
+        vi.stubEnv(key, undefined);
+      const modelDir = await createTempModelDir();
+      const modelId =
+        selection === "default"
+          ? FLUX_DIFFUSERS_MODEL_ID
+          : "example/alias-model";
+      const commit =
+        selection === "default"
+          ? FLUX_DIFFUSERS_MODEL_REVISION
+          : "b".repeat(40);
+      if (selection === "alias") {
+        vi.stubEnv("MGT_FLUX_PYTHON_MODEL_ID", modelId);
+        vi.stubEnv("MGT_FLUX_PYTHON_MODEL_REVISION", commit);
+      }
+      await writeFile(
+        join(modelDir, ".mgt-flux-diffusers-model.json"),
+        JSON.stringify({ modelId, revision: commit, ignorePatterns: [] }),
+      );
+      const launch = await buildFluxPythonLaunchSpec({
+        backend: "python-cpu",
+        modelDir,
+        pythonRuntime: createPythonRuntime({
+          executable: "must-not-download-again",
+        }),
+        workerPath: "worker.py",
+      });
+      expect(launch.args[launch.args.indexOf("--model-id") + 1]).toBe(modelId);
+      expect(launch.args[launch.args.indexOf("--revision") + 1]).toBe(commit);
+    },
+  );
+
+  it("does not borrow the built-in revision for a custom model", async () => {
+    vi.stubEnv("MANGA_TRANSLATOR_FLUX_PYTHON_MODEL_ID", "example/custom-model");
+    vi.stubEnv("MANGA_TRANSLATOR_FLUX_PYTHON_MODEL_REVISION", undefined);
+    vi.stubEnv("MGT_FLUX_PYTHON_MODEL_REVISION", undefined);
+    await expect(
+      buildFluxPythonLaunchSpec({
+        backend: "python-cpu",
+        modelDir: await createTempModelDir(),
+        pythonRuntime: createPythonRuntime({ executable: "must-not-run" }),
+        workerPath: "worker.py",
+      }),
+    ).rejects.toThrow(/full commit revision/);
   });
 });
 

@@ -7,7 +7,7 @@
       "sha256": "0d57bb6cb078b74d23dbfe91f77d6780d45bed328911609f1f7ee2ba1606bf44"
     },
     "getPip": {
-      "url": "https://bootstrap.pypa.io/get-pip.py",
+      "url": "https://raw.githubusercontent.com/pypa/get-pip/f6f644156f23dfe9acc06e7b9ca75eee311f2e37/public/get-pip.py",
       "sha256": "fb24e693bab954209a063d90953621412ccad4a500905a726286e038f508ddf6"
     }
   },
@@ -32,7 +32,7 @@
       "sha256": "a93abe456ab01bd96d7a085b3cdb6566b3063f4241360d114142fbdb07f0a310"
     },
     "getPip": {
-      "url": "https://bootstrap.pypa.io/get-pip.py",
+      "url": "https://raw.githubusercontent.com/pypa/get-pip/f6f644156f23dfe9acc06e7b9ca75eee311f2e37/public/get-pip.py",
       "sha256": "fb24e693bab954209a063d90953621412ccad4a500905a726286e038f508ddf6"
     }
   },
@@ -43,8 +43,14 @@
       "sha256": "a93abe456ab01bd96d7a085b3cdb6566b3063f4241360d114142fbdb07f0a310"
     },
     "getPip": {
-      "url": "https://bootstrap.pypa.io/get-pip.py",
+      "url": "https://raw.githubusercontent.com/pypa/get-pip/f6f644156f23dfe9acc06e7b9ca75eee311f2e37/public/get-pip.py",
       "sha256": "fb24e693bab954209a063d90953621412ccad4a500905a726286e038f508ddf6"
     }
+  },
+  "vcredistX64": {
+    "version": "14.44.35211.0",
+    "url": "https://download.visualstudio.microsoft.com/download/pr/990c720a-46ce-4dc7-87b9-c2eb615d34b9/CC0FF0EB1DC3F5188AE6300FAEF32BF5BEEBA4BDD6E8E445A9184072096B713B/VC_redist.x64.exe",
+    "sha256": "cc0ff0eb1dc3f5188ae6300faef32bf5beeba4bdd6e8e445a9184072096b713b",
+    "bytes": 25635768
   }
 }

@@ -5,7 +5,16 @@
  */
 const { mkdir, rm } = require("node:fs/promises");
 const { basename, join } = require("node:path");
-const { getPipUrl, pythonUrl } = require("./config.cjs");
+const { pythonUrl } = require("./config.cjs");
+const {
+  RUNTIME_INTEGRITY_MANIFEST,
+} = require("../../src/main/runtime/runtime-integrity.cjs");
+const {
+  downloadHfFileWithProgress,
+} = require("../../src/main/runtime/simple-page-download-utils.cjs");
+const {
+  MAX_REMOTE_SUPPORT_ASSET_BYTES,
+} = require("../../src/main/runtime/transport/download-budgets.cjs");
 const {
   downloadFile,
   ensureEmbeddedPythonPackagePath,
@@ -36,7 +45,15 @@ async function prepareEmbeddedPython({
   sanitizeStandaloneEmbeddedPythonPathFile(pythonDir);
   ensureEmbeddedPythonPackagePath(pythonExe, packageDir);
   const getPipPath = join(downloadsDir, "get-pip.py");
-  await downloadFile(getPipUrl, getPipPath, logger);
+  const getPip = RUNTIME_INTEGRITY_MANIFEST.managedPython.getPip;
+  await downloadHfFileWithProgress({
+    label: "Flux ROCm build pip",
+    file: "get-pip.py",
+    url: getPip.url,
+    destination: getPipPath,
+    maximumBytes: MAX_REMOTE_SUPPORT_ASSET_BYTES,
+    expectedSha256: getPip.sha256,
+  });
   await run(pythonExe, [getPipPath], {
     env: {
       ...process.env,

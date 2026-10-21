@@ -19,9 +19,13 @@ const { resolveOcrEngineLabel } = require("./engine-profile.cjs");
 const {
   MAX_REMOTE_SUPPORT_ASSET_BYTES,
 } = require("../transport/download-budgets.cjs");
+const {
+  RUNTIME_INTEGRITY_MANIFEST,
+  resolvePinnedRemoteAsset,
+} = require("../runtime-integrity.cjs");
+const { calculateFileSha256 } = require("../transport/download-integrity.cjs");
 
-const DEFAULT_VCREDIST_X64_URL =
-  "https://aka.ms/vs/17/release/vc_redist.x64.exe";
+const DEFAULT_VCREDIST_X64 = RUNTIME_INTEGRITY_MANIFEST.vcredistX64;
 
 /** @param {RuntimeOptions} options @param {string} runtimeDir @returns {Promise<void>} */
 async function ensureMicrosoftVisualCppRuntimeForOcr(options = {}, runtimeDir) {
@@ -63,25 +67,43 @@ function emitVcredistDisabled(options) {
 async function ensureVcredistInstaller(options, runtimeDir) {
   const url = String(
     runtimeOverrideEnv("MANGA_TRANSLATOR_VCREDIST_X64_URL", options) ||
-      DEFAULT_VCREDIST_X64_URL,
+      DEFAULT_VCREDIST_X64.url,
   ).trim();
+  const asset = resolvePinnedRemoteAsset({
+    defaultUrl: DEFAULT_VCREDIST_X64.url,
+    defaultSha256: DEFAULT_VCREDIST_X64.sha256,
+    url,
+    overrideSha256: runtimeOverrideEnv(
+      "MANGA_TRANSLATOR_VCREDIST_X64_SHA256",
+      options,
+    ),
+    label: "Microsoft Visual C++ runtime",
+  });
   const downloadsDir = path.join(runtimeDir, ".downloads", "vcredist");
   const redistPath = path.join(downloadsDir, "vc_redist.x64.exe");
   await mkdir(downloadsDir, { recursive: true });
-  if (!existsSync(redistPath)) {
-    await downloadVcredistInstaller(options, url, redistPath);
+  if (
+    !existsSync(redistPath) ||
+    (await calculateFileSha256(redistPath)) !== asset.sha256
+  ) {
+    await downloadVcredistInstaller(options, asset, redistPath);
   }
   return redistPath;
 }
 
-/** @param {RuntimeOptions} options @param {string} url @param {string} redistPath */
-async function downloadVcredistInstaller(options, url, redistPath) {
-  const totalBytes = await probeOptionalContentLength(url, options);
+/** @param {RuntimeOptions} options @param {{url: string; sha256: string}} asset @param {string} redistPath */
+async function downloadVcredistInstaller(options, asset, redistPath) {
+  const totalBytes =
+    asset.url === DEFAULT_VCREDIST_X64.url
+      ? DEFAULT_VCREDIST_X64.bytes
+      : await probeOptionalContentLength(asset.url, options);
   await downloadHfFileWithProgress(
     {
       label: "Microsoft Visual C++ 런타임",
       file: "vc_redist.x64.exe",
-      url,
+      url: asset.url,
+      expectedSha256: asset.sha256,
+      expectedTotalBytes: totalBytes || undefined,
       destination: redistPath,
       maximumBytes: MAX_REMOTE_SUPPORT_ASSET_BYTES,
       progressPhase: "ocr_downloading",

@@ -13,6 +13,7 @@ type EnsureFluxPythonModelCacheOptions = {
   pythonRuntime: FluxPythonRuntime;
   modelDir: string;
   modelId: string;
+  revision: string;
   ignorePatterns?: string[];
   signal?: AbortSignal;
   onProgress?: (progress: FluxAssetProgress) => void;
@@ -61,6 +62,9 @@ export async function verifyFluxPythonRuntime(
 export async function ensureFluxPythonModelCache(
   options: EnsureFluxPythonModelCacheOptions,
 ): Promise<void> {
+  if (!/^[a-f0-9]{40}$/.test(options.revision)) {
+    throw new Error("Flux Diffusers model requires a full commit revision.");
+  }
   const markerPath = join(options.modelDir, ".mgt-flux-diffusers-model.json");
   const ignorePatterns = options.ignorePatterns ?? [];
   if (await canUseFluxPythonModelCache(markerPath, options, ignorePatterns)) {
@@ -82,10 +86,12 @@ async function canUseFluxPythonModelCache(
   try {
     const marker = JSON.parse(await readFile(markerPath, "utf8")) as {
       modelId?: string;
+      revision?: string;
       ignorePatterns?: string[];
     };
     return (
       marker.modelId === options.modelId &&
+      marker.revision === options.revision &&
       JSON.stringify(marker.ignorePatterns ?? []) ===
         JSON.stringify(ignorePatterns)
     );
@@ -154,6 +160,7 @@ async function downloadFluxPythonModelCache(
       options.modelId,
       options.modelDir,
       JSON.stringify(ignorePatterns),
+      options.revision,
     ],
     {
       signal: options.signal,
@@ -183,7 +190,7 @@ function buildHuggingFaceSnapshotDownloadScript(): string {
     "from huggingface_hub import snapshot_download",
     "import json, sys",
     "ignore_patterns = json.loads(sys.argv[3])",
-    "snapshot_download(repo_id=sys.argv[1], cache_dir=sys.argv[2], ignore_patterns=ignore_patterns or None)",
+    "snapshot_download(repo_id=sys.argv[1], cache_dir=sys.argv[2], ignore_patterns=ignore_patterns or None, revision=sys.argv[4])",
   ].join("\n");
 }
 
@@ -229,6 +236,7 @@ async function writeFluxPythonModelCacheMarker(
     `${JSON.stringify(
       {
         modelId: options.modelId,
+        revision: options.revision,
         ignorePatterns,
         cachedAt: new Date().toISOString(),
       },

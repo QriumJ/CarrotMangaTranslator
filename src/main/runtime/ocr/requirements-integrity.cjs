@@ -1,6 +1,9 @@
 // @ts-check
 /** @typedef {import("../runtime-jsdoc-types").RuntimeOptions} RuntimeOptions */
 
+const {
+  packages: nativeRuntimePackages,
+} = require("../native-inference-manifest.json");
 const { existsSync, readFileSync } = require("node:fs");
 const path = require("node:path");
 const { runtimeOverrideEnv } = require("./host-services.cjs");
@@ -191,8 +194,8 @@ const OCR_BUILTIN_LOCK_CONTRACTS = {
       "sha256:9a01e2a7f89ea89383f6cd5ae884ac4875edefa387c4d8c77f207ba6efd178b0",
       "torchvision==0.28.0+rocm10.0.0",
       "sha256:2508a18eead7fb70ba35da6fcbc45bdc9b953d4ba44bb979a7fafebabebaa8b2",
-      "rocm-sdk-core==10.0.0",
-      "rocm-sdk-libraries==10.0.0",
+      `rocm-sdk-core @ ${nativeRuntimePackages["rocm-core"].url}`,
+      `rocm-sdk-libraries @ ${nativeRuntimePackages["rocm-libraries"].url}`,
       "amd-torch-device-gfx1030==2.13.0+rocm10.0.0",
       "amd-torch-device-gfx1201==2.13.0+rocm10.0.0",
       "huggingface-hub==1.33.0",

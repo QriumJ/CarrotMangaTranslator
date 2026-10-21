@@ -416,7 +416,7 @@ describeWindows("OCR runtime boundary behavior", () => {
           },
           {
             file: "get-pip.py",
-            url: "https://bootstrap.pypa.io/get-pip.py",
+            url: "https://raw.githubusercontent.com/pypa/get-pip/f6f644156f23dfe9acc06e7b9ca75eee311f2e37/public/get-pip.py",
             progressTitle: `${label} pip 다운로드 중`,
           },
         ]);
