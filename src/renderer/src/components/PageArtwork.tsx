@@ -1,3 +1,6 @@
+import { hasInlineTextShadow } from "../../../shared/richTextShadow";
+import { parseRichText } from "../../../shared/richTextMarkup";
+import type { PanelTextSelection } from "../../../shared/panelBridgeTypes";
 import { resolvePageDialogueFontSizes } from "../lib/dialogueFontSizeMatching";
 import { resolveBlockDisplayText } from "../../../shared/blockDisplayText";
 import React from "react";
@@ -32,22 +35,26 @@ import {
 } from "../lib/renderedGlyphEvidence";
 
 type ArtworkBlockProps = {
+  textSelection?: PanelTextSelection | null;
   afterContent?: React.ReactNode;
   block: TranslationBlock;
   chrome?: React.ReactNode;
   fontCatalog: BlockFontCatalog;
   model: OverlayBlockRenderModel;
   onPointerDown?: (event: React.PointerEvent) => void;
+  onDoubleClick?: React.MouseEventHandler<HTMLDivElement>;
   warpPreview?: boolean;
 };
 
 export const ArtworkBlock = React.memo(function ArtworkBlock({
+  textSelection,
   afterContent,
   block,
   chrome,
   fontCatalog,
   model,
   onPointerDown,
+  onDoubleClick,
   warpPreview = false,
 }: ArtworkBlockProps): React.JSX.Element {
   const content =
@@ -57,6 +64,7 @@ export const ArtworkBlock = React.memo(function ArtworkBlock({
       <>
         <TextBackgroundLayer block={block} />
         <ArtworkBlockText
+          textSelection={textSelection}
           block={block}
           fontCatalog={fontCatalog}
           model={model}
@@ -72,6 +80,7 @@ export const ArtworkBlock = React.memo(function ArtworkBlock({
       )}
       style={model.outerStyle}
       onPointerDown={onPointerDown}
+      onDoubleClick={onDoubleClick}
     >
       <LetteringPageFrame block={block} model={model} chrome={chrome}>
         {content}
@@ -97,11 +106,13 @@ function TextBackgroundLayer({
 }
 
 function ArtworkBlockText({
+  textSelection,
   block,
   fontCatalog,
   model,
   warpPreview,
 }: {
+  textSelection?: PanelTextSelection | null;
   block: TranslationBlock;
   fontCatalog: BlockFontCatalog;
   model: OverlayBlockRenderModel;
@@ -128,6 +139,7 @@ function ArtworkBlockText({
     />
   ) : (
     <OverlayText
+      textSelection={textSelection}
       block={block}
       displayText={model.displayText}
       fontCatalog={fontCatalog}
@@ -158,7 +170,14 @@ function TextEffectLayer({
   children: React.ReactNode;
   scale: { x: number; y: number };
 }): React.JSX.Element {
-  const filter = resolveTextEffectFilter(block.textEffect, scale);
+  // Legacy blocks retain the exact post-composition shadow. Once letters override
+  // it, the shared artwork renderer paints inherited/overridden shadows per run.
+  const inline =
+    !getActiveGeneratedLettering(block) &&
+    parseRichText(block.translatedText).runs.some(hasInlineTextShadow);
+  const filter = inline
+    ? undefined
+    : resolveTextEffectFilter(block.textEffect, scale);
   return filter ? (
     <div className="text-effect-layer" style={{ filter }}>
       {children}

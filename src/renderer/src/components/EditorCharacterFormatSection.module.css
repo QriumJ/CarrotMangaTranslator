@@ -1,0 +1,63 @@
+.body {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+/* The edit target, read next to the section title. */
+.scope {
+  min-width: 0;
+  padding: 2px var(--sp-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-sm);
+  color: var(--text-muted);
+  font-size: var(--font-xs);
+  font-weight: 650;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* Letter-level targets use the selection accent so a partial edit is never
+ * mistaken for a block-wide one. */
+.scope[data-scope="selection"],
+.scope[data-scope="caret"] {
+  border-color: var(--selected-edge);
+  background: var(--selected-surface);
+  color: var(--selected-text);
+}
+
+/* Two columns down to very narrow rails: size beside leading, and so on. */
+.typeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3) var(--sp-2);
+  min-width: 0;
+}
+
+@container editor-panel (max-width: 220px) {
+  .typeGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Active folded effects: quiet text with an accent marker. */
+.effectSummary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-dim);
+  font-size: var(--font-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.effectSummary::before {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-hi);
+  content: "";
+}

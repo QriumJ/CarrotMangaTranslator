@@ -240,7 +240,10 @@
       "pageSkippedDetail": "{{maxAttempts}}회 재시도 후 실패",
       "finalizing": "결과 정리 중",
       "pagesReadyNoModel": "{{count}}페이지 준비 완료, 모델 호출 없음",
-      "pagesReady": "{{count}}페이지 준비 완료"
+      "pagesReady": "{{count}}페이지 준비 완료",
+      "hunyuanOcrPreparing": "HunyuanOCR 선분석 준비 중",
+      "hunyuanOcrPreparingDetail": "HunyuanOCR용 텍스트 영역과 인식 런타임을 준비합니다.",
+      "hunyuanPageNoTextDetail": "HunyuanOCR에서 텍스트 근거를 찾지 못해 모델 호출을 생략했습니다."
     },
     "warnings": {
       "attemptFailed": "{{page}}: 시도 {{attempt}}/{{maxAttempts}} 실패 - {{message}}",
@@ -290,10 +293,16 @@
     "blocksRunning": "블록 OCR 선분석 중",
     "blocksDetail": "기존 블록 {{count}}개 영역을 잘라 텍스트를 읽습니다.",
     "gpuCacheReleased": "GPU OCR을 위해 인페인팅 엔진 캐시를 해제했습니다",
-    "gpuCacheReleasedDetail": "GPU 메모리(VRAM) 확보"
+    "gpuCacheReleasedDetail": "GPU 메모리(VRAM) 확보",
+    "hunyuanRunning": "HunyuanOCR 고정 영역 판독",
+    "hunyuanBatchRunning": "HunyuanOCR 배치 선분석 중",
+    "hunyuanPrepassDone": "HunyuanOCR 선분석 완료"
   },
   "inpainting": {
-    "targets": { "drawn": "그린 영역", "source": "원문" },
+    "targets": {
+      "drawn": "그린 영역",
+      "source": "원문"
+    },
     "preparing": "{{target}} 지우기 준비 중",
     "pageRunning": "{{current}} / {{total}} 페이지 {{target}} 지우는 중",
     "drawnDetail": "{{page}} · {{count}}개 그린 영역",
@@ -308,7 +317,10 @@
     "noTargets": "인페인팅할 텍스트 블록이 없습니다.",
     "mixedCompletionWorkflows": "선택한 페이지의 번역 완료 워크플로가 서로 달라 한 작업으로 처리할 수 없습니다.",
     "noChanges": "인페인팅 결과가 생성되지 않았습니다.",
-    "assets": { "fluxModel": "Flux 모델", "aot": "AOT 인페인팅" },
+    "assets": {
+      "fluxModel": "Flux 모델",
+      "aot": "AOT 인페인팅"
+    },
     "runtime": {
       "fluxReady": "Flux 인페인팅 준비 완료",
       "fluxReadyLog": "Flux 원문 지우기 엔진 준비가 완료되었습니다.",

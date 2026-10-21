@@ -11,7 +11,7 @@ export function useEditorPanelTab(
 ): [EditorTabId, (tab: EditorTabId) => void] {
   const [activeTab, setActiveTab] = React.useState<EditorTabId>(() => {
     if (multiSelectionKey) return "format";
-    if (preferTextOnMount) return "text";
+    if (preferTextOnMount) return "format";
     return transformMode === "select" ? readStoredEditorTab() : "layout";
   });
   const previousMode = React.useRef(transformMode);
@@ -19,6 +19,7 @@ export function useEditorPanelTab(
   const previousTextTabRequestToken = React.useRef(textTabRequestToken);
   React.useEffect(() => {
     const shouldRevealText =
+      textTabRequestToken > 0 &&
       previousTextTabRequestToken.current !== textTabRequestToken;
     const shouldRevealLayout =
       previousMode.current === "select" && transformMode !== "select";
@@ -28,7 +29,7 @@ export function useEditorPanelTab(
     previousMode.current = transformMode;
     previousMultiSelectionKey.current = multiSelectionKey;
     previousTextTabRequestToken.current = textTabRequestToken;
-    if (shouldRevealText) setActiveTab("text");
+    if (shouldRevealText) setActiveTab("format");
     else if (shouldRevealLayout) setActiveTab("layout");
     else if (shouldRevealFormat) setActiveTab("format");
   }, [multiSelectionKey, textTabRequestToken, transformMode]);

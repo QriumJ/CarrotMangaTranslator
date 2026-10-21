@@ -75,7 +75,10 @@ export async function detectWorkflowBlocks(
     translationCompletion: undefined,
     soundEffectReview: {
       contractVersion: 3,
-      producer: "hayai-regions-v1",
+      producer:
+        options.ocrPipeline === "hunyuan"
+          ? "hunyuan-regions-v1"
+          : "hayai-regions-v1",
       regionOverrides: [],
       manualRegions: [],
       resolvedRegions: [],

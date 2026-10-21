@@ -158,6 +158,9 @@ describe("renderer app helpers", () => {
     expect(matcher?.("1 / 2 페이지 Paddle OCR 분석 중")).toBe(true);
     expect(matcher?.("Paddle OCR 배치 위치 분석 중")).toBe(true);
     expect(matcher?.("Paddle OCR 선분석 완료")).toBe(true);
+    expect(matcher?.("PaddleOCR(레거시) 배치 위치 분석 중")).toBe(true);
+    expect(matcher?.("HunyuanOCR F16 · CPU")).toBe(true);
+    expect(matcher?.("HayaiOCR 분석 중")).toBe(true);
     expect(matcher?.("무관한 상태")).toBe(false);
     const typographyMatcher = resolveStatusLineReplacement({
       phase: "page_done",

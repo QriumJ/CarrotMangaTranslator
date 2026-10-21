@@ -30,7 +30,7 @@ const LegacyDismissedSoundEffectRegionIdsSchema = z
 const SoundEffectReviewV1Schema = z
   .object({
     contractVersion: z.literal(LEGACY_SOUND_EFFECT_REVIEW_CONTRACT_VERSION),
-    producer: z.literal("hayai-regions-v1"),
+    producer: z.enum(["hayai-regions-v1", "hunyuan-regions-v1"]),
     regions: z.array(SoundEffectReviewRegionSchema).max(MAX_BLOCKS_PER_PAGE),
     dismissedRegionIds: LegacyDismissedSoundEffectRegionIdsSchema,
   })
@@ -39,7 +39,7 @@ const SoundEffectReviewV1Schema = z
 const SoundEffectReviewV2Schema = z
   .object({
     contractVersion: z.literal(LEGACY_SOUND_EFFECT_REVIEW_V2_CONTRACT_VERSION),
-    producer: z.literal("hayai-regions-v1"),
+    producer: z.enum(["hayai-regions-v1", "hunyuan-regions-v1"]),
     regions: z.array(SoundEffectReviewRegionSchema).max(MAX_BLOCKS_PER_PAGE),
     resolvedRegions: z
       .array(
@@ -81,7 +81,7 @@ const ManualSoundEffectReviewRegionSchema = z
 const SoundEffectReviewV3Schema = z
   .object({
     contractVersion: z.literal(SOUND_EFFECT_REVIEW_CONTRACT_VERSION),
-    producer: z.literal("hayai-regions-v1"),
+    producer: z.enum(["hayai-regions-v1", "hunyuan-regions-v1"]),
     regions: z.array(SoundEffectReviewRegionSchema).max(MAX_BLOCKS_PER_PAGE),
     regionOverrides: z
       .array(SoundEffectReviewRegionOverrideSchema)

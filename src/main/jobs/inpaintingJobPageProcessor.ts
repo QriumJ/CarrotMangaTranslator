@@ -388,6 +388,7 @@ async function processLayoutOnlyInpaintingPage({
 }): Promise<ProcessedInpaintingPageResult> {
   const result = await runBubbleLayoutOnlyPage({
     blockId: target.blockId,
+    blockIds: target.blockIds,
     config: state.bubbleLayoutPostprocess,
     page,
     runner: state.bubbleLayoutRunner,

@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import React from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TranslationBlock } from "../src/shared/textTypes";
 import {
@@ -21,6 +27,68 @@ afterEach(cleanup);
 const EMPTY_STYLE_PRESETS: PanelSessionValue["blockStylePresets"] = [];
 
 describe("AppSessionView render boundaries", () => {
+  it("keeps padding actions current across selection updates and unavailable editors", () => {
+    const first = vi.fn();
+    const latest = vi.fn();
+    const { result, rerender } = renderHook(
+      ({ value }) => useStablePanelSessionValue(value),
+      {
+        initialProps: {
+          value: makePanelSessionValue({ onApplyBubblePadding: first }),
+        },
+      },
+    );
+    const apply = result.current.onApplyBubblePadding;
+    rerender({
+      value: makePanelSessionValue({
+        onApplyBubblePadding: latest,
+        bubblePaddingRatio: 0.3,
+      }),
+    });
+    expect(result.current.bubblePaddingRatio).toBe(0.3);
+    expect(result.current.onApplyBubblePadding).toBe(apply);
+    apply?.(0);
+    expect(first).not.toHaveBeenCalled();
+    expect(latest).toHaveBeenCalledExactlyOnceWith(0);
+    rerender({
+      value: makePanelSessionValue({ onApplyBubblePadding: undefined }),
+    });
+    expect(result.current.onApplyBubblePadding).toBeUndefined();
+    expect(() => apply?.(0)).not.toThrow();
+    expect(latest).toHaveBeenCalledTimes(1);
+  });
+
+  it("forwards previews to the latest callback without changing callback identity", () => {
+    const first = vi.fn();
+    const latest = vi.fn();
+    const { result, rerender } = renderHook(
+      ({ value }) => useStablePanelSessionValue(value),
+      {
+        initialProps: {
+          value: makePanelSessionValue({ onPreviewTextSelection: first }),
+        },
+      },
+    );
+    const preview = result.current.onPreviewTextSelection;
+    const selection = {
+      blockId: "block-a",
+      translatedText: "abcd",
+      start: 1,
+      end: 3,
+    };
+    rerender({
+      value: makePanelSessionValue({ onPreviewTextSelection: latest }),
+    });
+    expect(result.current.onPreviewTextSelection).toBe(preview);
+    preview?.(selection);
+    expect(first).not.toHaveBeenCalled();
+    expect(latest).toHaveBeenCalledWith(selection);
+    rerender({
+      value: makePanelSessionValue({ onPreviewTextSelection: undefined }),
+    });
+    expect(() => preview?.(selection)).not.toThrow();
+  });
+
   it("does not republish equivalent panel data and invokes the latest callback", () => {
     const onCommit = vi.fn();
     const onRender = vi.fn();

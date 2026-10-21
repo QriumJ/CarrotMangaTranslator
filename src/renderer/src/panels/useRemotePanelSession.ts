@@ -37,12 +37,14 @@ type RemoteBlockActions = Pick<
   | "onDuplicateBlock"
   | "onEraseBlockOriginal"
   | "onFitBlockBubble"
+  | "onApplyBubblePadding"
   | "onInsertBlockLibraryEntry"
   | "onOpenBlockLibrary"
   | "onSuggestConsistentEdit"
   | "onRemoveBubbleLayout"
   | "onUpdateBlock"
   | "onUpdateFormat"
+  | "onPreviewTextSelection"
 >;
 
 function dispatchCommand(command: PanelCommand): void {
@@ -169,11 +171,29 @@ function createRemotePresetActions(
   };
 }
 
+/** The main window drops the command if the selection changed meanwhile. */
+function createRemoteBubblePaddingAction(
+  selectedBlockId: string | undefined,
+  selectionKey: string,
+): Pick<PanelSessionValue, "onApplyBubblePadding"> {
+  return {
+    onApplyBubblePadding: (paddingRatio) => {
+      if (!selectedBlockId) return;
+      dispatchCommand({
+        type: "applySelectionBubblePadding",
+        selectionKey,
+        paddingRatio,
+      });
+    },
+  };
+}
+
 function createRemoteBlockActions(
   selectedBlockId: string | undefined,
   selectionKey: string,
 ): RemoteBlockActions {
   return {
+    ...createRemoteBubblePaddingAction(selectedBlockId, selectionKey),
     onAdjustFontSize: (adjustment) => {
       if (selectedBlockId) {
         dispatchCommand({
@@ -228,6 +248,12 @@ function createRemoteBlockActions(
         });
       }
     },
+    onPreviewTextSelection: (selection) =>
+      dispatchCommand({
+        type: "previewTextSelection",
+        selectionKey,
+        selection,
+      }),
     onUpdateFormat: (patch) => {
       if (selectedBlockId) {
         dispatchCommand({

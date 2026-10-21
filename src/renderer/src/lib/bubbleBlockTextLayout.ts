@@ -1,3 +1,5 @@
+import { resolveInlineBubbleSlots } from "./inlineBubbleLineSlots";
+import { applyInlineLineMetrics } from "./inlineLineMetrics";
 import { isAutomaticFontSize } from "./sourceFontSizeMatching";
 import { parseRichText } from "../../../shared/richTextMarkup";
 import { isGeneratedBubbleLayout } from "../../../shared/bubbleLayout";
@@ -24,7 +26,7 @@ import {
 } from "./blockFormatGeometry";
 import {
   resolveDefaultVerticalGraphemeAdvancePx,
-  resolveVerticalGraphemeAdvancePx,
+  resolveStyledVerticalGraphemeAdvancePx,
   segmentVerticalTextGraphemes,
 } from "./verticalTextSpacing";
 import {
@@ -54,7 +56,15 @@ export function resolveBubbleWrappedText(
   // A failed balanced paragraph reaches size fitting, never greedy fallback.
   if (context.balanceParagraph) return measureBalancedPlans(context, fontSize);
   for (const slots of context.plans) {
-    const measured = measureBubbleTextPlan(context, slots, block, fontSize);
+    const measured = measureInlineBubblePlan(
+      context,
+      slots,
+      block,
+      fontSize,
+      innerWidth,
+      innerHeight,
+    );
+    if (!measured) continue;
     if (
       measured.fits &&
       measured.consumedAll &&
@@ -86,11 +96,9 @@ function createBubbleParagraphContext(
   const lineHeightPx =
     resolveMaximumTextRunFontSizePx(runs, block, fontSize) * block.lineHeight;
   const fontWidthScale = resolveFontWidthScale(block.fontWidthScale);
-  const balanceParagraph = shouldBalanceParagraph(
-    block,
-    renderDirection,
-    plainText,
-  );
+  const balanceParagraph =
+    !runs.some((run) => run.lineHeight !== undefined) &&
+    shouldBalanceParagraph(block, renderDirection, plainText);
   const plans = resolveBubbleTextSlotPlans(block.bubbleLayout, {
     blockExtentPx: renderDirection === "vertical" ? innerWidth : innerHeight,
     inlineExtentPx: renderDirection === "vertical" ? innerHeight : innerWidth,
@@ -238,21 +246,55 @@ function measureVerticalStyledTextInSlots(
     lineHeightPx,
     defaultAdvancePx,
     wordBreak,
-    (grapheme, style) => {
-      const runLetterSpacingPx = (block.letterSpacing ?? 0) * style.fontSizePx;
-      const runDefaultAdvancePx = resolveDefaultVerticalGraphemeAdvancePx(
-        style.fontSizePx,
-        style.fontSizePx * block.lineHeight,
-        runLetterSpacingPx,
-      );
-      return resolveVerticalGraphemeAdvancePx(
+    (grapheme, style) =>
+      resolveStyledVerticalGraphemeAdvancePx(
         grapheme,
-        style.fontSizePx,
-        runDefaultAdvancePx,
-        runLetterSpacingPx,
-      );
-    },
+        style,
+        block.lineHeight,
+        block.letterSpacing ?? 0,
+      ),
     resolveRunStyle,
     (text) => segmentVerticalTextGraphemes(text),
   );
+}
+
+function measureInlineBubblePlan(
+  context: BubbleParagraphContext,
+  original: BubbleParagraphContext["plans"][number],
+  block: TranslationBlock,
+  fontSize: number,
+  innerWidth: number,
+  innerHeight: number,
+) {
+  let slots = original;
+  const hasLeading = context.runs.some((run) => run.lineHeight !== undefined);
+  for (let pass = 0; pass < (hasLeading ? 8 : 1); pass++) {
+    const measured = measureBubbleTextPlan(context, slots, block, fontSize);
+    if (!hasLeading) return measured;
+    if (!measured.consumedAll || measured.lines.length !== slots.length)
+      return null;
+    const vertical = context.renderDirection === "vertical";
+    const next = resolveInlineBubbleSlots(
+      measured.lines,
+      original,
+      block.bubbleLayout,
+      context.lineHeightPx,
+      fontSize,
+      vertical ? innerWidth : innerHeight,
+      vertical ? innerHeight : innerWidth,
+      resolveFontWidthScale(block.fontWidthScale),
+      context.renderDirection,
+    );
+    if (!next) return null;
+    if (JSON.stringify(next) === JSON.stringify(slots)) {
+      measured.totalHeight = applyInlineLineMetrics(
+        measured.lines,
+        context.lineHeightPx,
+        fontSize,
+      );
+      return measured;
+    }
+    slots = next;
+  }
+  return null;
 }

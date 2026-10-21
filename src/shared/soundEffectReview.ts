@@ -42,7 +42,7 @@ type ManualSoundEffectReviewRegion = {
 
 export type SoundEffectReview = {
   contractVersion: typeof SOUND_EFFECT_REVIEW_CONTRACT_VERSION;
-  producer: "hayai-regions-v1";
+  producer: "hayai-regions-v1" | "hunyuan-regions-v1";
   /** Immutable detector output retained for audit and detector refreshes. */
   regions: SoundEffectReviewRegion[];
   /** Geometry corrections for detector regions. OCR anchors are invalidated. */

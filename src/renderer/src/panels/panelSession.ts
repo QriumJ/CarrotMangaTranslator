@@ -30,7 +30,10 @@ export type PanelSessionValue = {
   selectedBlockCount: number;
   selectionKey: string;
   formatSelection: PanelFormatSelection;
+  /** Effective selection padding; `null` when blocks differ. */
+  bubblePaddingRatio?: number | null;
   editorTextTabRequestToken: number;
+  editorTextResetToken?: number;
   /** True when block edits are disabled (locked page or busy inpainting). */
   editorDisabled: boolean;
   aiUnavailable?: boolean;
@@ -66,6 +69,9 @@ export type PanelSessionValue = {
   /** Adjusts every selected block's font size by one relative step. */
   onAdjustFontSize: (adjustment: -1 | 1) => void;
   onUpdateBlock: (patch: Partial<TranslationBlock>) => void;
+  onPreviewTextSelection?: (
+    selection: import("../../../shared/panelBridgeTypes").PanelTextSelection,
+  ) => void;
   onUpdateFormat: (patch: Partial<TranslationBlock>) => void;
   onDeleteBlock: () => void;
   onDuplicateBlock: () => void;
@@ -75,6 +81,8 @@ export type PanelSessionValue = {
   onInsertBlockLibraryEntry: (entry: BlockLibraryEntryV1) => void;
   onEraseBlockOriginal: () => void;
   onFitBlockBubble: () => void;
+  /** Re-detects every selected block's bubble with this text padding. */
+  onApplyBubblePadding?: (paddingRatio: number) => void;
   onRemoveBubbleLayout: () => void;
   onChangeLetteringTool?: (
     tool: import("../../../shared/generatedLetteringMaskTypes").LetteringTool,

@@ -56,9 +56,9 @@ const {
 /** @typedef {{ archive?: string; archives?: LlamaRuntimeArchive[]; backend?: string; platform?: string; arch?: string; dir: string; id?: string; kind?: string; requiredFiles?: Array<string | string[]>; url?: string }} LlamaRuntimeDescriptor */
 /** @typedef {{ archivePath: string; archive: LlamaRuntimeArchive; sha256: string; bytes: number }} VerifiedLlamaRuntimeArchive */
 
-/** @param {ModelAssetOptions} [options] */
-async function ensureDefaultLlamaRuntimeDownloaded(options = {}) {
-  const runtime = resolvePreferredLlamaRuntime(options);
+/** @param {ModelAssetOptions} [options] @param {LlamaRuntimeDescriptor} [selected] */
+async function ensureDefaultLlamaRuntimeDownloaded(options = {}, selected) {
+  const runtime = selected ?? resolvePreferredLlamaRuntime(options);
   if (findCurrentCompleteRuntimeDir(options, runtime)) return;
   const layout = buildRuntimeLayout(options, runtime);
   assertRuntimeCanBeInstalled(options, layout);
@@ -424,6 +424,7 @@ function formatLlamaRuntimeBackend(runtime = {}) {
   const backend = String(runtime.backend || "cuda").toLowerCase();
   if (backend === "vulkan") return "Vulkan";
   if (backend === "metal") return "Metal";
+  if (backend === "cpu") return "CPU";
   if (backend === "rocm" || backend === "hip") return "ROCm/HIP";
   return "CUDA";
 }

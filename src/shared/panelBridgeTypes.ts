@@ -1,4 +1,4 @@
-import type { TranslationBlock } from "./textTypes";
+import type { TextEffect, TranslationBlock } from "./textTypes";
 import {
   BLOCK_FORMAT_FIELD_KEYS,
   type BlockFormatGroupId,
@@ -26,12 +26,18 @@ export const PANEL_FORMAT_FIELD_KEYS = [
   ...BLOCK_FORMAT_FIELD_KEYS,
   "backgroundColor",
   "opacity",
+  // Block settings outside text styles; style presets never copy them.
+  "inpaintExcluded",
+  "bubbleLayoutPaddingRatio",
 ] as const satisfies readonly (keyof TranslationBlock)[];
 
 export type PanelFormatFieldKey = (typeof PANEL_FORMAT_FIELD_KEYS)[number];
 export type PanelFormatPatch = Partial<
   Pick<TranslationBlock, PanelFormatFieldKey>
->;
+> & {
+  /** Transient edit intent, never stored on a block. Preserves mixed effect fields. */
+  textEffectFields?: readonly (keyof TextEffect)[];
+};
 export type PanelFormatSelection = {
   common: PanelFormatPatch;
   mixedFields: PanelFormatFieldKey[];
@@ -51,7 +57,13 @@ export type PanelSyncState = {
   selectedBlockCount: number;
   selectionKey: string;
   formatSelection: PanelFormatSelection;
+  /**
+   * Effective bubble padding of the selection: a block's own value, else the
+   * global setting. `null` when the selected blocks differ.
+   */
+  bubblePaddingRatio?: number | null;
   editorTextTabRequestToken: number;
+  editorTextResetToken?: number;
   editorDisabled: boolean;
   disableChapterApply: boolean;
   areaTranslateAvailable: boolean;
@@ -69,7 +81,19 @@ export type PanelSyncState = {
  * A command sent from a popped-out panel window back to the main window, which
  * applies it through the existing session action handlers.
  */
+export type PanelTextSelection = {
+  blockId: string;
+  translatedText: string;
+  start: number;
+  end: number;
+};
+
 export type PanelCommand =
+  | {
+      type: "previewTextSelection";
+      selectionKey: string;
+      selection: PanelTextSelection;
+    }
   | { type: "finishPageEdits"; requestId: string; error?: string }
   | {
       type: "updateBlock";
@@ -94,6 +118,12 @@ export type PanelCommand =
   | { type: "insertBlockLibraryEntry"; entry: BlockLibraryEntryV1 }
   | { type: "eraseBlockOriginal"; blockId: string }
   | { type: "fitBlockBubble"; blockId: string }
+  | {
+      /** Re-detects every selected block's bubble with this padding. */
+      type: "applySelectionBubblePadding";
+      selectionKey: string;
+      paddingRatio: number;
+    }
   | { type: "removeBubbleLayout"; blockId: string }
   | {
       type: "setLetteringTool";
@@ -143,7 +173,11 @@ export function pickPanelFormatPatch(
       safe[key] = patch[key];
     }
   }
-  return safe as PanelFormatPatch;
+  const effectFields = (patch as PanelFormatPatch).textEffectFields;
+  return {
+    ...safe,
+    ...(effectFields ? { textEffectFields: [...effectFields] } : {}),
+  } as PanelFormatPatch;
 }
 
 export function buildPanelFormatSelection(
@@ -154,11 +188,14 @@ export function buildPanelFormatSelection(
   const first = blocks[0];
   if (!first) return { common: {}, mixedFields };
   for (const key of PANEL_FORMAT_FIELD_KEYS) {
-    const value = first[key];
+    const value = readPanelFormatValue(first, key);
     if (
       blocks
         .slice(1)
-        .some((block) => !panelFormatValuesEqual(value, block[key]))
+        .some(
+          (block) =>
+            !panelFormatValuesEqual(value, readPanelFormatValue(block, key)),
+        )
     ) {
       mixedFields.push(key);
     } else if (value !== undefined) {
@@ -179,4 +216,11 @@ function panelFormatValuesEqual(left: unknown, right: unknown): boolean {
     return false;
   }
   return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function readPanelFormatValue(
+  block: TranslationBlock,
+  key: PanelFormatFieldKey,
+): unknown {
+  return key === "inpaintExcluded" ? Boolean(block[key]) : block[key];
 }

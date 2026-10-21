@@ -40,9 +40,11 @@ export function emitOcrPreparation(
     kind: "gemma-analysis",
     status: "starting",
     progressText: tMain(
-      isHayaiOcrPipeline(context.ocrPipeline)
-        ? "translation.progress.hayaiOcrPreparing"
-        : "translation.progress.ocrPreparing",
+      context.ocrPipeline === "hunyuan"
+        ? "translation.progress.hunyuanOcrPreparing"
+        : isHayaiOcrPipeline(context.ocrPipeline)
+          ? "translation.progress.hayaiOcrPreparing"
+          : "translation.progress.ocrPreparing",
     ),
     phase: "ocr_preparing",
     ocrPipeline: context.ocrPipeline,
@@ -50,9 +52,11 @@ export function emitOcrPreparation(
     progressTotal: context.progressTotal,
     pageTotal: context.pageTotal,
     detail: tMain(
-      isHayaiOcrPipeline(context.ocrPipeline)
-        ? "translation.progress.hayaiOcrPreparingDetail"
-        : "translation.progress.ocrPreparingDetail",
+      context.ocrPipeline === "hunyuan"
+        ? "translation.progress.hunyuanOcrPreparingDetail"
+        : isHayaiOcrPipeline(context.ocrPipeline)
+          ? "translation.progress.hayaiOcrPreparingDetail"
+          : "translation.progress.ocrPreparingDetail",
     ),
   });
 }
@@ -331,9 +335,11 @@ export function emitNoTextPage(
     pageIndex: pageIndex + 1,
     pageTotal: context.pageTotal,
     detail: tMain(
-      isHayaiOcrPipeline(context.ocrPipeline)
-        ? "translation.progress.hayaiPageNoTextDetail"
-        : "translation.progress.pageNoTextDetail",
+      context.ocrPipeline === "hunyuan"
+        ? "translation.progress.hunyuanPageNoTextDetail"
+        : isHayaiOcrPipeline(context.ocrPipeline)
+          ? "translation.progress.hayaiPageNoTextDetail"
+          : "translation.progress.pageNoTextDetail",
     ),
   });
 }

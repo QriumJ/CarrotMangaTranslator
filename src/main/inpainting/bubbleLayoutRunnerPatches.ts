@@ -11,6 +11,7 @@ export type BubbleLayoutBlockPatch = {
   renderBbox?: BBox | null;
   renderBboxSpace?: RenderBboxSpace | null;
   bubbleLayout?: BubbleLayout | null;
+  bubbleLayoutPaddingRatio?: number;
   /** Job-local only; never applied to or persisted with a TranslationBlock. */
   sharedInpaintGroupIds?: string[];
   sourceEraseConstraint?: InpaintingWindowMask;
@@ -133,6 +134,17 @@ function copyRunnerRenderPatch(
   }
   if (hasOwn(rawPatch, "bubbleLayout")) {
     patch.bubbleLayout = rawPatch.bubbleLayout;
+  }
+  if (hasOwn(rawPatch, "bubbleLayoutPaddingRatio")) {
+    const ratio = rawPatch.bubbleLayoutPaddingRatio;
+    if (
+      typeof ratio !== "number" ||
+      !Number.isFinite(ratio) ||
+      ratio < 0 ||
+      ratio > 0.7
+    )
+      throw new Error("말풍선 여백 값이 올바르지 않습니다.");
+    patch.bubbleLayoutPaddingRatio = ratio;
   }
   if (hasOwn(rawPatch, "sharedInpaintGroupIds")) {
     patch.sharedInpaintGroupIds = parseSharedInpaintGroupIds(

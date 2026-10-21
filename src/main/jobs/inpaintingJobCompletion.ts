@@ -125,13 +125,17 @@ export function assertRequestedBlockExists(
   targets: readonly { page: MangaPage }[],
   target: InpaintingTarget,
 ): void {
-  if (!target.blockId) {
+  if (!target.blockId && !target.blockIds) {
     return;
   }
   const page = targets[0]?.page;
+  const ids = target.blockIds ?? (target.blockId ? [target.blockId] : []);
   if (
+    (target.blockId !== undefined && target.blockIds !== undefined) ||
+    ids.length === 0 ||
+    new Set(ids).size !== ids.length ||
     targets.length !== 1 ||
-    !page?.blocks.some((block) => block.id === target.blockId)
+    !ids.every((id) => page?.blocks.some((block) => block.id === id))
   ) {
     throw new Error("선택한 텍스트 블록을 페이지에서 찾지 못했습니다.");
   }

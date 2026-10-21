@@ -64,6 +64,10 @@ const { isHayaiOcrPipeline } = require("./engine-profile.cjs");
 
 /** @param {RuntimeOptions} [options] @returns {Promise<OcrRuntimeLayout>} */
 async function ensureOcrRuntime(options = {}) {
+  if (options.ocrPipeline === "hunyuan")
+    throw new TypeError(
+      "HunyuanOCR uses the native fixed-region runtime, not a Python OCR runtime.",
+    );
   const bundledMacRuntime = await resolveBundledMacOcrRuntime(options);
   if (bundledMacRuntime) {
     return bundledMacRuntime;

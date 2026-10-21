@@ -24,16 +24,17 @@ export function attachEffectReviewToPage(
   pipeline: TranslationOptions["ocrPipeline"],
   result: OcrBboxResult | TranslationOptions["ocrBboxResult"] | undefined,
 ): MangaPage {
-  if (pipeline !== "hayai") return page;
+  if (pipeline !== "hayai" && pipeline !== "hunyuan") return page;
   return {
     ...page,
-    soundEffectReview: mergeSoundEffectReview(page, result),
+    soundEffectReview: mergeSoundEffectReview(page, result, pipeline),
   };
 }
 
 function mergeSoundEffectReview(
   page: MangaPage,
   result: OcrBboxResult | TranslationOptions["ocrBboxResult"] | undefined,
+  pipeline: "hayai" | "hunyuan",
 ): MangaPage["soundEffectReview"] {
   const history = resolveEffectReviewHistory(page.soundEffectReview);
   const regions = mergeEffectReviewRegions(
@@ -52,7 +53,8 @@ function mergeSoundEffectReview(
   }
   return {
     contractVersion: SOUND_EFFECT_REVIEW_CONTRACT_VERSION,
-    producer: "hayai-regions-v1",
+    producer:
+      pipeline === "hunyuan" ? "hunyuan-regions-v1" : "hayai-regions-v1",
     regions,
     regionOverrides: history.regionOverrides,
     manualRegions: history.manualRegions,

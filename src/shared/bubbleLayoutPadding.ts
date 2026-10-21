@@ -27,9 +27,9 @@ export function resolveBubbleLayoutPaddingRatio(value: unknown): number {
 /**
  * Applies visual text padding once to final shape metadata.
  *
- * Detector spans already contain their safety inset. Scaling each region
- * around its own centre preserves that inset, its curved silhouette, and
- * separate fused-balloon lobes without eroding the mask a second time.
+ * Detector spans describe the available balloon shape. Scaling each region
+ * around its own centre preserves the curved silhouette and separate
+ * fused-balloon lobes without an additional mask erosion.
  */
 export function applyBubbleLayoutPadding(
   layout: BubbleLayout,

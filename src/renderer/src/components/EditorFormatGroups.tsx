@@ -1,118 +1,83 @@
-import React from "react";
 import type { BlockFormatGroupId } from "../../../shared/blockFormat";
 import type {
   BlockStylePresetSummary,
   CreateBlockStylePresetInput,
 } from "../../../shared/blockStylePresets";
 import type { TranslationBlock } from "../../../shared/textTypes";
-import type {
-  PanelFormatFieldKey,
-  PanelFormatSelection,
-} from "../../../shared/panelBridgeTypes";
+import type { PanelFormatFieldKey } from "../../../shared/panelBridgeTypes";
 import type { FormatApplyScope } from "../hooks/blockEditingStatus";
 import type { BlockBackgroundApplyScope } from "../hooks/useApplyBlockBackgroundOpacityAction";
 import { BlockDisplayGroup } from "./BlockDisplayGroup";
 import { BlockStylePresetControls } from "./BlockStylePresetControls";
-import { EditorColorGroup } from "./EditorColorGroup";
 import { FormatEditorGroup } from "./EditorFormatControls";
-import { EditorTextEffectGroup } from "./EditorTextEffectControls";
 import { resolveEditorPanelModel } from "./editorPanelUtils";
 
 type EditorFormatGroupsProps = {
   activeStylePresetId: string;
   block: TranslationBlock;
-  canCreateStylePreset: boolean;
+  canCreateStylePreset?: boolean;
   disabled: boolean;
-  disableChapterApply: boolean;
-  fontFamilyDraft: string | undefined;
-  formatSelection: PanelFormatSelection;
-  onAdjustFontSize: (adjustment: -1 | 1) => void;
+  disableChapterApply?: boolean;
+  mixedFields: ReadonlySet<PanelFormatFieldKey>;
   onApplyBlockBackgroundOpacity?: (scope: BlockBackgroundApplyScope) => void;
   onApplyFormat?: (
     scope: FormatApplyScope,
     groupIds: BlockFormatGroupId[],
   ) => void;
   onApplyStylePreset: (presetId: string) => void;
-  onCreateStylePreset: (
+  onCreateStylePreset?: (
     input: CreateBlockStylePresetInput,
   ) => boolean | Promise<boolean>;
   onDeleteStylePreset: (presetId: string) => boolean | Promise<boolean>;
   onOpenStylePresetManager?: () => void;
-  onOpenFontManager?: () => void;
-  onOverwriteStylePreset: (presetId: string) => boolean | Promise<boolean>;
-  onRenameStylePreset: (
+  onOverwriteStylePreset?: (presetId: string) => boolean | Promise<boolean>;
+  onRenameStylePreset?: (
     presetId: string,
     name: string,
   ) => boolean | Promise<boolean>;
   onUpdate: (patch: Partial<TranslationBlock>) => void;
-  resolvedFontSizePx: number | null;
+  resolvedFontSizePx?: number | null;
   selectedBlockCount: number;
+  selectionKey?: string;
+  bubblePaddingRatio?: number | null;
+  onApplyBubblePadding?: (paddingRatio: number) => void;
   showStylePresets?: boolean;
-  setFontFamilyDraft: React.Dispatch<React.SetStateAction<string | undefined>>;
-  stylePresets: readonly BlockStylePresetSummary[];
+  stylePresets?: readonly BlockStylePresetSummary[];
 };
 
+const EMPTY_STYLE_PRESETS: readonly BlockStylePresetSummary[] = [];
+const NOOP_RESULT = (): boolean => false;
+
+/** Whole-block settings, editor display and style presets. */
 export function EditorFormatGroups(
   props: EditorFormatGroupsProps,
 ): React.JSX.Element {
-  const {
-    block,
-    disabled,
-    disableChapterApply,
-    fontFamilyDraft,
-    formatSelection,
-    onAdjustFontSize,
-    onApplyBlockBackgroundOpacity,
-    onApplyFormat,
-    onOpenFontManager,
-    onUpdate,
-    resolvedFontSizePx,
-    selectedBlockCount,
-    setFontFamilyDraft,
-  } = props;
-  const model = resolveEditorPanelModel(block, resolvedFontSizePx);
-  const mixedFields = React.useMemo<ReadonlySet<PanelFormatFieldKey>>(
-    () => new Set(formatSelection.mixedFields),
-    [formatSelection.mixedFields],
-  );
+  const { block, disabled, mixedFields, onUpdate } = props;
+  const disableChapterApply = props.disableChapterApply ?? false;
   return (
     <>
-      <EditorStylePresetControls props={props} />
       <FormatEditorGroup
         block={block}
         disabled={disabled}
         disableChapterApply={disableChapterApply}
-        fontFamilyDraft={fontFamilyDraft}
         mixedFields={mixedFields}
-        model={model}
-        onApplyFormat={onApplyFormat}
-        onAdjustFontSize={onAdjustFontSize}
-        onFontFamilyDraftChange={setFontFamilyDraft}
-        onOpenFontManager={onOpenFontManager}
+        model={resolveEditorPanelModel(block, props.resolvedFontSizePx)}
+        onApplyFormat={props.onApplyFormat}
         onUpdate={onUpdate}
-        selectedBlockCount={selectedBlockCount}
-      />
-      <EditorColorGroup
-        block={block}
-        disabled={disabled}
-        mixedFields={mixedFields}
-        model={model}
-        onUpdate={onUpdate}
-      />
-      <EditorTextEffectGroup
-        block={block}
-        disabled={disabled}
-        mixedFields={mixedFields}
-        onUpdate={onUpdate}
+        selectedBlockCount={props.selectedBlockCount}
+        selectionKey={props.selectionKey}
+        bubblePaddingRatio={props.bubblePaddingRatio}
+        onApplyBubblePadding={props.onApplyBubblePadding}
       />
       <BlockDisplayGroup
         block={block}
         disabled={disabled}
         disableChapterApply={disableChapterApply}
         mixed={mixedFields.has("opacity")}
-        onApply={onApplyBlockBackgroundOpacity}
+        onApply={props.onApplyBlockBackgroundOpacity}
         onUpdate={onUpdate}
       />
+      <EditorStylePresetControls props={props} />
     </>
   );
 }
@@ -126,15 +91,15 @@ function EditorStylePresetControls({
   return (
     <BlockStylePresetControls
       activePresetId={props.activeStylePresetId}
-      canCreate={props.canCreateStylePreset}
+      canCreate={props.canCreateStylePreset ?? false}
       disabled={props.disabled}
-      presets={props.stylePresets}
+      presets={props.stylePresets ?? EMPTY_STYLE_PRESETS}
       onApply={props.onApplyStylePreset}
-      onCreate={props.onCreateStylePreset}
+      onCreate={props.onCreateStylePreset ?? NOOP_RESULT}
       onDelete={props.onDeleteStylePreset}
       onManage={props.onOpenStylePresetManager}
-      onOverwrite={props.onOverwriteStylePreset}
-      onRename={props.onRenameStylePreset}
+      onOverwrite={props.onOverwriteStylePreset ?? NOOP_RESULT}
+      onRename={props.onRenameStylePreset ?? NOOP_RESULT}
     />
   );
 }

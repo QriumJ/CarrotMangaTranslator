@@ -3,83 +3,56 @@ import { useTranslation } from "react-i18next";
 import type { TranslationBlock } from "../../../shared/textTypes";
 import type { PanelFormatFieldKey } from "../../../shared/panelBridgeTypes";
 import { ColorField } from "./ColorField";
-import { EditorOutlineControls } from "./EditorOutlineControls";
-import { resolveColor, type EditorPanelModel } from "./editorPanelUtils";
+import type { CharacterFormatTarget } from "./editorCharacterFormatTarget";
+import { resolveColor } from "./editorPanelUtils";
 import { CheckboxField } from "./ui/CheckboxField";
 import { IconButton } from "./ui/IconButton";
+import styles from "./EditorColorGroup.module.css";
 
-type EditorColorGroupProps = {
-  block: TranslationBlock;
-  disabled: boolean;
-  mixedFields?: ReadonlySet<PanelFormatFieldKey>;
-  model: EditorPanelModel;
-  onUpdate: (patch: Partial<TranslationBlock>) => void;
-};
-
+/** Text color cell of the character grid, with the text/outline color swap. */
 export function EditorColorGroup({
-  block,
   disabled,
-  mixedFields = EMPTY_MIXED_FIELDS,
-  model,
-  onUpdate,
-}: EditorColorGroupProps): React.JSX.Element {
+  target,
+}: {
+  disabled: boolean;
+  target: CharacterFormatTarget;
+}): React.JSX.Element {
   const { t } = useTranslation("components");
+  const { mixed, values } = target;
   return (
-    <div className="editor-group editor-appearance-group">
-      <div className="editor-group-head">
-        <h3>{t("format.color")}</h3>
+    <div className="editor-format-number-cell">
+      <span>{t("format.textColor")}</span>
+      <div className={styles.colorControl}>
+        <ColorField
+          className="editor-appearance-color"
+          label={t("format.textColor")}
+          labelHidden
+          value={values.color}
+          disabled={disabled}
+          mixed={mixed.has("color")}
+          onChange={(color) => target.apply({ color })}
+        />
         <IconButton
           size="sm"
           label={t("editor.swapTextOutlineColors")}
           title={t("editor.swapTextOutlineColors")}
           disabled={disabled}
           onClick={() =>
-            onUpdate({
-              textColor: model.outlineColor,
-              outlineColor: resolveColor(block.textColor, "#111111"),
+            target.apply({
+              color: values.outlineColor,
+              outlineColor: values.color,
             })
           }
         >
           <IconSwitchHorizontal size={15} stroke={2.1} aria-hidden="true" />
         </IconButton>
       </div>
-      <div
-        className="editor-appearance-list"
-        aria-label={t("editor.blockColors")}
-      >
-        <div className="editor-appearance-row">
-          <span className="editor-appearance-label">
-            {t("format.textColor")}
-          </span>
-          <ColorField
-            className="editor-appearance-color"
-            label={t("format.textColor")}
-            labelHidden
-            value={resolveColor(block.textColor, "#111111")}
-            disabled={disabled}
-            mixed={mixedFields.has("textColor")}
-            onChange={(textColor) => onUpdate({ textColor })}
-          />
-        </div>
-        <TextBackgroundField
-          block={block}
-          disabled={disabled}
-          mixedFields={mixedFields}
-          onUpdate={onUpdate}
-        />
-        <EditorOutlineControls
-          block={block}
-          disabled={disabled}
-          mixedFields={mixedFields}
-          outlineColor={model.outlineColor}
-          onUpdate={onUpdate}
-        />
-      </div>
     </div>
   );
 }
 
-function TextBackgroundField({
+/** The block's full text-area background, independent of letter styles. */
+export function TextBackgroundField({
   block,
   disabled,
   mixedFields,
@@ -121,5 +94,3 @@ function TextBackgroundField({
     </div>
   );
 }
-
-const EMPTY_MIXED_FIELDS: ReadonlySet<PanelFormatFieldKey> = new Set();

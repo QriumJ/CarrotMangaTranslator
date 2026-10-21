@@ -15,9 +15,11 @@ type EditingCallbacks = Pick<
   | "onDuplicateBlock"
   | "onEraseBlockOriginal"
   | "onFitBlockBubble"
+  | "onApplyBubblePadding"
   | "onRemoveBubbleLayout"
   | "onUpdateBlock"
   | "onUpdateFormat"
+  | "onPreviewTextSelection"
 >;
 
 type PanelChromeCallbacks = Pick<
@@ -69,7 +71,9 @@ export function useStablePanelSessionValue(
       editorFloating: value.editorFloating,
       editorPoppedOut: value.editorPoppedOut,
       editorTextTabRequestToken: value.editorTextTabRequestToken,
+      editorTextResetToken: value.editorTextResetToken,
       formatSelection,
+      bubblePaddingRatio: value.bubblePaddingRatio,
       selectionKey: value.selectionKey,
       selectedBlock: value.selectedBlock,
       selectedBlockCount: value.selectedBlockCount,
@@ -84,6 +88,7 @@ export function useStablePanelSessionValue(
       callbacks,
       formatSelection,
       selectedPageSize,
+      value.bubblePaddingRatio,
       value.letteringTool,
       value.onChangeLetteringTool,
       value.areaTranslateAvailable,
@@ -96,6 +101,7 @@ export function useStablePanelSessionValue(
       value.editorFloating,
       value.editorPoppedOut,
       value.editorTextTabRequestToken,
+      value.editorTextResetToken,
       value.selectionKey,
       value.selectedBlock,
       value.selectedBlockCount,
@@ -138,8 +144,20 @@ function useStableEditingCallbacks(value: PanelSessionValue): EditingCallbacks {
   const onDuplicateBlock = useEventCallback(value.onDuplicateBlock);
   const onEraseBlockOriginal = useEventCallback(value.onEraseBlockOriginal);
   const onFitBlockBubble = useEventCallback(value.onFitBlockBubble);
+  const applyBubblePadding = useEventCallback((paddingRatio: number) =>
+    value.onApplyBubblePadding?.(paddingRatio),
+  );
+  // Editors without a live page (library/templates) have no handler.
+  const onApplyBubblePadding = value.onApplyBubblePadding
+    ? applyBubblePadding
+    : undefined;
   const onRemoveBubbleLayout = useEventCallback(value.onRemoveBubbleLayout);
   const onUpdateBlock = useEventCallback(value.onUpdateBlock);
+  const onPreviewTextSelection = useEventCallback(
+    (
+      selection: import("../../../shared/panelBridgeTypes").PanelTextSelection,
+    ) => value.onPreviewTextSelection?.(selection),
+  );
   const onUpdateFormat = useEventCallback(value.onUpdateFormat);
 
   return React.useMemo<EditingCallbacks>(
@@ -154,9 +172,11 @@ function useStableEditingCallbacks(value: PanelSessionValue): EditingCallbacks {
       onDuplicateBlock,
       onEraseBlockOriginal,
       onFitBlockBubble,
+      onApplyBubblePadding,
       onRemoveBubbleLayout,
       onUpdateBlock,
       onUpdateFormat,
+      onPreviewTextSelection,
     }),
     [
       onAdjustFontSize,
@@ -169,9 +189,11 @@ function useStableEditingCallbacks(value: PanelSessionValue): EditingCallbacks {
       onDuplicateBlock,
       onEraseBlockOriginal,
       onFitBlockBubble,
+      onApplyBubblePadding,
       onRemoveBubbleLayout,
       onUpdateBlock,
       onUpdateFormat,
+      onPreviewTextSelection,
     ],
   );
 }

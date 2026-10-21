@@ -1,3 +1,4 @@
+import type { HunyuanSettings } from "../../../../shared/settingsTypes";
 import {
   DEFAULT_GEMMA_SAMPLING,
   type GemmaSamplingSettings,
@@ -127,6 +128,7 @@ export type SettingsFormValues = {
   activeCustomProfileId: string;
   ocrDevice: OcrDevice;
   ocrPipeline: OcrPipeline;
+  hunyuanOcr: HunyuanSettings;
   ocrGpuBackend: OcrGpuBackend;
   ocrQualityMode: OcrQualityMode;
   inpaintingModel: InpaintingModel;
@@ -285,6 +287,7 @@ function resolveHardwareFormValues(
   SettingsFormValues,
   | "ocrDevice"
   | "ocrPipeline"
+  | "hunyuanOcr"
   | "ocrGpuBackend"
   | "ocrQualityMode"
   | "inpaintingModel"
@@ -295,6 +298,7 @@ function resolveHardwareFormValues(
   return {
     ocrDevice: settings.ocr.device,
     ocrPipeline: settings.ocr.pipeline ?? "paddle-legacy",
+    hunyuanOcr: normalizeHunyuanSettings(settings.ocr.hunyuan),
     ocrGpuBackend: settings.ocr.gpuBackend ?? "cuda",
     ocrQualityMode: settings.ocr.qualityMode ?? "economy",
     inpaintingModel: settings.inpainting?.model ?? "flux-klein",
@@ -326,3 +330,4 @@ function resolveClaudeFormValues(settings: AppSettings) {
     claudeEffort: settings.claude?.effort ?? "high",
   };
 }
+import { normalizeHunyuanSettings } from "../../../../shared/hunyuanOcr";

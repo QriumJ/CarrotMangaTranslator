@@ -93,6 +93,7 @@ async function attachEffectReviewRegions(
   manifest: HayaiRegionManifest,
   outputDir: string,
 ): Promise<OcrBboxResult> {
+  if (result.effectReviewRegions) return result;
   const recognized = await readRecognizedEffectText(
     join(outputDir, "ocr-bbox-hints.json"),
   );

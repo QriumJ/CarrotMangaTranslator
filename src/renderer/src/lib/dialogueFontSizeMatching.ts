@@ -10,7 +10,7 @@ import {
   type ViewportSize,
 } from "./overlayLayout";
 import { resolvePageSourceFontFaceFallbacks } from "./sourceFontSizeMatching";
-import { assessWrappedTextQuality } from "./bubbleTextWrapping";
+import { assessWrappedTextQuality } from "./bubbleTextQuality";
 
 function median(values: number[]): number {
   const sorted = [...values].sort((a, b) => a - b);

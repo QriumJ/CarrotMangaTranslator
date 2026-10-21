@@ -9,14 +9,14 @@ import {
 } from "../../../shared/textWrapping";
 import type { TranslationBlock } from "../../../shared/textTypes";
 import { resolveBlockFontFamily, type BlockFontCatalog } from "./fonts";
+import type { BlockTextLine } from "./textLineTypes";
 import {
   measureStyledWrappedText,
   measureUniformStyledWrappedText,
-  type BlockTextLine,
 } from "./overlayTextWrapping";
 import {
   resolveDefaultVerticalGraphemeAdvancePx,
-  resolveVerticalGraphemeAdvancePx,
+  resolveStyledVerticalGraphemeAdvancePx,
   segmentVerticalTextGraphemes,
 } from "./verticalTextSpacing";
 import {
@@ -215,32 +215,28 @@ function measureVerticalText(
     maximumFontSizePx * block.lineHeight,
     defaultAdvancePx,
     wordBreak,
-    (grapheme, style) => {
-      const runLetterSpacingPx = (block.letterSpacing ?? 0) * style.fontSizePx;
-      const runDefaultAdvancePx = resolveDefaultVerticalGraphemeAdvancePx(
-        style.fontSizePx,
-        style.fontSizePx * block.lineHeight,
-        runLetterSpacingPx,
-      );
-      return resolveVerticalGraphemeAdvancePx(
+    (grapheme, style) =>
+      resolveStyledVerticalGraphemeAdvancePx(
         grapheme,
-        style.fontSizePx,
-        runDefaultAdvancePx,
-        runLetterSpacingPx,
-      );
-    },
+        style,
+        block.lineHeight,
+        block.letterSpacing ?? 0,
+      ),
     resolveRunStyle,
     (text) => segmentVerticalTextGraphemes(text),
   );
   const columnCount = Math.max(1, measured.lineCount);
-  const estimatedColumnWidth =
-    maximumFontSizePx * block.lineHeight * fontWidthScale;
+  const occupiedWidth = measured.lines.some(
+    (line) => line.lineBoxHeightPx !== undefined,
+  )
+    ? measured.totalHeight * fontWidthScale
+    : columnCount * (maximumFontSizePx * block.lineHeight * fontWidthScale);
   return {
     lines: measured.lines,
     columnCount,
     fits:
       columnCount <= MAX_VERTICAL_COLUMNS &&
-      columnCount * estimatedColumnWidth <= maxWidth &&
+      occupiedWidth <= maxWidth &&
       measured.maxLineWidth <= maxHeight,
   };
 }

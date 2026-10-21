@@ -140,6 +140,15 @@ it("records background completions without replacing the active model and keeps 
       progressText: "B 내보내기 완료",
     });
     events.operation(operation("download", "completed", 20));
+    events.job({
+      ...model,
+      id: "workflow-C",
+      status: "completed",
+      progressText: "페이지 작업 완료",
+      workflowProgress: { pageCount: 80, stageCount: 7 },
+      progressCurrent: 560,
+      progressTotal: 560,
+    });
   });
   await waitFor(() =>
     expect(loadStatusCenterHistory().map((e) => e.id)).toEqual(
@@ -147,6 +156,10 @@ it("records background completions without replacing the active model and keeps 
     ),
   );
   fireEvent.click(screen.getByRole("button", { name: "작업 센터 열기" }));
+  expect(
+    loadStatusCenterHistory().find((entry) => entry.id === "workflow-C")
+      ?.pageTotal,
+  ).toBe(80);
   expect(screen.getByText("B 내보내기 완료")).not.toBeNull();
   act(() => events.job({ ...model, progressText: "A 계속 처리 중" }));
   expect(screen.getByText("B 내보내기 완료")).not.toBeNull();

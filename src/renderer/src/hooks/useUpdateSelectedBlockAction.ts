@@ -1,3 +1,8 @@
+import { stripRichTextMarkup } from "../../../shared/richTextMarkup";
+import {
+  clearChangedCharacterOverrides,
+  applySelectedBlockFormatPatch,
+} from "../../../shared/richTextBlockFormatting";
 import { resolveBlockDisplayText } from "../../../shared/blockDisplayText";
 import { normalizeFontWeightPatch } from "../../../shared/blockFontWeight";
 import { useCallback } from "react";
@@ -25,9 +30,15 @@ type UpdateBlockOptions = {
 function resolveBlockEditMergeKey(
   blockId: string,
   patch: Partial<TranslationBlock>,
+  previousText: string | undefined,
 ): string | undefined {
   if ("generatedLettering" in patch) return undefined;
-  const isTextEdit = "translatedText" in patch || "sourceText" in patch;
+  const translatedContentChanged =
+    patch.translatedText !== undefined &&
+    (previousText === undefined ||
+      stripRichTextMarkup(patch.translatedText) !==
+        stripRichTextMarkup(previousText));
+  const isTextEdit = translatedContentChanged || "sourceText" in patch;
   return `${isTextEdit ? "text" : "style"}:${blockId}`;
 }
 
@@ -46,7 +57,12 @@ export function useUpdateBlockAction({
         return;
       }
 
-      const mergeKey = resolveBlockEditMergeKey(blockId, patch);
+      const mergeKey = resolveBlockEditMergeKey(
+        blockId,
+        patch,
+        selectedPage.blocks.find((block) => block.id === blockId)
+          ?.translatedText,
+      );
       updateCurrentChapter(
         selectedPage.id,
         (current) =>
@@ -91,6 +107,10 @@ export function normalizeTranslationBlockPatch(
   patch: Partial<TranslationBlock>,
   pageSize?: { width: number; height: number },
 ): TranslationBlock {
+  patch = clearChangedCharacterOverrides(
+    block,
+    applySelectedBlockFormatPatch(block, patch),
+  );
   const next = constrainPatchedVisualTransform(
     buildNormalizedTranslationBlock(
       block,

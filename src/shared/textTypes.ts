@@ -93,6 +93,8 @@ export type TranslationBlock = {
    * This is per-block geometry, not a reusable formatting default.
    */
   bubbleLayout?: BubbleLayout;
+  /** Explicit per-block visual inset, applied by the balloon fitting job. */
+  bubbleLayoutPaddingRatio?: number;
   sourceText: string;
   translatedText: string;
   /** Provider-refused ImageGen region; retained for local review, never retried automatically. */

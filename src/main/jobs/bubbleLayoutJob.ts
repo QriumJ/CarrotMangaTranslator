@@ -112,6 +112,7 @@ function resolveJobBubbleLayoutConfig(
   if (request.mode === "page-bubble-layout") {
     return {
       policy: request.policy,
+      paddingRatioOverride: request.paddingRatio,
       paddingRatio: resolveBubbleLayoutPaddingRatio(
         appSettings.inpainting?.bubbleLayoutPaddingRatio,
       ),
@@ -133,12 +134,14 @@ function resolveJobBubbleLayoutConfig(
 
 export async function runBubbleLayoutOnlyPage({
   blockId,
+  blockIds,
   config,
   page,
   runner,
   signal,
 }: {
   blockId?: string;
+  blockIds?: readonly string[];
   config: BubbleLayoutPostprocessConfig | null;
   page: MangaPage;
   runner: BubbleLayoutRunner | null;
@@ -149,6 +152,7 @@ export async function runBubbleLayoutOnlyPage({
   }
   const processed = await runBubbleLayoutPostprocess({
     blockId,
+    blockIds,
     config,
     page,
     runner,

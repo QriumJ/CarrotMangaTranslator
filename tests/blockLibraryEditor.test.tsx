@@ -181,7 +181,7 @@ describe("block library editor", () => {
         }),
     );
 
-    expect(screen.getByRole("tab", { name: "텍스트" })).toBeTruthy();
+    expect(screen.queryByRole("tab", { name: "텍스트" })).toBeNull();
     expect(screen.getByRole("tab", { name: "배치" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "서식" })).toBeTruthy();
     expect(container.querySelector(".page-artwork")).toBeTruthy();
@@ -194,7 +194,7 @@ describe("block library editor", () => {
       target: { value: " 새 의성어 " },
     });
     fireEvent.click(screen.getByRole("tab", { name: "서식" }));
-    fireEvent.click(screen.getByRole("button", { name: "블록 전체 굵게" }));
+    fireEvent.click(screen.getByRole("button", { name: "굵게" }));
     fireEvent.click(screen.getByRole("button", { name: "저장" }));
 
     await waitFor(() => expect(updateBlockLibraryEntry).toHaveBeenCalledOnce());
@@ -250,7 +250,7 @@ describe("block library editor", () => {
       },
     });
     try {
-      expect(readStoredEditorTab()).toBe("text");
+      expect(readStoredEditorTab()).toBe("format");
       expect(() => storeEditorTab("format")).not.toThrow();
       expect(warn).toHaveBeenCalledTimes(2);
     } finally {

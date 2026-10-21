@@ -1,7 +1,10 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { TranslationOptions } from "../appSettings";
-import { isHayaiOcrPipeline } from "../../shared/ocrEngines";
+import {
+  isRegionOcrPipeline,
+  resolveOcrEngineDisplayName,
+} from "../../shared/ocrEngines";
 import {
   buildHayaiRegionManifest,
   type HayaiRegionManifest,
@@ -29,13 +32,13 @@ async function prepareHayaiRegionsNow(
   options: TranslationOptions,
   detect: typeof detectPageTextRegions,
 ): Promise<PreparedHayaiRegions> {
-  if (!isHayaiOcrPipeline(options.ocrPipeline)) {
+  if (!isRegionOcrPipeline(options.ocrPipeline)) {
     throw new Error("HayaiOCR 영역 전처리는 최신 OCR 경로에서만 실행됩니다.");
   }
   options.abortSignal?.throwIfAborted();
   options.onProgress?.({
     phase: "ocr_preparing",
-    progressText: "HayaiOCR 텍스트 영역 준비 중",
+    progressText: `${resolveOcrEngineDisplayName(options.ocrPipeline)} 텍스트 영역 준비 중`,
     detail:
       options.ocrInputKind === "known-block-crop"
         ? "선택한 원문 영역을 다시 탐지하지 않고 그대로 판독합니다."
@@ -56,7 +59,7 @@ async function prepareHayaiRegionsNow(
   options.onProgress?.({
     phase: "ocr_running",
     progressText: `일반 텍스트 ${manifest.dialogueRegions.length}개 · 효과음 검토 ${manifest.effectRegions.length}개`,
-    detail: "Hayai가 고정된 일반 텍스트 영역만 판독합니다.",
+    detail: `${resolveOcrEngineDisplayName(options.ocrPipeline)}가 고정 영역을 판독합니다.`,
     progressMode: "log-only",
   });
   return { manifest, manifestPath };

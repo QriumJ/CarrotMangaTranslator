@@ -52,6 +52,10 @@
   "job": {
     "pageProgress": "Page {{current}} / {{total}} · {{status}}",
     "pageStatus": "Page · {{status}}",
+    "workflowProgress": {
+      "scope": "{{pages}} pages · {{stages}} stages",
+      "operations": "Stage tasks {{current}} / {{total}}"
+    },
     "pageRetry": "Page {{current}} / {{total}} · Retry {{attempt}} / {{attemptTotal}}",
     "elapsed": {
       "lessThanSecond": "under 1 sec",
@@ -91,7 +95,11 @@
       "ocrPreanalysisDone": "Paddle OCR pre-analysis complete",
       "hayaiOcrRunning": "Analyzing with HayaiOCR",
       "hayaiOcrPreanalysisDone": "HayaiOCR pre-analysis complete",
-      "pageRetry": "Retrying page"
+      "pageRetry": "Retrying page",
+      "hunyuanOcrDownloading": "Downloading/installing HunyuanOCR",
+      "hunyuanOcrPreparing": "Preparing HunyuanOCR",
+      "hunyuanOcrRunning": "Analyzing with HunyuanOCR",
+      "hunyuanOcrPreanalysisDone": "HunyuanOCR pre-analysis complete"
     },
     "status": {
       "starting": "Preparing model",
@@ -462,6 +470,7 @@
       "success": "Fitted the current page's translated blocks to their bubbles.",
       "selectedBlockSuccess": "Fitted the selected translated block to its bubble.",
       "selectedBlockNoMatch": "No matching bubble area was found for the selected block.",
+      "selectionChanged": "{{count}} selected blocks · {{changed}} bubble layouts changed",
       "failedTitle": "Bubble fitting failed",
       "failed": "Could not fit the translated blocks to their bubbles."
     },

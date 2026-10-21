@@ -1,0 +1,4 @@
+.line[data-text-selection] {
+  outline: 1px solid var(--accent-bd);
+  outline-offset: 2px;
+}

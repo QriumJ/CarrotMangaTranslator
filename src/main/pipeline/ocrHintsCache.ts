@@ -177,7 +177,7 @@ export async function writeCachedOcrHints(
         width: page.width,
         height: page.height,
         sourceLanguage: normalizeOcrCacheLanguage(options.sourceLanguage),
-        configuration: buildOcrCacheConfiguration(options),
+        configuration: buildOcrCacheConfiguration(options, result),
         schemaVersion: OCR_HINT_CACHE_SCHEMA_VERSION,
         hints: result.hints,
         effectReviewRegions: result.effectReviewRegions,

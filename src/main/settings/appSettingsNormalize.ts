@@ -1,3 +1,4 @@
+import { normalizeHunyuanSettings } from "../../shared/hunyuanOcr";
 import {
   normalizeClaudePreferences,
   normalizeImageReview,
@@ -154,6 +155,7 @@ function normalizeOcrSettings(
     qualityMode: normalizedQualityMode,
   } = resolveStoredOcrModeSettings(ocr, defaults);
   return {
+    hunyuan: normalizeHunyuanSettings(ocr?.hunyuan),
     pipeline: resolveOcrPipeline(
       ocr?.pipeline,
       defaults.ocr.pipeline ?? "hayai",

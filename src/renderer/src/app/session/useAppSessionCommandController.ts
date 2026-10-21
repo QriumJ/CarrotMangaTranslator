@@ -31,6 +31,7 @@ type UseAppSessionCommandControllerArgs = {
   setShowTextBlocks: Dispatch<SetStateAction<boolean>>;
   openTranslateOptions: () => void;
   openChat?: () => void;
+  editBlockText?: () => void;
   openWorkContext?: (workId: string) => void;
   setTranslationSourceOpen: Dispatch<SetStateAction<boolean>>;
   setAddPagesChapter: Dispatch<SetStateAction<ChapterSnapshot | null>>;
@@ -62,6 +63,7 @@ export function useAppSessionCommandController({
   setShowTextBlocks,
   openTranslateOptions,
   openChat,
+  editBlockText,
   openWorkContext,
   setTranslationSourceOpen,
   setAddPagesChapter,
@@ -93,6 +95,7 @@ export function useAppSessionCommandController({
     toggleTextBlocks: () => setShowTextBlocks((visible) => !visible),
     openTranslateOptions,
     openChat,
+    editBlockText,
     openWorkContext,
     openTranslationSource: () => {
       setAddPagesChapter(null);

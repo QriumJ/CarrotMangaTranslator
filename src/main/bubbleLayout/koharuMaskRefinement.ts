@@ -8,12 +8,6 @@ import {
 import type { KoharuInstanceMask } from "./contracts";
 import type { BubbleMaskRefinementResult } from "./bubbleMaskTypes";
 
-const POLICY_INSET_SCALE = {
-  safe: 1.2,
-  balanced: 1,
-  maximize: 0.75,
-} as const;
-
 /**
  * Converts KoharuLayout's full-page 288² instance logits into the fitting
  * region used by the editor. No color flood, ellipse, or legacy detector
@@ -44,10 +38,14 @@ export function refineKoharuBubbleMask(input: {
   const promptCoverage = measurePromptCoverage(input.promptBoxes, crop, raw);
   if (promptCoverage < 0.12) return null;
 
-  // Translated font/outline sizes describe typesetting, not the original ink.
-  // Keep a pixel at the detected boundary without cutting off edge furigana.
-  const insetPx = input.sourceEraseMask ? 1 : resolveKoharuSafeInsetPx(input);
-  const safeMask = erodeBinaryMask(raw, crop.width, crop.height, insetPx);
+  // Only erasure keeps its existing one-pixel boundary protection.
+  // Translated font/outline sizes do not change either region.
+  const insetPx = input.sourceEraseMask ? 1 : 0;
+  // Visual padding is explicitly chosen by the user, never inferred from glyphs.
+  // Erosion has a minimum one-pixel threshold, so bypass it for render geometry.
+  const safeMask = input.sourceEraseMask
+    ? erodeBinaryMask(raw, crop.width, crop.height, insetPx)
+    : raw;
   const regions = extractPromptedMaskRegions({
     mask: safeMask,
     width: crop.width,
@@ -64,15 +62,6 @@ export function refineKoharuBubbleMask(input: {
     promptCoverage,
     confidence: clamp(0.55 + promptCoverage * 0.45, 0, 1),
   };
-}
-
-export function resolveKoharuSafeInsetPx(input: {
-  fontSizePx: number;
-  outlineWidthPx: number;
-  policy: BubbleLayoutPolicy;
-}): number {
-  const base = Math.max(3, input.fontSizePx * 0.18, input.outlineWidthPx * 2.5);
-  return base * POLICY_INSET_SCALE[input.policy];
 }
 
 function rasterizeMaskLogits(

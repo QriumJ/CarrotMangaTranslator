@@ -91,6 +91,19 @@ async function writeManagedPythonFixtureZip(
 
 const describeWindows = process.platform === "win32" ? describe : describe.skip;
 
+it.each(["Paddle OCR", "PaddleOCR(레거시)"])(
+  "preserves timeout classification for %s runtime logs",
+  (label) => {
+    const errors = require("../src/main/runtime/ocr/runtime-errors.cjs");
+    expect(
+      errors.buildOcrRuntimeImportFailureMessage(
+        `${label} runtime verification timed out.`,
+        { ocrPipeline: "paddle-legacy", ocrDevice: "cpu" },
+      ),
+    ).toContain("검증이 시간 초과");
+  },
+);
+
 describeWindows("OCR runtime boundary behavior", () => {
   it("gives HayaiOCR CPU its own PyTorch runtime instead of Paddle CPU", () => {
     const options = { ocrPipeline: "hayai", ocrDevice: "cpu" };
@@ -253,7 +266,7 @@ describeWindows("OCR runtime boundary behavior", () => {
   });
 
   it.each([
-    { options: {}, version: "3.12.7", label: "Paddle OCR" },
+    { options: {}, version: "3.12.7", label: "PaddleOCR(레거시)" },
     {
       options: { ocrPipeline: "hayai", ocrDevice: "cpu" },
       version: "3.14.8",

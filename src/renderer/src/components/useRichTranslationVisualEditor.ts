@@ -33,7 +33,9 @@ type VisualEditorArgs = {
 };
 
 export type RichTranslationVisualEditor = {
-  captureSelectionBeforeControlFocus: React.PointerEventHandler<HTMLDivElement>;
+  captureSelectionBeforeControlFocus: (
+    event: Pick<React.PointerEvent<HTMLDivElement>, "target">,
+  ) => void;
   commitInput: (normalizeDom?: boolean) => void;
   commitRuns: (
     runs: readonly TextStyleRun[],
@@ -99,7 +101,7 @@ function useVisualSelectionListener(
     if (!document) return;
     const update = (): void => {
       const root = visualRef.current;
-      if (!root) return;
+      if (!root || !root.contains(document.activeElement)) return;
       const next = getRichTextEditorSelection(root);
       if (next) state.recordVisualSelection(root, next);
     };
@@ -273,7 +275,7 @@ function useCaptureSelectionBeforeControlFocus(
   args: VisualEditorArgs,
   visualRef: React.MutableRefObject<HTMLDivElement | null>,
   cacheRef: React.MutableRefObject<RichTranslationVisualRenderCache>,
-): React.PointerEventHandler<HTMLDivElement> {
+): (event: Pick<React.PointerEvent<HTMLDivElement>, "target">) => void {
   return React.useCallback(
     (event) => {
       if (args.mode !== "visual") return;
@@ -284,8 +286,9 @@ function useCaptureSelectionBeforeControlFocus(
         return;
       }
       const state = args.selectionState;
-      const current =
-        getRichTextEditorSelection(root) ?? state.selectionRef.current;
+      const current = root.contains(root.ownerDocument.activeElement)
+        ? (getRichTextEditorSelection(root) ?? state.selectionRef.current)
+        : state.selectionRef.current;
       if (isCaret(current)) state.setCaretRun(getRichTextEditorCaretRun(root));
       if (current.end <= current.start) return;
       state.setSelection(current);
@@ -297,6 +300,9 @@ function useCaptureSelectionBeforeControlFocus(
         args.value,
         cacheRef,
       );
+      // Replacing the runs collapses the browser Range before the control
+      // receives focus. Keep it intact through that pointerdown transition.
+      restoreRichTextEditorSelection(root, current);
     },
     [args, cacheRef, visualRef],
   );

@@ -1,5 +1,15 @@
 # 코드 경계와 품질 규칙
 
+## 2026-10-21 Hunyuan 영역 OCR
+
+Hunyuan은 기존 OCR 선택/영역 전처리/작업 경계를 사용하며 별도의 네이티브 서버를 소유한다.
+기존 영역 알고리즘은 이동하지 않고 Hayai와의 parity를 검증한다. 설정 타입은 settingsTypes에,
+추천과 실행 해석은 shared/hunyuanOcr에 두어 순환 의존을 만들지 않는다.
+일본어 판정의 기존 권위를 재사용하는 직접 소비자 1개로 translationLanguages의 측정 상한은
+34→35, 기존 설정 composition의 도메인 normalizer 1개로 appSettingsNormalize의 직접
+runtime import 상한은 16→17이다. 전역 상한과 커버리지 기준은 변경하지 않는다.
+자산·수명·실측·복구 근거는 [Hunyuan 통합 기록](hunyuan-ocr-integration-20261021.md)에 남긴다.
+
 ## 2026-10-20 화 여러 개 삭제와 용어 파일 (이슈 #156)
 
 여러 화 삭제는 `application/chapterBatchDeletionService`가 소유한다. 요청한 화가 모두 그

@@ -199,7 +199,9 @@ export function resolveOcrPipeline(
   value: unknown,
   fallback: import("../../shared/settingsTypes").OcrPipeline,
 ): import("../../shared/settingsTypes").OcrPipeline {
-  return value === "hayai" || value === "paddle-legacy" ? value : fallback;
+  return value === "hayai" || value === "paddle-legacy" || value === "hunyuan"
+    ? value
+    : fallback;
 }
 
 export function resolveMaxTokens(value: unknown, fallback: number): number {

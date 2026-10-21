@@ -1,0 +1,15 @@
+.group {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+/* The draft value and its explicit Apply share one row, even at 300px. */
+.paddingRow {
+  display: grid;
+  grid-template-columns: minmax(72px, 112px) auto;
+  justify-content: start;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}

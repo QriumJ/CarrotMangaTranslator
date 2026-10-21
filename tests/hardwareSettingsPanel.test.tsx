@@ -433,7 +433,7 @@ describe("HardwareSettingsPanel", () => {
     expect(screen.queryByRole("group", { name: "Paddle OCR 품질" })).toBeNull();
     fireEvent.click(
       within(pipelineGroup).getByRole("button", {
-        name: "PaddleOCR",
+        name: "PaddleOCR(레거시)",
       }),
     );
     expect(clearTestState).toHaveBeenCalledOnce();
@@ -446,6 +446,20 @@ describe("HardwareSettingsPanel", () => {
     expect(setOcrPipeline).toHaveBeenCalledWith("hayai");
     expect(setOcrDevice).not.toHaveBeenCalled();
     expect(setOcrGpuBackend).not.toHaveBeenCalled();
+
+    const setHunyuanOcr = vi.fn();
+    rerender(
+      <HardwareSettingsPanel
+        {...props}
+        ocrPipeline="hunyuan"
+        setHunyuanOcr={setHunyuanOcr}
+        sourceLanguage="ja"
+      />,
+    );
+    fireEvent.click(screen.getByRole("radio", { name: "Q4_K_M" }));
+    expect(setHunyuanOcr).toHaveBeenCalledWith({ model: "q4", device: "auto" });
+    fireEvent.click(screen.getByRole("button", { name: "추천 적용" }));
+    expect(setOcrPipeline).toHaveBeenLastCalledWith("hayai");
 
     rerender(
       <HardwareSettingsPanel {...props} ocrDevice="cpu" ocrPipeline="hayai" />,

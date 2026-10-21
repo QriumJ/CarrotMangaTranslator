@@ -57,6 +57,7 @@ export type ImageStageProps = {
   onApplyBubbleLayoutDraft?: () => void;
   onCancelBubbleLayoutDraft?: () => void;
   onUndoBubbleLayoutPoint?: () => void;
+  onEditBlockText?: () => void;
   onBlockPointerDown: (
     event: React.PointerEvent,
     block: TranslationBlock,

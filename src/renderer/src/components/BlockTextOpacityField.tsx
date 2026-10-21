@@ -1,38 +1,31 @@
 import { useTranslation } from "react-i18next";
-import type { TranslationBlock } from "../../../shared/textTypes";
-import { NumberField } from "./ui/NumberField";
+import { EditorNumberField } from "./EditorNumberField";
 
 export function BlockTextOpacityField({
-  block,
   disabled,
   mixed,
-  onUpdate,
+  opacity,
+  onChange,
 }: {
-  block: TranslationBlock;
   disabled: boolean;
   mixed: boolean;
-  onUpdate: (patch: Partial<TranslationBlock>) => void;
+  /** Text opacity ratio, shown as a percentage. */
+  opacity: number;
+  onChange: (opacity: number) => void;
 }): React.JSX.Element {
   const { t } = useTranslation("components");
-  const label = t("format.textOpacity");
   return (
-    <div className="editor-format-number-cell">
-      <span>{label}</span>
-      <NumberField
-        variant="scrubber"
-        ariaLabel={label}
-        decreaseLabel={t("format.decreaseValue", { label })}
-        increaseLabel={t("format.increaseValue", { label })}
-        min={0}
-        max={100}
-        step={1}
-        precision={0}
-        value={Math.round((block.textOpacity ?? 1) * 100)}
-        disabled={disabled}
-        mixed={mixed}
-        unit="%"
-        onValueChange={(value) => onUpdate({ textOpacity: value / 100 })}
-      />
-    </div>
+    <EditorNumberField
+      label={t("format.textOpacity")}
+      min={0}
+      max={100}
+      step={1}
+      precision={0}
+      unit="%"
+      value={Math.round(opacity * 100)}
+      disabled={disabled}
+      mixed={mixed}
+      onChange={(value) => onChange(value / 100)}
+    />
   );
 }

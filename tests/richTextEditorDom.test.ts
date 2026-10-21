@@ -94,23 +94,52 @@ describe("rich text editor DOM", () => {
       expect(getRichTextEditorSelection(root)).toEqual({ start: 3, end: 4 });
     },
   );
-  it.each(["#000000", "#ffffff", "#a32727"])(
-    "keeps unoutlined %s ink readable without persisting an editor backdrop",
-    (color) => {
+  // The editor field takes the tone of the block's base ink (paper for dark
+  // lettering, dark for light lettering). Only a run that would vanish against
+  // that field gets an editor-only backdrop; nothing is persisted.
+  it.each([
+    ["#111111", "#000000", ""],
+    ["#111111", "#a32727", ""],
+    ["#111111", "#ffffff", "rgb(17, 17, 17)"],
+    ["#ffffff", "#ffffff", ""],
+    ["#ffffff", "#000000", "rgb(255, 255, 255)"],
+  ])(
+    "on a %s-ink block keeps unoutlined %s ink readable without strips",
+    (textColor, color, backdrop) => {
       const root = makeRoot();
       const runs = [{ text: "잠깐!", bold: true, italic: false, color }];
       renderRichTextEditorRuns(root, runs, {
         ...options,
-        block: { ...decoratedBlock, outlineWidthPx: 0 },
+        block: { ...decoratedBlock, textColor, outlineWidthPx: 0 },
       });
       const glyph = root.firstElementChild as HTMLElement;
-      expect(glyph.style.backgroundColor).toBe(
-        color === "#ffffff" ? "rgb(17, 17, 17)" : "rgb(255, 255, 255)",
-      );
+      expect(glyph.style.backgroundColor).toBe(backdrop);
       expect(glyph.dataset.backgroundColor).toBeUndefined();
       expect(extractRichTextEditorRuns(root)).toEqual(runs);
     },
   );
+
+  it("previews outlines as a thin editor-only ring and keeps the run outline", () => {
+    const root = makeRoot();
+    const runs = [
+      {
+        text: "외곽",
+        bold: false,
+        italic: false,
+        outlineColor: "#ff0000",
+        outlineWidthPx: 8,
+      },
+    ];
+    renderRichTextEditorRuns(root, runs, { ...options, block: decoratedBlock });
+    const shadow = (root.firstElementChild as HTMLElement).style.textShadow;
+    const offsets = [
+      ...shadow.matchAll(/(-?[\d.]+)px (-?[\d.]+)px 0(?:px)?/g),
+    ].map(([, x, y]) => Math.hypot(Number(x), Number(y)));
+    expect(offsets.length).toBeGreaterThan(0);
+    expect(Math.max(...offsets)).toBeLessThanOrEqual(1.5);
+    expect(shadow).toMatch(/#ff0000|rgb\(255, 0, 0\)/);
+    expect(extractRichTextEditorRuns(root)).toEqual(runs);
+  });
 
   it("renders and extracts only supported safe run attributes", () => {
     const root = makeRoot();
@@ -136,6 +165,8 @@ describe("rich text editor DOM", () => {
         glowColor: "#ff8800",
         glowBlurPx: 6,
         glowOpacity: 0.65,
+        lineHeight: 1.8,
+        letterSpacing: -0.15,
       },
     ];
 

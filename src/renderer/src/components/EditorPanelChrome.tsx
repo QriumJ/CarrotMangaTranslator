@@ -1,10 +1,6 @@
 import { BubbleLayoutOption } from "./EditorPanelSections";
 import React from "react";
-import {
-  IconDotsVertical,
-  IconEraserOff,
-  IconLibraryPlus,
-} from "@tabler/icons-react";
+import { IconDotsVertical, IconLibraryPlus } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import type { TranslationBlock } from "../../../shared/textTypes";
 import { Button } from "./ui/Button";
@@ -14,7 +10,7 @@ import { MenuSurface } from "./ui/MenuSurface";
 import { Tabs } from "./ui/Tabs";
 import { usePopupController } from "./ui/usePopupController";
 
-const EDITOR_TABS = ["text", "layout", "format"] as const;
+const EDITOR_TABS = ["format", "layout"] as const;
 export type EditorTabId = (typeof EDITOR_TABS)[number];
 
 type BlockOverflowMenuProps = {
@@ -23,7 +19,6 @@ type BlockOverflowMenuProps = {
   onDelete: () => void;
   onDuplicate: () => void;
   onSaveToLibrary: () => void;
-  onUpdate: (patch: Partial<TranslationBlock>) => void;
 };
 
 function BlockOverflowMenu({
@@ -32,7 +27,6 @@ function BlockOverflowMenu({
   onDelete,
   onDuplicate,
   onSaveToLibrary,
-  onUpdate,
 }: BlockOverflowMenuProps): React.JSX.Element {
   const { t } = useTranslation("components");
   const [open, setOpen] = React.useState(false);
@@ -71,11 +65,9 @@ function BlockOverflowMenu({
           onClose={close}
         >
           <BlockOverflowMenuItems
-            block={block}
             onDelete={() => run(onDelete)}
             onDuplicate={() => run(onDuplicate)}
             onSaveToLibrary={() => run(onSaveToLibrary)}
-            onUpdate={(patch) => run(() => onUpdate(patch))}
           />
         </MenuSurface>
       ) : null}
@@ -84,28 +76,15 @@ function BlockOverflowMenu({
 }
 
 function BlockOverflowMenuItems({
-  block,
   onDelete,
   onDuplicate,
   onSaveToLibrary,
-  onUpdate,
-}: Omit<BlockOverflowMenuProps, "disabled">): React.JSX.Element {
+}: Omit<BlockOverflowMenuProps, "block" | "disabled">): React.JSX.Element {
   const { t } = useTranslation("components");
+  // 자동 지우기 제외 lives in 블록 전체 설정, where it covers every selected
+  // block; this menu only holds active-block commands.
   return (
     <>
-      <Button
-        aria-checked={Boolean(block.inpaintExcluded)}
-        role="menuitemcheckbox"
-        type="button"
-        onClick={() => onUpdate({ inpaintExcluded: !block.inpaintExcluded })}
-        variant="bare"
-      >
-        <IconEraserOff size={17} stroke={2.1} aria-hidden="true" />
-        <span>{t("editor.inpainting.exclude")}</span>
-        <span className="editor-overflow-check" aria-hidden="true">
-          {block.inpaintExcluded ? "✓" : ""}
-        </span>
-      </Button>
       <Button
         role="menuitem"
         type="button"
@@ -174,7 +153,6 @@ export function EditorPanelTabs({
 }): React.JSX.Element {
   const { t } = useTranslation("components");
   const labels: Record<EditorTabId, string> = {
-    text: t("editor.tabs.text", { defaultValue: "텍스트" }),
     layout: t("editor.tabs.layout", { defaultValue: "배치" }),
     format: t("editor.tabs.format", { defaultValue: "서식" }),
   };
@@ -264,7 +242,6 @@ export function SelectedBlockHeader({
   onSaveToLibrary,
   onRemoveBubbleLayout,
   onSelect,
-  onUpdate,
 }: {
   activeTab: EditorTabId;
   baseId: string;
@@ -276,7 +253,6 @@ export function SelectedBlockHeader({
   onSaveToLibrary: () => void;
   onRemoveBubbleLayout: () => void;
   onSelect: (tab: EditorTabId) => void;
-  onUpdate: (patch: Partial<TranslationBlock>) => void;
 }): React.JSX.Element {
   return (
     <div className="editor-panel-sticky">
@@ -291,7 +267,6 @@ export function SelectedBlockHeader({
               onDelete={onDelete}
               onDuplicate={onDuplicate}
               onSaveToLibrary={onSaveToLibrary}
-              onUpdate={onUpdate}
             />
           </>
         }

@@ -10,9 +10,15 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { PanelFormatFieldKey } from "../src/shared/panelBridgeTypes";
 import type { TranslationBlock } from "../src/shared/textTypes";
-import { EditorColorGroup } from "../src/renderer/src/components/EditorColorGroup";
-import { EditorTextEffectGroup } from "../src/renderer/src/components/EditorTextEffectControls";
+import { EditorCharacterEffectControls } from "../src/renderer/src/components/EditorCharacterEffectControls";
+import { buildBlocksCharacterFormatTarget } from "../src/renderer/src/components/editorCharacterFormatTarget";
+import {
+  EditorColorGroup,
+  TextBackgroundField,
+} from "../src/renderer/src/components/EditorColorGroup";
+import { TextEffectControls } from "../src/renderer/src/components/EditorTextEffectControls";
 import { ColorField } from "../src/renderer/src/components/ColorField";
 import {
   hexToRgb,
@@ -159,21 +165,9 @@ function colorAt(s: number, v: number): string {
 describe("editor text and outline color swap", () => {
   it("swaps the resolved text and outline colors in one edit", () => {
     const onUpdate = vi.fn();
-    render(
-      <EditorColorGroup
-        block={makeBlock({
-          textColor: "#111111",
-          outlineColor: "#fefefe",
-        })}
-        disabled={false}
-        model={{
-          autoFitText: true,
-          fontSizePx: 24,
-          outlineColor: "#fefefe",
-          renderDirection: "horizontal",
-        }}
-        onUpdate={onUpdate}
-      />,
+    renderColors(
+      makeBlock({ textColor: "#111111", outlineColor: "#fefefe" }),
+      onUpdate,
     );
 
     fireEvent.click(
@@ -191,18 +185,10 @@ describe("editor text and outline color swap", () => {
 
   it("uses editor fallbacks and stays disabled with the panel", () => {
     const onUpdate = vi.fn();
-    render(
-      <EditorColorGroup
-        block={makeBlock({ textColor: "invalid", outlineColor: undefined })}
-        disabled
-        model={{
-          autoFitText: true,
-          fontSizePx: 24,
-          outlineColor: "#ffffff",
-          renderDirection: "horizontal",
-        }}
-        onUpdate={onUpdate}
-      />,
+    renderColors(
+      makeBlock({ textColor: "invalid", outlineColor: undefined }),
+      onUpdate,
+      { disabled: true },
     );
 
     const button = screen.getByRole("button", {
@@ -215,18 +201,9 @@ describe("editor text and outline color swap", () => {
 
   it("offers an outline checkbox and converts only manual edits to pixels", () => {
     const onUpdate = vi.fn();
-    const { rerender } = render(
-      <EditorColorGroup
-        block={makeBlock({ outlineColor: "#ffffff", outlineWidthScale: 1 })}
-        disabled={false}
-        model={{
-          autoFitText: true,
-          fontSizePx: 24,
-          outlineColor: "#ffffff",
-          renderDirection: "horizontal",
-        }}
-        onUpdate={onUpdate}
-      />,
+    const view = renderEffects(
+      makeBlock({ outlineColor: "#ffffff", outlineWidthScale: 1 }),
+      onUpdate,
     );
 
     const checkbox = screen.getByRole("checkbox", { name: "외곽선 사용" });
@@ -234,34 +211,20 @@ describe("editor text and outline color swap", () => {
     fireEvent.click(checkbox);
     expect(onUpdate).toHaveBeenLastCalledWith({ outlineWidthPx: 0 });
 
-    rerender(
-      <EditorColorGroup
-        block={makeBlock({ outlineColor: "#ffffff", outlineWidthPx: 0 })}
-        disabled={false}
-        model={{
-          autoFitText: true,
-          fontSizePx: 24,
-          outlineColor: "#ffffff",
-          renderDirection: "horizontal",
-        }}
-        onUpdate={onUpdate}
-      />,
+    view.rerender(
+      effectsView(
+        makeBlock({ outlineColor: "#ffffff", outlineWidthPx: 0 }),
+        onUpdate,
+      ),
     );
     fireEvent.click(screen.getByRole("checkbox", { name: "외곽선 사용" }));
     expect(onUpdate).toHaveBeenLastCalledWith({ outlineWidthPx: 1.5 });
 
-    rerender(
-      <EditorColorGroup
-        block={makeBlock({ outlineColor: "#ffffff", outlineWidthPx: 1.5 })}
-        disabled={false}
-        model={{
-          autoFitText: true,
-          fontSizePx: 24,
-          outlineColor: "#ffffff",
-          renderDirection: "horizontal",
-        }}
-        onUpdate={onUpdate}
-      />,
+    view.rerender(
+      effectsView(
+        makeBlock({ outlineColor: "#ffffff", outlineWidthPx: 1.5 }),
+        onUpdate,
+      ),
     );
     const input = screen.getByRole("spinbutton", { name: "외곽선 굵기" });
     fireEvent.change(input, { target: { value: "32" } });
@@ -271,19 +234,7 @@ describe("editor text and outline color swap", () => {
 
   it("enables the full text-area background without changing the glyph color", () => {
     const onUpdate = vi.fn();
-    const { rerender } = render(
-      <EditorColorGroup
-        block={makeBlock()}
-        disabled={false}
-        model={{
-          autoFitText: true,
-          fontSizePx: 24,
-          outlineColor: "#ffffff",
-          renderDirection: "horizontal",
-        }}
-        onUpdate={onUpdate}
-      />,
-    );
+    const view = render(textBackgroundView(makeBlock(), onUpdate));
 
     fireEvent.click(screen.getByRole("checkbox", { name: "글자 영역 배경" }));
     expect(onUpdate).toHaveBeenLastCalledWith({
@@ -291,27 +242,14 @@ describe("editor text and outline color swap", () => {
       textBackgroundColor: "#ffffff",
     });
 
-    fireEvent.change(screen.getByRole("textbox", { name: "글자색 HEX" }), {
-      target: { value: "#223344" },
-    });
-    expect(onUpdate).toHaveBeenLastCalledWith({ textColor: "#223344" });
-
-    rerender(
-      <EditorColorGroup
-        block={makeBlock({
-          textColor: "#223344",
+    view.rerender(
+      textBackgroundView(
+        makeBlock({
           textBackgroundEnabled: true,
           textBackgroundColor: "#ffffff",
-        })}
-        disabled={false}
-        model={{
-          autoFitText: true,
-          fontSizePx: 24,
-          outlineColor: "#ffffff",
-          renderDirection: "horizontal",
-        }}
-        onUpdate={onUpdate}
-      />,
+        }),
+        onUpdate,
+      ),
     );
     fireEvent.change(screen.getByRole("textbox", { name: "배경색 HEX" }), {
       target: { value: "#f5f1e8" },
@@ -319,22 +257,79 @@ describe("editor text and outline color swap", () => {
     expect(onUpdate).toHaveBeenLastCalledWith({
       textBackgroundColor: "#f5f1e8",
     });
+    expect(onUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ textColor: expect.anything() }),
+    );
+  });
+
+  it("keeps a whole-selection text color edit off the letter background", () => {
+    const onUpdate = vi.fn();
+    renderColors(makeBlock(), onUpdate);
+    fireEvent.change(screen.getByRole("textbox", { name: "글자색 HEX" }), {
+      target: { value: "#223344" },
+    });
+    expect(onUpdate).toHaveBeenLastCalledWith({ textColor: "#223344" });
+    renderEffects(makeBlock(), onUpdate);
+    // Letter backgrounds are text runs, so the multi-block target has none.
+    expect(screen.queryByRole("checkbox", { name: "글자 배경" })).toBeNull();
   });
 });
 
 describe("editor text shadow and glow controls", () => {
+  it("sends only the edited character-shadow field for mixed frame selection", () => {
+    const onUpdate = vi.fn();
+    renderEffects(
+      makeBlock({
+        textEffect: {
+          enabled: true,
+          color: "#123456",
+          offsetXpx: 2,
+          offsetYpx: 2,
+          blurPx: 4,
+          opacity: 0.5,
+        },
+      }),
+      onUpdate,
+    );
+    fireEvent.change(screen.getByRole("textbox", { name: "그림자 색상 HEX" }), {
+      target: { value: "#abcdef" },
+    });
+    expect(onUpdate).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        textEffectFields: ["color"],
+        textEffect: expect.objectContaining({ color: "#abcdef" }),
+      }),
+    );
+    for (const [name, value, field, expected] of [
+      ["Y 위치", "-8", "offsetYpx", -8],
+      ["블러", "20.5", "blurPx", 20.5],
+      ["불투명도", "35", "opacity", 0.35],
+    ] as const) {
+      const input = screen.getByRole("spinbutton", { name });
+      fireEvent.change(input, { target: { value } });
+      fireEvent.blur(input);
+      expect(onUpdate).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          textEffectFields: [field],
+          textEffect: expect.objectContaining({ [field]: expected }),
+        }),
+      );
+    }
+  });
   it("resolves mixed shadow and glow toggles to enabled", () => {
     const onUpdate = vi.fn();
     render(
-      <EditorTextEffectGroup
-        block={makeBlock()}
-        disabled={false}
-        mixedFields={new Set(["textEffect", "textGlow"])}
-        onUpdate={onUpdate}
-      />,
+      <>
+        <ShadowHarness block={makeBlock()} mixed onUpdate={onUpdate} />
+        {effectsView(makeBlock(), onUpdate, {
+          mixedFields: new Set(["textGlow"]),
+        })}
+      </>,
     );
 
-    const shadow = screen.getByRole("checkbox", { name: "그림자 사용" });
+    // The first is the settings-default shadow; the character effects list
+    // has its own letter shadow after it.
+    const shadow = screen.getAllByRole("checkbox", { name: "그림자 사용" })[0];
     const glow = screen.getByRole("checkbox", { name: "광선" });
     expect((shadow as HTMLInputElement).indeterminate).toBe(true);
     expect((glow as HTMLInputElement).indeterminate).toBe(true);
@@ -352,11 +347,7 @@ describe("editor text shadow and glow controls", () => {
   it("starts disabled, preserves explicit values, and commits direct numeric edits", () => {
     const onUpdate = vi.fn();
     const { rerender } = render(
-      <EditorTextEffectGroup
-        block={makeBlock()}
-        disabled={false}
-        onUpdate={onUpdate}
-      />,
+      <ShadowHarness block={makeBlock()} onUpdate={onUpdate} />,
     );
 
     const enabled = screen.getByRole("checkbox", { name: "그림자 사용" });
@@ -384,11 +375,7 @@ describe("editor text shadow and glow controls", () => {
       opacity: 0.5,
     };
     rerender(
-      <EditorTextEffectGroup
-        block={makeBlock({ textEffect })}
-        disabled={false}
-        onUpdate={onUpdate}
-      />,
+      <ShadowHarness block={makeBlock({ textEffect })} onUpdate={onUpdate} />,
     );
     fireEvent.click(screen.getByRole("checkbox", { name: "그림자 사용" }));
     expect(onUpdate).toHaveBeenLastCalledWith({
@@ -402,40 +389,24 @@ describe("editor text shadow and glow controls", () => {
       textEffect: { ...textEffect, color: "#abcdef" },
     });
 
-    const offsetX = screen.getByRole("spinbutton", { name: "X 위치" });
-    fireEvent.change(offsetX, { target: { value: "-12.5" } });
-    fireEvent.blur(offsetX);
-    expect(onUpdate).toHaveBeenLastCalledWith({
-      textEffect: { ...textEffect, offsetXpx: -12.5 },
-    });
-
-    const offsetY = screen.getByRole("spinbutton", { name: "Y 위치" });
-    fireEvent.change(offsetY, { target: { value: "-8" } });
-    fireEvent.blur(offsetY);
-    expect(onUpdate).toHaveBeenLastCalledWith({
-      textEffect: { ...textEffect, offsetYpx: -8 },
-    });
-
-    const blur = screen.getByRole("spinbutton", { name: "블러" });
-    fireEvent.change(blur, { target: { value: "20.5" } });
-    fireEvent.blur(blur);
-    expect(onUpdate).toHaveBeenLastCalledWith({
-      textEffect: { ...textEffect, blurPx: 20.5 },
-    });
-
-    const opacity = screen.getAllByRole("spinbutton", {
-      name: "불투명도",
-    })[0];
-    fireEvent.change(opacity, { target: { value: "35" } });
-    fireEvent.blur(opacity);
-    expect(onUpdate).toHaveBeenLastCalledWith({
-      textEffect: { ...textEffect, opacity: 0.35 },
-    });
+    for (const [name, value, field, expected] of [
+      ["X 위치", "-12.5", "offsetXpx", -12.5],
+      ["Y 위치", "-8", "offsetYpx", -8],
+      ["블러", "20.5", "blurPx", 20.5],
+      ["불투명도", "35", "opacity", 0.35],
+    ] as const) {
+      const input = screen.getByRole("spinbutton", { name });
+      fireEvent.change(input, { target: { value } });
+      fireEvent.blur(input);
+      expect(onUpdate).toHaveBeenLastCalledWith({
+        textEffect: { ...textEffect, [field]: expected },
+      });
+    }
   });
 
   it("disables the complete effect editor with the block panel", () => {
     render(
-      <EditorTextEffectGroup
+      <ShadowHarness
         block={makeBlock({
           textEffect: {
             enabled: true,
@@ -465,13 +436,7 @@ describe("editor text shadow and glow controls", () => {
 
   it("edits glow independently from the directional shadow", () => {
     const onUpdate = vi.fn();
-    const { rerender } = render(
-      <EditorTextEffectGroup
-        block={makeBlock()}
-        disabled={false}
-        onUpdate={onUpdate}
-      />,
-    );
+    const view = renderEffects(makeBlock(), onUpdate);
 
     fireEvent.click(screen.getByRole("checkbox", { name: "광선" }));
     expect(onUpdate).toHaveBeenLastCalledWith({
@@ -489,13 +454,7 @@ describe("editor text shadow and glow controls", () => {
       blurPx: 8,
       opacity: 0.6,
     };
-    rerender(
-      <EditorTextEffectGroup
-        block={makeBlock({ textGlow })}
-        disabled={false}
-        onUpdate={onUpdate}
-      />,
-    );
+    view.rerender(effectsView(makeBlock({ textGlow }), onUpdate));
     fireEvent.change(screen.getByRole("textbox", { name: "광선 색상 HEX" }), {
       target: { value: "#123456" },
     });
@@ -516,8 +475,99 @@ describe("editor text shadow and glow controls", () => {
     expect(onUpdate).toHaveBeenLastCalledWith({
       textGlow: { ...textGlow, opacity: 0.45 },
     });
+    expect(onUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ textEffect: expect.anything() }),
+    );
   });
 });
+
+type HarnessOptions = {
+  disabled?: boolean;
+  mixedFields?: ReadonlySet<PanelFormatFieldKey>;
+};
+
+/** Several selected blocks: the character controls edit block fields. */
+function blocksTarget(
+  block: TranslationBlock,
+  onUpdate: (patch: Partial<TranslationBlock>) => void,
+  mixedFields: ReadonlySet<PanelFormatFieldKey> = new Set(),
+) {
+  return buildBlocksCharacterFormatTarget({
+    block,
+    blockCount: 2,
+    mixedFields,
+    onUpdate,
+  });
+}
+
+function renderColors(
+  block: TranslationBlock,
+  onUpdate: (patch: Partial<TranslationBlock>) => void,
+  options: HarnessOptions = {},
+) {
+  return render(
+    <EditorColorGroup
+      disabled={options.disabled ?? false}
+      target={blocksTarget(block, onUpdate, options.mixedFields)}
+    />,
+  );
+}
+
+function effectsView(
+  block: TranslationBlock,
+  onUpdate: (patch: Partial<TranslationBlock>) => void,
+  options: HarnessOptions = {},
+): React.JSX.Element {
+  return (
+    <EditorCharacterEffectControls
+      disabled={options.disabled ?? false}
+      target={blocksTarget(block, onUpdate, options.mixedFields)}
+    />
+  );
+}
+
+function renderEffects(
+  block: TranslationBlock,
+  onUpdate: (patch: Partial<TranslationBlock>) => void,
+  options: HarnessOptions = {},
+) {
+  return render(effectsView(block, onUpdate, options));
+}
+
+function textBackgroundView(
+  block: TranslationBlock,
+  onUpdate: (patch: Partial<TranslationBlock>) => void,
+): React.JSX.Element {
+  return (
+    <TextBackgroundField
+      block={block}
+      disabled={false}
+      mixedFields={new Set()}
+      onUpdate={onUpdate}
+    />
+  );
+}
+
+function ShadowHarness({
+  block,
+  disabled = false,
+  mixed = false,
+  onUpdate,
+}: {
+  block: TranslationBlock;
+  disabled?: boolean;
+  mixed?: boolean;
+  onUpdate: (patch: Partial<TranslationBlock>) => void;
+}): React.JSX.Element {
+  return (
+    <TextEffectControls
+      disabled={disabled}
+      effect={block.textEffect}
+      mixed={mixed}
+      onChange={(textEffect) => onUpdate({ textEffect })}
+    />
+  );
+}
 
 function makeBlock(patch: Partial<TranslationBlock> = {}): TranslationBlock {
   return {

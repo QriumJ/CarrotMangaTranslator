@@ -13,6 +13,47 @@ import type { TranslationBlock } from "../src/shared/textTypes";
 import { BLOCK_FORMAT_FIELD_KEYS } from "../src/shared/blockFormat";
 
 describe("panel multi-selection format contracts", () => {
+  it("treats missing and explicitly cleared erasure exclusion as the same state", () => {
+    const selection = buildPanelFormatSelection([
+      makeBlock("a", {}),
+      makeBlock("b", { inpaintExcluded: false }),
+    ]);
+    expect(selection.mixedFields).not.toContain("inpaintExcluded");
+    expect(selection.common.inpaintExcluded).toBe(false);
+    expect(
+      buildPanelFormatSelection([
+        makeBlock("a", {}),
+        makeBlock("b", { inpaintExcluded: true }),
+      ]).mixedFields,
+    ).toContain("inpaintExcluded");
+  });
+  it("validates logical selection ranges before accepting a detached preview", () => {
+    const command = {
+      type: "previewTextSelection",
+      selectionKey: "selected",
+      selection: {
+        blockId: "block-a",
+        translatedText: "ab😀",
+        start: 1,
+        end: 4,
+      },
+    };
+    expect(PanelCommandSchema.parse(command)).toEqual(command);
+    for (const [start, end] of [
+      [3, 2],
+      [0, 5],
+      [-1, 2],
+      [0, 1.5],
+    ]) {
+      expect(
+        PanelCommandSchema.safeParse({
+          ...command,
+          selection: { ...command.selection, start, end },
+        }).success,
+      ).toBe(false);
+    }
+  });
+
   it("creates an order-independent key for the exact selected block set", () => {
     expect(createPanelSelectionKey(["block-b", "block-a", "block-b"])).toBe(
       JSON.stringify(["block-a", "block-b"]),
@@ -128,6 +169,8 @@ describe("panel multi-selection format contracts", () => {
         opacity: 0.5,
       },
       textGlow: glow,
+      inpaintExcluded: true,
+      bubbleLayoutPaddingRatio: 0.2,
     });
     const patch = pickPanelFormatPatch(source);
 

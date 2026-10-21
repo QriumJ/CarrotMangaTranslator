@@ -1,7 +1,13 @@
 import { createCodexTypesettingPreferences } from "../src/shared/codexTypesettingDefaults";
 import { DEFAULT_EXPORT_PREFERENCES } from "../src/shared/exportPreferences";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { AppActivityGate } from "../src/main/appActivityGate";
@@ -48,6 +54,30 @@ const tavilyMock = {
   getUsage: vi.fn(),
 };
 
+// Settings persistence stays real; host GPU discovery is an external process
+// boundary and must not make IPC tests wait for a CI machine's WMI inventory.
+vi.mock("node:child_process", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("node:child_process")>()),
+  execFile: vi.fn((file: string, ...args: unknown[]) => {
+    const probes = [
+      "nvidia-smi",
+      "rocm-smi",
+      "powershell.exe",
+      "lspci",
+      "/usr/sbin/sysctl",
+    ];
+    if (!probes.includes(file)) {
+      throw new Error(
+        `Unexpected native process in settings IPC test: ${file}`,
+      );
+    }
+    const callback = args.at(-1);
+    if (typeof callback !== "function")
+      throw new Error("Missing probe callback");
+    callback(null, "", "");
+  }),
+}));
+
 vi.mock("electron", () => ({
   app: {
     isPackaged: false,
@@ -84,6 +114,12 @@ it("validates and persists only safe export preferences through the narrow IPC",
   await expect(
     handler(trustedEvent(), { ...preferences, collisionPolicy: "replace" }),
   ).rejects.toThrow();
+  const dataRoot = tempDirs.at(-1);
+  if (!dataRoot) throw new Error("Missing isolated settings directory");
+  expect(
+    JSON.parse(readFileSync(join(dataRoot, "settings.json"), "utf8")).ui
+      .exportPreferences,
+  ).toEqual(preferences);
 });
 
 beforeEach(() => {

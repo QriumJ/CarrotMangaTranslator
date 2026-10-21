@@ -1,7 +1,12 @@
+import { TextEffectSchema } from "./textEffect";
 import { letteringToolSchema } from "./generatedLetteringMaskSchemas";
 import { z } from "zod";
 import { ALL_BLOCK_FORMAT_GROUP_IDS } from "./blockFormat";
 import { PANEL_FORMAT_FIELD_KEYS } from "./panelBridgeTypes";
+import {
+  MAX_BUBBLE_LAYOUT_PADDING_RATIO,
+  MIN_BUBBLE_LAYOUT_PADDING_RATIO,
+} from "./bubbleLayoutSettings";
 import {
   MAX_BLOCK_STYLE_PRESETS,
   MAX_BLOCK_STYLE_PRESET_ID_LENGTH,
@@ -52,9 +57,24 @@ const PanelFormatPatchSchema = TranslationBlockObjectSchema.pick({
   rotationDeg: true,
   textEffect: true,
   textGlow: true,
+  inpaintExcluded: true,
+  bubbleLayoutPaddingRatio: true,
 })
   .partial()
-  .strict();
+  .extend({
+    textEffectFields: z
+      .array(TextEffectSchema.keyof())
+      .min(1)
+      .max(6)
+      .optional(),
+  })
+  .strict()
+  .refine(
+    (patch) => !patch.textEffectFields || patch.textEffect !== undefined,
+    {
+      message: "Shadow field edits require a shadow value.",
+    },
+  );
 
 const PanelFormatFieldKeySchema = z.enum(PANEL_FORMAT_FIELD_KEYS);
 const PanelSelectionKeySchema = z.string().max(25_000_000);
@@ -107,6 +127,14 @@ export const PanelSyncStateSchema = z
         mixedFields: z.array(PanelFormatFieldKeySchema).max(50),
       })
       .strict(),
+    bubblePaddingRatio: z
+      .number()
+      .finite()
+      .min(MIN_BUBBLE_LAYOUT_PADDING_RATIO)
+      .max(MAX_BUBBLE_LAYOUT_PADDING_RATIO)
+      .nullable()
+      .optional(),
+    editorTextResetToken: z.number().int().nonnegative().optional(),
     editorTextTabRequestToken: z
       .number()
       .int()
@@ -144,6 +172,25 @@ export const PanelSyncStateSchema = z
   .strict();
 
 export const PanelCommandSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      type: z.literal("previewTextSelection"),
+      selectionKey: PanelSelectionKeySchema,
+      selection: z
+        .object({
+          blockId: TranslationBlockObjectSchema.shape.id,
+          translatedText: TranslationBlockObjectSchema.shape.translatedText,
+          start: z.number().int().min(0).max(100000),
+          end: z.number().int().min(0).max(100000),
+        })
+        .strict()
+        .refine(
+          (value) =>
+            value.start <= value.end &&
+            value.end <= value.translatedText.length,
+        ),
+    })
+    .strict(),
   z
     .object({
       type: z.literal("finishPageEdits"),
@@ -208,6 +255,17 @@ export const PanelCommandSchema = z.discriminatedUnion("type", [
     .object({
       type: z.literal("fitBlockBubble"),
       blockId: TranslationBlockObjectSchema.shape.id,
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("applySelectionBubblePadding"),
+      selectionKey: PanelSelectionKeySchema,
+      paddingRatio: z
+        .number()
+        .finite()
+        .min(MIN_BUBBLE_LAYOUT_PADDING_RATIO)
+        .max(MAX_BUBBLE_LAYOUT_PADDING_RATIO),
     })
     .strict(),
   z

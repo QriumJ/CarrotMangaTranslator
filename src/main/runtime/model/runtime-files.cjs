@@ -30,6 +30,9 @@ function backendLibraryNames(backend) {
   const normalized = String(backend || "cuda")
     .trim()
     .toLowerCase();
+  if (normalized === "cpu") {
+    return ["ggml-cpu-x64.dll", "ggml-cpu.dll", "libggml-cpu.dylib"];
+  }
   if (normalized === "vulkan") {
     return ["ggml-vulkan.dll", "libggml-vulkan.so"];
   }

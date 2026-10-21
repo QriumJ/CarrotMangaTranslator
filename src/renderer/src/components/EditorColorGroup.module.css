@@ -1,0 +1,8 @@
+/* Swatch and HEX take the cell; the swap stays a fixed square beside it. */
+.colorControl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+}

@@ -20,6 +20,75 @@ const WIDTH = 120;
 const HEIGHT = 80;
 
 describe("bubble layout page processor", () => {
+  it("uses the detected bounds at zero padding regardless of glyph size or outline", () => {
+    const page = createPage();
+    const run = (
+      paddingRatio: number,
+      fontSizePx: number,
+      outlineWidthPx: number,
+    ) => {
+      page.blocks[0] = {
+        ...page.blocks[0],
+        bubbleLayoutPaddingRatio: paddingRatio,
+        fontSizePx,
+        outlineWidthPx,
+      };
+      return processDetectedBubbleLayouts({
+        page,
+        imageWidth: WIDTH,
+        imageHeight: HEIGHT,
+        detections: [
+          detection(0, [10, 10, 110, 70], 0.99),
+          detection(1, [25, 20, 95, 60], 0.99),
+        ],
+        policy: "balanced",
+        paddingRatio: 0.7,
+        pageRevision: "explicit-padding",
+      })[0];
+    };
+    const zero = run(0, 18, 0);
+    const largeGlyphs = run(0, 200, 30);
+    expect(zero.renderBbox).toEqual({
+      x: 1000 / 12,
+      y: 125,
+      w: (1000 * 5) / 6,
+      h: 750,
+    });
+    expect(largeGlyphs.renderBbox).toEqual(zero.renderBbox);
+    expect(largeGlyphs.bubbleLayout?.regions).toEqual(
+      zero.bubbleLayout?.regions,
+    );
+    expect(zero.bubbleLayout?.insetRatio).toBe(0);
+    expect(zero.bubbleLayoutPaddingRatio).toBe(0);
+    const padded = run(0.7, 18, 0);
+    expect(padded.renderBbox?.w).toBeLessThan(zero.renderBbox?.w ?? 0);
+    expect(padded.renderBbox?.h).toBeLessThan(zero.renderBbox?.h ?? 0);
+    expect(padded.bubbleLayoutPaddingRatio).toBe(0.7);
+  });
+
+  it("does not let visual padding alter the original-text erasure mask", () => {
+    const page = createPage();
+    const run = (ratio: number) => {
+      page.blocks[0].bubbleLayoutPaddingRatio = ratio;
+      return processDetectedBubbleLayouts({
+        page,
+        imageWidth: WIDTH,
+        imageHeight: HEIGHT,
+        detections: [
+          detection(0, [10, 10, 110, 70], 0.99),
+          detection(1, [25, 20, 95, 60], 0.99),
+        ],
+        policy: "balanced",
+        paddingRatio: ratio,
+        sourceEraseMask: true,
+        pageRevision: "erase",
+      });
+    };
+    const zero = run(0);
+    expect(zero).toHaveLength(1);
+    expect(zero[0].bubbleLayoutPaddingRatio).toBeUndefined();
+    expect(run(0.7)).toEqual(zero);
+  });
   it("budgets the same visible outline as rendering for a legacy scale zero", () => {
     const block: TranslationBlock = {
       ...createPage().blocks[0],
@@ -54,6 +123,7 @@ describe("bubble layout page processor", () => {
 
     expect(patches).toHaveLength(1);
     expect(patches[0].bubbleLayout?.regions).toHaveLength(2);
+    expect(patches[0].bubbleLayoutPaddingRatio).toBeUndefined();
     expect(Object.hasOwn(patches[0], "bbox")).toBe(false);
     expect(page.blocks[0].bbox).toEqual({ x: 150, y: 225, w: 700, h: 450 });
   });

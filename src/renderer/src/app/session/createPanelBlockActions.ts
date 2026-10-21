@@ -3,7 +3,7 @@ import type { AppSessionViewModel } from "./appSessionViewModel";
 
 type PanelBlockActions = Pick<
   PanelSessionValue,
-  "onEraseBlockOriginal" | "onFitBlockBubble"
+  "onEraseBlockOriginal" | "onFitBlockBubble" | "onApplyBubblePadding"
 >;
 
 export function createPanelBlockActions({
@@ -18,6 +18,18 @@ export function createPanelBlockActions({
     onFitBlockBubble: () => {
       const blockId = derivedState.selectedBlock?.id;
       if (blockId) void inpaintingActions.runBubbleLayout(blockId);
+    },
+    onApplyBubblePadding: (paddingRatio) => {
+      const blockIds = derivedState.selectedBlockIds.length
+        ? derivedState.selectedBlockIds
+        : derivedState.selectedBlock
+          ? [derivedState.selectedBlock.id]
+          : [];
+      if (blockIds.length)
+        void inpaintingActions.runBubbleLayout(undefined, {
+          blockIds,
+          paddingRatio,
+        });
     },
   };
 }

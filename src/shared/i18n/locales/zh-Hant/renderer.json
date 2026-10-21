@@ -52,6 +52,10 @@
   "job": {
     "pageProgress": "第 {{current}} / {{total}} 頁 · {{status}}",
     "pageStatus": "頁面 · {{status}}",
+    "workflowProgress": {
+      "scope": "{{pages}} 頁 · {{stages}} 個階段",
+      "operations": "階段作業 {{current}} / {{total}}"
+    },
     "pageRetry": "第 {{current}} / {{total}} 頁 · 重試 {{attempt}} / {{attemptTotal}}",
     "elapsed": {
       "lessThanSecond": "不到 1 秒",
@@ -91,7 +95,11 @@
       "ocrPreanalysisDone": "Paddle OCR 預分析完成",
       "hayaiOcrRunning": "正在使用 HayaiOCR 分析",
       "hayaiOcrPreanalysisDone": "HayaiOCR 預分析完成",
-      "pageRetry": "正在重試頁面"
+      "pageRetry": "正在重試頁面",
+      "hunyuanOcrDownloading": "正在下載／安裝 HunyuanOCR",
+      "hunyuanOcrPreparing": "正在準備 HunyuanOCR",
+      "hunyuanOcrRunning": "正在使用 HunyuanOCR 分析",
+      "hunyuanOcrPreanalysisDone": "HunyuanOCR 預分析完成"
     },
     "status": {
       "starting": "正在準備模型",
@@ -462,6 +470,7 @@
       "success": "已將目前頁面的譯文文字區塊適配到對話框內。",
       "selectedBlockSuccess": "已將所選譯文文字區塊適配到對話框內。",
       "selectedBlockNoMatch": "找不到與所選文字區塊匹配的對話框區域。",
+      "selectionChanged": "選取的 {{count}} 個文字區塊 · {{changed}} 個對話框配置已變更",
       "failedTitle": "對話框適配失敗",
       "failed": "無法將譯文文字區塊適配到對話框內。"
     },

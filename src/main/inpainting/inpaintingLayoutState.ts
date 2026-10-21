@@ -25,6 +25,8 @@ export type InpaintingBlockLayoutState = {
   renderBbox: BBox | null;
   renderBboxSpace: RenderBboxSpace | null;
   bubbleLayout: BubbleLayout | null;
+  /** Absent in legacy history; null removes the per-block preference. */
+  bubbleLayoutPaddingRatio?: number | null;
   translatedText?: string;
   renderDirection?: RenderTextDirection;
 };
@@ -51,6 +53,7 @@ export function captureInpaintingLayoutStates(
     blockIds,
     () => options.includeTranslatedText === true,
     () => options.includeRenderDirection === true,
+    () => true,
   );
 }
 
@@ -59,6 +62,7 @@ function captureSelectedInpaintingLayoutStates(
   blockIds: readonly string[],
   includeTranslatedText: (index: number) => boolean,
   includeRenderDirection: (index: number) => boolean,
+  includePadding: (index: number) => boolean,
 ): InpaintingBlockLayoutState[] {
   const blocksById = new Map(page.blocks.map((block) => [block.id, block]));
   const seen = new Set<string>();
@@ -82,6 +86,9 @@ function captureSelectedInpaintingLayoutStates(
     if (includeTranslatedText(index)) {
       assertStoredTranslatedText(block.translatedText);
       state.translatedText = block.translatedText;
+    }
+    if (includePadding(index)) {
+      state.bubbleLayoutPaddingRatio = block.bubbleLayoutPaddingRatio ?? null;
     }
     if (includeRenderDirection(index)) {
       state.renderDirection = block.renderDirection;
@@ -125,6 +132,13 @@ export function applyInpaintingLayoutStates<
         return block;
       }
       const next: TranslationBlock = { ...block };
+      if (state.bubbleLayoutPaddingRatio !== undefined) {
+        const ratio = state.bubbleLayoutPaddingRatio;
+        if (ratio === null) delete next.bubbleLayoutPaddingRatio;
+        else if (Number.isFinite(ratio) && ratio >= 0 && ratio <= 0.7)
+          next.bubbleLayoutPaddingRatio = ratio;
+        else throw new Error("말풍선 배치 기록의 여백 값이 올바르지 않습니다.");
+      }
       if (state.renderBbox === null) {
         delete next.renderBbox;
         delete next.renderBboxSpace;
@@ -184,6 +198,7 @@ export function pageMatchesInpaintingLayoutStates(
       expected.map((state) => state.blockId),
       (index) => hasOwnTranslatedText(expected[index]),
       (index) => hasOwnRenderDirection(expected[index]),
+      (index) => Object.hasOwn(expected[index], "bubbleLayoutPaddingRatio"),
     ),
     expected,
   );

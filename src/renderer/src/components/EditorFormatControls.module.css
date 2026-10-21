@@ -1,0 +1,14 @@
+.description {
+  margin: calc(var(--sp-2) * -1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-xs);
+  line-height: 1.45;
+}
+
+/* A direct row: keeps the legacy `.editor-group > label` grid off the box. */
+.autoFitRow {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: var(--ctl-h-sm);
+}

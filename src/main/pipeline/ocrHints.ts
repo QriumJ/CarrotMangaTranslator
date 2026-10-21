@@ -311,9 +311,11 @@ function emitOcrBatchStarted(
     kind: "gemma-analysis",
     status: "running",
     progressText: tMain(
-      isHayaiOcrPipeline(baseOptions.ocrPipeline)
-        ? "ocr.hayaiBatchRunning"
-        : "ocr.batchRunning",
+      baseOptions.ocrPipeline === "hunyuan"
+        ? "ocr.hunyuanBatchRunning"
+        : isHayaiOcrPipeline(baseOptions.ocrPipeline)
+          ? "ocr.hayaiBatchRunning"
+          : "ocr.batchRunning",
     ),
     phase: "ocr_running",
     ocrPipeline: baseOptions.ocrPipeline,
@@ -359,9 +361,11 @@ function emitOcrHintsCompleted({
     kind: "gemma-analysis",
     status: "running",
     progressText: tMain(
-      isHayaiOcrPipeline(baseOptions.ocrPipeline)
-        ? "ocr.hayaiPrepassDone"
-        : "ocr.prepassDone",
+      baseOptions.ocrPipeline === "hunyuan"
+        ? "ocr.hunyuanPrepassDone"
+        : isHayaiOcrPipeline(baseOptions.ocrPipeline)
+          ? "ocr.hayaiPrepassDone"
+          : "ocr.prepassDone",
     ),
     phase: "ocr_running",
     ocrPipeline: baseOptions.ocrPipeline,

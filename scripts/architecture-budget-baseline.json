@@ -83,8 +83,8 @@
       "reason": "Renderer session composition also mounts the job-wide manual image review host. Global chat adds one direct consumer/registration of this existing authority; contracts and algorithms are unchanged. See docs/global-chat-translation-20261009.md."
     },
     "src/renderer/src/app/session/createAppSessionViewProps.ts": {
-      "maxRuntimeImports": 15,
-      "reason": "Session composition checks work-context ownership for reset independently of an unrelated local model job."
+      "maxRuntimeImports": 16,
+      "reason": "Session composition checks work-context ownership for reset independently of an unrelated local model job. Unified text selection adds the ephemeral textSelectionPreview publisher to the existing panel composition. The same selection contract is used by detached panels and the canvas; stale commands are rejected by appSessionPanelCommand tests and no selection is persisted."
     },
     "src/renderer/src/components/settingsModal/SettingsModalView.tsx": {
       "maxRuntimeImports": 18,
@@ -155,8 +155,8 @@
       "reason": "Block OCR source selection and effect-region evidence map through the existing pixel conversion. Two actual boundary consumers reuse the authoritative geometry; global limits remain unchanged. Structure policy projects before/after source and display rectangles using the canonical geometry and existing source-rect validation. Pixel conversions are not copied; native undo/redo rendering parity is required. The source raster adapter uses canonical coordinate normalization after source-bound validation. Selected-region OCR projects native source bounds and reports overlaps using the canonical geometry authority; no display-geometry reinterpretation."
     },
     "src/shared/richTextMarkup.ts": {
-      "maxImportedBy": 38,
-      "reason": "Merged direct consumers include Codex treatment serialization, image lettering prompts, blind readback and literal font specimens, plus master's conditionalBatchTypography rich-run scaling. Preserve both features on the canonical grammar without duplication or alias gateways; parser/serializer ownership remains unchanged. Source-only MCP editing is one additional consumer of plain-text parsing to pin the existing legacy render frame before changing source geometry. Lettering change-scope and new inline-font validation use the existing parser, with visible-text preservation and recovery tests. Automatic dialogue-size comparison parses styled text with the canonical grammar; sourceFontSizeCap tests cover manual intent and read-only targets. No parser copy or relocation. Detailed MCP translation (2026-10-08) reuses the canonical errors, revisions, locking, hashing, typography and tool boundaries; exact new consumers and regression tests are recorded in docs/mcp-translation-quality-v2-20261008.md. Unicode-derived lettering text structure reuses the same plain-text authority for generation and MCP repair metadata; letteringTextStructure and native MCP image/HTTP tests protect markup, NFD, mixed scripts and exact consonant identity. Measured runtime consumer ceiling: 38. No global ceiling or model/data authority changes."
+      "maxImportedBy": 43,
+      "reason": "Merged direct consumers include Codex treatment serialization, image lettering prompts, blind readback and literal font specimens, plus master's conditionalBatchTypography rich-run scaling. Preserve both features on the canonical grammar without duplication or alias gateways; parser/serializer ownership remains unchanged. Source-only MCP editing is one additional consumer of plain-text parsing to pin the existing legacy render frame before changing source geometry. Lettering change-scope and new inline-font validation use the existing parser, with visible-text preservation and recovery tests. Automatic dialogue-size comparison parses styled text with the canonical grammar; sourceFontSizeCap tests cover manual intent and read-only targets. No parser copy or relocation. Detailed MCP translation (2026-10-08) reuses the canonical errors, revisions, locking, hashing, typography and tool boundaries; exact new consumers and regression tests are recorded in docs/mcp-translation-quality-v2-20261008.md. Unicode-derived lettering text structure reuses the same plain-text authority for generation and MCP repair metadata; letteringTextStructure and native MCP image/HTTP tests protect markup, NFD, mixed scripts and exact consonant identity. Measured runtime consumer ceiling: 38. No global ceiling or model/data authority changes. Integrated format selection and per-character shadow use canonical markup and shared shadow resolution; characterization and artwork parity cover unchanged legacy rendering. See docs/unified-format-panel-handoff.md."
     },
     "src/shared/ipcSchemaPrimitives.ts": {
       "maxRuntimeImports": 16,
@@ -164,8 +164,8 @@
       "reason": "Shared IPC schema primitive authority. Clipboard payload validation and paste capacity checks use the existing block schema and page block limit directly, with malformed-payload and atomic-overflow tests. Structure policy directly uses MAX_BLOCKS_PER_PAGE to reject atomic split overflow. Existing IPC schema and global limits are unchanged; overflow is tested before any write. Lettering advanced transport descriptors invoke the existing native Zod-3 transform/effect validators, with parity tests; native validation is not replaced. Bundle-nine native context migration and exact recovery directly reuse existing identity, revision, activity, locking, transaction and error authorities. The only output/desktop additions register strict context contracts and tools. Source-specific callers and native multi-chapter, revocation and crash regressions are documented in docs/mcp-context-migration-boundaries-20260920.md; no global ceiling change or forwarding dependency wrapper. Validate optional Hayai workflow block metadata with its bounded shared schema. Duplicate/library/manual block creation now consumes the canonical 500-block limit; live-updater capacity and save-schema tests cover these direct consumers. Detailed MCP translation (2026-10-08) reuses the canonical errors, revisions, locking, hashing, typography and tool boundaries; exact new consumers and regression tests are recorded in docs/mcp-translation-quality-v2-20261008.md. Sampled retouch cancellation reuses the canonical UUID validator; see docs/sampled-retouch.md. Measured runtime consumer ceiling: 34. No global ceiling or model/data authority changes. Issue 156 term file import caps new glossary/character entries with the existing MAX_GLOSSARY_ENTRIES/MAX_CHARACTER_PROFILES authority instead of copying limits; workGlossaryImportPlan tests cover the cap."
     },
     "src/shared/translationLanguages.ts": {
-      "maxImportedBy": 34,
-      "reason": "The text-only block translation adapter directly resolves the existing source/target language pair for prompts and result metadata. Page handoff retains its canonical Japanese predicate. Language definitions are not copied; adapter tests verify language-bearing requests without OCR or images. Typography preflight reuses the canonical ja/ko predicates; language definitions and global limits remain unchanged. Bundle-three selected analysis transport validates language codes with the existing app contract; no new language registry. The measured exchange adapters reuse the existing text/context policy, locked native storage, exact source fingerprints and typed errors. The exact direct dependency or consumer list and regression evidence are recorded in docs/mcp-exchange-gates-20260923.json. Global and legacy budgets remain unchanged."
+      "maxImportedBy": 35,
+      "reason": "The text-only block translation adapter directly resolves the existing source/target language pair for prompts and result metadata. Page handoff retains its canonical Japanese predicate. Language definitions are not copied; adapter tests verify language-bearing requests without OCR or images. Typography preflight reuses the canonical ja/ko predicates; language definitions and global limits remain unchanged. Bundle-three selected analysis transport validates language codes with the existing app contract; no new language registry. The measured exchange adapters reuse the existing text/context policy, locked native storage, exact source fingerprints and typed errors. The exact direct dependency or consumer list and regression evidence are recorded in docs/mcp-exchange-gates-20260923.json. Global and legacy budgets remain unchanged. Hunyuan recommendation uses the canonical Japanese-language predicate; the additional direct consumer is shared/hunyuanOcr.ts. Boundary tests cover Japanese, non-Japanese and auto without copying language rules."
     },
     "src/main/pipeline/wholePagePipelinePorts.ts": {
       "maxRuntimeImports": 13,
@@ -204,8 +204,8 @@
       "reason": "Context research snapshots execution settings and owns its cancellable job lifetime independently of unrelated editing and export tasks. Context analysis IPC composes an explicit resource ownership boundary before invoking the analyzer; the storage facade remains injected."
     },
     "src/renderer/src/hooks/useEventCallback.ts": {
-      "maxImportedBy": 32,
-      "reason": "Page handoff, mask completion, detached input completion and stale-image recovery read current session state through the established event callback primitive. Windowed page-list measurement reuses the stable event callback contract so ResizeObserver remains subscribed across progress updates. Chapter navigation reads the latest committed mask state before discarding; pending-read mask rejection regression covers the additional consumer. Export preference persistence reads the current settings-owner save callback through the existing stable event callback."
+      "maxImportedBy": 33,
+      "reason": "Page handoff, mask completion, detached input completion and stale-image recovery read current session state through the established event callback primitive. Windowed page-list measurement reuses the stable event callback contract so ResizeObserver remains subscribed across progress updates. Chapter navigation reads the latest committed mask state before discarding; pending-read mask rejection regression covers the additional consumer. Export preference persistence reads the current settings-owner save callback through the existing stable event callback. Unified translation editing adds one direct consumer for stable text-edit request and selection-preview callbacks in RichTranslationEditor; the controller owns the selection state and detached command guards reject stale block identities. No global budget change."
     },
     "src/renderer/src/app/session/useChapterSessionController.ts": {
       "maxRuntimeImports": 22,
@@ -237,8 +237,8 @@
       "reason": "MCP desktop controls use the existing trusted main-window IPC boundary; remote clients cannot approve connections or change local permissions. Hayai workflow preflight, execution and resume use the trusted IPC boundary. Environment backup uses the existing trusted sender and schema validation boundary. Master integration: MCP desktop controls, page workflow and environment backup share the established trusted sender and schema boundary. The merged runtime-consumer count is exactly 28; global limits are unchanged. Global chat adds one direct consumer/registration of this existing authority; contracts and algorithms are unchanged. See docs/global-chat-translation-20261009.md. Claude Code integration adds the native runtime/account/research contracts at the existing composition boundaries; measured exact dependency count. No storage or rendering authority moved. Verified by claudeIntegration, claudeRuntime and existing chat/MCP regression tests. Grok Build account IPC reuses the existing contract and trusted sender boundaries; one new direct consumer at each composition point. Verified by Grok runtime, account IPC and chat tests; see docs/grok-build-integration.md."
     },
     "src/renderer/src/components/PageArtwork.tsx": {
-      "maxRuntimeImports": 15,
-      "reason": " Prepared blank blocks share a single display-text contract across canvas and exports. Page-local automatic dialogue sizing shares the exact editor/export calculation; sourceFontSizeCap tests and production wide/narrow PNG QA cover parity. No global selector or algorithm relocation. Detailed MCP layout observations add one read-only Hangul ink measurement consumer using production canvas fonts; no fitting or transform algorithm change. Covered by actual PageArtwork/export parity and documented in docs/mcp-translation-quality-v2-20261008.md."
+      "maxRuntimeImports": 17,
+      "reason": " Prepared blank blocks share a single display-text contract across canvas and exports. Page-local automatic dialogue sizing shares the exact editor/export calculation; sourceFontSizeCap tests and production wide/narrow PNG QA cover parity. No global selector or algorithm relocation. Detailed MCP layout observations add one read-only Hangul ink measurement consumer using production canvas fonts; no fitting or transform algorithm change. Covered by actual PageArtwork/export parity and documented in docs/mcp-translation-quality-v2-20261008.md. Integrated format selection and per-character shadow use canonical markup and shared shadow resolution; characterization and artwork parity cover unchanged legacy rendering. See docs/unified-format-panel-handoff.md."
     },
     "src/renderer/src/lib/toastStore.ts": {
       "maxImportedBy": 27,
@@ -398,8 +398,8 @@
       "reason": " Custom API seeding reuses canonical connection defaults; no copied model catalog."
     },
     "src/renderer/src/lib/bubbleBlockTextLayout.ts": {
-      "maxRuntimeImports": 13,
-      "reason": "Automatic legacy balloon layout directly reuses the sizing-intent predicate in sourceFontSizeMatching. narrowDialogueBubble and sourceFontSizeCap regression tests preserve manual sizes; no algorithm relocation or global budget change."
+      "maxRuntimeImports": 15,
+      "reason": "Automatic legacy balloon layout directly reuses the sizing-intent predicate in sourceFontSizeMatching. narrowDialogueBubble and sourceFontSizeCap regression tests preserve manual sizes; no algorithm relocation or global budget change. Variable character leading uses inlineLineMetrics and inlineBubbleLineSlots directly for measured advances and conservative shape re-intersection. Legacy no-override wrapping remains on its prior path; inlineSpacingParity, inlineTextLayout and shaped-slot tests cover parity and both directions."
     },
     "src/main/application/mcpCompositeWorkflowPolicy.ts": {
       "maxImportedBy": 33,
@@ -410,8 +410,8 @@
       "maxRuntimeImports": 13
     },
     "src/main/settings/appSettingsNormalize.ts": {
-      "maxRuntimeImports": 16,
-      "reason": " Claude Code integration adds the native runtime/account/research contracts at the existing composition boundaries; measured exact dependency count. No storage or rendering authority moved. Verified by claudeIntegration, claudeRuntime and existing chat/MCP regression tests."
+      "maxRuntimeImports": 17,
+      "reason": " Claude Code integration adds the native runtime/account/research contracts at the existing composition boundaries; measured exact dependency count. No storage or rendering authority moved. Verified by claudeIntegration, claudeRuntime and existing chat/MCP regression tests. Hunyuan settings add one direct domain normalizer at the existing settings composition boundary, preserving old OCR selections and rejecting removed Q5. No generic limit changes; see docs/hunyuan-ocr-integration-20261021.md."
     },
     "src/main/workContextResearch.ts": {
       "maxRuntimeImports": 15,
@@ -424,6 +424,10 @@
     "src/shared/ipcContractCore.ts": {
       "maxImportedBy": 27,
       "reason": " Grok Build account IPC reuses the existing contract and trusted sender boundaries; one new direct consumer at each composition point. Verified by Grok runtime, account IPC and chat tests; see docs/grok-build-integration.md. Issue 156 term file open/save dialogs define their contract in ipcWorkGlossaryContracts with the existing defineIpcContract and path schemas."
+    },
+    "src/shared/bubbleLayout.ts": {
+      "maxImportedBy": 26,
+      "reason": " Inline leading re-intersects moved line bands through the existing validated bubble geometry in inlineBubbleLineSlots. Tests inlineBubbleLineSlots and inlineTextLayout cover both directions and rejection of uncovered bands; no duplicated geometry or global ceiling change."
     }
   }
 }

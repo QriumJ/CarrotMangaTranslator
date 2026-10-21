@@ -268,6 +268,8 @@ function hasUnsupportedRunStyle(run: TextStyleRun): boolean {
     run.fontFamily,
     run.opacity,
     run.widthScale,
+    run.lineHeight,
+    run.letterSpacing,
     run.color,
     run.backgroundColor,
     run.outlineColor,
@@ -277,6 +279,12 @@ function hasUnsupportedRunStyle(run: TextStyleRun): boolean {
     run.glowColor,
     run.glowBlurPx,
     run.glowOpacity,
+    run.shadowEnabled,
+    run.shadowColor,
+    run.shadowOffsetXpx,
+    run.shadowOffsetYpx,
+    run.shadowBlurPx,
+    run.shadowOpacity,
   ];
   return (
     enabledStyles.some(Boolean) ||

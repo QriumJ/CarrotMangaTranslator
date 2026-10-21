@@ -11,6 +11,7 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TranslationOptionsModal } from "../src/renderer/src/components/TranslationOptionsModal";
+import { PageWorkflowModal } from "../src/renderer/src/components/PageWorkflowModal";
 import { createTestMangaGatewayStub } from "../src/renderer/src/api/mangaGateway";
 import { resolveDefaultAppSettings } from "../src/main/appSettings";
 import { createPageWorkflowPlan } from "../src/shared/pageWorkflowTypes";
@@ -67,7 +68,7 @@ afterEach(() => {
 function show(
   plan = createPageWorkflowPlan(["detect"]),
   initialUi: UiSettings = {},
-  pipeline: "hayai" | "paddle-legacy" = "hayai",
+  pipeline: "hayai" | "paddle-legacy" | "hunyuan" = "hayai",
 ) {
   const onStart = vi.fn<
     (
@@ -124,6 +125,22 @@ function installChapterPages(ids: string[]): () => void {
 }
 
 describe("Hayai page work modal", () => {
+  it("uses the region workflow for Hunyuan and retains a header without optional settings", () => {
+    show(createPageWorkflowPlan(["detect"]), {}, "hunyuan");
+    expect(screen.getByText(/현재: HunyuanOCR/)).toBeTruthy();
+    cleanup();
+    render(
+      <PageWorkflowModal
+        chapter={chapter}
+        library={library}
+        uiSettings={{}}
+        onStart={() => {}}
+        onClose={() => {}}
+        onPersistDefaults={() => {}}
+      />,
+    );
+    expect(screen.getByText("HayaiOCR")).toBeTruthy();
+  });
   it("uses the shared reverse Shift range and Ctrl toggle for its final page IDs", async () => {
     const restore = installChapterPages(["p1", "p2", "p3", "p4"]);
     try {
@@ -477,7 +494,7 @@ describe("Hayai page work modal", () => {
       pageWorkflowFavoritePresetIds: [],
     });
     expect(screen.queryByRole("button", { name: "내 준비 삭제" })).toBeNull();
-    await screen.findByText("1페이지 · 1개 작업");
+    await screen.findByText("1페이지 × 1단계 = 단계 작업 1개");
   });
   it("persists favorite IDs through IPC validation and settings normalization", () => {
     const patch = UiSettingsSchema.parse({
@@ -509,7 +526,7 @@ describe("Hayai page work modal", () => {
     const f = show();
     const start = screen.getByRole("button", { name: "작업 시작" });
     await waitFor(() => expect(start.hasAttribute("disabled")).toBe(false));
-    const summary = screen.getByText("1페이지 · 1개 작업");
+    const summary = screen.getByText("1페이지 × 1단계 = 단계 작업 1개");
     let finish!: () => void;
     window.mangaApi = createTestMangaGatewayStub({
       preflightPageWorkflow: async (request) => {
@@ -524,7 +541,7 @@ describe("Hayai page work modal", () => {
       screen.getByRole("checkbox", { name: "2. 원문 읽기 · OCR" }),
     );
     await waitFor(() => expect(finish).toBeTypeOf("function"));
-    expect(summary.textContent).toBe("1페이지 · 2개 작업");
+    expect(summary.textContent).toBe("1페이지 × 2단계 = 단계 작업 2개");
     expect(start.hasAttribute("disabled")).toBe(true);
     fireEvent.click(start);
     expect(f.onStart).not.toHaveBeenCalled();
@@ -532,7 +549,7 @@ describe("Hayai page work modal", () => {
       finish();
     });
     await waitFor(() => expect(start.hasAttribute("disabled")).toBe(false));
-    expect(summary.textContent).toBe("1페이지 · 2개 작업");
+    expect(summary.textContent).toBe("1페이지 × 2단계 = 단계 작업 2개");
   });
   it("provides each stage description on keyboard focus", async () => {
     show();
@@ -545,7 +562,7 @@ describe("Hayai page work modal", () => {
     expect(checkbox.getAttribute("aria-describedby")).toBe(tooltip.id);
     fireEvent.blur(checkbox);
     expect(screen.queryByRole("tooltip")).toBeNull();
-    await screen.findByText("1페이지 · 1개 작업");
+    await screen.findByText("1페이지 × 1단계 = 단계 작업 1개");
     fireEvent.click(screen.getByRole("checkbox", { name: "6. 자동 서식" }));
     fireEvent.click(screen.getByRole("button", { name: "자동 서식 설정" }));
     const font = screen.getByRole("checkbox", { name: "폰트 맞춤" });

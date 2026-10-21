@@ -120,7 +120,25 @@ const SPEED_LLAMA_RUNTIME_METAL_ARM64 = {
   ],
 };
 
+const SPEED_LLAMA_RUNTIME_CPU = {
+  id: "llama-b11146-cpu-x64",
+  kind: "mainline",
+  backend: "cpu",
+  dir: "llama-b11146-cpu-x64",
+  archives: [
+    {
+      archive: "llama-b11146-bin-win-cpu-x64.zip",
+      url: "https://github.com/ggml-org/llama.cpp/releases/download/b11146/llama-b11146-bin-win-cpu-x64.zip",
+      sha256:
+        "14cf1303ca9ac3abd94816850532f9f9a69ac66fbaca3776fc6f9061c2fac1d1",
+      expectedBytes: 18560055,
+    },
+  ],
+  requiredFiles: ["llama-server.exe", "llama-server-impl.dll", "ggml-base.dll"],
+};
+
 module.exports = {
+  SPEED_LLAMA_RUNTIME_CPU,
   SPEED_LLAMA_RUNTIME_CUDA12,
   SPEED_LLAMA_RUNTIME_CUDA13,
   SPEED_LLAMA_RUNTIME_METAL_ARM64,

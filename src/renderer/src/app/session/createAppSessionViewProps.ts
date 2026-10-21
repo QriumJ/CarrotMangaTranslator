@@ -1,3 +1,4 @@
+import { publishTextSelectionPreview } from "../../lib/textSelectionPreview";
 import { activityResourcesConflict } from "../../../../shared/appActivityTypes";
 import type { PanelSessionValue } from "../../panels/panelSession";
 import type { AppSessionViewProps } from "./AppSessionView";
@@ -230,6 +231,7 @@ function createPanelSessionValue(
     },
     onStartAreaTranslate: model.commandRegistry.byId["translate-region"].run,
     onUpdateBlock: blockEditingActions.updateSelectedBlock,
+    onPreviewTextSelection: publishTextSelectionPreview,
     onUpdateFormat: (patch) =>
       blockEditingActions.updateSelectedBlocks(pickPanelFormatPatch(patch)),
   };

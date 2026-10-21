@@ -104,7 +104,7 @@ describe("detached editor block-library ownership", () => {
     expect(
       screen.getByRole("tab", { name: "서식" }).getAttribute("aria-selected"),
     ).toBe("true");
-    fireEvent.click(screen.getByRole("tab", { name: "텍스트" }));
+    // The active block's text stays editable while several are selected.
     const translation = screen.getByRole("textbox", {
       name: "번역문",
     }) as HTMLDivElement;
@@ -123,7 +123,7 @@ describe("detached editor block-library ownership", () => {
     expect(onUpdateFormat).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole("tab", { name: "서식" }));
-    fireEvent.click(screen.getByRole("button", { name: "블록 전체 굵게" }));
+    fireEvent.click(screen.getByRole("button", { name: "굵게" }));
     expect(onUpdateFormat).toHaveBeenLastCalledWith({ bold: true });
   });
 });

@@ -240,7 +240,10 @@
       "pageSkippedDetail": "Failed after {{maxAttempts}} attempts",
       "finalizing": "Finalizing results",
       "pagesReadyNoModel": "Pages ready: {{count}} · No model request",
-      "pagesReady": "Pages ready: {{count}}"
+      "pagesReady": "Pages ready: {{count}}",
+      "hunyuanOcrPreparing": "Preparing HunyuanOCR prepass",
+      "hunyuanOcrPreparingDetail": "Preparing text regions and the recognition runtime for HunyuanOCR.",
+      "hunyuanPageNoTextDetail": "HunyuanOCR found no text evidence, so the model request was skipped."
     },
     "warnings": {
       "attemptFailed": "{{page}}: attempt {{attempt}}/{{maxAttempts}} failed — {{message}}",
@@ -290,10 +293,16 @@
     "blocksRunning": "Running block OCR prepass",
     "blocksDetail": "Cropping existing block regions: {{count}}. Reading text next.",
     "gpuCacheReleased": "Released the inpainting engine cache for GPU OCR",
-    "gpuCacheReleasedDetail": "Freed GPU memory (VRAM)"
+    "gpuCacheReleasedDetail": "Freed GPU memory (VRAM)",
+    "hunyuanRunning": "HunyuanOCR fixed-region recognition",
+    "hunyuanBatchRunning": "Running HunyuanOCR batch prepass",
+    "hunyuanPrepassDone": "HunyuanOCR prepass complete"
   },
   "inpainting": {
-    "targets": { "drawn": "drawn regions", "source": "source text" },
+    "targets": {
+      "drawn": "drawn regions",
+      "source": "source text"
+    },
     "preparing": "Preparing to erase {{target}}",
     "pageRunning": "Erasing {{target}} on page {{current}} / {{total}}",
     "drawnDetail": "{{page}} · Drawn regions: {{count}}",
@@ -308,7 +317,10 @@
     "noTargets": "There are no text blocks to inpaint.",
     "mixedCompletionWorkflows": "The selected pages use different translation completion workflows and cannot be processed as one job.",
     "noChanges": "The inpainting operation produced no result.",
-    "assets": { "fluxModel": "Flux model", "aot": "AOT inpainting" },
+    "assets": {
+      "fluxModel": "Flux model",
+      "aot": "AOT inpainting"
+    },
     "runtime": {
       "fluxReady": "Flux inpainting ready",
       "fluxReadyLog": "The Flux source-text removal engine is ready.",

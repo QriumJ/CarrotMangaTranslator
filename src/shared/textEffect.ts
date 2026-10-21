@@ -95,6 +95,15 @@ export function resolveTextEffectFilter(
   value: unknown,
   scale: TextEffectScale = { x: 1, y: 1 },
 ): string | undefined {
+  const shadow = resolveTextEffectCssShadow(value, scale);
+  return shadow ? `drop-shadow(${shadow})` : undefined;
+}
+
+/** CSS text shadow for a separate glyph shadow plane; caller owns painting order. */
+export function resolveTextEffectCssShadow(
+  value: unknown,
+  scale: TextEffectScale = { x: 1, y: 1 },
+): string | undefined {
   const effect = normalizeTextEffect(value);
   if (!effect?.enabled || effect.opacity <= 0) return undefined;
   const scaleX = normalizeScale(scale.x);
@@ -105,7 +114,7 @@ export function resolveTextEffectFilter(
     effect.color.slice(3, 5),
     effect.color.slice(5, 7),
   ].map((channel) => Number.parseInt(channel, 16));
-  return `drop-shadow(${formatCssNumber(effect.offsetXpx * scaleX)}px ${formatCssNumber(effect.offsetYpx * scaleY)}px ${formatCssNumber(effect.blurPx * blurScale)}px rgba(${red}, ${green}, ${blue}, ${effect.opacity}))`;
+  return `${formatCssNumber(effect.offsetXpx * scaleX)}px ${formatCssNumber(effect.offsetYpx * scaleY)}px ${formatCssNumber(effect.blurPx * blurScale)}px rgba(${red}, ${green}, ${blue}, ${effect.opacity})`;
 }
 
 function normalizeColor(value: unknown): string {

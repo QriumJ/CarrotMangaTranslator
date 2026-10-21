@@ -43,7 +43,11 @@ export type OcrQualityMode = "economy" | "full";
  * path remains available for compatibility with projects that rely on the
  * older fragment/grouping behaviour.
  */
-export type OcrPipeline = "hayai" | "paddle-legacy";
+export type HunyuanSettings = {
+  model: "auto" | "f16" | "q4";
+  device: "auto" | "gpu" | "cpu";
+};
+export type OcrPipeline = "hayai" | "paddle-legacy" | "hunyuan";
 export type TranslationWorkflowMode = "standard" | "cumulative";
 export type CumulativeContextDetail = "detailed" | "balanced" | "essential";
 export type LlamaRuntimeProfile =
@@ -168,6 +172,7 @@ export type GenerationLimitProfiles = {
 };
 
 type OcrSettings = {
+  hunyuan?: HunyuanSettings;
   /** Missing in settings written before the Hayai/Paddle split. */
   pipeline?: OcrPipeline;
   device: OcrDevice;

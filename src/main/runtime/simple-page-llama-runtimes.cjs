@@ -182,6 +182,7 @@ const WINDOWS_LLAMA_RUNTIME_MAX_RELATIVE_PATH_LENGTH = Object.freeze({
   "llama-b11146-cuda12.4": 28,
   "llama-b11146-cuda13.4": 28,
   "llama-b11146-vulkan": 28,
+  "llama-b11146-cpu-x64": 28,
   "lemonade-llama-b1338-rocm-gfx103X": 102,
   "lemonade-llama-b1338-rocm-gfx1150": 122,
   "lemonade-llama-b1338-rocm-gfx110X": 122,

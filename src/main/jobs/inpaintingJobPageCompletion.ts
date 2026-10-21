@@ -72,8 +72,10 @@ export function countInpaintingPageTargets(
 ): number {
   if (target.drawnPatternMode) return target.drawnStrokes.length;
   if (target.layoutOnly) {
-    return page.blocks.filter((block) =>
-      isBubbleLayoutBlockEligible(block, target.blockId),
+    return page.blocks.filter(
+      (block) =>
+        isBubbleLayoutBlockEligible(block, target.blockId) &&
+        (!target.blockIds || target.blockIds.includes(block.id)),
     ).length;
   }
   return countEligiblePatternBlocks(
@@ -124,7 +126,11 @@ export function canCompleteTranslationWorkflowWithoutTargets(
   state: InpaintingJobState,
   target: InpaintingTarget,
 ): boolean {
-  if (target.blockId !== undefined || target.drawnPatternMode) {
+  if (
+    target.blockId !== undefined ||
+    target.blockIds !== undefined ||
+    target.drawnPatternMode
+  ) {
     return false;
   }
   if (
@@ -276,6 +282,7 @@ export function resolveInpaintingTarget(
   if (request.mode === "page-bubble-layout") {
     return {
       ...(request.blockId === undefined ? {} : { blockId: request.blockId }),
+      ...(request.blockIds === undefined ? {} : { blockIds: request.blockIds }),
       drawnPatternMode: false,
       drawnStrokes: [],
       layoutOnly: true,

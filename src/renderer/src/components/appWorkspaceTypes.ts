@@ -73,6 +73,7 @@ export type AppWorkspaceProps = {
     ImageStageProps["onUndoBubbleLayoutPoint"]
   >;
   onBlockPointerDown: ImageStageProps["onBlockPointerDown"];
+  onEditBlockText?: () => void;
   onWarpTransformCommit?: ImageStageProps["onWarpTransformCommit"];
   onSelectSoundEffectReviewRegion?: ImageStageProps["onSelectSoundEffectReviewRegion"];
   onDismissSoundEffectReviewRegion?: ImageStageProps["onDismissSoundEffectReviewRegion"];

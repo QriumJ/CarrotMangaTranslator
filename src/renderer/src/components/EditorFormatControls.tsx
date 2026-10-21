@@ -4,27 +4,18 @@ import type { TranslationBlock } from "../../../shared/textTypes";
 import type { BlockFormatGroupId } from "../../../shared/blockFormat";
 import type { PanelFormatFieldKey } from "../../../shared/panelBridgeTypes";
 import { resolveBlockTextWordBreak } from "../../../shared/textWrapping";
-import { BlockSpacingFields } from "./BlockSpacingFields";
-import { BlockTextOpacityField } from "./BlockTextOpacityField";
-import { FontSelect } from "./FontSelect";
 import { FormatBatchApplyModal } from "./FormatBatchApplyModal";
 import type { FormatApplyScope } from "../hooks/blockEditingStatus";
+import { EditorBubbleLayoutSettings } from "./EditorBubbleLayoutSettings";
+import { TextBackgroundField } from "./EditorColorGroup";
 import { Button } from "./ui/Button";
+import { CheckboxField } from "./ui/CheckboxField";
 import { IconButton } from "./ui/IconButton";
 import { SegmentedControl } from "./ui/SegmentedControl";
 import { TextWrappingSelect } from "./TextWrappingSelect";
-import {
-  AlignCenterIcon,
-  AlignLeftIcon,
-  AlignRightIcon,
-  BoldIcon,
-  EmphasisMarkIcon,
-  ItalicIcon,
-  StrikethroughIcon,
-  UnderlineIcon,
-} from "./ui/icons";
-import type { EditorPanelModel } from "./editorPanelUtils";
-import { EditorFontSizeRow } from "./EditorFontSizeRow";
+import { AlignCenterIcon, AlignLeftIcon, AlignRightIcon } from "./ui/icons";
+import { clampFontSize, type EditorPanelModel } from "./editorPanelUtils";
+import styles from "./EditorFormatControls.module.css";
 
 type BlockPatchHandler = (patch: Partial<TranslationBlock>) => void;
 type ApplyFormatHandler = (
@@ -39,47 +30,40 @@ type BlockSectionProps = {
   onUpdate: BlockPatchHandler;
 };
 
+/**
+ * Settings that always apply to the whole block (or every selected block),
+ * regardless of the letters being edited in the translation.
+ */
 export function FormatEditorGroup({
-  block,
-  disabled,
   disableChapterApply,
-  fontFamilyDraft,
-  mixedFields,
   model,
+  bubblePaddingRatio,
+  onApplyBubblePadding,
   onApplyFormat,
-  onAdjustFontSize,
-  onFontFamilyDraftChange,
-  onOpenFontManager,
-  onUpdate,
   selectedBlockCount,
+  selectionKey,
+  ...props
 }: BlockSectionProps & {
   disableChapterApply: boolean;
-  fontFamilyDraft?: string;
   model: EditorPanelModel;
+  bubblePaddingRatio?: number | null;
+  onApplyBubblePadding?: (paddingRatio: number) => void;
   onApplyFormat?: ApplyFormatHandler;
-  onAdjustFontSize: (adjustment: -1 | 1) => void;
-  onFontFamilyDraftChange: (fontFamily?: string) => void;
-  onOpenFontManager?: () => void;
   selectedBlockCount: number;
+  selectionKey?: string;
 }): React.JSX.Element {
   const { t } = useTranslation("components");
+  const titleId = React.useId();
   const [applyOpen, setApplyOpen] = React.useState(false);
   return (
-    <div className="editor-group">
+    <section className="editor-group" aria-labelledby={titleId}>
       <div className="editor-group-head">
-        <h3>
-          {t(
-            selectedBlockCount > 1
-              ? "format.blockScope"
-              : "format.singleBlockScope",
-            { count: selectedBlockCount },
-          )}
-        </h3>
+        <h3 id={titleId}>{t("format.blockSettings.title")}</h3>
         {onApplyFormat ? (
           <Button
             size="sm"
             variant="ghost"
-            disabled={disabled}
+            disabled={props.disabled}
             onClick={() => setApplyOpen(true)}
             title={t("format.batchApplyTitle")}
           >
@@ -87,95 +71,73 @@ export function FormatEditorGroup({
           </Button>
         ) : null}
       </div>
-      <BatchApplyDialog
-        disableChapterApply={disableChapterApply}
-        onApply={onApplyFormat}
-        onClose={() => setApplyOpen(false)}
-        open={applyOpen}
+      {selectedBlockCount > 1 ? (
+        <p className={styles.description}>
+          {t("format.blockSettings.descriptionMultiple", {
+            count: selectedBlockCount,
+          })}
+        </p>
+      ) : null}
+      {applyOpen && onApplyFormat ? (
+        <FormatBatchApplyModal
+          selectedBlockCount={selectedBlockCount}
+          disableChapterApply={disableChapterApply}
+          onApply={onApplyFormat}
+          onClose={() => setApplyOpen(false)}
+        />
+      ) : null}
+      <div className="format-toolbar">
+        <TextAlignButtons {...props} />
+        <DirectionToggle
+          disabled={props.disabled}
+          mixed={props.mixedFields.has("renderDirection")}
+          onUpdate={props.onUpdate}
+          renderDirection={model.renderDirection}
+        />
+      </div>
+      <div className={styles.autoFitRow}>
+        <AutoFitField {...props} model={model} />
+      </div>
+      <TextWrappingField {...props} />
+      <div className="editor-appearance-list">
+        <TextBackgroundField {...props} />
+      </div>
+      <EditorBubbleLayoutSettings
+        {...props}
         selectedBlockCount={selectedBlockCount}
+        selectionKey={selectionKey}
+        effectivePaddingRatio={bubblePaddingRatio}
+        onApplyBubblePadding={onApplyBubblePadding}
       />
-      <StyleToolbar {...{ block, disabled, mixedFields, model, onUpdate }} />
-      <FontField
-        disabled={disabled}
-        fontFamilyDraft={fontFamilyDraft}
-        mixed={mixedFields.has("fontFamily")}
-        onFontFamilyDraftChange={onFontFamilyDraftChange}
-        onOpenFontManager={onOpenFontManager}
-        onUpdate={onUpdate}
-      />
-      <TextWrappingField {...{ block, disabled, mixedFields, onUpdate }} />
-      <FormatNumberFields
-        block={block}
-        disabled={disabled}
-        mixedFields={mixedFields}
-        model={model}
-        onAdjustFontSize={onAdjustFontSize}
-        onUpdate={onUpdate}
-      />
-    </div>
+    </section>
   );
 }
 
-function FormatNumberFields({
-  block,
+function AutoFitField({
   disabled,
   mixedFields,
   model,
-  onAdjustFontSize,
   onUpdate,
-}: BlockSectionProps & {
-  model: EditorPanelModel;
-  onAdjustFontSize: (adjustment: -1 | 1) => void;
-}): React.JSX.Element {
+}: BlockSectionProps & { model: EditorPanelModel }): React.JSX.Element {
+  const { t } = useTranslation("components");
+  const mixed = mixedFields.has("autoFitText");
   return (
-    <div className="editor-format-fields">
-      <EditorFontSizeRow
-        autoFitText={model.autoFitText}
-        autoFitMixed={mixedFields.has("autoFitText")}
-        disabled={disabled}
-        fontSizePx={model.fontSizePx}
-        fontSizeMixed={mixedFields.has("fontSizePx")}
-        onAdjust={onAdjustFontSize}
-        onUpdate={onUpdate}
-      />
-      <div className="editor-format-number-grid">
-        <BlockTextOpacityField
-          block={block}
-          disabled={disabled}
-          mixed={mixedFields.has("textOpacity")}
-          onUpdate={onUpdate}
-        />
-        <BlockSpacingFields
-          block={block}
-          disabled={disabled}
-          mixedFields={mixedFields}
-          onUpdate={onUpdate}
-        />
-      </div>
-    </div>
-  );
-}
-
-function BatchApplyDialog({
-  disableChapterApply,
-  onApply,
-  onClose,
-  open,
-  selectedBlockCount,
-}: {
-  disableChapterApply: boolean;
-  onApply?: ApplyFormatHandler;
-  onClose: () => void;
-  open: boolean;
-  selectedBlockCount: number;
-}): React.JSX.Element | null {
-  if (!open || !onApply) return null;
-  return (
-    <FormatBatchApplyModal
-      selectedBlockCount={selectedBlockCount}
-      disableChapterApply={disableChapterApply}
-      onApply={onApply}
-      onClose={onClose}
+    <CheckboxField
+      label={t("format.autoFitTitle")}
+      checked={model.autoFitText}
+      indeterminate={mixed}
+      disabled={disabled}
+      onCheckedChange={(checked) =>
+        onUpdate(
+          mixed || checked
+            ? { autoFitText: true, fontSizeIntent: "manual" }
+            : {
+                autoFitText: false,
+                fontSizeIntent: "manual",
+                fontSizePx: clampFontSize(model.fontSizePx),
+              },
+        )
+      }
     />
   );
 }
@@ -201,107 +163,6 @@ function TextWrappingField({
         onChange={(wordBreak) => onUpdate({ wordBreak })}
       />
     </label>
-  );
-}
-
-function StyleToolbar({
-  block,
-  disabled,
-  mixedFields,
-  model,
-  onUpdate,
-}: BlockSectionProps & {
-  model: EditorPanelModel;
-}): React.JSX.Element {
-  return (
-    <div className="format-toolbar">
-      <TextEmphasisButtons
-        block={block}
-        disabled={disabled}
-        mixedFields={mixedFields}
-        onUpdate={onUpdate}
-      />
-      <TextAlignButtons
-        block={block}
-        disabled={disabled}
-        mixedFields={mixedFields}
-        onUpdate={onUpdate}
-      />
-      <DirectionToggle
-        disabled={disabled}
-        mixed={mixedFields.has("renderDirection")}
-        onUpdate={onUpdate}
-        renderDirection={model.renderDirection}
-      />
-    </div>
-  );
-}
-
-function TextEmphasisButtons({
-  block,
-  disabled,
-  mixedFields,
-  onUpdate,
-}: BlockSectionProps): React.JSX.Element {
-  const { t } = useTranslation("components");
-  const controls = [
-    {
-      field: "bold",
-      label: t("format.blockBold", { defaultValue: "블록 전체 굵게" }),
-      icon: <BoldIcon size={18} />,
-    },
-    {
-      field: "italic",
-      label: t("format.blockItalic", { defaultValue: "블록 전체 기울임" }),
-      icon: <ItalicIcon size={18} />,
-    },
-    {
-      field: "underline",
-      label: t("format.blockUnderline", { defaultValue: "블록 전체 밑줄" }),
-      icon: <UnderlineIcon size={18} />,
-    },
-    {
-      field: "strikethrough",
-      label: t("format.blockStrikethrough", {
-        defaultValue: "블록 전체 취소선",
-      }),
-      icon: <StrikethroughIcon size={18} />,
-    },
-    {
-      field: "emphasisMark",
-      label: t("format.blockEmphasisMark", {
-        defaultValue: "블록 전체 강조점",
-      }),
-      icon: <EmphasisMarkIcon size={18} />,
-    },
-  ] as const;
-  return (
-    <div
-      className="format-emphasis-control"
-      role="group"
-      aria-label={t("format.blockStyle", { defaultValue: "블록 전체" })}
-    >
-      <div className="block-style-group">
-        {controls.map(({ field, icon, label }) => (
-          <IconButton
-            key={field}
-            size="sm"
-            label={label}
-            aria-pressed={
-              mixedFields.has(field) ? "mixed" : Boolean(block[field])
-            }
-            disabled={disabled}
-            onClick={() =>
-              onUpdate({
-                [field]: mixedFields.has(field) || !block[field],
-              })
-            }
-          >
-            {icon}
-          </IconButton>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -365,36 +226,5 @@ function DirectionToggle({
       value={renderDirection}
       onChange={(nextDirection) => onUpdate({ renderDirection: nextDirection })}
     />
-  );
-}
-
-function FontField({
-  disabled,
-  fontFamilyDraft,
-  mixed,
-  onFontFamilyDraftChange,
-  onOpenFontManager,
-  onUpdate,
-}: {
-  disabled: boolean;
-  fontFamilyDraft?: string;
-  mixed: boolean;
-  onFontFamilyDraftChange: (fontFamily?: string) => void;
-  onOpenFontManager?: () => void;
-  onUpdate: BlockPatchHandler;
-}): React.JSX.Element {
-  return (
-    <div className="font-field">
-      <FontSelect
-        value={fontFamilyDraft}
-        disabled={disabled}
-        mixed={mixed}
-        onOpenManager={onOpenFontManager}
-        onChange={(fontFamily) => {
-          onFontFamilyDraftChange(fontFamily);
-          onUpdate({ fontFamily });
-        }}
-      />
-    </div>
   );
 }

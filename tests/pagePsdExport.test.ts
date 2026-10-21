@@ -23,6 +23,17 @@ initializeCanvas(
 );
 
 describe("layered PSD export", () => {
+  it.each(["true", "false"])(
+    "keeps partial shadow %s in the faithful raster rather than dropping it from editable text",
+    (enabled) => {
+      const block = {
+        ...makeBlock(),
+        translatedText: `a[shadow-enabled=${enabled}]b[/shadow-enabled]c`,
+      };
+      expect(resolveEditablePsdText(block, makePage())).toBeNull();
+    },
+  );
+
   it.each([0.5, 0.95, 1, 1.5])(
     "preserves horizontal scale ratio %s",
     (scale) => {

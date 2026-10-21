@@ -1,9 +1,7 @@
+import { assertUniformOcrBatchProfile } from "./ocrBatchProfile";
 import { prepareExternalImageFile } from "../imageRedactionContext";
 import type { TranslationOptions } from "../appSettings";
-import {
-  isHayaiOcrPipeline,
-  resolveOcrPipeline,
-} from "../../shared/ocrEngines";
+import { isRegionOcrPipeline } from "../../shared/ocrEngines";
 import { tMain } from "./localization";
 import type {
   ModelEndpointHandle,
@@ -16,6 +14,10 @@ import { startModelEndpointSession } from "./runtimeModules";
 import type { OcrGroupingEvidencePort } from "./ocrGroupingEvidencePort";
 import { logPipelineWarning } from "./pipelineLogger";
 import { startHayaiRecognitionSession } from "./hayaiRecognitionSession";
+import {
+  collectHunyuanHints,
+  startHunyuanRecognitionSession,
+} from "./hunyuanRecognitionSession";
 
 type TranslationEndpointSession = {
   readonly handle: ModelEndpointHandle;
@@ -138,13 +140,15 @@ export function createTranslationRuntimePort({
     },
     collectPreparedHayaiHints: async (options) => {
       if (
-        !isHayaiOcrPipeline(options.ocrPipeline) ||
+        !isRegionOcrPipeline(options.ocrPipeline) ||
         !options.ocrBboxRegionsPath
       )
         throw new Error("HayaiOCR 고정 영역 입력이 필요합니다.");
       await releaseGpuBeforeOcr(gpuMemory, [options]);
       await hayaiRegionPrepass.releaseDetectorResources("prepared-hayai-ocr");
-      return runtime.simplePage.collectOcrBboxHints(options);
+      return options.ocrPipeline === "hunyuan"
+        ? collectHunyuanHints(options)
+        : runtime.simplePage.collectOcrBboxHints(options);
     },
     collectOcrHints: (options) =>
       collectOcrHints({
@@ -190,10 +194,12 @@ async function prepareHayaiSession(
   prepass: HayaiOcrRegionPrepassPort,
   runtime: RuntimeModules,
 ) {
-  if (!isHayaiOcrPipeline(options.ocrPipeline) || !options.ocrBboxRegionsPath)
+  if (!isRegionOcrPipeline(options.ocrPipeline) || !options.ocrBboxRegionsPath)
     throw new Error("HayaiOCR 고정 영역 입력이 필요합니다.");
   await releaseGpuBeforeOcr(gpuMemory, [options]);
   await prepass.releaseDetectorResources("prepared-hayai-session");
+  if (options.ocrPipeline === "hunyuan")
+    return startHunyuanRecognitionSession(options);
   return startHayaiRecognitionSession(options, (page) =>
     runtime.simplePage.collectOcrBboxHints(page),
   );
@@ -213,11 +219,15 @@ async function collectOcrHints({
   options: TranslationOptions;
 }): Promise<OcrBboxResult> {
   await releaseGpuBeforeOcr(gpuMemory, [options]);
-  if (isHayaiOcrPipeline(options.ocrPipeline)) {
+  if (isRegionOcrPipeline(options.ocrPipeline)) {
     const [prepared] = await prepareHayaiRegionStage(hayaiRegionPrepass, [
       options,
     ]);
-    const result = await runtime.simplePage.collectOcrBboxHints({
+    const collect =
+      options.ocrPipeline === "hunyuan"
+        ? collectHunyuanHints
+        : runtime.simplePage.collectOcrBboxHints;
+    const result = await collect({
       ...options,
       ocrBboxRegionsPath: prepared.manifestPath,
     });
@@ -243,7 +253,7 @@ async function collectOcrHintsBatch({
 }): Promise<OcrBboxResult[]> {
   assertUniformOcrBatchProfile(optionsList);
   await releaseGpuBeforeOcr(gpuMemory, optionsList);
-  if (!isHayaiOcrPipeline(optionsList[0]?.ocrPipeline)) {
+  if (!isRegionOcrPipeline(optionsList[0]?.ocrPipeline)) {
     const results = runtime.simplePage.collectOcrBboxHintsBatch
       ? await runtime.simplePage.collectOcrBboxHintsBatch(optionsList)
       : await collectSequentialOcr(runtime, optionsList);
@@ -257,6 +267,19 @@ async function collectOcrHintsBatch({
     ...options,
     ocrBboxRegionsPath: prepared[index].manifestPath,
   }));
+  if (runtimeOptions[0]?.ocrPipeline === "hunyuan") {
+    const session = startHunyuanRecognitionSession(runtimeOptions[0]);
+    const results: OcrBboxResult[] = [];
+    try {
+      for (const [index, options] of runtimeOptions.entries())
+        results.push(
+          await prepared[index].finalize(await session.collect(options)),
+        );
+      return results;
+    } finally {
+      await session.dispose();
+    }
+  }
   const results = runtime.simplePage.collectOcrBboxHintsBatch
     ? await runtime.simplePage.collectOcrBboxHintsBatch(runtimeOptions)
     : await collectSequentialOcr(runtime, runtimeOptions);
@@ -340,51 +363,16 @@ function emitDetectorReleasedBeforeTranslation(
 function emitHayaiOcrProcessStopped(options: TranslationOptions): void {
   options.onProgress?.({
     phase: "ocr_running",
-    progressText: tMain("ocr.hayaiProcessStopped"),
-    detail: tMain("ocr.hayaiProcessStoppedDetail"),
+    progressText:
+      options.ocrPipeline === "hunyuan"
+        ? "HunyuanOCR 종료 · 메모리 반환"
+        : tMain("ocr.hayaiProcessStopped"),
+    detail:
+      options.ocrPipeline === "hunyuan"
+        ? "OCR 서버를 종료했습니다."
+        : tMain("ocr.hayaiProcessStoppedDetail"),
     progressMode: "log-only",
   });
-}
-
-const OCR_BATCH_PROFILE_KEYS = [
-  "ocrPipeline",
-  "ocrDevice",
-  "ocrGpuBackend",
-  "ocrGpuCudaTag",
-  "ocrQualityMode",
-  "ocrBboxProvider",
-  "ocrBboxMode",
-  "ocrEngine",
-  "ocrEngineDtype",
-  "ocrVersion",
-  "ocrTextDetectionModelName",
-  "ocrTextRecognitionModelName",
-  "ocrMergeMode",
-  "ocrDetLimit",
-  "ocrRecBatch",
-] as const satisfies ReadonlyArray<keyof TranslationOptions>;
-
-function assertUniformOcrBatchProfile(optionsList: TranslationOptions[]): void {
-  if (optionsList.length < 2) return;
-  const expected = buildOcrBatchProfileKey(optionsList[0]);
-  const mismatchIndex = optionsList.findIndex(
-    (options) => buildOcrBatchProfileKey(options) !== expected,
-  );
-  if (mismatchIndex > 0) {
-    throw new TypeError(
-      `OCR batch item ${mismatchIndex + 1} has a different runtime profile. Split mixed engine/device profiles into separate batches.`,
-    );
-  }
-}
-
-function buildOcrBatchProfileKey(options: TranslationOptions): string {
-  return JSON.stringify(
-    OCR_BATCH_PROFILE_KEYS.map((key) =>
-      key === "ocrPipeline"
-        ? resolveOcrPipeline(options.ocrPipeline)
-        : (options[key] ?? null),
-    ),
-  );
 }
 
 async function collectSequentialOcr(

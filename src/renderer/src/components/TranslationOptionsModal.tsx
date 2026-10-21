@@ -3,6 +3,7 @@ import type {
   TranslationModalPresentation,
 } from "./translationOptionsModalTypes";
 import React from "react";
+import { OcrRecommendation } from "./OcrRecommendation";
 import { SegmentedControl } from "./ui/SegmentedControl";
 import { PageWorkflowModal } from "./PageWorkflowModal";
 import { TranslationOptionsForm } from "./TranslationOptionsForm";
@@ -35,7 +36,8 @@ type TranslationDefaultsPatch = Pick<
 export function TranslationOptionsModal(
   props: TranslationOptionsModalProps,
 ): React.JSX.Element {
-  return props.settings?.ocr.pipeline === "hayai" ? (
+  return props.settings?.ocr.pipeline === "hayai" ||
+    props.settings?.ocr.pipeline === "hunyuan" ? (
     <HayaiTranslationOptionsModal {...props} />
   ) : (
     <LegacyTranslationOptionsModal {...props} />
@@ -66,7 +68,11 @@ function HayaiTranslationOptionsModal(props: TranslationOptionsModalProps) {
     headerExtra: (
       <div ref={switcherRef}>
         <SegmentedControl
-          ariaLabel="Hayai 작업 화면"
+          ariaLabel={
+            props.settings?.ocr.pipeline === "hunyuan"
+              ? "Hunyuan 작업 화면"
+              : "Hayai 작업 화면"
+          }
           singleRow
           value={mode}
           onChange={switchMode}
@@ -146,6 +152,10 @@ function LegacyTranslationOptionsModal({
           />
         }
       >
+        <OcrRecommendation
+          sourceLanguage={sourceLanguage}
+          pipeline={settings?.ocr.pipeline}
+        />
         <TranslationOptionsForm
           {...state.formProps}
           currentPageId={currentPageId}

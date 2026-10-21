@@ -70,6 +70,7 @@ export function useAppSessionModel(): AppSessionViewProps {
       core: chapter.core,
       derivedState: chapter.derivedState,
       inpaintingBridge: inpainting.inpaintingBridge,
+      settingsDialog: chapter.settingsDialog,
       uiState: chapter.uiState,
       workspaceHistory: translation.workspaceHistory,
     }),
@@ -158,6 +159,19 @@ function openConditionalBatchSuggestion(
   chapter.uiState.setConditionalBatchOpen(true);
 }
 
+/** The block set a panel command acts on; the active block when none. */
+function usePanelSelectionIds(
+  chapter: ChapterSessionController,
+  selectedBlockId: string | null,
+): string[] {
+  const derived = chapter.derivedState.selectedBlockIds;
+  return useMemo(
+    () =>
+      derived.length > 0 ? derived : selectedBlockId ? [selectedBlockId] : [],
+    [derived, selectedBlockId],
+  );
+}
+
 function usePanelCommandHandler(
   chapter: ChapterSessionController,
   translation: TranslationController,
@@ -168,13 +182,8 @@ function usePanelCommandHandler(
     chapter.derivedState.selectedPageEditLocked ||
     translation.workspaceHistory.busy;
   const selectedBlockId = chapter.derivedState.selectedBlock?.id ?? null;
-  const selectionKey = createPanelSelectionKey(
-    chapter.derivedState.selectedBlockIds.length > 0
-      ? chapter.derivedState.selectedBlockIds
-      : selectedBlockId
-        ? [selectedBlockId]
-        : [],
-  );
+  const selectedBlockIds = usePanelSelectionIds(chapter, selectedBlockId);
+  const selectionKey = createPanelSelectionKey(selectedBlockIds);
   const selectWorkspaceTool = chapter.uiState.selectWorkspaceTool;
   const setBlockLibraryOpen = chapter.uiState.setBlockLibraryOpen;
   const setFontManagerOpen = chapter.uiState.setFontManagerOpen;
@@ -191,6 +200,13 @@ function usePanelCommandHandler(
           ...actions,
           eraseBlockOriginal: (blockId) => void runInpainting("page", blockId),
           fitBlockBubble: (blockId) => void runBubbleLayout(blockId),
+          applySelectionBubblePadding: (paddingRatio) => {
+            if (selectedBlockIds.length === 0) return;
+            void runBubbleLayout(undefined, {
+              blockIds: selectedBlockIds,
+              paddingRatio,
+            });
+          },
           deleteStylePreset: (presetId) =>
             void presetActions.deleteStylePreset(presetId),
           createStylePreset: (input) =>
@@ -223,6 +239,7 @@ function usePanelCommandHandler(
       runBubbleLayout,
       runInpainting,
       selectedBlockId,
+      selectedBlockIds,
       selectionKey,
       selectWorkspaceTool,
       setBlockLibraryOpen,

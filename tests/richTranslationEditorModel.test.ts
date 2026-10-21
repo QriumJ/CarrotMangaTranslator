@@ -47,14 +47,14 @@ describe("rich translation editor model", () => {
     },
   );
 
-  it("preserves the historical first-field priority for a compound patch", () => {
+  it("applies every field in a compound patch consistently with visual editing", () => {
     expect(
       applyRichTranslationCodeStyle(
         "효과",
         { start: 0, end: 2 },
         { bold: true, color: "#123456" },
       )?.value,
-    ).toBe("**효과**");
+    ).toBe("[color=#123456]**효과**[/color]");
   });
 
   it("removes a nullable code-mode style without changing the text", () => {

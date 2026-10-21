@@ -363,7 +363,39 @@
       }
     },
     "blockScope": "選択ブロック {{count}} 個 · 基本書式",
-    "singleBlockScope": "ブロックの基本書式"
+    "singleBlockScope": "ブロックの基本書式",
+    "characterFormat": {
+      "editText": "ブロックの翻訳文を編集",
+      "title": "文字書式",
+      "emphasis": "文字の強調",
+      "underline": "下線",
+      "strikethrough": "取り消し線",
+      "emphasisMark": "傍点",
+      "effects": "詳細な文字効果",
+      "scopePrefix": "適用先: ",
+      "scope": {
+        "block": "ブロック内のすべての文字",
+        "selection": "選択した文字",
+        "caret": "これから入力する文字",
+        "blocks": "選択した{{count}}個のブロックのすべての文字"
+      },
+      "selectAll": "すべて選択",
+      "selectAllTitle": "翻訳文全体を選択して文字単位で書式を適用",
+      "selectOutputLine": "出力行を選択",
+      "selectOutputLineTitle": "キャンバスに出力された現在の行全体を選択",
+      "finishEditing": "編集を終了",
+      "finishEditingTitle": "テキスト編集を終了してブロック全体に書式を適用"
+    },
+    "blockSettings": {
+      "title": "ブロック全体の設定",
+      "description": "文字の選択に関係なく、常にブロック全体に適用されます。",
+      "descriptionMultiple": "選択した{{count}}個のブロック全体に適用されます。"
+    },
+    "bubblePadding": {
+      "label": "吹き出しの余白",
+      "apply": "適用",
+      "applyMultiple": "{{count}}個のブロックに適用"
+    }
   },
   "transform": {
     "title": "変形",
@@ -511,6 +543,7 @@
   "editor": {
     "text": "テキスト",
     "translatedText": "翻訳文",
+    "sourceText": "原文OCR",
     "eraseOriginal": "原文を消去",
     "fitBubble": "吹き出し合わせ",
     "moreActions": "ブロック操作を表示",
@@ -2419,8 +2452,12 @@
           "description": "テキスト検出器が本文と効果音の領域を分離し、Hayai OCRが固定された各領域を読み取ります。効果音は通常翻訳から除外して確認対象として保存します。"
         },
         "paddle-legacy": {
-          "label": "PaddleOCR",
+          "label": "PaddleOCR（レガシー）",
           "description": "従来のPaddle OCR断片とGemmaのグループ化をそのまま使用します。"
+        },
+        "hunyuan": {
+          "label": "HunyuanOCR 1.5",
+          "description": "固定領域を一つずつ読む多言語OCR。標準F16、任意Q4。"
         }
       },
       "ocrQuality": "Paddle OCR品質",
@@ -2458,6 +2495,18 @@
         "rocm-transformers": "ROCm 対応 AMD GPU が必要",
         "cpu": "GPU 不要",
         "unsupportedRocm": "検出した GPU は ROCm OCR 非対応"
+      },
+      "hunyuan": {
+        "current": "現在: {{engine}}",
+        "recommendation": "原文言語の推奨: {{engine}}",
+        "autoLanguage": "日本語はHayai、多言語はHunyuanを推奨します。",
+        "apply": "推奨を適用",
+        "model": "Hunyuanモデル",
+        "autoModel": "自動 (F16)",
+        "modelHelp": "F16が標準です。Q4はVRAM節約用で、画像モデルは共通です。",
+        "device": "実行デバイス",
+        "autoDevice": "自動",
+        "deviceHelp": "専用VRAM 4GB以上またはApple統合メモリ8GB以上ではGPUを使用します。GPU初期化やメモリ不足時は同じモデルでCPUを一度再試行します。"
       }
     },
     "format": {

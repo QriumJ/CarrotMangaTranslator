@@ -6,6 +6,17 @@ import { logInfo } from "../logger";
 import type { SimplePageRuntime } from "../simplePageRuntime";
 import { tMain } from "./localization";
 import { isHayaiOcrPipeline } from "../../shared/ocrEngines";
+import {
+  ensureHunyuanAssets,
+  ensureHunyuanRuntime,
+} from "../runtimeSupport/hunyuanAssets";
+import { startHunyuanServer } from "../runtimeSupport/hunyuanServer";
+
+const nativeHunyuan = {
+  assets: ensureHunyuanAssets,
+  runtime: ensureHunyuanRuntime,
+  start: startHunyuanServer,
+};
 
 export type SendModelTestProgress = (
   progress: Omit<ModelTestProgressEvent, "id">,
@@ -77,8 +88,35 @@ export async function verifyOcrRuntime(
   options: TranslationOptions,
   sendProgress: SendModelTestProgress,
   _settings?: AppSettings,
+  native = nativeHunyuan,
 ): Promise<void> {
   const ocrPipeline = options.ocrPipeline;
+  if (ocrPipeline === "hunyuan") {
+    const execution = options.hunyuanOcr ?? {
+      model: "f16",
+      device: "cpu",
+      backend: "cpu",
+    };
+    const preparedOptions = { ...options, onProgress: sendProgress };
+    const assets = await native.assets(preparedOptions, execution);
+    const binary = await native.runtime(preparedOptions, execution);
+    const server = await native.start(
+      preparedOptions,
+      execution,
+      assets,
+      binary,
+    );
+    await server.dispose();
+    sendProgress({
+      phase: "ocr_preparing",
+      ocrPipeline,
+      progressText: "HunyuanOCR 준비 완료",
+      detail: `${execution.model.toUpperCase()} · ${execution.backend.toUpperCase()}`,
+      progressMode: "determinate",
+      progressPercent: 1,
+    });
+    return;
+  }
   const hayai = isHayaiOcrPipeline(ocrPipeline);
   sendProgress({
     phase: "ocr_preparing",

@@ -25,7 +25,7 @@ const {
   sanitizeHintLabel,
   sanitizeOcrTextForPrompt,
 } = require("./ocr-text.cjs");
-const { isHayaiOcrPipeline } = require("../ocr/engine-profile.cjs");
+const { isRegionOcrPipeline } = require("../ocr/engine-profile.cjs");
 
 /**
  * @typedef {{
@@ -53,8 +53,11 @@ function buildOcrBboxHintSection(options = {}, imageVariants = []) {
   if (!prepared) {
     return [];
   }
-  if (isHayaiOcrPipeline(options) && !options.keepBlocksMode) {
-    return buildHayaiRegionSectionLines(prepared);
+  if (isRegionOcrPipeline(options) && !options.keepBlocksMode) {
+    return buildHayaiRegionSectionLines(
+      prepared,
+      options.ocrPipeline === "hunyuan" ? "HunyuanOCR" : "HayaiOCR",
+    );
   }
   const policy = buildOcrHintPolicy(options, prepared.maxCandidateId);
   return buildOcrBboxSectionLines(prepared, policy);
@@ -64,11 +67,12 @@ function buildOcrBboxHintSection(options = {}, imageVariants = []) {
  * The text detector has already produced complete ordinary-text regions. Hayai supplies
  * reading hints only; the model translates each immutable slot independently.
  * @param {PreparedOcrHints} prepared
+ * @param {string} engine
  * @returns {PromptSection}
  */
-function buildHayaiRegionSectionLines(prepared) {
+function buildHayaiRegionSectionLines(prepared, engine) {
   return [
-    "Locked ordinary-text regions (HayaiOCR)",
+    `Locked ordinary-text regions (${engine})`,
     "The app has already separated and finalized every ordinary dialogue, narration, caption, note, sign, and label region. Standalone sound effects are deliberately excluded from this list and handled by a separate user review layer.",
     "Treat every candidate as one immutable output slot. Never merge candidates, split a candidate, move a candidate, enlarge a candidate, or assign one candidate's text to another candidate.",
     "For every accepted candidate, output exactly one record with the same id and the exact x1, y1, x2, y2 values below. Never output candidateIds containing another id.",

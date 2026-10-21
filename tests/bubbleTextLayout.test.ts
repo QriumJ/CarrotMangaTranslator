@@ -7,8 +7,8 @@ import {
   resolveBubbleRegionLineInterval,
   resolveBubbleTextSlotPlans,
 } from "../src/renderer/src/lib/bubbleTextLayout";
-import { assessWrappedTextQuality } from "../src/renderer/src/lib/bubbleTextWrapping";
-import type { BlockTextLine } from "../src/renderer/src/lib/overlayTextWrapping";
+import { assessWrappedTextQuality } from "../src/renderer/src/lib/bubbleTextQuality";
+import type { BlockTextLine } from "../src/renderer/src/lib/textLineTypes";
 
 describe("bubble text slot geometry", () => {
   it("intersects every scanline band touched by the full line height", () => {

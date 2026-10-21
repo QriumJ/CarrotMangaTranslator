@@ -1,8 +1,9 @@
-import type { TextStylePatch } from "../../../shared/richTextMarkup";
-
 export type RichTranslationEditorMode = "visual" | "code";
 
 export type RichTranslationSelectionValues = {
+  lineHeightPercent?: number;
+  letterSpacingEm?: number;
+  mixedFields?: readonly string[];
   bold: boolean;
   italic: boolean;
   underline: boolean;
@@ -28,6 +29,10 @@ export type RichTranslationSelectionValues = {
   glowColor: string;
   glowBlurPx: number;
   glowOpacityPercent: number;
+  shadowEnabled: boolean;
+  shadowColor: string;
+  shadowOffsetXpx: number;
+  shadowOffsetYpx: number;
+  shadowBlurPx: number;
+  shadowOpacityPercent: number;
 };
-
-export type RichTranslationInlineStyleAction = (patch: TextStylePatch) => void;

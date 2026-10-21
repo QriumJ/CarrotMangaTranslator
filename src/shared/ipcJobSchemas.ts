@@ -82,6 +82,13 @@ export const JobEventSchema = z
       .optional(),
     progressCurrent: finiteNumber.min(0).optional(),
     progressTotal: finiteNumber.min(0).optional(),
+    workflowProgress: z
+      .object({
+        pageCount: z.number().int().positive(),
+        stageCount: z.number().int().positive(),
+      })
+      .strict()
+      .optional(),
     pageIndex: finiteNumber.min(0).optional(),
     pageTotal: finiteNumber.min(0).optional(),
     attempt: finiteNumber.min(0).optional(),
@@ -285,11 +292,24 @@ export const StartInpaintingRequestSchema = z.discriminatedUnion("mode", [
       mode: z.literal("page-bubble-layout"),
       pageId: uuid,
       blockId: TranslationBlockObjectSchema.shape.id.optional(),
+      blockIds: z
+        .array(TranslationBlockObjectSchema.shape.id)
+        .min(1)
+        .max(MAX_BLOCKS_PER_PAGE)
+        .optional(),
+      paddingRatio: finiteNumber.min(0).max(0.7).optional(),
       policy: z.enum(["safe", "balanced", "maximize"]),
       postprocess: InpaintingPostprocessOptionsSchema.optional(),
       ...PageTimingSessionFields,
     })
-    .strict(),
+    .strict()
+    .refine(
+      (request) =>
+        !(request.blockId !== undefined && request.blockIds !== undefined) &&
+        (!request.blockIds ||
+          new Set(request.blockIds).size === request.blockIds.length),
+      { message: "Choose one unique block selection." },
+    ),
   z
     .object({
       chapterId: uuid,

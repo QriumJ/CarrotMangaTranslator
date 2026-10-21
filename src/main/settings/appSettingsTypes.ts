@@ -163,6 +163,7 @@ export type TranslationOptions = {
   ocrDevice: OcrDevice;
   /** Canonical OCR engine identity. App-created translation options always set it. */
   ocrPipeline: OcrPipeline;
+  hunyuanOcr?: import("../../shared/hunyuanOcr").HunyuanExecution;
   ocrGpuBackend?: OcrGpuBackend;
   ocrGpuCudaTag?: string;
   ocrQualityMode?: OcrQualityMode;

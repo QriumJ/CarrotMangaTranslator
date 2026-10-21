@@ -3,6 +3,10 @@ import {
   clampFontSizePx,
   MAX_FONT_SIZE_PX,
   MIN_FONT_SIZE_PX,
+  MIN_LINE_HEIGHT,
+  MAX_LINE_HEIGHT,
+  MIN_LETTER_SPACING_EM,
+  MAX_LETTER_SPACING_EM,
 } from "./blockFormatValues";
 
 /**
@@ -29,6 +33,9 @@ export type TextStyleRun = {
   opacity?: number;
   /** Horizontal glyph scale (장평/자폭), not letter spacing. */
   widthScale?: number;
+  /** Leading ratio for this character; the largest value on a line wins. */
+  lineHeight?: number;
+  letterSpacing?: number;
   color?: string;
   backgroundColor?: string;
   outlineColor?: string;
@@ -38,6 +45,12 @@ export type TextStyleRun = {
   glowColor?: string;
   glowBlurPx?: number;
   glowOpacity?: number;
+  shadowEnabled?: boolean;
+  shadowColor?: string;
+  shadowOffsetXpx?: number;
+  shadowOffsetYpx?: number;
+  shadowBlurPx?: number;
+  shadowOpacity?: number;
 };
 
 export type ParsedRichText = {
@@ -55,6 +68,8 @@ export type TextStylePatch = {
   fontFamily?: string | null;
   opacity?: number | null;
   widthScale?: number | null;
+  lineHeight?: number | null;
+  letterSpacing?: number | null;
   color?: string | null;
   backgroundColor?: string | null;
   outlineColor?: string | null;
@@ -64,6 +79,12 @@ export type TextStylePatch = {
   glowColor?: string | null;
   glowBlurPx?: number | null;
   glowOpacity?: number | null;
+  shadowEnabled?: boolean | null;
+  shadowColor?: string | null;
+  shadowOffsetXpx?: number | null;
+  shadowOffsetYpx?: number | null;
+  shadowBlurPx?: number | null;
+  shadowOpacity?: number | null;
 };
 
 const MARKERS = ["***", "**", "*"] as const;
@@ -79,6 +100,8 @@ type StyleTagName =
   | "size"
   | "font"
   | "opacity"
+  | "line-height"
+  | "letter-spacing"
   | "width"
   | "color"
   | "background"
@@ -86,6 +109,12 @@ type StyleTagName =
   | "outline-width"
   | "outer-outline-color"
   | "outer-outline-width"
+  | "shadow-enabled"
+  | "shadow-color"
+  | "shadow-x"
+  | "shadow-y"
+  | "shadow-blur"
+  | "shadow-opacity"
   | "glow-color"
   | "glow-blur"
   | "glow-opacity"
@@ -197,6 +226,8 @@ export function clearTextStylesFromRuns(
     fontFamily: null,
     opacity: null,
     widthScale: null,
+    lineHeight: null,
+    letterSpacing: null,
     color: null,
     backgroundColor: null,
     outlineColor: null,
@@ -206,6 +237,12 @@ export function clearTextStylesFromRuns(
     glowColor: null,
     glowBlurPx: null,
     glowOpacity: null,
+    shadowEnabled: null,
+    shadowColor: null,
+    shadowOffsetXpx: null,
+    shadowOffsetYpx: null,
+    shadowBlurPx: null,
+    shadowOpacity: null,
   });
 }
 
@@ -342,6 +379,11 @@ function matchValuedStyleOpeningTag(
   rawValue: string,
   nextIndex: number,
 ): StyleTagMatch | null {
+  if (name === "shadow-enabled") {
+    return rawValue === "true" || rawValue === "false"
+      ? { name, nextIndex, patch: { shadowEnabled: rawValue === "true" } }
+      : null;
+  }
   if (name === "size") return matchSizeTag(rawValue, nextIndex);
   if (name === "font") return matchFontTag(rawValue, nextIndex);
   if (name === "opacity") return matchOpacityTag(rawValue, nextIndex);
@@ -436,6 +478,7 @@ const COLOR_TAG_PATCH_KEYS: Partial<
   "outline-color": "outlineColor",
   "outer-outline-color": "outerOutlineColor",
   "glow-color": "glowColor",
+  "shadow-color": "shadowColor",
 };
 
 const NUMBER_TAG_DEFINITIONS: Partial<
@@ -456,6 +499,20 @@ const NUMBER_TAG_DEFINITIONS: Partial<
     min: 0,
     max: MAX_INLINE_EFFECT_PX,
   },
+  "line-height": {
+    key: "lineHeight",
+    min: MIN_LINE_HEIGHT,
+    max: MAX_LINE_HEIGHT,
+  },
+  "letter-spacing": {
+    key: "letterSpacing",
+    min: MIN_LETTER_SPACING_EM,
+    max: MAX_LETTER_SPACING_EM,
+  },
+  "shadow-x": { key: "shadowOffsetXpx", min: -64, max: 64 },
+  "shadow-y": { key: "shadowOffsetYpx", min: -64, max: 64 },
+  "shadow-blur": { key: "shadowBlurPx", min: 0, max: 64 },
+  "shadow-opacity": { key: "shadowOpacity", min: 0, max: 1 },
   "glow-opacity": { key: "glowOpacity", min: 0, max: 1 },
 };
 
@@ -581,6 +638,17 @@ function valuedStyleTags(
   run: TextStyleRun,
 ): readonly [StyleTagName, string | number | undefined][] {
   return [
+    ["line-height", run.lineHeight],
+    ["letter-spacing", run.letterSpacing],
+    [
+      "shadow-enabled",
+      run.shadowEnabled === undefined ? undefined : String(run.shadowEnabled),
+    ],
+    ["shadow-color", run.shadowColor],
+    ["shadow-x", run.shadowOffsetXpx],
+    ["shadow-y", run.shadowOffsetYpx],
+    ["shadow-blur", run.shadowBlurPx],
+    ["shadow-opacity", run.shadowOpacity],
     ["glow-opacity", run.glowOpacity],
     ["glow-blur", run.glowBlurPx],
     ["glow-color", run.glowColor],
@@ -642,6 +710,7 @@ const COLOR_STYLE_TAGS = new Set<StyleTagName>([
   "outline-color",
   "outer-outline-color",
   "glow-color",
+  "shadow-color",
 ]);
 
 function escapeRichText(value: string): string {
@@ -665,6 +734,8 @@ function applyStylePatch(
   applyOptionalPatch(next, "fontFamily", patch.fontFamily);
   applyOptionalPatch(next, "opacity", patch.opacity);
   applyOptionalPatch(next, "widthScale", patch.widthScale);
+  applyOptionalPatch(next, "lineHeight", patch.lineHeight);
+  applyOptionalPatch(next, "letterSpacing", patch.letterSpacing);
   applyOptionalPatch(next, "color", patch.color);
   applyOptionalPatch(next, "backgroundColor", patch.backgroundColor);
   applyOptionalPatch(next, "outlineColor", patch.outlineColor);
@@ -674,6 +745,13 @@ function applyStylePatch(
   applyOptionalPatch(next, "glowColor", patch.glowColor);
   applyOptionalPatch(next, "glowBlurPx", patch.glowBlurPx);
   applyOptionalPatch(next, "glowOpacity", patch.glowOpacity);
+  applyOptionalPatch(next, "shadowEnabled", patch.shadowEnabled);
+  applyOptionalPatch(next, "shadowColor", patch.shadowColor);
+  applyOptionalPatch(next, "shadowOffsetXpx", patch.shadowOffsetXpx);
+  applyOptionalPatch(next, "shadowOffsetYpx", patch.shadowOffsetYpx);
+  applyOptionalPatch(next, "shadowBlurPx", patch.shadowBlurPx);
+  applyOptionalPatch(next, "shadowOpacity", patch.shadowOpacity);
+
   return normalizeRun(next);
 }
 
@@ -698,6 +776,8 @@ function applyOptionalPatch<
     | "sizePx"
     | "fontFamily"
     | "opacity"
+    | "lineHeight"
+    | "letterSpacing"
     | "widthScale"
     | "color"
     | "backgroundColor"
@@ -707,7 +787,13 @@ function applyOptionalPatch<
     | "outerOutlineWidthPx"
     | "glowColor"
     | "glowBlurPx"
-    | "glowOpacity",
+    | "glowOpacity"
+    | "shadowEnabled"
+    | "shadowColor"
+    | "shadowOffsetXpx"
+    | "shadowOffsetYpx"
+    | "shadowBlurPx"
+    | "shadowOpacity",
 >(target: TextStyleRun, key: Key, value: TextStylePatch[Key]): void {
   if (value === undefined) return;
   if (value === null) {
@@ -735,6 +821,14 @@ function normalizeRun(run: TextStyleRun): TextStyleRun {
     bold: Boolean(run.bold),
     italic: Boolean(run.italic),
   };
+  copyNumber(run, next, "lineHeight", MIN_LINE_HEIGHT, MAX_LINE_HEIGHT);
+  copyNumber(
+    run,
+    next,
+    "letterSpacing",
+    MIN_LETTER_SPACING_EM,
+    MAX_LETTER_SPACING_EM,
+  );
   copyEnabledStyles(run, next);
   copyNormalizedCoreValues(run, next);
   copyColor(run, next, "color");
@@ -746,6 +840,14 @@ function normalizeRun(run: TextStyleRun): TextStyleRun {
   copyNumber(run, next, "outerOutlineWidthPx", 0, MAX_INLINE_EFFECT_PX);
   copyNumber(run, next, "glowBlurPx", 0, MAX_INLINE_EFFECT_PX);
   copyNumber(run, next, "glowOpacity", 0, 1);
+  if (typeof run.shadowEnabled === "boolean")
+    next.shadowEnabled = run.shadowEnabled;
+  copyColor(run, next, "shadowColor");
+  copyNumber(run, next, "shadowOffsetXpx", -64, 64);
+  copyNumber(run, next, "shadowOffsetYpx", -64, 64);
+  copyNumber(run, next, "shadowBlurPx", 0, 64);
+  copyNumber(run, next, "shadowOpacity", 0, 1);
+
   return next;
 }
 
@@ -792,6 +894,8 @@ const STYLE_COMPARISON_FIELDS = [
   "fontFamily",
   "opacity",
   "widthScale",
+  "lineHeight",
+  "letterSpacing",
   "color",
   "backgroundColor",
   "outlineColor",
@@ -801,6 +905,12 @@ const STYLE_COMPARISON_FIELDS = [
   "glowColor",
   "glowBlurPx",
   "glowOpacity",
+  "shadowEnabled",
+  "shadowColor",
+  "shadowOffsetXpx",
+  "shadowOffsetYpx",
+  "shadowBlurPx",
+  "shadowOpacity",
 ] as const satisfies readonly (keyof TextStyleRun)[];
 
 function copyColor<
@@ -809,7 +919,8 @@ function copyColor<
     | "backgroundColor"
     | "outlineColor"
     | "outerOutlineColor"
-    | "glowColor",
+    | "glowColor"
+    | "shadowColor",
 >(source: TextStyleRun, target: TextStyleRun, key: Key): void {
   const value = source[key];
   if (value && HEX_COLOR_PATTERN.test(value)) {
@@ -819,7 +930,16 @@ function copyColor<
 
 function copyNumber<
   Key extends
-    "outlineWidthPx" | "outerOutlineWidthPx" | "glowBlurPx" | "glowOpacity",
+    | "outlineWidthPx"
+    | "outerOutlineWidthPx"
+    | "glowBlurPx"
+    | "glowOpacity"
+    | "lineHeight"
+    | "letterSpacing"
+    | "shadowOffsetXpx"
+    | "shadowOffsetYpx"
+    | "shadowBlurPx"
+    | "shadowOpacity",
 >(
   source: TextStyleRun,
   target: TextStyleRun,

@@ -5,7 +5,7 @@ import {
 } from "../../../shared/bubbleLayout";
 import type { RenderTextDirection } from "../../../shared/textTypes";
 import { resolveDisjointBubbleLayout } from "../../../shared/bubbleLayoutDisjoint";
-import type { TextLineSlot } from "./overlayTextWrapping";
+import type { TextLineSlot } from "./textLineTypes";
 import {
   BUBBLE_SLOT_COORDINATE_EPSILON,
   combineBubbleRegionPlanPrefixes,

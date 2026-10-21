@@ -52,6 +52,10 @@
   "job": {
     "pageProgress": "{{current}} / {{total}}ページ・{{status}}",
     "pageStatus": "ページ・{{status}}",
+    "workflowProgress": {
+      "scope": "{{pages}}ページ · {{stages}}段階",
+      "operations": "段階作業 {{current}} / {{total}}"
+    },
     "pageRetry": "{{current}} / {{total}}ページ・再試行 {{attempt}} / {{attemptTotal}}",
     "elapsed": {
       "lessThanSecond": "1秒未満",
@@ -91,7 +95,11 @@
       "ocrPreanalysisDone": "Paddle OCRの事前解析完了",
       "hayaiOcrRunning": "HayaiOCRで解析中",
       "hayaiOcrPreanalysisDone": "HayaiOCRの事前解析完了",
-      "pageRetry": "ページを再試行中"
+      "pageRetry": "ページを再試行中",
+      "hunyuanOcrDownloading": "HunyuanOCRをダウンロード／インストール中",
+      "hunyuanOcrPreparing": "HunyuanOCRを準備中",
+      "hunyuanOcrRunning": "HunyuanOCRで解析中",
+      "hunyuanOcrPreanalysisDone": "HunyuanOCRの事前解析完了"
     },
     "status": {
       "starting": "モデルを準備中",
@@ -462,6 +470,7 @@
       "success": "現在のページの翻訳ブロックを吹き出しに合わせました。",
       "selectedBlockSuccess": "選択した翻訳ブロックを吹き出しに合わせました。",
       "selectedBlockNoMatch": "選択したブロックに合う吹き出し領域が見つかりませんでした。",
+      "selectionChanged": "選択したブロック{{count}}個 · 吹き出し配置{{changed}}個を変更",
       "failedTitle": "吹き出し合わせ失敗",
       "failed": "翻訳ブロックを吹き出しに合わせられませんでした。"
     },

@@ -1,3 +1,8 @@
+import { totalmem } from "node:os";
+import {
+  normalizeHunyuanSettings,
+  resolveHunyuanExecution,
+} from "../../shared/hunyuanOcr";
 import { DEFAULT_OCR_GPU_CUDA_TAG } from "../../shared/modelPresets";
 import type {
   AppSettings,
@@ -20,6 +25,7 @@ import {
 type OcrTranslationOptions = Pick<
   TranslationOptions,
   | "ocrDevice"
+  | "hunyuanOcr"
   | "ocrPipeline"
   | "ocrGpuBackend"
   | "ocrGpuCudaTag"
@@ -48,6 +54,7 @@ export function resolveOcrTranslationOptions(
     runtimeEnv.MANGA_TRANSLATOR_OCR_PIPELINE,
     settings.ocr.pipeline ?? "paddle-legacy",
   );
+  if (ocrPipeline === "hunyuan") return hunyuanTranslationOptions(settings);
   const configuredOcrGpuBackend = resolveOcrGpuBackend(
     runtimeEnv.MANGA_TRANSLATOR_OCR_GPU_BACKEND,
     settings.ocr.gpuBackend ?? "cuda",
@@ -64,8 +71,7 @@ export function resolveOcrTranslationOptions(
         ? (runtimeEnv.MANGA_TRANSLATOR_PADDLEOCR_QUALITY_MODE ??
           runtimeEnv.MANGA_TRANSLATOR_PADDLEOCR_PRESET)
         : undefined),
-    settings.ocr.qualityMode ??
-      resolveOcrQualityModeFromGemmaVramMode(gemmaVramMode),
+    defaultOcrQuality(settings, gemmaVramMode),
   );
   const ocrQualityMode = resolveRuntimeOcrQualityMode(
     configuredQualityMode,
@@ -103,6 +109,12 @@ export function resolveOcrTranslationOptions(
       runtimeEnv.MANGA_TRANSLATOR_OCR_BBOX_HINTS_PATH,
     ),
   };
+}
+
+function defaultOcrQuality(settings: AppSettings, mode: GemmaVramMode) {
+  return (
+    settings.ocr.qualityMode ?? resolveOcrQualityModeFromGemmaVramMode(mode)
+  );
 }
 
 type PaddleOcrModeOptions = Pick<
@@ -258,4 +270,22 @@ function resolveRuntimeOcrQualityMode(
     return "economy";
   }
   return configuredQualityMode;
+}
+
+function hunyuanTranslationOptions(
+  settings: AppSettings,
+): OcrTranslationOptions {
+  const hunyuanOcr = resolveHunyuanExecution(
+    normalizeHunyuanSettings(settings.ocr.hunyuan),
+    settings.runtimeHardware,
+    totalmem() / 1024 ** 2,
+    process.platform,
+  );
+  return {
+    ocrPipeline: "hunyuan",
+    ocrDevice: hunyuanOcr.device,
+    hunyuanOcr,
+    ocrBboxProvider: "hunyuan-regions",
+    ocrGpuCudaTag: settings.ocr.gpuCudaTag,
+  };
 }

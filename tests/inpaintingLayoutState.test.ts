@@ -34,6 +34,7 @@ describe("inpainting layout state", () => {
         renderBbox: null,
         renderBboxSpace: null,
         bubbleLayout: null,
+        bubbleLayoutPaddingRatio: null,
       },
     ]);
     expect(geometryOnly[0]).not.toHaveProperty("translatedText");

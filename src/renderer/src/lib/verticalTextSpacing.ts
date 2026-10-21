@@ -203,3 +203,24 @@ export function resolveVerticalGraphemeAdvancePx(
   }
   return defaultAdvancePx;
 }
+
+export function resolveStyledVerticalGraphemeAdvancePx(
+  grapheme: string,
+  style: { fontSizePx: number; letterSpacingEm?: number },
+  lineHeight: number,
+  inheritedLetterSpacing: number,
+): number {
+  const spacing =
+    (style.letterSpacingEm ?? inheritedLetterSpacing) * style.fontSizePx;
+  const advance = resolveDefaultVerticalGraphemeAdvancePx(
+    style.fontSizePx,
+    style.fontSizePx * lineHeight,
+    spacing,
+  );
+  return resolveVerticalGraphemeAdvancePx(
+    grapheme,
+    style.fontSizePx,
+    advance,
+    spacing,
+  );
+}

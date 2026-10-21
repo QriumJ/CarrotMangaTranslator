@@ -363,7 +363,39 @@
       }
     },
     "blockScope": "선택 블록 {{count}}개 · 기본 서식",
-    "singleBlockScope": "블록 기본 서식"
+    "singleBlockScope": "블록 기본 서식",
+    "characterFormat": {
+      "editText": "블록 번역문 편집",
+      "title": "문자 서식",
+      "emphasis": "글자 강조",
+      "underline": "밑줄",
+      "strikethrough": "취소선",
+      "emphasisMark": "강조점",
+      "effects": "상세 문자 효과",
+      "scopePrefix": "적용 대상: ",
+      "scope": {
+        "block": "블록 전체 글자",
+        "selection": "선택한 글자",
+        "caret": "이후 입력할 글자",
+        "blocks": "선택한 블록 {{count}}개의 모든 글자"
+      },
+      "selectAll": "전체 선택",
+      "selectAllTitle": "번역문 전체를 선택해 글자 단위로 서식 적용",
+      "selectOutputLine": "출력 줄 선택",
+      "selectOutputLineTitle": "캔버스에 출력된 현재 줄 전체를 선택",
+      "finishEditing": "편집 종료",
+      "finishEditingTitle": "텍스트 편집을 끝내고 블록 전체에 서식 적용"
+    },
+    "blockSettings": {
+      "title": "블록 전체 설정",
+      "description": "글자 선택과 관계없이 항상 블록 전체에 적용됩니다.",
+      "descriptionMultiple": "선택한 블록 {{count}}개 전체에 적용됩니다."
+    },
+    "bubblePadding": {
+      "label": "말풍선 여백",
+      "apply": "적용",
+      "applyMultiple": "블록 {{count}}개에 적용"
+    }
   },
   "transform": {
     "title": "변형",
@@ -511,6 +543,7 @@
   "editor": {
     "text": "텍스트",
     "translatedText": "번역문",
+    "sourceText": "원문 OCR",
     "eraseOriginal": "원문 지우기",
     "fitBubble": "말풍선 맞춤",
     "moreActions": "블록 작업 더 보기",
@@ -2419,8 +2452,12 @@
           "description": "텍스트 검출기가 일반 텍스트와 효과음 영역을 분리하고 Hayai OCR이 각 고정 영역만 판독합니다. 효과음은 기본 번역에서 제외하고 검토 대상으로 보관합니다."
         },
         "paddle-legacy": {
-          "label": "PaddleOCR",
+          "label": "PaddleOCR(레거시)",
           "description": "기존 Paddle OCR 조각과 Gemma 병합 방식을 그대로 사용합니다."
+        },
+        "hunyuan": {
+          "label": "HunyuanOCR 1.5",
+          "description": "고정 영역을 하나씩 읽는 다국어 OCR. 기본 F16, 선택 Q4."
         }
       },
       "ocrQuality": "Paddle OCR 품질",
@@ -2458,6 +2495,18 @@
         "rocm-transformers": "ROCm 지원 AMD GPU 필요",
         "cpu": "GPU 없이 실행",
         "unsupportedRocm": "감지된 GPU는 ROCm OCR 미지원"
+      },
+      "hunyuan": {
+        "current": "현재: {{engine}}",
+        "recommendation": "원문 언어 추천: {{engine}}",
+        "autoLanguage": "일본어는 Hayai, 다국어는 Hunyuan을 추천합니다.",
+        "apply": "추천 적용",
+        "model": "Hunyuan 모델",
+        "autoModel": "자동 (F16)",
+        "modelHelp": "F16이 기본입니다. Q4는 VRAM 절약 옵션이며 이미지 모델은 동일합니다.",
+        "device": "실행 장치",
+        "autoDevice": "자동",
+        "deviceHelp": "4GB 이상 전용 GPU 또는 8GB 이상 Apple 통합 메모리는 GPU를 사용합니다. GPU 초기화·메모리 부족 시 같은 모델로 CPU에서 한 번 재시도합니다."
       }
     },
     "format": {

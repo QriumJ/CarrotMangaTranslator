@@ -124,6 +124,7 @@ function ImageStageLayerSet({
   imageRef,
   interactionPreviewStore,
   onBlockPointerDown,
+  onEditBlockText,
   onWarpTransformCommit,
   onDismissSoundEffectReviewRegion,
   onExitSoundEffectReview,
@@ -166,6 +167,7 @@ function ImageStageLayerSet({
             imageDataUrl={imageDataUrl}
             interactionPreviewStore={interactionPreviewStore}
             onBlockPointerDown={onBlockPointerDown}
+            onEditBlockText={onEditBlockText}
             onWarpTransformCommit={onWarpTransformCommit}
             page={page}
             selectedBlockId={selectedBlockId}

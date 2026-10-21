@@ -13,7 +13,10 @@ import {
   type ManualRasterExportOptions,
 } from "./useExportPageImagesAction";
 import { useRevertInpaintingAction } from "./useRevertInpaintingAction";
-import { useRunBubbleLayoutAction } from "./useRunBubbleLayoutAction";
+import {
+  useRunBubbleLayoutAction,
+  type BubbleLayoutRunOptions,
+} from "./useRunBubbleLayoutAction";
 import { useRunInpaintingAction } from "./useRunInpaintingAction";
 import { useRunInpaintingSelectionAction } from "./useRunInpaintingSelectionAction";
 import type { AutoInpaintingChapterSelection } from "../lib/autoInpaintingSelection";
@@ -32,7 +35,10 @@ export type InpaintingActions = {
     options?: ManualPsdExportOptions,
   ) => Promise<boolean>;
   revertInpainting: (scope: InpaintingScope) => Promise<void>;
-  runBubbleLayout: (blockId?: string) => Promise<void>;
+  runBubbleLayout: (
+    blockId?: string,
+    run?: BubbleLayoutRunOptions,
+  ) => Promise<void>;
   runDrawnPatternInpainting: (engine?: "codex") => Promise<void>;
   runInpainting: (scope: InpaintingScope, blockId?: string) => Promise<void>;
   runInpaintingSelection: (
@@ -130,7 +136,8 @@ function useExclusiveImageActions(
     [actions, runExclusive],
   );
   const runBubbleLayout = useCallback(
-    (blockId?: string) => runExclusive(() => actions.runBubbleLayout(blockId)),
+    (blockId?: string, run?: BubbleLayoutRunOptions) =>
+      runExclusive(() => actions.runBubbleLayout(blockId, run)),
     [actions, runExclusive],
   );
   const revertInpainting = useCallback(

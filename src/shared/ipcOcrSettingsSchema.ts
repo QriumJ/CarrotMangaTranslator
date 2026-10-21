@@ -7,6 +7,13 @@ import {
 
 export const OcrSettingsSchema = z
   .object({
+    hunyuan: z
+      .object({
+        model: z.enum(["auto", "f16", "q4"]),
+        device: z.enum(["auto", "gpu", "cpu"]),
+      })
+      .strict()
+      .optional(),
     pipeline: z.enum(OCR_PIPELINES).default("paddle-legacy"),
     device: z.enum(["cpu", "gpu"]),
     qualityMode: OcrQualityModeSchema,
