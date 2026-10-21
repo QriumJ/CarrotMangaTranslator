@@ -1,3 +1,4 @@
+import { useEditorTextTabRequest } from "./useEditorTextTabRequest";
 import { DEFAULT_LETTERING_TOOL } from "../../../../shared/generatedLetteringMask";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
@@ -131,14 +132,6 @@ export function useAppSessionUiState() {
     styleGuideBackgrounded,
     textViewOpen,
   };
-}
-
-function useEditorTextTabRequest() {
-  const [editorTextTabRequestToken, setToken] = useState(0);
-  const requestEditorTextTab = useCallback(() => {
-    setToken((current) => current + 1);
-  }, []);
-  return { editorTextTabRequestToken, requestEditorTextTab };
 }
 
 /**

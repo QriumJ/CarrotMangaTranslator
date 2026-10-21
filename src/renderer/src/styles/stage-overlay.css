@@ -914,6 +914,7 @@
   pointer-events: none;
 }
 
+.overlay-text-shadow,
 .overlay-text-outline,
 .overlay-text-outer {
   pointer-events: none;

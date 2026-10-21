@@ -13,6 +13,33 @@ import type { TranslationBlock } from "../src/shared/textTypes";
 import { BLOCK_FORMAT_FIELD_KEYS } from "../src/shared/blockFormat";
 
 describe("panel multi-selection format contracts", () => {
+  it("validates logical selection ranges before accepting a detached preview", () => {
+    const command = {
+      type: "previewTextSelection",
+      selectionKey: "selected",
+      selection: {
+        blockId: "block-a",
+        translatedText: "ab😀",
+        start: 1,
+        end: 4,
+      },
+    };
+    expect(PanelCommandSchema.parse(command)).toEqual(command);
+    for (const [start, end] of [
+      [3, 2],
+      [0, 5],
+      [-1, 2],
+      [0, 1.5],
+    ]) {
+      expect(
+        PanelCommandSchema.safeParse({
+          ...command,
+          selection: { ...command.selection, start, end },
+        }).success,
+      ).toBe(false);
+    }
+  });
+
   it("creates an order-independent key for the exact selected block set", () => {
     expect(createPanelSelectionKey(["block-b", "block-a", "block-b"])).toBe(
       JSON.stringify(["block-a", "block-b"]),

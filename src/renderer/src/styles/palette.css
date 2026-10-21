@@ -40,6 +40,10 @@
   --canvas-transform-handle-light: var(--info-text);
   --canvas-curve-accent: var(--warning-text);
   --canvas-contrast-light: var(--palette-paper);
+  /* Translation editor field under dark lettering, like the page it lands on. */
+  --editor-paper-surface: var(--palette-paper);
+  --editor-paper-text: var(--palette-neutral-950);
+  --editor-paper-placeholder: var(--palette-neutral-500);
   --action-danger-text: var(--danger-text);
   --review-warning-text: var(--warning-text);
   --job-error-accent: var(--danger-text);

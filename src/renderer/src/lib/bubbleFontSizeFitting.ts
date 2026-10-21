@@ -3,10 +3,8 @@ import type { TranslationBlock } from "../../../shared/textTypes";
 import { parseRichText } from "../../../shared/richTextMarkup";
 import { isGeneratedBubbleLayout } from "../../../shared/bubbleLayout";
 import { MIN_READABLE_FONT_SIZE_PX } from "../../../shared/readableTextBox";
-import {
-  assessWrappedTextQuality,
-  type SlottedWrappedTextMeasurement,
-} from "./bubbleTextWrapping";
+import { assessWrappedTextQuality } from "./bubbleTextQuality";
+import type { SlottedWrappedTextMeasurement } from "./bubbleTextWrapping";
 
 type ParagraphDamage = { splits: number; punctuation: number; orphans: number };
 

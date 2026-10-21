@@ -256,6 +256,9 @@ function readRunStyle(element: HTMLElement): Omit<TextStyleRun, "text"> {
     bold: element.dataset.bold === "true",
     italic: element.dataset.italic === "true",
   };
+  if (element.dataset.shadowEnabled !== undefined) {
+    style.shadowEnabled = element.dataset.shadowEnabled === "true";
+  }
   copyBooleanDatasetStyles(style, element);
   copyStringDatasetStyles(style, element);
   copyNumberDatasetStyles(style, element);
@@ -275,16 +278,23 @@ const STRING_RUN_STYLE_FIELDS = [
   "outlineColor",
   "outerOutlineColor",
   "glowColor",
+  "shadowColor",
 ] as const satisfies readonly (keyof TextStyleRun)[];
 
 const NUMBER_RUN_STYLE_FIELDS = [
   "sizePx",
   "opacity",
   "widthScale",
+  "lineHeight",
+  "letterSpacing",
   "outlineWidthPx",
   "outerOutlineWidthPx",
   "glowBlurPx",
   "glowOpacity",
+  "shadowOffsetXpx",
+  "shadowOffsetYpx",
+  "shadowBlurPx",
+  "shadowOpacity",
 ] as const satisfies readonly (keyof TextStyleRun)[];
 
 function copyBooleanDatasetStyles(
@@ -351,6 +361,8 @@ function createRunSpan(
 }
 
 function copyRunDatasetStyles(span: HTMLSpanElement, run: TextStyleRun): void {
+  if (run.shadowEnabled !== undefined)
+    span.dataset.shadowEnabled = String(run.shadowEnabled);
   for (const key of BOOLEAN_RUN_STYLE_FIELDS) {
     span.dataset[key] = String(Boolean(run[key]));
   }

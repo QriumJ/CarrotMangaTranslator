@@ -1,3 +1,4 @@
+import { useTextSelectionPreview } from "../lib/textSelectionPreview";
 import { resolveBlockDisplayText } from "../../../shared/blockDisplayText";
 import React from "react";
 import { IconEraserOff } from "@tabler/icons-react";
@@ -43,6 +44,7 @@ type OverlayBlockProps = {
   editingDisabled?: boolean;
   transformMode?: BlockTransformMode;
   onPointerDown: (event: React.PointerEvent) => void;
+  onEditBlockText?: () => void;
   onResizePointerDown: (event: React.PointerEvent) => void;
   onTransformPointerDown?: (event: React.PointerEvent, mode: DragMode) => void;
   onWarpTransformCommit?: (transform: WarpTransform) => void;
@@ -61,6 +63,11 @@ export const OverlayBlockView = React.memo(function OverlayBlockView(
   },
 ): React.JSX.Element {
   const catalog = props.fontCatalog;
+  const textSelection = useTextSelectionPreview(
+    props.block.id,
+    props.block.translatedText,
+    props.selected,
+  );
   const previewBlock = useBlockInteractionPreview(
     props.interactionPreviewStore,
     props.block.id,
@@ -95,6 +102,7 @@ export const OverlayBlockView = React.memo(function OverlayBlockView(
   });
   return (
     <ArtworkBlock
+      textSelection={textSelection}
       afterContent={
         <>
           <OverlayExcludeControl excluded={excluded} />
@@ -113,21 +121,16 @@ export const OverlayBlockView = React.memo(function OverlayBlockView(
       }
       block={block}
       chrome={
-        <>
-          {model.showChromeLayer ? (
-            <div className="overlay-block-chrome" style={model.chromeStyle} />
-          ) : null}
-          <BubbleLayoutGuide
-            block={block}
-            height={model.layout.layoutHeight}
-            selected={props.selected}
-            width={model.layout.layoutWidth}
-          />
-        </>
+        <OverlayBlockChrome
+          block={block}
+          model={model}
+          selected={props.selected}
+        />
       }
       fontCatalog={catalog}
       model={model}
       onPointerDown={resolveOuterPointerDown(props)}
+      onDoubleClick={resolveTextEditDoubleClick(props)}
       warpPreview={previewBlock !== null}
     />
   );
@@ -235,4 +238,39 @@ function OverlayExcludeControl({
       <IconEraserOff size={14} stroke={2.4} aria-hidden="true" />
     </span>
   ) : null;
+}
+
+function OverlayBlockChrome({
+  block,
+  model,
+  selected,
+}: {
+  block: TranslationBlock;
+  model: OverlayBlockRenderModel;
+  selected: boolean;
+}): React.JSX.Element {
+  return (
+    <>
+      {model.showChromeLayer ? (
+        <div className="overlay-block-chrome" style={model.chromeStyle} />
+      ) : null}
+      <BubbleLayoutGuide
+        block={block}
+        height={model.layout.layoutHeight}
+        selected={selected}
+        width={model.layout.layoutWidth}
+      />
+    </>
+  );
+}
+
+function resolveTextEditDoubleClick(
+  props: OverlayBlockProps,
+): React.MouseEventHandler<HTMLDivElement> | undefined {
+  if (props.editingDisabled || props.pointerDisabled || props.shapeEditMode)
+    return undefined;
+  return (event) => {
+    event.stopPropagation();
+    props.onEditBlockText?.();
+  };
 }

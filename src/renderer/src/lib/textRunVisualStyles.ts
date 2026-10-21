@@ -1,3 +1,5 @@
+import { resolveRunTextEffect } from "../../../shared/richTextShadow";
+import { resolveTextEffectCssShadow } from "../../../shared/textEffect";
 import type React from "react";
 import { getTextMeasureContext } from "./blockTextMeasurement";
 import type { TextStyleRun } from "../../../shared/richTextMarkup";
@@ -6,10 +8,12 @@ import {
   resolveTextGlowCssShadow,
 } from "../../../shared/textGlow";
 import {
+  MIN_AUTOMATIC_TEXT_OUTLINE_CONTRAST_RATIO,
   resolveAutomaticTextOutlineColor,
   resolveEffectiveTextColor,
   resolveEffectiveTextOutlineColor,
   resolveEffectiveTextOutlineWidthPx,
+  resolveTextOutlineContrastRatio,
 } from "../../../shared/textOutline";
 import type {
   RenderTextDirection,
@@ -17,6 +21,26 @@ import type {
 } from "../../../shared/textTypes";
 
 const DEFAULT_OUTER_OUTLINE_COLOR = "#111111";
+/** Contrast stand-ins for the two editor field tones (see formatting.css). */
+const EDITOR_SURFACE_COLORS = { light: "#ffffff", dark: "#111111" } as const;
+/** Outlines preview as a thin ring; the canvas keeps the real width. */
+const EDITOR_OUTLINE_PREVIEW_MAX_PX = 1.5;
+
+export type EditorSurfaceTone = keyof typeof EDITOR_SURFACE_COLORS;
+
+/**
+ * The translation field takes the side of the block's base ink, like paper
+ * under dark lettering, so ordinary text needs no per-run backing.
+ */
+export function resolveEditorSurfaceTone(
+  block: TranslationBlock,
+): EditorSurfaceTone {
+  const ink = resolveEffectiveTextColor(block);
+  return resolveTextOutlineContrastRatio(ink, EDITOR_SURFACE_COLORS.light) >=
+    resolveTextOutlineContrastRatio(ink, EDITOR_SURFACE_COLORS.dark)
+    ? "light"
+    : "dark";
+}
 
 export type TextRunDecorations = Readonly<{
   strikethrough: boolean;
@@ -92,21 +116,47 @@ export function resolveEditorRunVisualStyle(
   const glow = typeof main.textShadow === "string" ? main.textShadow : "";
   return {
     ...main,
-    // This editing-only backdrop keeps unoutlined ink readable in either theme.
-    // Run datasets and the artwork/export renderer retain the original background.
+    // Editing-only backing for a run that would vanish on the field tone.
+    // Run datasets and the artwork/export renderer keep the real background.
     backgroundColor:
       main.backgroundColor ??
-      (outlineWidth === 0
-        ? resolveAutomaticTextOutlineColor({ textColor: String(main.color) })
-        : undefined),
+      resolveEditorRunBackdrop(
+        block,
+        String(main.color),
+        outlineWidth,
+        outlineColor,
+      ),
     WebkitTextStrokeColor: "transparent",
     WebkitTextStrokeWidth: "0px",
-    textShadow: [outlineShadow, glow].filter(Boolean).join(", ") || undefined,
+    textShadow:
+      [
+        outlineShadow,
+        glow,
+        resolveRunShadowCss(block, run, renderedBaseFontSizePx),
+      ]
+        .filter(Boolean)
+        .join(", ") || undefined,
   };
 }
 
+function resolveEditorRunBackdrop(
+  block: TranslationBlock,
+  ink: string,
+  outlineWidth: number,
+  outlineColor: string,
+): string | undefined {
+  const surface = EDITOR_SURFACE_COLORS[resolveEditorSurfaceTone(block)];
+  const readable = (color: string): boolean =>
+    resolveTextOutlineContrastRatio(color, surface) >=
+    MIN_AUTOMATIC_TEXT_OUTLINE_CONTRAST_RATIO;
+  if (readable(ink) || (outlineWidth > 0 && readable(outlineColor))) {
+    return undefined;
+  }
+  return resolveAutomaticTextOutlineColor({ textColor: ink });
+}
+
 function createEditorOutlineShadow(width: number, color: string): string {
-  const radius = Math.min(6, Math.max(0, width));
+  const radius = Math.min(EDITOR_OUTLINE_PREVIEW_MAX_PX, Math.max(0, width));
   if (radius === 0) return "";
   const shadows: string[] = [];
   const ringCount = Math.max(1, Math.ceil(radius));
@@ -243,9 +293,9 @@ export function hasAnyOuterOutline(
   );
 }
 
-function resolveRunGlow(
+export function resolveRunGlow(
   block: TranslationBlock,
-  run: TextStyleRun,
+  run: Omit<TextStyleRun, "text">,
   scale: number,
 ): string | undefined {
   const hasInlineGlow =
@@ -270,4 +320,15 @@ function resolveInlineScale(
   renderedBaseFontSizePx: number,
 ): number {
   return renderedBaseFontSizePx / Math.max(1, block.fontSizePx || 1);
+}
+
+/** A separate plane paints selected-character shadows before every outline/ink plane. */
+export function resolveRunShadowCss(
+  block: TranslationBlock,
+  run: Omit<TextStyleRun, "text">,
+  renderedBaseFontSizePx: number,
+): string | undefined {
+  const scale = resolveInlineScale(block, renderedBaseFontSizePx);
+  const effect = resolveRunTextEffect(block, run);
+  return resolveTextEffectCssShadow(effect, { x: scale, y: scale });
 }

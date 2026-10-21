@@ -209,6 +209,25 @@ describe("production cleanup coverage floor gate", () => {
     );
   });
 
+  it.each(["BlockSpacingFields", "BlockTextOpacityField"])(
+    "keeps %s branch floors on the shared numeric control",
+    (name) => {
+      const fixture = createFixture(
+        "src/renderer/src/components/EditorNumberField.tsx",
+        `src/renderer/src/components/${name}.tsx`,
+      );
+      fixture.coverage[fixture.existingFileAbsolute].branches = coverageMetric(
+        0,
+        0,
+      );
+      fixture.writeCoverage();
+      expect(() => runGate(fixture, "win32")).not.toThrow();
+      fixture.coverage[fixture.addedFileAbsolute].branches = coverageMetric(79);
+      fixture.writeCoverage();
+      expect(() => runGate(fixture, "win32")).toThrow(/below exact baseline/u);
+    },
+  );
+
   it("keeps the consolidated timing dialog branch floor on the shared view", () => {
     const fixture = createFixture(
       "src/renderer/src/components/pageList/PageWorkflowTimingView.tsx",
@@ -583,7 +602,8 @@ describe("production cleanup coverage floor gate", () => {
     // Text exchange adds its file codec and renderer review importer.
     // Issue #156 adds chapter selection/deletion and glossary file exchange owners.
     // Hunyuan adds 11 OCR runtime, domain and production UI owners.
-    expect(scope.added).toHaveLength(1548);
+    // Integrated formatting replaces four inline owners with 23 shared owners.
+    expect(scope.added).toHaveLength(1567);
     expect(scope.deleted).toHaveLength(12);
   });
 });

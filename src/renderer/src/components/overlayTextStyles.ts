@@ -17,7 +17,7 @@ import {
 } from "../../../shared/textWrapping";
 import { resolveBlockFontFamily, type BlockFontCatalog } from "../lib/fonts";
 import { resolveFontWidthScale } from "../lib/blockFormatGeometry";
-import type { BlockTextLine } from "../lib/overlayTextWrapping";
+import type { BlockTextLine } from "../lib/textLineTypes";
 import type { BlockTextLayout } from "../lib/overlayLayout";
 
 export function resolveOverlayTextWrapStyle(
@@ -189,9 +189,23 @@ export function resolveFixedLineStyle(
     return {
       display: "block",
       whiteSpace: "pre",
+      ...(line.lineBoxHeightPx === undefined
+        ? {}
+        : {
+            lineHeight: `${line.lineBoxHeightPx}px`,
+            ...(renderDirection === "vertical"
+              ? {
+                  marginRight: line.leadingOffsetPx,
+                  width: line.lineBoxHeightPx,
+                }
+              : {
+                  marginTop: line.leadingOffsetPx,
+                  height: line.lineBoxHeightPx,
+                }),
+          }),
       width:
         renderDirection === "vertical"
-          ? fixedColumnFontSizePx * block.lineHeight
+          ? (line.lineBoxHeightPx ?? fixedColumnFontSizePx * block.lineHeight)
           : undefined,
     };
   if (renderDirection === "vertical") {

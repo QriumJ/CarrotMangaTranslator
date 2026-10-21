@@ -363,7 +363,34 @@
       }
     },
     "blockScope": "選択ブロック {{count}} 個 · 基本書式",
-    "singleBlockScope": "ブロックの基本書式"
+    "singleBlockScope": "ブロックの基本書式",
+    "characterFormat": {
+      "editText": "ブロックの翻訳文を編集",
+      "title": "文字書式",
+      "emphasis": "文字の強調",
+      "underline": "下線",
+      "strikethrough": "取り消し線",
+      "emphasisMark": "傍点",
+      "effects": "詳細な文字効果",
+      "scopePrefix": "適用先: ",
+      "scope": {
+        "block": "ブロック内のすべての文字",
+        "selection": "選択した文字",
+        "caret": "これから入力する文字",
+        "blocks": "選択した{{count}}個のブロックのすべての文字"
+      },
+      "selectAll": "すべて選択",
+      "selectAllTitle": "翻訳文全体を選択して文字単位で書式を適用",
+      "selectOutputLine": "出力行を選択",
+      "selectOutputLineTitle": "キャンバスに出力された現在の行全体を選択",
+      "finishEditing": "編集を終了",
+      "finishEditingTitle": "テキスト編集を終了してブロック全体に書式を適用"
+    },
+    "blockSettings": {
+      "title": "ブロック全体の設定",
+      "description": "文字の選択に関係なく、常にブロック全体に適用されます。",
+      "descriptionMultiple": "選択した{{count}}個のブロック全体に適用されます。"
+    }
   },
   "transform": {
     "title": "変形",
@@ -511,6 +538,7 @@
   "editor": {
     "text": "テキスト",
     "translatedText": "翻訳文",
+    "sourceText": "原文OCR",
     "eraseOriginal": "原文を消去",
     "fitBubble": "吹き出し合わせ",
     "moreActions": "ブロック操作を表示",

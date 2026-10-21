@@ -73,8 +73,7 @@ describe("editor text actions", () => {
         <TextEditorGroup
           block={BLOCK}
           disabled={false}
-          onEraseOriginal={onEraseOriginal}
-          onFitBubble={onFitBubble}
+          sourceActions={{ onEraseOriginal, onFitBubble }}
           onSuggestConsistentEdit={onSuggestConsistentEdit}
           onUpdate={onUpdate}
         />
@@ -89,7 +88,7 @@ describe("editor text actions", () => {
     expect(onSuggestConsistentEdit).toHaveBeenCalledWith("렌", "랜");
     expect(screen.queryByText("“렌” → “랜”")).toBeNull();
 
-    fireEvent.change(screen.getByRole("textbox", { name: "OCR" }), {
+    fireEvent.change(screen.getByRole("textbox", { name: "원문 OCR" }), {
       target: { value: "カランが来た" },
     });
     expect(onUpdate).toHaveBeenCalledWith({ sourceText: "カランが来た" });

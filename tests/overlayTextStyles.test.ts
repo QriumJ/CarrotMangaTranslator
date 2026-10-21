@@ -2,11 +2,34 @@ import { describe, expect, it } from "vitest";
 import type { TranslationBlock } from "../src/shared/textTypes";
 import {
   resolveBlockTextOutlinePx,
+  resolveFixedLineStyle,
   resolveOverlayTextContentStyle,
 } from "../src/renderer/src/components/overlayTextStyles";
 import type { BlockTextLayout } from "../src/renderer/src/lib/overlayLayout";
 
 describe("overlay text word-break styles", () => {
+  it.each(["horizontal", "vertical"] as const)(
+    "applies partial leading as an incoming %s gap",
+    (direction) => {
+      const style = resolveFixedLineStyle(
+        {
+          width: 20,
+          runs: [],
+          lineBoxHeightPx: 24,
+          leadingOffsetPx: 16,
+        },
+        BLOCK,
+        20,
+        direction,
+        20,
+      );
+      expect(style.lineHeight).toBe("24px");
+      expect(
+        direction === "vertical" ? style.marginRight : style.marginTop,
+      ).toBe(16);
+    },
+  );
+
   it.each([
     [undefined, "vertical", "break-word", "anywhere"],
     [undefined, "horizontal", "break-all", "normal"],

@@ -1,15 +1,12 @@
+import { EditorDisclosure } from "./EditorDisclosure";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { RichTranslationInlineStylePanel } from "./RichTranslationInlineStylePanel";
-import type {
-  RichTranslationEditorMode,
-  RichTranslationInlineStyleAction,
-  RichTranslationSelectionValues,
-} from "./richTranslationEditorTypes";
+import type { EditorSurfaceTone } from "../lib/textRunVisualStyles";
+import type { RichTranslationEditorMode } from "./richTranslationEditorTypes";
 import type { RichTranslationVisualEditor } from "./useRichTranslationVisualEditor";
 import { Button } from "./ui/Button";
 import { SegmentedControl } from "./ui/SegmentedControl";
-import { Textarea } from "./ui/Field";
+import { RichTranslationEditorInput } from "./RichTranslationEditorInput";
 import { IconButton } from "./ui/IconButton";
 import { RestoreIcon } from "./ui/icons";
 
@@ -28,8 +25,14 @@ const SPECIAL_CHARACTERS = [
 ] as const;
 
 type RichTranslationEditorViewProps = {
+  beginEditing?: () => void;
+  endEditing?: () => void;
+  revealToken?: number;
+  /** Translation-bound notices shown under the input, inside its section. */
+  afterInput?: React.ReactNode;
   afterEditor?: React.ReactNode;
-  applyInlineStyle: RichTranslationInlineStyleAction;
+  /** Rendered inside the editor root so control clicks keep the selection. */
+  characterFormat?: React.ReactNode;
   clearAllFormatting: () => void;
   codeRef: React.RefObject<HTMLTextAreaElement | null>;
   disabled: boolean;
@@ -37,11 +40,10 @@ type RichTranslationEditorViewProps = {
   heightRefCallback: (element: HTMLElement | null) => void;
   insertSpecialCharacter: (character: string) => void;
   mode: RichTranslationEditorMode;
-  onChange: (value: string) => void;
+  onChange: (value: string, composing?: boolean) => void;
   onCodeSelect: React.ReactEventHandler<HTMLTextAreaElement>;
   plainText: string;
-  hasSelection: boolean;
-  selectionValues: RichTranslationSelectionValues;
+  surfaceTone: EditorSurfaceTone;
   setMode: (mode: RichTranslationEditorMode) => void;
   specialCharactersId: string;
   specialCharactersOpen: boolean;
@@ -52,68 +54,74 @@ type RichTranslationEditorViewProps = {
 
 export function RichTranslationEditorView({
   afterEditor,
-  applyInlineStyle,
-  clearAllFormatting,
-  codeRef,
-  disabled,
+  afterInput,
+  beginEditing,
+  characterFormat,
   editorRootRef,
-  heightRefCallback,
-  insertSpecialCharacter,
-  mode,
-  onChange,
-  onCodeSelect,
-  plainText,
-  hasSelection,
-  selectionValues,
-  setMode,
-  specialCharactersId,
-  specialCharactersOpen,
-  toggleSpecialCharacters,
-  value,
-  visual,
+  endEditing,
+  revealToken,
+  ...props
 }: RichTranslationEditorViewProps): React.JSX.Element {
+  const { t } = useTranslation("components");
+  const header = <RichTranslationEditorHeader {...props} />;
+  const body = <RichTranslationEditorBody {...props} afterInput={afterInput} />;
   return (
     <div
       className="rich-translation-editor"
       ref={editorRootRef}
-      onPointerDownCapture={visual.captureSelectionBeforeControlFocus}
+      onPointerDownCapture={props.visual.captureSelectionBeforeControlFocus}
+      onFocusCapture={(event) => {
+        if (
+          (event.target as HTMLElement).closest("[data-rich-translated-input]")
+        )
+          beginEditing?.();
+      }}
+      onKeyDown={(event) => {
+        if (
+          event.key === "Escape" &&
+          (event.target as HTMLElement).closest("[data-rich-translated-input]")
+        ) {
+          event.stopPropagation();
+          endEditing?.();
+          (event.target as HTMLElement).blur();
+        }
+      }}
     >
-      <RichTranslationEditorHeader
-        clearAllFormatting={clearAllFormatting}
-        disabled={disabled}
-        mode={mode}
-        plainText={plainText}
-        setMode={setMode}
-        specialCharactersId={specialCharactersId}
-        specialCharactersOpen={specialCharactersOpen}
-        toggleSpecialCharacters={toggleSpecialCharacters}
-        value={value}
-      />
-      <SpecialCharacterPalette
-        disabled={disabled}
-        id={specialCharactersId}
-        open={specialCharactersOpen}
-        onInsert={insertSpecialCharacter}
-      />
-      <RichTranslationEditorInput
-        codeRef={codeRef}
-        disabled={disabled}
-        heightRefCallback={heightRefCallback}
-        mode={mode}
-        onChange={onChange}
-        onCodeSelect={onCodeSelect}
-        plainText={plainText}
-        value={value}
-        visual={visual}
-      />
+      <EditorDisclosure
+        id="translation"
+        label={t("editor.translatedText")}
+        actions={header}
+        revealToken={revealToken}
+      >
+        {body}
+      </EditorDisclosure>
       {afterEditor}
-      <RichTranslationInlineStylePanel
-        disabled={disabled}
-        mode={mode}
-        hasSelection={hasSelection}
-        values={selectionValues}
-        onApplyStyle={applyInlineStyle}
+      {characterFormat}
+    </div>
+  );
+}
+
+function RichTranslationEditorBody(
+  props: Omit<
+    RichTranslationEditorViewProps,
+    | "afterEditor"
+    | "beginEditing"
+    | "characterFormat"
+    | "editorRootRef"
+    | "endEditing"
+    | "revealToken"
+  >,
+): React.JSX.Element {
+  return (
+    <div className="rich-translation-body">
+      <SpecialCharacterPalette
+        disabled={props.disabled}
+        id={props.specialCharactersId}
+        open={props.specialCharactersOpen}
+        onInsert={props.insertSpecialCharacter}
       />
+      <RichTranslationEditorInput {...props} />
+      {props.afterInput}
     </div>
   );
 }
@@ -149,7 +157,6 @@ function RichTranslationModePicker({
   const { t } = useTranslation("components");
   return (
     <div className="rich-editor-heading">
-      <h3>{t("editor.translatedText")}</h3>
       <SegmentedControl
         ariaLabel={t("editor.richText.modeLabel", {
           defaultValue: "번역문 보기 방식",
@@ -184,18 +191,18 @@ function RichTranslationEditorToolbar({
   const { t } = useTranslation("components");
   return (
     <div className="rich-editor-toolbar">
-      <Button
+      <IconButton
         size="sm"
-        variant="ghost"
         className="rich-special-character-trigger"
+        label={t("editor.richText.specialCharacters", { defaultValue: "기호" })}
+        title={t("editor.richText.specialCharacters", { defaultValue: "기호" })}
         aria-controls={specialCharactersId}
         aria-expanded={specialCharactersOpen}
         disabled={disabled}
-        iconLeft={<span aria-hidden="true">Ω</span>}
         onClick={toggleSpecialCharacters}
       >
-        {t("editor.richText.specialCharacters", { defaultValue: "기호" })}
-      </Button>
+        <span aria-hidden="true">Ω</span>
+      </IconButton>
       <IconButton
         size="sm"
         label={t("editor.richText.resetAll", {
@@ -251,126 +258,5 @@ function SpecialCharacterPalette({
         </Button>
       ))}
     </div>
-  );
-}
-
-type EditorInputProps = Pick<
-  RichTranslationEditorViewProps,
-  | "codeRef"
-  | "disabled"
-  | "heightRefCallback"
-  | "mode"
-  | "onChange"
-  | "onCodeSelect"
-  | "plainText"
-  | "value"
-  | "visual"
->;
-
-function RichTranslationEditorInput(
-  props: EditorInputProps,
-): React.JSX.Element {
-  return props.mode === "visual" ? (
-    <VisualTranslationInput
-      disabled={props.disabled}
-      heightRefCallback={props.heightRefCallback}
-      plainText={props.plainText}
-      visual={props.visual}
-    />
-  ) : (
-    <CodeTranslationInput
-      codeRef={props.codeRef}
-      disabled={props.disabled}
-      heightRefCallback={props.heightRefCallback}
-      onChange={props.onChange}
-      onSelect={props.onCodeSelect}
-      value={props.value}
-    />
-  );
-}
-
-function VisualTranslationInput({
-  disabled,
-  heightRefCallback,
-  plainText,
-  visual,
-}: Pick<
-  EditorInputProps,
-  "disabled" | "heightRefCallback" | "plainText" | "visual"
->): React.JSX.Element {
-  const { t } = useTranslation("components");
-  return (
-    <div
-      ref={(element) => {
-        visual.visualRef.current = element;
-        heightRefCallback(element);
-      }}
-      className="rich-editor-surface"
-      data-rich-translated-input=""
-      contentEditable={!disabled}
-      tabIndex={0}
-      suppressContentEditableWarning
-      role="textbox"
-      aria-label={t("editor.translatedText")}
-      aria-multiline="true"
-      aria-readonly={disabled || undefined}
-      data-empty={plainText.length === 0 ? "true" : undefined}
-      data-placeholder={t("editor.richText.placeholder", {
-        defaultValue: "번역문을 입력하세요",
-      })}
-      onInput={() => {
-        if (!disabled) visual.commitInput();
-      }}
-      onBeforeInput={(event) => {
-        if (disabled) event.preventDefault();
-        else visual.onBeforeInput();
-      }}
-      onCompositionStart={visual.onCompositionStart}
-      onCompositionEnd={visual.onCompositionEnd}
-      onKeyUp={visual.updateSelection}
-      onPointerUp={visual.updateSelection}
-      onPaste={(event) => {
-        if (disabled) event.preventDefault();
-        else visual.onPaste(event);
-      }}
-    />
-  );
-}
-
-function CodeTranslationInput({
-  codeRef,
-  disabled,
-  heightRefCallback,
-  onChange,
-  onSelect,
-  value,
-}: {
-  codeRef: React.RefObject<HTMLTextAreaElement | null>;
-  disabled: boolean;
-  heightRefCallback: (element: HTMLElement | null) => void;
-  onChange: (value: string) => void;
-  onSelect: React.ReactEventHandler<HTMLTextAreaElement>;
-  value: string;
-}): React.JSX.Element {
-  const { t } = useTranslation("components");
-  return (
-    <Textarea
-      ref={(element) => {
-        codeRef.current = element;
-        heightRefCallback(element);
-      }}
-      className="rich-editor-code"
-      data-rich-translated-input=""
-      aria-label={t("editor.richText.codeAria", {
-        defaultValue: "번역문 서식 코드",
-      })}
-      value={value}
-      readOnly={disabled}
-      spellCheck={false}
-      onChange={(event) => {
-        if (!disabled) onChange(event.target.value);
-      }}
-      onSelect={onSelect}
-    />
   );
 }

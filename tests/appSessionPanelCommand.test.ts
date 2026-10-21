@@ -356,3 +356,39 @@ it("routes lettering brushes through the selected editor and switches to selecti
     true,
   );
 });
+
+it("rejects stale detached-panel text selections without changing saved blocks", () => {
+  const actions = createTarget();
+  const input = {
+    actions,
+    busy: false,
+    selectedBlockId: "current-block",
+    selectionKey: currentSelectionKey,
+    command: {
+      type: "previewTextSelection" as const,
+      selectionKey: currentSelectionKey,
+      selection: {
+        blockId: "current-block",
+        translatedText: "abc",
+        start: 0,
+        end: 2,
+      },
+    },
+  };
+  expect(dispatchPanelCommand(input)).toBe(true);
+  expect(dispatchPanelCommand({ ...input, busy: true })).toBe(false);
+  expect(
+    dispatchPanelCommand({ ...input, selectedBlockId: "other-block" }),
+  ).toBe(false);
+  expect(
+    dispatchPanelCommand({
+      ...input,
+      selectionKey: createPanelSelectionKey(["other-block"]),
+    }),
+  ).toBe(false);
+  expect(
+    Object.values(actions).every(
+      (action) => !vi.mocked(action).mock.calls.length,
+    ),
+  ).toBe(true);
+});

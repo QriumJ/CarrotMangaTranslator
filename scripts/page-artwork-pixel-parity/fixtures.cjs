@@ -3,6 +3,7 @@ const { PNG } = require("pngjs");
 
 function createFixtureBlocks() {
   return [
+    createSelectedShadowFixture(),
     createBlock("generated-lettering", {
       bbox: { x: 430, y: 260, w: 180, h: 180 },
       generatedLettering: {
@@ -77,13 +78,15 @@ function createFixtureBlocks() {
       letterSpacing: 0.08,
       rotationDeg: 13.5,
       textEffect: createTextEffect("#7a2148", 4, 6, 8, 0.72),
-      translatedText: "**굵게** 그리고 *기울임*",
+      translatedText:
+        "**굵게**\n[line-height=1.8][letter-spacing=0.12]*기울임*[/letter-spacing][/line-height]\n일반",
     }),
     createBlock("vertical", {
       bbox: { x: 650.2, y: 105.4, w: 155.7, h: 350.3 },
       renderDirection: "vertical",
       textEffect: createTextEffect("#2358b8", 0, 0, 12, 0.8),
-      translatedText: "세로쓰기",
+      translatedText:
+        "세로\n[line-height=1.7][letter-spacing=0.15]쓰기[/letter-spacing][/line-height]",
       warpTransform: createWarpFixture("wave", 3),
       wordBreak: "keep-all",
     }),
@@ -128,7 +131,7 @@ function createFixtureBlocks() {
       },
       rotationDeg: -4.5,
       textEffect: createTextEffect("#d56b20", 0, 0, 14, 0.68),
-      translatedText: "곡선 텍스트",
+      translatedText: "곡선 [shadow-enabled=false]텍스트[/shadow-enabled]",
       warpTransform: createWarpFixture("archUp", 5),
     }),
     createBlock("multiline-warp", {
@@ -343,3 +346,14 @@ function createBlock(id, overrides) {
 }
 
 module.exports = { createFixtureBlocks };
+
+function createSelectedShadowFixture() {
+  return createBlock("selected-shadow", {
+    bbox: { x: 650, y: 50, w: 300, h: 180 },
+    translatedText:
+      "A[shadow-enabled=true][shadow-color=#dd2200][shadow-x=8][shadow-y=5][shadow-blur=1][shadow-opacity=0.85]B[/shadow-opacity][/shadow-blur][/shadow-y][/shadow-x][/shadow-color][/shadow-enabled]C",
+    fontSizePx: 40,
+    autoFitText: false,
+    outlineWidthPx: 1,
+  });
+}

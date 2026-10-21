@@ -15,6 +15,51 @@ import {
 } from "../src/renderer/src/lib/overlayTextSegmentation";
 
 describe("overlay text word breaking", () => {
+  it("preserves inline leading on an empty paragraph in a shaped bubble", () => {
+    const result = measureStyledWrappedTextInSlots(
+      fixedMeasureContext,
+      [{ text: "\nA", bold: false, italic: false, lineHeight: 2 }],
+      [0, 1].map((regionIndex) => ({
+        blockOffsetPx: regionIndex * 12,
+        inlineOffsetPx: 0,
+        availableWidth: 50,
+        regionIndex,
+      })),
+      12,
+      10,
+      "sans-serif",
+      0,
+      "normal",
+    );
+    expect(lineTexts(result.lines)).toEqual(["", "A"]);
+    expect(result.lines[0].leadingRuns).toEqual([
+      expect.objectContaining({ text: "\n", lineHeight: 2 }),
+    ]);
+    expect(result.consumedAll).toBe(true);
+    expect(result.fits).toBe(true);
+  });
+  it("keeps an indivisible oversized grapheme in the last slot and reports overflow", () => {
+    const result = measureStyledWrappedTextInSlots(
+      fixedMeasureContext,
+      plainRuns("😀"),
+      [
+        {
+          blockOffsetPx: 0,
+          inlineOffsetPx: 0,
+          availableWidth: 5,
+          regionIndex: 0,
+        },
+      ],
+      12,
+      10,
+      "sans-serif",
+      0,
+      "break-word",
+    );
+    expect(lineTexts(result.lines)).toEqual(["😀"]);
+    expect(result.consumedAll).toBe(true);
+    expect(result.fits).toBe(false);
+  });
   it("uses visible soft-line width without changing the manual whitespace contract", () => {
     const measure = (trimLineEnds: boolean) =>
       measureStyledWrappedText(

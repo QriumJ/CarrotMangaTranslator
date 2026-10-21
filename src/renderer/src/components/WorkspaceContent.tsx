@@ -47,6 +47,7 @@ export const WorkspaceContent = React.memo(function WorkspaceContent(
       interactionPreviewStore={props.interactionPreviewStore}
       maskStrokes={props.maskStrokes}
       onBlockPointerDown={props.onBlockPointerDown}
+      onEditBlockText={props.onEditBlockText}
       onWarpTransformCommit={props.onWarpTransformCommit}
       onDismissSoundEffectReviewRegion={props.onDismissSoundEffectReviewRegion}
       onExitSoundEffectReview={props.onExitSoundEffectReview}
@@ -103,6 +104,7 @@ const WORKSPACE_CONTENT_RENDER_KEYS = [
   "jobActive",
   "maskStrokes",
   "onBlockPointerDown",
+  "onEditBlockText",
   "onWarpTransformCommit",
   "onDismissSoundEffectReviewRegion",
   "onExitSoundEffectReview",

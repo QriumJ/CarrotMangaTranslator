@@ -1,3 +1,4 @@
+import { TextEffectSchema } from "./textEffect";
 import { letteringToolSchema } from "./generatedLetteringMaskSchemas";
 import { z } from "zod";
 import { ALL_BLOCK_FORMAT_GROUP_IDS } from "./blockFormat";
@@ -54,7 +55,20 @@ const PanelFormatPatchSchema = TranslationBlockObjectSchema.pick({
   textGlow: true,
 })
   .partial()
-  .strict();
+  .extend({
+    textEffectFields: z
+      .array(TextEffectSchema.keyof())
+      .min(1)
+      .max(6)
+      .optional(),
+  })
+  .strict()
+  .refine(
+    (patch) => !patch.textEffectFields || patch.textEffect !== undefined,
+    {
+      message: "Shadow field edits require a shadow value.",
+    },
+  );
 
 const PanelFormatFieldKeySchema = z.enum(PANEL_FORMAT_FIELD_KEYS);
 const PanelSelectionKeySchema = z.string().max(25_000_000);
@@ -107,6 +121,7 @@ export const PanelSyncStateSchema = z
         mixedFields: z.array(PanelFormatFieldKeySchema).max(50),
       })
       .strict(),
+    editorTextResetToken: z.number().int().nonnegative().optional(),
     editorTextTabRequestToken: z
       .number()
       .int()
@@ -144,6 +159,25 @@ export const PanelSyncStateSchema = z
   .strict();
 
 export const PanelCommandSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      type: z.literal("previewTextSelection"),
+      selectionKey: PanelSelectionKeySchema,
+      selection: z
+        .object({
+          blockId: TranslationBlockObjectSchema.shape.id,
+          translatedText: TranslationBlockObjectSchema.shape.translatedText,
+          start: z.number().int().min(0).max(100000),
+          end: z.number().int().min(0).max(100000),
+        })
+        .strict()
+        .refine(
+          (value) =>
+            value.start <= value.end &&
+            value.end <= value.translatedText.length,
+        ),
+    })
+    .strict(),
   z
     .object({
       type: z.literal("finishPageEdits"),

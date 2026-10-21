@@ -6,6 +6,7 @@ export type TextRunRenderStyle = {
   fontSizePx: number;
   fontFamily: string;
   opacity: number;
+  letterSpacingEm?: number;
 };
 
 export type TextRunStyleResolver = (run: TextStyleRun) => TextRunRenderStyle;
@@ -25,6 +26,9 @@ export function createTextRunStyleResolver(
       fontCatalog,
     ),
     opacity: run.opacity ?? baseOpacity,
+    ...(run.letterSpacing === undefined
+      ? {}
+      : { letterSpacingEm: run.letterSpacing }),
   });
 }
 

@@ -14,7 +14,7 @@ import { MenuSurface } from "./ui/MenuSurface";
 import { Tabs } from "./ui/Tabs";
 import { usePopupController } from "./ui/usePopupController";
 
-const EDITOR_TABS = ["text", "layout", "format"] as const;
+const EDITOR_TABS = ["format", "layout"] as const;
 export type EditorTabId = (typeof EDITOR_TABS)[number];
 
 type BlockOverflowMenuProps = {
@@ -174,7 +174,6 @@ export function EditorPanelTabs({
 }): React.JSX.Element {
   const { t } = useTranslation("components");
   const labels: Record<EditorTabId, string> = {
-    text: t("editor.tabs.text", { defaultValue: "텍스트" }),
     layout: t("editor.tabs.layout", { defaultValue: "배치" }),
     format: t("editor.tabs.format", { defaultValue: "서식" }),
   };

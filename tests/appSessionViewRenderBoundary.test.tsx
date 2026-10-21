@@ -1,7 +1,13 @@
 // @vitest-environment jsdom
 
 import React from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { TranslationBlock } from "../src/shared/textTypes";
 import {
@@ -21,6 +27,37 @@ afterEach(cleanup);
 const EMPTY_STYLE_PRESETS: PanelSessionValue["blockStylePresets"] = [];
 
 describe("AppSessionView render boundaries", () => {
+  it("forwards previews to the latest callback without changing callback identity", () => {
+    const first = vi.fn();
+    const latest = vi.fn();
+    const { result, rerender } = renderHook(
+      ({ value }) => useStablePanelSessionValue(value),
+      {
+        initialProps: {
+          value: makePanelSessionValue({ onPreviewTextSelection: first }),
+        },
+      },
+    );
+    const preview = result.current.onPreviewTextSelection;
+    const selection = {
+      blockId: "block-a",
+      translatedText: "abcd",
+      start: 1,
+      end: 3,
+    };
+    rerender({
+      value: makePanelSessionValue({ onPreviewTextSelection: latest }),
+    });
+    expect(result.current.onPreviewTextSelection).toBe(preview);
+    preview?.(selection);
+    expect(first).not.toHaveBeenCalled();
+    expect(latest).toHaveBeenCalledWith(selection);
+    rerender({
+      value: makePanelSessionValue({ onPreviewTextSelection: undefined }),
+    });
+    expect(() => preview?.(selection)).not.toThrow();
+  });
+
   it("does not republish equivalent panel data and invokes the latest callback", () => {
     const onCommit = vi.fn();
     const onRender = vi.fn();

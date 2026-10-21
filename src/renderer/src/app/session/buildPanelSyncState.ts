@@ -70,6 +70,7 @@ export function buildPanelSyncState({
     selectionKey: createPanelSelectionKey(selectedIds),
     formatSelection: buildPanelFormatSelection(selectedBlocks),
     editorTextTabRequestToken: uiState.editorTextTabRequestToken,
+    editorTextResetToken: uiState.editorTextResetToken,
     transformMode:
       uiState.stageTool === "perspective" ||
       uiState.stageTool === "curve" ||

@@ -31,6 +31,7 @@ export type PanelSessionValue = {
   selectionKey: string;
   formatSelection: PanelFormatSelection;
   editorTextTabRequestToken: number;
+  editorTextResetToken?: number;
   /** True when block edits are disabled (locked page or busy inpainting). */
   editorDisabled: boolean;
   aiUnavailable?: boolean;
@@ -66,6 +67,9 @@ export type PanelSessionValue = {
   /** Adjusts every selected block's font size by one relative step. */
   onAdjustFontSize: (adjustment: -1 | 1) => void;
   onUpdateBlock: (patch: Partial<TranslationBlock>) => void;
+  onPreviewTextSelection?: (
+    selection: import("../../../shared/panelBridgeTypes").PanelTextSelection,
+  ) => void;
   onUpdateFormat: (patch: Partial<TranslationBlock>) => void;
   onDeleteBlock: () => void;
   onDuplicateBlock: () => void;

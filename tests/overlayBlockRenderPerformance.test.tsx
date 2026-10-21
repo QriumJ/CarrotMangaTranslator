@@ -1,7 +1,13 @@
 /** @vitest-environment jsdom */
 
 import React from "react";
-import { act, cleanup, render, waitFor } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  waitFor,
+} from "@testing-library/react";
 import {
   afterAll,
   afterEach,
@@ -20,6 +26,9 @@ import { DEFAULT_BLOCK_FONT_CATALOG } from "../src/renderer/src/lib/fonts";
 import { createWorkspaceInteractionPreviewStore } from "../src/renderer/src/lib/workspaceInteractionPreview";
 import type { MangaPage } from "../src/shared/libraryTypes";
 import type { TranslationBlock } from "../src/shared/textTypes";
+
+import { OverlayBlockView } from "../src/renderer/src/components/OverlayBlock";
+import { publishTextSelectionPreview } from "../src/renderer/src/lib/textSelectionPreview";
 
 const originalGetContext = HTMLCanvasElement.prototype.getContext;
 const measureText = vi.fn((text: string) => ({
@@ -55,6 +64,90 @@ afterAll(() => {
 });
 
 describe("overlay block render isolation", () => {
+  it("keeps the resize fallback working when only the original resize callback exists", () => {
+    const resize = vi.fn();
+    const view = render(
+      <OverlayBlockView
+        block={makeBlock("moving", "text", 100)}
+        fontCatalog={DEFAULT_BLOCK_FONT_CATALOG}
+        pageSize={{ width: 1000, height: 1000 }}
+        stageSize={{ width: 500, height: 500 }}
+        textLayoutStageSize={{ width: 1000, height: 1000 }}
+        interactionPreviewStore={createWorkspaceInteractionPreviewStore()}
+        selected
+        showChrome
+        onPointerDown={vi.fn()}
+        onResizePointerDown={resize}
+      />,
+    );
+    fireEvent.pointerDown(
+      requiredElement(view.container, '[data-transform-handle="resize-se"]'),
+    );
+    expect(resize).toHaveBeenCalledTimes(1);
+  });
+
+  it("highlights only the selected output line and clears stale previews", () => {
+    const store = createWorkspaceInteractionPreviewStore();
+    const block = makeBlock("moving", "first\nsecond\nthird", 100);
+    const view = renderLayer(makePage([block]), store);
+    act(() =>
+      publishTextSelectionPreview({
+        blockId: block.id,
+        translatedText: block.translatedText,
+        start: 6,
+        end: 12,
+      }),
+    );
+    expect(
+      [...view.container.querySelectorAll("[data-text-selection]")].map(
+        (e) => e.textContent,
+      ),
+    ).toEqual(["second"]);
+    expect(
+      view.container.querySelector(
+        ".overlay-text-outline [data-text-selection]",
+      ),
+    ).toBeNull();
+    act(() =>
+      publishTextSelectionPreview({
+        blockId: block.id,
+        translatedText: "different text",
+        start: 1,
+        end: 2,
+      }),
+    );
+    expect(view.container.querySelector("[data-text-selection]")).toBeNull();
+    act(() =>
+      publishTextSelectionPreview({
+        blockId: block.id,
+        translatedText: block.translatedText,
+        start: 0,
+        end: 0,
+      }),
+    );
+  });
+  it("opens text editing on double click and suppresses it during shape editing", () => {
+    const onEdit = vi.fn();
+    const page = makePage([makeBlock("moving", "text", 100)]);
+    const view = renderLayer(
+      page,
+      createWorkspaceInteractionPreviewStore(),
+      "select",
+      onEdit,
+    );
+    fireEvent.doubleClick(requiredElement(view.container, ".overlay-block"));
+    expect(onEdit).toHaveBeenCalledTimes(1);
+    cleanup();
+    const shape = renderLayer(
+      page,
+      createWorkspaceInteractionPreviewStore(),
+      "bubble",
+      onEdit,
+    );
+    fireEvent.doubleClick(requiredElement(shape.container, ".overlay-block"));
+    expect(onEdit).toHaveBeenCalledTimes(1);
+  });
+
   it("keeps prepared empty blocks selectable without painting source or measuring placeholders during movement", () => {
     const store = createWorkspaceInteractionPreviewStore();
     const block = {
@@ -198,6 +291,7 @@ function renderLayer(
   page: MangaPage,
   store: ReturnType<typeof createWorkspaceInteractionPreviewStore>,
   stageTool: "bubble" | "select" = "select",
+  onEditBlockText?: () => void,
 ) {
   return render(
     withFonts(
@@ -206,6 +300,7 @@ function renderLayer(
         imageDataUrl="data:image/png;base64,overlay"
         interactionPreviewStore={store}
         onBlockPointerDown={() => undefined}
+        onEditBlockText={onEditBlockText}
         page={page}
         selectedBlockId="moving"
         selectedBlockIds={["moving"]}
@@ -262,4 +357,10 @@ function makeBlock(
     translatedText,
     type: "nonsolid",
   };
+}
+
+function requiredElement(root: HTMLElement, selector: string): Element {
+  const element = root.querySelector(selector);
+  if (!element) throw new Error(`Missing test element: ${selector}`);
+  return element;
 }

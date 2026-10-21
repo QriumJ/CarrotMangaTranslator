@@ -7,11 +7,12 @@ import {
   keepsWordsTogether,
   type TextWordBreak,
 } from "../../../shared/textWrapping";
+import type { TextLineSlot } from "./textLineTypes";
 import {
   buildNaturalUnits,
+  resolveGraphemeSpacing,
   toBlockTextLine,
   type StyledGrapheme,
-  type TextLineSlot,
 } from "./overlayTextWrapping";
 import type { SlottedWrappedTextMeasurement } from "./bubbleTextWrapping";
 
@@ -93,7 +94,9 @@ class BalancedParagraphSolver {
     ).length;
     for (const glyph of graphemes)
       this.prefix.push(
-        (this.prefix.at(-1) ?? 0) + glyph.width + letterSpacingPx,
+        (this.prefix.at(-1) ?? 0) +
+          glyph.width +
+          resolveGraphemeSpacing(glyph, letterSpacingPx),
       );
     this.idealWidth = this.width(0, graphemes.length) / slots.length;
   }
@@ -131,7 +134,9 @@ class BalancedParagraphSolver {
     while (end > start && SPACE_GLYPH.test(this.graphemes[end - 1].text)) end--;
     return end === start
       ? 0
-      : this.prefix[end] - this.prefix[start] - this.letterSpacingPx;
+      : this.prefix[end] -
+          this.prefix[start] -
+          resolveGraphemeSpacing(this.graphemes[end - 1], this.letterSpacingPx);
   }
 
   private allowsBreak(end: number): boolean {

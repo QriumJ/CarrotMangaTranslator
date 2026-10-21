@@ -1,31 +1,29 @@
 import type { TextStyleRun } from "../../../shared/richTextMarkup";
-import { isCjkGrapheme } from "../../../shared/naturalTextLayoutSegmentation";
 import {
   allowsLongTokenFallback,
   keepsWordsTogether,
   resolveTextWordBreak,
   type TextWordBreak,
 } from "../../../shared/textWrapping";
+import type {
+  BlockTextLine,
+  TextLineSlot,
+  WrappedTextMeasurement,
+} from "./textLineTypes";
 import {
   buildNaturalUnits,
+  resolveGraphemeSpacing,
   measureGraphemeSequence,
   measureStyledGraphemes,
   measureUniformStyledGraphemes,
   toBlockTextLine,
-  type BlockTextLine,
   type StyledGrapheme,
-  type TextLineSlot,
   type TextMeasurementContext,
-  type WrappedTextMeasurement,
 } from "./overlayTextWrapping";
 import type {
   TextRunRenderStyle,
   TextRunStyleResolver,
 } from "./textStyleRunResolution";
-import {
-  resolveNaturalWordBreakOffsets,
-  segmentGraphemes,
-} from "./overlayTextSegmentation";
 
 export type SlottedWrappedTextMeasurement = WrappedTextMeasurement & {
   fits: boolean;
@@ -33,109 +31,6 @@ export type SlottedWrappedTextMeasurement = WrappedTextMeasurement & {
 };
 
 const WIDTH_EPSILON_PX = 1e-6;
-
-export type WrappedTextQuality = {
-  intraWordSplitCount: number;
-  orphanLineCount: number;
-  lineCount: number;
-  semanticGraphemeCount: number;
-  averageSemanticGraphemesPerLine: number;
-};
-
-/**
- * Measure rendered line damage without changing the text or wrapping policy.
- * Natural word boundaries and explicit source newlines are free; a boundary
- * inside a letter/number sequence is counted as an intra-word split.
- */
-export function assessWrappedTextQuality(
-  plainText: string,
-  lines: readonly BlockTextLine[],
-): WrappedTextQuality {
-  const compact = compactExplicitNewlines(plainText.replace(/\r\n?/g, "\n"));
-  const naturalBoundaries = resolveNaturalWordBreakOffsets(
-    segmentGraphemes(compact.text).map((text) => ({ text })),
-  );
-  let textOffset = 0;
-  let intraWordSplitCount = 0;
-  let orphanLineCount = 0;
-  let semanticGraphemeCount = 0;
-  for (const [index, line] of lines.entries()) {
-    const lineText = line.runs.map((run) => run.text).join("");
-    textOffset += line.sourceTextLength ?? lineText.length;
-    semanticGraphemeCount += countSemanticGraphemes(lineText);
-    if (countContentGraphemes(lineText) === 1) {
-      orphanLineCount += 1;
-    }
-    if (
-      index < lines.length - 1 &&
-      isDamagingWordBoundary(
-        compact.text,
-        textOffset,
-        naturalBoundaries,
-        compact.explicitBoundaries,
-      )
-    ) {
-      intraWordSplitCount += 1;
-    }
-  }
-  return {
-    intraWordSplitCount,
-    orphanLineCount,
-    lineCount: lines.length,
-    semanticGraphemeCount,
-    averageSemanticGraphemesPerLine:
-      semanticGraphemeCount / Math.max(1, lines.length),
-  };
-}
-
-function compactExplicitNewlines(value: string): {
-  text: string;
-  explicitBoundaries: ReadonlySet<number>;
-} {
-  let text = "";
-  const explicitBoundaries = new Set<number>();
-  for (const grapheme of segmentGraphemes(value)) {
-    if (grapheme === "\n") {
-      explicitBoundaries.add(text.length);
-    } else {
-      text += grapheme;
-    }
-  }
-  return { text, explicitBoundaries };
-}
-
-function isDamagingWordBoundary(
-  text: string,
-  offset: number,
-  naturalBoundaries: ReadonlySet<number>,
-  explicitBoundaries: ReadonlySet<number>,
-): boolean {
-  if (offset <= 0 || offset >= text.length || explicitBoundaries.has(offset)) {
-    return false;
-  }
-  const previous = segmentGraphemes(text.slice(0, offset)).slice(-1).join("");
-  const next = segmentGraphemes(text.slice(offset)).slice(0, 1).join("");
-  if (
-    naturalBoundaries.has(offset) &&
-    !isCjkGrapheme(previous) &&
-    !isCjkGrapheme(next)
-  )
-    return false;
-  return isWordContent(previous) && isWordContent(next);
-}
-
-function countContentGraphemes(value: string): number {
-  return segmentGraphemes(value).filter((grapheme) => !/^\s+$/u.test(grapheme))
-    .length;
-}
-
-function countSemanticGraphemes(value: string): number {
-  return segmentGraphemes(value).filter(isWordContent).length;
-}
-
-function isWordContent(value: string): boolean {
-  return /[\p{Letter}\p{Number}\p{Mark}]/u.test(value);
-}
 
 /**
  * Wrap rich text through a finite sequence of shape-derived line slots.
@@ -219,11 +114,18 @@ function measureWrappedTextInSlots(
 
   for (const paragraph of paragraphs) {
     const measured = wrapParagraphInSlots(
-      paragraph,
+      paragraph.graphemes,
       slots.slice(lines.length),
       letterSpacingPx,
       resolveTextWordBreak(wordBreak),
     );
+    if (
+      !paragraph.graphemes.length &&
+      paragraph.terminator?.lineHeight !== undefined &&
+      measured.lines[0]
+    ) {
+      measured.lines[0].leadingRuns = [{ ...paragraph.terminator }];
+    }
     lines.push(...measured.lines);
     fits = fits && measured.fits;
     if (!measured.consumedAll) {
@@ -236,13 +138,21 @@ function measureWrappedTextInSlots(
   return summarizeSlottedLines(lines, lineHeightPx, fits, consumedAll);
 }
 
-function splitParagraphs(graphemes: StyledGrapheme[]): StyledGrapheme[][] {
-  const paragraphs: StyledGrapheme[][] = [[]];
+function splitParagraphs(graphemes: StyledGrapheme[]): Array<{
+  graphemes: StyledGrapheme[];
+  terminator?: StyledGrapheme;
+}> {
+  const paragraphs: Array<{
+    graphemes: StyledGrapheme[];
+    terminator?: StyledGrapheme;
+  }> = [{ graphemes: [] }];
   for (const grapheme of graphemes) {
+    const paragraph = paragraphs[paragraphs.length - 1];
     if (grapheme.text === "\n") {
-      paragraphs.push([]);
+      paragraph.terminator = grapheme;
+      paragraphs.push({ graphemes: [] });
     } else {
-      paragraphs.at(-1)?.push(grapheme);
+      paragraph.graphemes.push(grapheme);
     }
   }
   return paragraphs;
@@ -327,7 +237,9 @@ class SlotParagraphWriter {
   private mustMoveToNextLine(width: number, slot: TextLineSlot): boolean {
     return (
       this.line.length > 0 &&
-      this.lineWidth + this.letterSpacingPx + width >
+      this.lineWidth +
+        resolveGraphemeSpacing(this.line.at(-1), this.letterSpacingPx) +
+        width >
         slot.availableWidth + WIDTH_EPSILON_PX
     );
   }
@@ -337,7 +249,11 @@ class SlotParagraphWriter {
     width: number,
     slot: TextLineSlot,
   ): void {
-    if (this.line.length > 0) this.lineWidth += this.letterSpacingPx;
+    if (this.line.length > 0)
+      this.lineWidth += resolveGraphemeSpacing(
+        this.line.at(-1),
+        this.letterSpacingPx,
+      );
     this.line.push(...graphemes);
     this.lineWidth += width;
     if (this.lineWidth > slot.availableWidth + WIDTH_EPSILON_PX) {
@@ -395,11 +311,13 @@ function fittingPrefixLength(
   letterSpacingPx: number,
 ): number {
   let width = 0;
-  for (let index = 0; index < graphemes.length; index += 1) {
-    const grapheme = graphemes[index];
-    if (!grapheme) break;
+  for (const [index, grapheme] of graphemes.entries()) {
     const nextWidth =
-      width + grapheme.width + (index > 0 ? letterSpacingPx : 0);
+      width +
+      grapheme.width +
+      (index > 0
+        ? resolveGraphemeSpacing(graphemes[index - 1], letterSpacingPx)
+        : 0);
     if (index > 0 && nextWidth > maxWidth + WIDTH_EPSILON_PX) return index;
     width = nextWidth;
   }

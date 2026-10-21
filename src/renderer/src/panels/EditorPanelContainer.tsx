@@ -47,6 +47,7 @@ export function EditorPanelContainer(): React.JSX.Element {
         selectionKey={session.selectionKey}
         formatSelection={session.formatSelection}
         editorTextTabRequestToken={session.editorTextTabRequestToken}
+        editorTextResetToken={session.editorTextResetToken}
         pageSize={session.selectedPageSize}
         resolvedFontSizePx={resolvedFontSizePx}
         transformMode={session.transformMode}
@@ -70,6 +71,7 @@ export function EditorPanelContainer(): React.JSX.Element {
         onAdjustFontSize={session.onAdjustFontSize}
         onUpdate={session.onUpdateBlock}
         onUpdateFormat={session.onUpdateFormat}
+        onPreviewTextSelection={session.onPreviewTextSelection}
         onDelete={session.onDeleteBlock}
         onDuplicate={session.onDuplicateBlock}
         onSaveToLibrary={() => setSaveOpen(true)}

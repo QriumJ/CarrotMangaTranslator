@@ -3,10 +3,8 @@ import {
   compareBalancedParagraphs,
   measureBalancedBubbleParagraph,
 } from "../src/renderer/src/lib/balancedBubbleTextWrapping";
-import type {
-  StyledGrapheme,
-  TextLineSlot,
-} from "../src/renderer/src/lib/overlayTextWrapping";
+import type { TextLineSlot } from "../src/renderer/src/lib/textLineTypes";
+import type { StyledGrapheme } from "../src/renderer/src/lib/overlayTextWrapping";
 
 const glyphs = (text: string): StyledGrapheme[] =>
   Array.from(text).map((text, i) => ({

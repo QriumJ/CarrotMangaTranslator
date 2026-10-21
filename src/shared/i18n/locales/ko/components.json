@@ -363,7 +363,34 @@
       }
     },
     "blockScope": "선택 블록 {{count}}개 · 기본 서식",
-    "singleBlockScope": "블록 기본 서식"
+    "singleBlockScope": "블록 기본 서식",
+    "characterFormat": {
+      "editText": "블록 번역문 편집",
+      "title": "문자 서식",
+      "emphasis": "글자 강조",
+      "underline": "밑줄",
+      "strikethrough": "취소선",
+      "emphasisMark": "강조점",
+      "effects": "상세 문자 효과",
+      "scopePrefix": "적용 대상: ",
+      "scope": {
+        "block": "블록 전체 글자",
+        "selection": "선택한 글자",
+        "caret": "이후 입력할 글자",
+        "blocks": "선택한 블록 {{count}}개의 모든 글자"
+      },
+      "selectAll": "전체 선택",
+      "selectAllTitle": "번역문 전체를 선택해 글자 단위로 서식 적용",
+      "selectOutputLine": "출력 줄 선택",
+      "selectOutputLineTitle": "캔버스에 출력된 현재 줄 전체를 선택",
+      "finishEditing": "편집 종료",
+      "finishEditingTitle": "텍스트 편집을 끝내고 블록 전체에 서식 적용"
+    },
+    "blockSettings": {
+      "title": "블록 전체 설정",
+      "description": "글자 선택과 관계없이 항상 블록 전체에 적용됩니다.",
+      "descriptionMultiple": "선택한 블록 {{count}}개 전체에 적용됩니다."
+    }
   },
   "transform": {
     "title": "변형",
@@ -511,6 +538,7 @@
   "editor": {
     "text": "텍스트",
     "translatedText": "번역문",
+    "sourceText": "원문 OCR",
     "eraseOriginal": "원문 지우기",
     "fitBubble": "말풍선 맞춤",
     "moreActions": "블록 작업 더 보기",

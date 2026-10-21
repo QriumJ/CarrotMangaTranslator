@@ -15,6 +15,7 @@ type OverlayBlockLayerProps = Pick<
   | "imageDataUrl"
   | "interactionPreviewStore"
   | "onBlockPointerDown"
+  | "onEditBlockText"
   | "onWarpTransformCommit"
   | "page"
   | "selectedBlockId"
@@ -52,6 +53,7 @@ const OverlayBlockLayerView = React.memo(function OverlayBlockLayerView({
   imageDataUrl,
   interactionPreviewStore,
   onBlockPointerDown,
+  onEditBlockText,
   onWarpTransformCommit,
   page,
   selectedBlockId,
@@ -108,16 +110,12 @@ const OverlayBlockLayerView = React.memo(function OverlayBlockLayerView({
           editingDisabled={blockEditingDisabled}
           textVisible={showTextBlocks}
           interactionPreviewStore={interactionPreviewStore}
-          transformMode={
-            block.id === selectedBlockId &&
-            (stageTool === "select" ||
-              stageTool === "perspective" ||
-              stageTool === "curve" ||
-              stageTool === "warp")
-              ? stageTool
-              : undefined
-          }
+          transformMode={resolveBlockTransformMode(
+            block.id === selectedBlockId,
+            stageTool,
+          )}
           onBlockPointerDown={handleBlockPointerDown}
+          onEditBlockText={onEditBlockText}
           onWarpTransformCommit={onWarpTransformCommit}
         />
       ))}
@@ -139,6 +137,7 @@ type OverlayBlockItemProps = Omit<
 const OverlayBlockItem = React.memo(function OverlayBlockItem({
   block,
   onBlockPointerDown,
+  onEditBlockText,
   onWarpTransformCommit,
   ...props
 }: OverlayBlockItemProps): React.JSX.Element {
@@ -161,6 +160,7 @@ const OverlayBlockItem = React.memo(function OverlayBlockItem({
     <OverlayBlockView
       {...props}
       block={block}
+      onEditBlockText={onEditBlockText}
       onPointerDown={onPointerDown}
       onResizePointerDown={onResizePointerDown}
       onTransformPointerDown={onTransformPointerDown}
@@ -213,4 +213,17 @@ function useDialogueSizes(
     }),
     [ready, page.blocks, pageSize, catalog],
   );
+}
+
+function resolveBlockTransformMode(
+  selected: boolean,
+  tool: ImageStageProps["stageTool"],
+) {
+  if (!selected) return undefined;
+  return tool === "select" ||
+    tool === "perspective" ||
+    tool === "curve" ||
+    tool === "warp"
+    ? tool
+    : undefined;
 }

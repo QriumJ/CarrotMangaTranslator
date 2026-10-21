@@ -1,0 +1,17 @@
+/* Consecutive editor sections share one rail surface and divide by a rule. */
+.disclosure + .disclosure {
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border-soft);
+}
+
+/* In a narrow rail the header tools drop below the title instead of
+ * squeezing it onto two lines. */
+.header {
+  flex-wrap: wrap;
+  align-items: center;
+  row-gap: var(--sp-1);
+}
+
+.title {
+  white-space: nowrap;
+}

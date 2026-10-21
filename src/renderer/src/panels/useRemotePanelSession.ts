@@ -43,6 +43,7 @@ type RemoteBlockActions = Pick<
   | "onRemoveBubbleLayout"
   | "onUpdateBlock"
   | "onUpdateFormat"
+  | "onPreviewTextSelection"
 >;
 
 function dispatchCommand(command: PanelCommand): void {
@@ -228,6 +229,12 @@ function createRemoteBlockActions(
         });
       }
     },
+    onPreviewTextSelection: (selection) =>
+      dispatchCommand({
+        type: "previewTextSelection",
+        selectionKey,
+        selection,
+      }),
     onUpdateFormat: (patch) => {
       if (selectedBlockId) {
         dispatchCommand({

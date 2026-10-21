@@ -38806,6 +38806,28 @@
         "pct": 100
       }
     },
+    "src/renderer/src/app/session/useEditorTextTabRequest.ts": {
+      "lines": {
+        "covered": 6,
+        "total": 8,
+        "pct": 75
+      },
+      "statements": {
+        "covered": 7,
+        "total": 10,
+        "pct": 70
+      },
+      "functions": {
+        "covered": 3,
+        "total": 5,
+        "pct": 60
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
     "src/renderer/src/app/session/useSoundEffectReviewUiState.ts": {
       "lines": {
         "covered": 7,
@@ -39884,6 +39906,94 @@
         "pct": 62.5
       }
     },
+    "src/renderer/src/components/EditorCharacterEffectControls.tsx": {
+      "lines": {
+        "covered": 39,
+        "total": 39,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 41,
+        "total": 41,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 17,
+        "total": 17,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 29,
+        "total": 32,
+        "pct": 90.62
+      }
+    },
+    "src/renderer/src/components/EditorCharacterFormatSection.tsx": {
+      "lines": {
+        "covered": 17,
+        "total": 17,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 18,
+        "total": 18,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 8,
+        "total": 8,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 20,
+        "total": 22,
+        "pct": 90.9
+      }
+    },
+    "src/renderer/src/components/EditorCharacterNumberFields.tsx": {
+      "lines": {
+        "covered": 9,
+        "total": 10,
+        "pct": 90
+      },
+      "statements": {
+        "covered": 10,
+        "total": 11,
+        "pct": 90.9
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 11,
+        "total": 14,
+        "pct": 78.57
+      }
+    },
+    "src/renderer/src/components/EditorDisclosure.tsx": {
+      "lines": {
+        "covered": 16,
+        "total": 19,
+        "pct": 84.21
+      },
+      "statements": {
+        "covered": 17,
+        "total": 20,
+        "pct": 85
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 10,
+        "total": 10,
+        "pct": 100
+      }
+    },
     "src/renderer/src/components/EditorFontSizeRow.tsx": {
       "lines": {
         "covered": 4,
@@ -39903,6 +40013,28 @@
       "branches": {
         "covered": 0,
         "total": 0,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/components/EditorNumberField.tsx": {
+      "lines": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 8,
+        "total": 8,
         "pct": 100
       }
     },
@@ -39928,6 +40060,28 @@
         "pct": 57.69
       }
     },
+    "src/renderer/src/components/EditorPanelBody.tsx": {
+      "lines": {
+        "covered": 34,
+        "total": 34,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 34,
+        "total": 35,
+        "pct": 97.14
+      },
+      "functions": {
+        "covered": 12,
+        "total": 13,
+        "pct": 92.3
+      },
+      "branches": {
+        "covered": 24,
+        "total": 24,
+        "pct": 100
+      }
+    },
     "src/renderer/src/components/EditorTextEffectControls.tsx": {
       "lines": {
         "total": 27,
@@ -39947,6 +40101,28 @@
       "branches": {
         "total": 11,
         "covered": 11,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/components/EditorTextSelectionCommands.tsx": {
+      "lines": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 2,
+        "total": 2,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 1,
+        "total": 1,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 6,
+        "total": 6,
         "pct": 100
       }
     },
@@ -40456,6 +40632,28 @@
         "pct": 100
       }
     },
+    "src/renderer/src/components/OverlayTextRun.tsx": {
+      "lines": {
+        "covered": 22,
+        "total": 22,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 24,
+        "total": 24,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 6,
+        "total": 6,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 46,
+        "total": 48,
+        "pct": 95.83
+      }
+    },
     "src/renderer/src/components/PageEditorModal.tsx": {
       "lines": {
         "total": 44,
@@ -40742,6 +40940,28 @@
         "pct": 100
       }
     },
+    "src/renderer/src/components/RichTranslationEditorInput.tsx": {
+      "lines": {
+        "covered": 20,
+        "total": 20,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 24,
+        "total": 24,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 11,
+        "total": 11,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 17,
+        "total": 18,
+        "pct": 94.44
+      }
+    },
     "src/renderer/src/components/RichTranslationEditorView.tsx": {
       "lines": {
         "total": 25,
@@ -40762,94 +40982,6 @@
         "total": 10,
         "covered": 10,
         "pct": 100
-      }
-    },
-    "src/renderer/src/components/RichTranslationInlineAppearance.tsx": {
-      "lines": {
-        "total": 27,
-        "covered": 24,
-        "pct": 88.88
-      },
-      "statements": {
-        "total": 27,
-        "covered": 24,
-        "pct": 88.88
-      },
-      "functions": {
-        "total": 20,
-        "covered": 17,
-        "pct": 85
-      },
-      "branches": {
-        "total": 14,
-        "covered": 8,
-        "pct": 57.14
-      }
-    },
-    "src/renderer/src/components/RichTranslationInlineNumberField.tsx": {
-      "lines": {
-        "total": 1,
-        "covered": 1,
-        "pct": 100
-      },
-      "statements": {
-        "total": 1,
-        "covered": 1,
-        "pct": 100
-      },
-      "functions": {
-        "total": 1,
-        "covered": 1,
-        "pct": 100
-      },
-      "branches": {
-        "total": 4,
-        "covered": 4,
-        "pct": 100
-      }
-    },
-    "src/renderer/src/components/RichTranslationInlineStylePanel.tsx": {
-      "lines": {
-        "total": 2,
-        "covered": 2,
-        "pct": 100
-      },
-      "statements": {
-        "total": 2,
-        "covered": 2,
-        "pct": 100
-      },
-      "functions": {
-        "total": 1,
-        "covered": 1,
-        "pct": 100
-      },
-      "branches": {
-        "total": 0,
-        "covered": 0,
-        "pct": 100
-      }
-    },
-    "src/renderer/src/components/RichTranslationInlineTypography.tsx": {
-      "lines": {
-        "total": 18,
-        "covered": 18,
-        "pct": 100
-      },
-      "statements": {
-        "total": 18,
-        "covered": 18,
-        "pct": 100
-      },
-      "functions": {
-        "total": 10,
-        "covered": 10,
-        "pct": 100
-      },
-      "branches": {
-        "total": 10,
-        "covered": 6,
-        "pct": 60
       }
     },
     "src/renderer/src/components/SaveBlockLibraryModal.tsx": {
@@ -41773,6 +41905,50 @@
       "branches": {
         "total": 4,
         "covered": 4,
+        "pct": 100
+      }
+    },
+    "src/renderer/src/components/editorCharacterFormatTarget.ts": {
+      "lines": {
+        "covered": 21,
+        "total": 21,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 24,
+        "total": 25,
+        "pct": 96
+      },
+      "functions": {
+        "covered": 6,
+        "total": 6,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 28,
+        "total": 31,
+        "pct": 90.32
+      }
+    },
+    "src/renderer/src/components/editorPanelTypes.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
         "pct": 100
       }
     },
@@ -43314,6 +43490,28 @@
         "total": 179,
         "covered": 112,
         "pct": 62.56
+      }
+    },
+    "src/renderer/src/components/richTranslationTypingStyleValues.ts": {
+      "lines": {
+        "covered": 21,
+        "total": 33,
+        "pct": 63.63
+      },
+      "statements": {
+        "covered": 23,
+        "total": 35,
+        "pct": 65.71
+      },
+      "functions": {
+        "covered": 17,
+        "total": 28,
+        "pct": 60.71
+      },
+      "branches": {
+        "covered": 15,
+        "total": 50,
+        "pct": 30
       }
     },
     "src/renderer/src/components/settingsModal/AccountRuntimeSetup.tsx": {
@@ -45560,6 +45758,28 @@
         "pct": 100
       }
     },
+    "src/renderer/src/components/useRichTranslationEditorActions.ts": {
+      "lines": {
+        "covered": 53,
+        "total": 58,
+        "pct": 91.37
+      },
+      "statements": {
+        "covered": 53,
+        "total": 59,
+        "pct": 89.83
+      },
+      "functions": {
+        "covered": 9,
+        "total": 9,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 18,
+        "total": 26,
+        "pct": 69.23
+      }
+    },
     "src/renderer/src/components/useRichTranslationEditorController.ts": {
       "lines": {
         "total": 62,
@@ -45602,6 +45822,28 @@
         "total": 12,
         "covered": 11,
         "pct": 91.66
+      }
+    },
+    "src/renderer/src/components/useRichTranslationOutputSelection.ts": {
+      "lines": {
+        "covered": 12,
+        "total": 12,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 13,
+        "total": 15,
+        "pct": 86.66
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 12,
+        "total": 18,
+        "pct": 66.66
       }
     },
     "src/renderer/src/components/useRichTranslationSpecialCharacters.ts": {
@@ -47232,6 +47474,28 @@
         "pct": 83.33
       }
     },
+    "src/renderer/src/lib/appOutputCommands.ts": {
+      "lines": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 6,
+        "total": 6,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 3,
+        "total": 3,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      }
+    },
     "src/renderer/src/lib/balancedBubbleTextWrapping.ts": {
       "lines": {
         "covered": 71,
@@ -47274,6 +47538,28 @@
         "covered": 28,
         "total": 37,
         "pct": 75.67
+      }
+    },
+    "src/renderer/src/lib/bubbleTextQuality.ts": {
+      "lines": {
+        "covered": 33,
+        "total": 33,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 35,
+        "total": 35,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 9,
+        "total": 9,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 22,
+        "total": 22,
+        "pct": 100
       }
     },
     "src/renderer/src/lib/chapterBulkSelection.ts": {
@@ -47428,6 +47714,50 @@
         "covered": 9,
         "total": 9,
         "pct": 100
+      }
+    },
+    "src/renderer/src/lib/inlineBubbleLineSlots.ts": {
+      "lines": {
+        "covered": 29,
+        "total": 29,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 33,
+        "total": 35,
+        "pct": 94.28
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 20,
+        "total": 26,
+        "pct": 76.92
+      }
+    },
+    "src/renderer/src/lib/inlineLineMetrics.ts": {
+      "lines": {
+        "covered": 29,
+        "total": 30,
+        "pct": 96.66
+      },
+      "statements": {
+        "covered": 33,
+        "total": 35,
+        "pct": 94.28
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 31,
+        "total": 36,
+        "pct": 86.11
       }
     },
     "src/renderer/src/lib/jobProgressFormatting.ts": {
@@ -48112,6 +48442,28 @@
         "pct": 80.7
       }
     },
+    "src/renderer/src/lib/textLineTypes.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 0,
+        "total": 0,
+        "pct": 100
+      }
+    },
     "src/renderer/src/lib/textRunVisualStyles.ts": {
       "lines": {
         "total": 25,
@@ -48132,6 +48484,28 @@
         "total": 61,
         "covered": 31,
         "pct": 50.81
+      }
+    },
+    "src/renderer/src/lib/textSelectionPreview.ts": {
+      "lines": {
+        "covered": 12,
+        "total": 12,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 12,
+        "total": 15,
+        "pct": 80
+      },
+      "functions": {
+        "covered": 5,
+        "total": 6,
+        "pct": 83.33
+      },
+      "branches": {
+        "covered": 7,
+        "total": 13,
+        "pct": 53.84
       }
     },
     "src/renderer/src/lib/textStyleRunResolution.ts": {
@@ -52510,6 +52884,50 @@
         "covered": 63,
         "total": 64,
         "pct": 98.43
+      }
+    },
+    "src/shared/richTextBlockFormatting.ts": {
+      "lines": {
+        "covered": 35,
+        "total": 36,
+        "pct": 97.22
+      },
+      "statements": {
+        "covered": 42,
+        "total": 43,
+        "pct": 97.67
+      },
+      "functions": {
+        "covered": 6,
+        "total": 6,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 21,
+        "total": 22,
+        "pct": 95.45
+      }
+    },
+    "src/shared/richTextShadow.ts": {
+      "lines": {
+        "total": 16,
+        "covered": 16,
+        "pct": 100
+      },
+      "statements": {
+        "total": 18,
+        "covered": 18,
+        "pct": 100
+      },
+      "functions": {
+        "total": 4,
+        "covered": 4,
+        "pct": 100
+      },
+      "branches": {
+        "total": 8,
+        "covered": 8,
+        "pct": 100
       }
     },
     "src/shared/sampledRetouch.ts": {

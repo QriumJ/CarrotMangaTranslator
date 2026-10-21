@@ -67,14 +67,24 @@ export function layoutGlyphsOnCurve({
     widths,
     letterSpacingPx,
   );
-  const totalWidth = sum(widths) + Math.max(0, glyphs.length - 1) * gap;
+  const gaps = resolveInlineCurveGaps(
+    glyphs,
+    fontSizePx,
+    gap,
+    layout.fitSpacing === true &&
+      glyphs.length > 1 &&
+      pathLength >= sum(widths),
+  );
+  const totalWidth =
+    sum(widths) +
+    (gaps ? sum(gaps.slice(0, -1)) : Math.max(0, glyphs.length - 1) * gap);
   let cursor = alignmentOffset(layout.alignment, pathLength, totalWidth);
   const offsetPx = layout.offsetEm * fontSizePx;
 
   return glyphs.map((glyph, index) => {
     const widthPx = widths[index];
     const sample = sampleAtDistance(samples, cursor + widthPx / 2);
-    cursor += widthPx + gap;
+    cursor += widthPx + (gaps?.[index] ?? gap);
     return {
       ...glyph,
       width: widthPx,
@@ -210,4 +220,22 @@ function interpolatePoint(a: Point, b: Point, ratio: number): Point {
 
 function sum(values: number[]): number {
   return values.reduce((total, value) => total + value, 0);
+}
+
+function resolveInlineCurveGaps(
+  glyphs: MeasuredCurveGlyph[],
+  fontSizePx: number,
+  fallback: number,
+  fitted: boolean,
+): number[] | null {
+  if (
+    fitted ||
+    !glyphs.some((glyph) => glyph.style?.letterSpacing !== undefined)
+  )
+    return null;
+  return glyphs.map((glyph) =>
+    glyph.style?.letterSpacing === undefined
+      ? fallback
+      : glyph.style.letterSpacing * (glyph.fontSizePx ?? fontSizePx),
+  );
 }

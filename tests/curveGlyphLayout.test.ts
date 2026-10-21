@@ -72,3 +72,30 @@ describe("curve glyph layout", () => {
     expect(result[0].y).toBeCloseTo(60);
   });
 });
+
+it("uses selected character tracking on a curve while retaining fit-spacing authority", () => {
+  const input = {
+    glyphs: [
+      {
+        ...glyphs[0],
+        style: { bold: false, italic: false, letterSpacing: 0.5 },
+      },
+      glyphs[1],
+    ],
+    layout: straight,
+    width: 200,
+    height: 100,
+    fontSizePx: 20,
+    fontWidthScale: 1,
+    letterSpacingPx: 0,
+  };
+  const result = layoutGlyphsOnCurve(input);
+  expect(result[0].x).toBeCloseTo(85);
+  expect(result[1].x).toBeCloseTo(115);
+  const fitted = layoutGlyphsOnCurve({
+    ...input,
+    layout: { ...straight, fitSpacing: true },
+  });
+  expect(fitted[0].x).toBeCloseTo(10);
+  expect(fitted[1].x).toBeCloseTo(190);
+});

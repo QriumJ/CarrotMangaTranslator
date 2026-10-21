@@ -286,10 +286,12 @@ describe("selected block font-size adjustment", () => {
     selectEditorTab("서식");
     const sizeInput = screen.getByLabelText("글자 크기 값") as HTMLInputElement;
     expect(sizeInput.value).toBe("37");
-    expect(sizeInput.disabled).toBe(true);
+    expect(sizeInput.disabled).toBe(false);
     expect(block.fontSizePx).toBe(12);
 
-    fireEvent.click(screen.getByRole("checkbox", { name: "자동" }));
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: "텍스트 상자에 맞춰 자동 크기" }),
+    );
     expect(onUpdate).toHaveBeenCalledWith({
       autoFitText: false,
       fontSizeIntent: "manual",
@@ -313,7 +315,9 @@ describe("selected block font-size adjustment", () => {
     );
 
     selectEditorTab("서식");
-    fireEvent.click(screen.getByRole("checkbox", { name: "자동" }));
+    fireEvent.click(
+      screen.getByRole("checkbox", { name: "텍스트 상자에 맞춰 자동 크기" }),
+    );
 
     expect(onUpdate).toHaveBeenCalledWith({
       autoFitText: true,
@@ -453,9 +457,9 @@ describe("selected block font-size adjustment", () => {
     });
     expect(remove.hasAttribute("title")).toBe(false);
     expect(
-      screen.getByRole("tab", { name: "텍스트" }).getAttribute("aria-selected"),
+      screen.getByRole("tab", { name: "서식" }).getAttribute("aria-selected"),
     ).toBe("true");
-    selectEditorTab("서식");
+    selectEditorTab("배치");
     expect(
       screen.getByRole("button", { name: "말풍선 맞춤 해제" }),
     ).not.toBeNull();
@@ -480,7 +484,7 @@ describe("selected block font-size adjustment", () => {
     ).toBeNull();
   });
 
-  it("runs block-only erase and bubble-fit actions above the translation", () => {
+  it("runs block-only erase and bubble-fit actions with the original OCR", () => {
     const onEraseOriginal = vi.fn();
     const onFitBubble = vi.fn();
     const view = render(
@@ -500,12 +504,19 @@ describe("selected block font-size adjustment", () => {
 
     const erase = screen.getByRole("button", { name: "원문 지우기" });
     const fit = screen.getByRole("button", { name: "말풍선 맞춤" });
-    const actionRow = view.container.querySelector(".editor-text-actions");
+    // Both act on this block's source art, so they sit with its OCR text,
+    // below the translation instead of above it.
+    const source = screen.getByRole("region", { name: "원문 OCR" });
+    expect(source.contains(erase)).toBe(true);
+    expect(source.contains(fit)).toBe(true);
     expect(
-      actionRow?.nextElementSibling?.classList.contains(
-        "rich-translation-editor",
-      ),
-    ).toBe(true);
+      screen
+        .getByRole("textbox", { name: "번역문" })
+        .compareDocumentPosition(erase),
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(
+      screen.getByRole("region", { name: "블록 전체 설정" }).contains(erase),
+    ).toBe(false);
 
     fireEvent.click(erase);
     fireEvent.click(fit);
@@ -563,8 +574,9 @@ describe("selected block font-size adjustment", () => {
     );
 
     expect(
-      screen.getByRole("tab", { name: "텍스트" }).getAttribute("aria-selected"),
+      screen.getByRole("tab", { name: "서식" }).getAttribute("aria-selected"),
     ).toBe("true");
+    expect(screen.queryByRole("tab", { name: "텍스트" })).toBeNull();
     const translation = screen.getByRole("textbox", {
       name: "번역문",
     }) as HTMLDivElement;
@@ -574,19 +586,20 @@ describe("selected block font-size adjustment", () => {
     expect(onUpdateFormat).not.toHaveBeenCalled();
 
     const source = screen.getByRole("textbox", {
-      name: "OCR",
+      name: "원문 OCR",
     }) as HTMLTextAreaElement;
     expect(source.value).toBe("OCR 첫 줄\nOCR 둘째 줄");
-    expect(container.querySelector(".editor-source-disclosure")).toBeNull();
-    expect(container.querySelector(".editor-source-field")).not.toBeNull();
+    expect(
+      screen
+        .getByRole("button", { name: "원문 OCR" })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
     expect(container.querySelector(".markup-hint")).toBeNull();
 
     expect(
       screen.queryByRole("button", { name: "부분 강조 도움말" }),
     ).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "굵게 (**굵게**)" }),
-    ).not.toBeNull();
+    expect(screen.getByRole("button", { name: "굵게" })).not.toBeNull();
     fireEvent.change(source, { target: { value: "수정한 OCR" } });
     expect(onUpdate).toHaveBeenCalledWith({ sourceText: "수정한 OCR" });
     expect(onUpdateFormat).not.toHaveBeenCalled();
@@ -599,15 +612,20 @@ describe("selected block font-size adjustment", () => {
     expect(onUpdateFormat).not.toHaveBeenCalled();
 
     selectEditorTab("서식");
-    fireEvent.click(screen.getByRole("button", { name: "블록 전체 굵게" }));
-    expect(onUpdateFormat).toHaveBeenCalledWith({ bold: true });
-    selectEditorTab("텍스트");
+    // One block formats through its text controller, so the change and any
+    // markup it rewrites reach the active block together.
+    fireEvent.click(screen.getByRole("button", { name: "굵게" }));
+    expect(onUpdate).toHaveBeenLastCalledWith({ bold: true });
+    expect(onUpdateFormat).not.toHaveBeenCalled();
     expect(screen.getByRole("textbox", { name: "번역문" }).textContent).toBe(
       "작성 중 번역",
     );
     expect(
-      (screen.getByRole("textbox", { name: "OCR" }) as HTMLTextAreaElement)
-        .value,
+      (
+        screen.getByRole("textbox", {
+          name: "원문 OCR",
+        }) as HTMLTextAreaElement
+      ).value,
     ).toBe("수정한 OCR");
   });
 
@@ -628,6 +646,7 @@ describe("selected block font-size adjustment", () => {
     const editor = screen.getByRole("textbox", { name: "번역문" });
     const textNode = editor.querySelector("[data-rich-text-run]")?.firstChild;
     if (!textNode) throw new Error("Expected a visual editor text node");
+    act(() => editor.focus());
     const range = document.createRange();
     range.setStart(textNode, 1);
     range.setEnd(textNode, 3);
@@ -635,17 +654,18 @@ describe("selected block font-size adjustment", () => {
     document.getSelection()?.addRange(range);
     act(() => document.dispatchEvent(new Event("selectionchange")));
 
-    const inlinePanel = screen.getByRole("region", { name: "글자별 서식" });
+    const inlinePanel = characterFormatRegion();
+    expect(within(inlinePanel).getByRole("status").textContent).toBe(
+      "적용 대상: 선택한 글자",
+    );
     expect(
-      within(inlinePanel).getByRole("button", { name: "굵게 (**굵게**)" }),
-    ).not.toBeNull();
+      within(inlinePanel).getByRole("button", { name: "굵게" }),
+    ).toBeTruthy();
     expect(
-      within(inlinePanel).getByRole("button", {
-        name: "기울임 (*기울임*)",
-      }),
-    ).not.toBeNull();
-    const size = within(inlinePanel).getByRole("textbox", {
-      name: "글자 크기",
+      within(inlinePanel).getByRole("button", { name: "기울임꼴" }),
+    ).toBeTruthy();
+    const size = within(inlinePanel).getByRole("spinbutton", {
+      name: "글자 크기 값",
     }) as HTMLInputElement;
     fireEvent.pointerDown(size);
     act(() => size.focus());
@@ -661,14 +681,21 @@ describe("selected block font-size adjustment", () => {
         .join(""),
     ).toBe("나다");
     fireEvent.change(size, { target: { value: "40" } });
-    expect(document.activeElement).toBe(size);
-    const opacity = within(inlinePanel).getByRole("textbox", {
+    fireEvent.keyDown(size, { key: "Enter" });
+    // Committing a field never moves focus back into the text editor, and the
+    // range stays the format target for the next control.
+    expect(editor.contains(document.activeElement)).toBe(false);
+    expect(within(inlinePanel).getByRole("status").textContent).toBe(
+      "적용 대상: 선택한 글자",
+    );
+    const opacity = within(inlinePanel).getByRole("spinbutton", {
       name: "글자 투명도",
     }) as HTMLInputElement;
     fireEvent.pointerDown(opacity);
     act(() => opacity.focus());
     fireEvent.change(opacity, { target: { value: "60" } });
-    expect(document.activeElement).toBe(opacity);
+    fireEvent.keyDown(opacity, { key: "Enter" });
+    expect(editor.contains(document.activeElement)).toBe(false);
 
     await waitFor(() =>
       expect(onUpdate).toHaveBeenLastCalledWith({
@@ -785,61 +812,58 @@ describe("selected block font-size adjustment", () => {
     if (!(textNode instanceof Text)) {
       throw new Error("Expected a fully styled visual run");
     }
+    act(() => editor.focus());
     const range = document.createRange();
     range.selectNodeContents(textNode);
     document.getSelection()?.removeAllRanges();
     document.getSelection()?.addRange(range);
     act(() => document.dispatchEvent(new Event("selectionchange")));
 
-    const panel = screen.getByRole("region", { name: "글자별 서식" });
-    fireEvent.click(
-      within(panel).getByRole("button", { name: "블록 전체 밑줄" }),
+    const panel = characterFormatRegion();
+    fireEvent.click(within(panel).getByRole("button", { name: "밑줄" }));
+    fireEvent.click(within(panel).getByRole("button", { name: "취소선" }));
+    fireEvent.click(within(panel).getByRole("button", { name: "강조점" }));
+    commitNumber(
+      within(panel).getByRole("spinbutton", { name: "장평" }),
+      "135",
     );
-    fireEvent.click(
-      within(panel).getByRole("button", { name: "블록 전체 취소선" }),
-    );
-    fireEvent.click(
-      within(panel).getByRole("button", { name: "블록 전체 강조점" }),
-    );
-    fireEvent.change(within(panel).getByRole("textbox", { name: "장평" }), {
-      target: { value: "135" },
-    });
     fireEvent.change(
       within(panel).getByRole("textbox", { name: "글자색 HEX" }),
       { target: { value: "#334455" } },
     );
+    const effects = openCharacterEffects();
     fireEvent.change(
-      within(panel).getByRole("textbox", { name: "배경색 HEX" }),
+      within(effects).getByRole("textbox", { name: "배경색 HEX" }),
       { target: { value: "#fff4cc" } },
     );
-
     fireEvent.change(
-      within(panel).getByRole("textbox", { name: "외곽선 HEX" }),
+      within(effects).getByRole("textbox", { name: "외곽선 HEX" }),
       { target: { value: "#ddeeff" } },
     );
     fireEvent.change(
-      within(panel).getByRole("textbox", { name: "바깥 외곽선 HEX" }),
+      within(effects).getByRole("textbox", { name: "바깥 외곽선 색상 HEX" }),
       { target: { value: "#101820" } },
     );
-    const outlineWidths = within(panel).getAllByRole("textbox", {
-      name: "외곽선 굵기",
-    });
-    fireEvent.change(outlineWidths[0] as HTMLInputElement, {
-      target: { value: "2.5" },
-    });
-    fireEvent.change(outlineWidths[1] as HTMLInputElement, {
-      target: { value: "4" },
-    });
+    commitNumber(
+      within(effects).getByRole("spinbutton", { name: "외곽선 굵기" }),
+      "2.5",
+    );
+    commitNumber(
+      within(effects).getByRole("spinbutton", { name: "바깥 외곽선 두께" }),
+      "4",
+    );
     fireEvent.change(
-      within(panel).getByRole("textbox", { name: "광선 색상 HEX" }),
+      within(effects).getByRole("textbox", { name: "광선 색상 HEX" }),
       { target: { value: "#ff4400" } },
     );
-    fireEvent.change(within(panel).getByRole("textbox", { name: "퍼짐" }), {
-      target: { value: "9" },
-    });
-    fireEvent.change(within(panel).getByRole("textbox", { name: "불투명도" }), {
-      target: { value: "55" },
-    });
+    commitNumber(
+      within(effects).getByRole("spinbutton", { name: "퍼짐" }),
+      "9",
+    );
+    commitNumber(
+      within(effects).getByRole("spinbutton", { name: "불투명도" }),
+      "55",
+    );
 
     expect(onUpdate.mock.calls.length).toBeGreaterThanOrEqual(12);
   });
@@ -875,43 +899,44 @@ describe("selected block font-size adjustment", () => {
     const code = screen.getByRole("textbox", {
       name: "번역문 서식 코드",
     }) as HTMLTextAreaElement;
+    act(() => code.focus());
     code.setSelectionRange(0, 2);
     fireEvent.select(code);
-    const panel = screen.getByRole("region", { name: "글자별 서식" });
+    const panel = characterFormatRegion();
 
-    for (const name of [
-      "블록 전체 밑줄",
-      "블록 전체 취소선",
-      "블록 전체 강조점",
-    ]) {
+    for (const name of ["밑줄", "취소선", "강조점"]) {
       fireEvent.click(within(panel).getByRole("button", { name }));
     }
-    fireEvent.change(
-      within(panel).getByRole("textbox", { name: "글자 크기" }),
-      { target: { value: "36" } },
+    commitNumber(
+      within(panel).getByRole("spinbutton", { name: "글자 크기 값" }),
+      "36",
     );
-    fireEvent.change(
-      within(panel).getByRole("textbox", { name: "글자 투명도" }),
-      { target: { value: "70" } },
+    commitNumber(
+      within(panel).getByRole("spinbutton", { name: "글자 투명도" }),
+      "70",
     );
-    fireEvent.change(within(panel).getByRole("textbox", { name: "장평" }), {
-      target: { value: "125" },
-    });
+    commitNumber(
+      within(panel).getByRole("spinbutton", { name: "장평" }),
+      "125",
+    );
     fireEvent.change(
       within(panel).getByRole("textbox", { name: "글자색 HEX" }),
       { target: { value: "#123456" } },
     );
-    fireEvent.click(within(panel).getByRole("checkbox", { name: "글자 배경" }));
+    const effects = openCharacterEffects();
+    fireEvent.click(
+      within(effects).getByRole("checkbox", { name: "글자 배경" }),
+    );
     fireEvent.change(
-      within(panel).getByRole("textbox", { name: "외곽선 HEX" }),
+      within(effects).getByRole("textbox", { name: "외곽선 HEX" }),
       { target: { value: "#abcdef" } },
     );
     fireEvent.change(
-      within(panel).getByRole("textbox", { name: "바깥 외곽선 HEX" }),
+      within(effects).getByRole("textbox", { name: "바깥 외곽선 색상 HEX" }),
       { target: { value: "#010203" } },
     );
     fireEvent.change(
-      within(panel).getByRole("textbox", { name: "광선 색상 HEX" }),
+      within(effects).getByRole("textbox", { name: "광선 색상 HEX" }),
       { target: { value: "#ff5500" } },
     );
 
@@ -919,9 +944,10 @@ describe("selected block font-size adjustment", () => {
       .map(([patch]) => (patch as Partial<TranslationBlock>).translatedText)
       .filter((value): value is string => typeof value === "string");
     expect(generated.some((value) => value.includes("[underline]"))).toBe(true);
-    expect(generated.some((value) => value.includes("[width=1.25]"))).toBe(
-      true,
-    );
+    expect(
+      generated.some((value) => value.includes("[width=1.25]")),
+      generated.join("\n"),
+    ).toBe(true);
     expect(
       generated.some((value) => value.includes("[glow-color=#ff5500]")),
     ).toBe(true);
@@ -948,11 +974,14 @@ describe("selected block font-size adjustment", () => {
       name: "번역문 서식 코드",
     }) as HTMLTextAreaElement;
     const start = value.indexOf("효과");
+    act(() => code.focus());
     code.setSelectionRange(start, start + 2);
     fireEvent.select(code);
 
-    const panel = screen.getByRole("region", { name: "글자별 서식" });
-    fireEvent.click(within(panel).getByRole("checkbox", { name: "글자 배경" }));
+    const effects = openCharacterEffects();
+    fireEvent.click(
+      within(effects).getByRole("checkbox", { name: "글자 배경" }),
+    );
 
     expect(onUpdate).toHaveBeenLastCalledWith({ translatedText: "효과" });
   });
@@ -978,6 +1007,7 @@ describe("selected block font-size adjustment", () => {
       "[data-size-px='48']",
     )?.firstChild;
     if (!styledText) throw new Error("Expected an inline-sized text run");
+    act(() => editor.focus());
     const range = document.createRange();
     range.setStart(styledText, 1);
     range.collapse(true);
@@ -985,17 +1015,20 @@ describe("selected block font-size adjustment", () => {
     document.getSelection()?.addRange(range);
     act(() => document.dispatchEvent(new Event("selectionchange")));
 
-    const inlinePanel = screen.getByRole("region", { name: "글자별 서식" });
+    const inlinePanel = characterFormatRegion();
+    expect(within(inlinePanel).getByRole("status").textContent).toBe(
+      "적용 대상: 이후 입력할 글자",
+    );
     expect(
       (
-        within(inlinePanel).getByRole("textbox", {
-          name: "글자 크기",
+        within(inlinePanel).getByRole("spinbutton", {
+          name: "글자 크기 값",
         }) as HTMLInputElement
       ).value,
     ).toBe("48");
     expect(
       (
-        within(inlinePanel).getByRole("textbox", {
+        within(inlinePanel).getByRole("spinbutton", {
           name: "글자 투명도",
         }) as HTMLInputElement
       ).value,
@@ -1068,15 +1101,19 @@ describe("selected block font-size adjustment", () => {
       document.getSelection()?.addRange(range);
       if (notify) document.dispatchEvent(new Event("selectionchange"));
     };
-    act(() => placeCaret(1));
+    act(() => {
+      editor.focus();
+      placeCaret(1);
+    });
 
-    const inlinePanel = screen.getByRole("region", { name: "글자별 서식" });
-    const size = within(inlinePanel).getByRole("textbox", {
-      name: "글자 크기",
+    const inlinePanel = characterFormatRegion();
+    const size = within(inlinePanel).getByRole("spinbutton", {
+      name: "글자 크기 값",
     }) as HTMLInputElement;
     fireEvent.pointerDown(size);
     act(() => size.focus());
     fireEvent.change(size, { target: { value: "40" } });
+    fireEvent.keyDown(size, { key: "Enter" });
     expect(onUpdate).not.toHaveBeenCalled();
     expect(size.value).toBe("40");
 
@@ -1133,15 +1170,17 @@ describe("selected block font-size adjustment", () => {
       document.getSelection()?.addRange(range);
     };
     act(() => {
+      editor.focus();
       placeCaret(1);
       document.dispatchEvent(new Event("selectionchange"));
     });
-    const size = within(
-      screen.getByRole("region", { name: "글자별 서식" }),
-    ).getByRole("textbox", { name: "글자 크기" }) as HTMLInputElement;
+    const size = within(characterFormatRegion()).getByRole("spinbutton", {
+      name: "글자 크기 값",
+    }) as HTMLInputElement;
     fireEvent.pointerDown(size);
     act(() => size.focus());
     fireEvent.change(size, { target: { value: "40" } });
+    fireEvent.keyDown(size, { key: "Enter" });
 
     act(() => {
       editor.focus();
@@ -1261,6 +1300,7 @@ describe("selected block font-size adjustment", () => {
     const editor = screen.getByRole("textbox", { name: "번역문" });
     const textNode = editor.querySelector("[data-rich-text-run]")?.firstChild;
     if (!textNode) throw new Error("Expected a visual editor text node");
+    act(() => editor.focus());
     const range = document.createRange();
     range.setStart(textNode, 2);
     range.collapse(true);
@@ -1268,10 +1308,10 @@ describe("selected block font-size adjustment", () => {
     document.getSelection()?.addRange(range);
     act(() => document.dispatchEvent(new Event("selectionchange")));
 
-    const inlinePanel = screen.getByRole("region", { name: "글자별 서식" });
+    const inlinePanel = characterFormatRegion();
     // The font picker is now ui/Select, so its trigger is a combobox.
     const fontTrigger = within(inlinePanel).getByRole("combobox", {
-      name: "글자 폰트",
+      name: "폰트",
     });
     fireEvent.click(fontTrigger);
     expect(screen.getByRole("listbox")).not.toBeNull();
@@ -1297,6 +1337,7 @@ describe("selected block font-size adjustment", () => {
       </FontsTestProvider>,
     );
     const editor = screen.getByRole("textbox", { name: "번역문" });
+    act(() => editor.focus());
     const textNode = editor.querySelector("[data-rich-text-run]")?.firstChild;
     if (!(textNode instanceof Text)) {
       throw new Error("Expected a visual editor text node");
@@ -1399,17 +1440,17 @@ describe("selected block font-size adjustment", () => {
         <EditorPanel {...props} />
       </FontsTestProvider>,
     );
-    const textTab = screen.getByRole("tab", { name: "텍스트" });
+    const formatTab = screen.getByRole("tab", { name: "서식" });
 
-    fireEvent.keyDown(textTab, { key: "ArrowRight" });
+    fireEvent.keyDown(formatTab, { key: "ArrowRight" });
     const layoutTab = screen.getByRole("tab", { name: "배치" });
     expect(layoutTab.getAttribute("aria-selected")).toBe("true");
     expect(document.activeElement).toBe(layoutTab);
 
-    fireEvent.keyDown(layoutTab, { key: "End" });
-    expect(
-      screen.getByRole("tab", { name: "서식" }).getAttribute("aria-selected"),
-    ).toBe("true");
+    fireEvent.keyDown(layoutTab, { key: "Home" });
+    expect(formatTab.getAttribute("aria-selected")).toBe("true");
+    fireEvent.keyDown(formatTab, { key: "End" });
+    expect(layoutTab.getAttribute("aria-selected")).toBe("true");
     view.unmount();
     render(
       <FontsTestProvider>
@@ -1417,11 +1458,11 @@ describe("selected block font-size adjustment", () => {
       </FontsTestProvider>,
     );
     expect(
-      screen.getByRole("tab", { name: "서식" }).getAttribute("aria-selected"),
+      screen.getByRole("tab", { name: "배치" }).getAttribute("aria-selected"),
     ).toBe("true");
   });
 
-  it("returns to the text tab when a new-block request token changes", () => {
+  it("returns to the text-and-format tab when a new-block request token changes", () => {
     const props = {
       block: makeBlock(),
       disabled: false,
@@ -1435,7 +1476,7 @@ describe("selected block font-size adjustment", () => {
         <EditorPanel {...props} editorTextTabRequestToken={0} />
       </FontsTestProvider>,
     );
-    selectEditorTab("서식");
+    selectEditorTab("배치");
 
     view.rerender(
       <FontsTestProvider>
@@ -1444,7 +1485,7 @@ describe("selected block font-size adjustment", () => {
     );
 
     expect(
-      screen.getByRole("tab", { name: "텍스트" }).getAttribute("aria-selected"),
+      screen.getByRole("tab", { name: "서식" }).getAttribute("aria-selected"),
     ).toBe("true");
   });
 
@@ -1480,7 +1521,7 @@ describe("selected block font-size adjustment", () => {
       screen.getByRole("tab", { name: "서식" }).getAttribute("aria-selected"),
     ).toBe("true");
 
-    selectEditorTab("텍스트");
+    selectEditorTab("배치");
     view.rerender(
       <FontsTestProvider>
         <EditorPanel
@@ -1546,7 +1587,10 @@ describe("selected block font-size adjustment", () => {
     chooseCustomSelectOption("폰트", "기본 폰트");
     expect(onUpdateFormat).toHaveBeenCalledWith({ fontFamily: undefined });
 
-    const bold = screen.getByRole("button", { name: "블록 전체 굵게" });
+    expect(
+      within(characterFormatRegion()).getByRole("status").textContent,
+    ).toBe("적용 대상: 선택한 블록 2개의 모든 글자");
+    const bold = screen.getByRole("button", { name: "굵게" });
     expect(bold.getAttribute("aria-pressed")).toBe("mixed");
     fireEvent.click(bold);
     expect(onUpdateFormat).toHaveBeenCalledWith({ bold: true });
@@ -1575,7 +1619,7 @@ describe("selected block font-size adjustment", () => {
     });
 
     const autoFit = screen.getByRole("checkbox", {
-      name: "자동",
+      name: "텍스트 상자에 맞춰 자동 크기",
     }) as HTMLInputElement;
     expect(autoFit.indeterminate).toBe(true);
     fireEvent.click(autoFit);
@@ -1619,7 +1663,7 @@ describe("selected block font-size adjustment", () => {
     expect(onUpdate).not.toHaveBeenCalled();
   });
 
-  it("opens a newly mounted blank manual block on the text tab", () => {
+  it("opens a newly mounted blank manual block on the text-and-format tab", () => {
     const props = {
       disabled: false,
       onAdjustFontSize: vi.fn(),
@@ -1632,7 +1676,7 @@ describe("selected block font-size adjustment", () => {
         <EditorPanel {...props} block={makeBlock()} />
       </FontsTestProvider>,
     );
-    selectEditorTab("서식");
+    selectEditorTab("배치");
     previous.unmount();
 
     render(
@@ -1646,7 +1690,7 @@ describe("selected block font-size adjustment", () => {
     );
 
     expect(
-      screen.getByRole("tab", { name: "텍스트" }).getAttribute("aria-selected"),
+      screen.getByRole("tab", { name: "서식" }).getAttribute("aria-selected"),
     ).toBe("true");
   });
 
@@ -1671,12 +1715,12 @@ describe("selected block font-size adjustment", () => {
     expect(panel).not.toBeNull();
     expect(header).not.toBeNull();
     expect(body).not.toBeNull();
-    expect(header?.contains(screen.getByRole("tab", { name: "텍스트" }))).toBe(
+    expect(header?.contains(screen.getByRole("tab", { name: "서식" }))).toBe(
       true,
     );
-    expect(
-      body?.contains(screen.getByRole("tabpanel", { name: "텍스트" })),
-    ).toBe(true);
+    expect(body?.contains(screen.getByRole("tabpanel", { name: "서식" }))).toBe(
+      true,
+    );
   });
 
   it("keeps the applied preset visible until direct formatting overrides it", () => {
@@ -1713,7 +1757,7 @@ describe("selected block font-size adjustment", () => {
     expect(onApplyStylePreset).toHaveBeenCalledWith("style-preset:dialogue");
     expect(presetTrigger.textContent).toContain("기본 대사");
 
-    fireEvent.click(screen.getByRole("button", { name: "블록 전체 굵게" }));
+    fireEvent.click(screen.getByRole("button", { name: "굵게" }));
     expect(presetTrigger.textContent).toContain("프리셋 선택");
   });
 
@@ -1733,10 +1777,13 @@ describe("selected block font-size adjustment", () => {
     );
 
     selectEditorTab("서식");
-    fireEvent.click(screen.getByRole("button", { name: "블록 전체 기울임" }));
-    fireEvent.click(screen.getByRole("button", { name: "블록 전체 밑줄" }));
-    fireEvent.click(screen.getByRole("button", { name: "블록 전체 취소선" }));
-    fireEvent.click(screen.getByRole("button", { name: "블록 전체 강조점" }));
+    expect(
+      within(characterFormatRegion()).getByRole("status").textContent,
+    ).toBe("적용 대상: 블록 전체 글자");
+    fireEvent.click(screen.getByRole("button", { name: "기울임꼴" }));
+    fireEvent.click(screen.getByRole("button", { name: "밑줄" }));
+    fireEvent.click(screen.getByRole("button", { name: "취소선" }));
+    fireEvent.click(screen.getByRole("button", { name: "강조점" }));
 
     expect(onUpdate).toHaveBeenCalledWith({ italic: true });
     expect(onUpdate).toHaveBeenCalledWith({ underline: true });
@@ -1798,14 +1845,14 @@ describe("selected block font-size adjustment", () => {
       screen.getByRole("tab", { name: "배치" }).getAttribute("aria-selected"),
     ).toBe("true");
 
-    selectEditorTab("텍스트");
+    selectEditorTab("서식");
     view.rerender(
       <FontsTestProvider>
         <EditorPanel {...props} transformMode="curve" />
       </FontsTestProvider>,
     );
     expect(
-      screen.getByRole("tab", { name: "텍스트" }).getAttribute("aria-selected"),
+      screen.getByRole("tab", { name: "서식" }).getAttribute("aria-selected"),
     ).toBe("true");
   });
 
@@ -1897,13 +1944,11 @@ describe("selected block font-size adjustment", () => {
       fontSizeIntent: "manual",
     });
 
-    const formatGroup = screen
-      .getByRole("heading", { name: /블록.*기본 서식/ })
-      .closest(".editor-group");
     fireEvent.click(
-      within(formatGroup as HTMLElement).getByRole("button", {
-        name: "일괄 적용",
-      }),
+      within(screen.getByRole("region", { name: "블록 전체 설정" })).getByRole(
+        "button",
+        { name: "일괄 적용" },
+      ),
     );
     expect(
       screen.getByRole("heading", { name: "서식 일괄 적용" }),
@@ -2011,7 +2056,7 @@ describe("selected block font-size adjustment", () => {
     const backgroundOpacity = screen.getByRole("slider", {
       name: "블록 배경 투명도",
     });
-    expect(textOpacity.closest(".editor-group")?.textContent).toContain("서식");
+    expect(characterFormatRegion().contains(textOpacity)).toBe(true);
     expect(backgroundOpacity.closest(".editor-group")).not.toBe(
       textOpacity.closest(".editor-group"),
     );
@@ -2492,7 +2537,24 @@ describe("font-size panel bridge", () => {
   });
 });
 
-function selectEditorTab(name: "텍스트" | "배치" | "서식"): void {
+function characterFormatRegion(): HTMLElement {
+  return screen.getByRole("region", { name: "문자 서식" });
+}
+
+/** Opens the remembered "more character effects" section if it is closed. */
+function openCharacterEffects(): HTMLElement {
+  const trigger = screen.getByRole("button", { name: "상세 문자 효과" });
+  if (trigger.getAttribute("aria-expanded") !== "true")
+    fireEvent.click(trigger);
+  return screen.getByRole("region", { name: "상세 문자 효과" });
+}
+
+function commitNumber(input: HTMLElement, value: string): void {
+  fireEvent.change(input, { target: { value } });
+  fireEvent.keyDown(input, { key: "Enter" });
+}
+
+function selectEditorTab(name: "배치" | "서식"): void {
   fireEvent.click(screen.getByRole("tab", { name }));
 }
 

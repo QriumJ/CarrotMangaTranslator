@@ -1,7 +1,4 @@
-import React from "react";
 import { useTranslation } from "react-i18next";
-import type { TranslationBlock } from "../../../shared/textTypes";
-import type { PanelFormatFieldKey } from "../../../shared/panelBridgeTypes";
 import {
   FONT_WIDTH_SCALE_STEP,
   LETTER_SPACING_STEP_EM,
@@ -16,108 +13,73 @@ import {
   clampLetterSpacingEm,
   clampLineHeight,
 } from "../../../shared/blockFormatValues";
-import { NumberField } from "./ui/NumberField";
+import { EditorNumberField } from "./EditorNumberField";
 
-type BlockSpacingFieldsProps = {
-  block: TranslationBlock;
-  disabled: boolean;
-  mixedFields: ReadonlySet<PanelFormatFieldKey>;
-  onUpdate: (patch: Partial<TranslationBlock>) => void;
+export type BlockSpacingValues = {
+  /** Leading ratio, shown as a percentage (1.18 → 118%). */
+  lineHeight: number;
+  letterSpacingEm: number;
+  /** Horizontal glyph scale ratio, shown as a percentage. */
+  fontWidthScale: number;
 };
 
+/** Leading, tracking and glyph width cells of the format number grid. */
 export function BlockSpacingFields({
-  block,
   disabled,
-  mixedFields,
-  onUpdate,
-}: BlockSpacingFieldsProps): React.JSX.Element {
+  mixed,
+  values,
+  onChange,
+}: {
+  disabled: boolean;
+  mixed: Readonly<Record<keyof BlockSpacingValues, boolean>>;
+  values: BlockSpacingValues;
+  onChange: (patch: Partial<BlockSpacingValues>) => void;
+}): React.JSX.Element {
   const { t } = useTranslation("components");
-  const lineHeight = clampLineHeight(block.lineHeight);
-  const letterSpacing = clampLetterSpacingEm(block.letterSpacing ?? 0);
-  const fontWidthScale = clampFontWidthScale(block.fontWidthScale ?? 1);
-  const labels = {
-    lineHeight: t("format.lineHeight"),
-    letterSpacing: t("format.letterSpacing"),
-    fontWidth: t("format.fontWidth"),
-  };
-  const decreaseLabel = (label: string): string =>
-    t("format.decreaseValue", { label });
-  const increaseLabel = (label: string): string =>
-    t("format.increaseValue", { label });
-
   return (
     <>
-      <EditorNumberCell label={labels.lineHeight}>
-        <NumberField
-          variant="scrubber"
-          ariaLabel={labels.lineHeight}
-          decreaseLabel={decreaseLabel(labels.lineHeight)}
-          increaseLabel={increaseLabel(labels.lineHeight)}
-          min={MIN_LINE_HEIGHT}
-          max={MAX_LINE_HEIGHT}
-          step={LINE_HEIGHT_STEP}
-          precision={2}
-          value={lineHeight}
-          disabled={disabled}
-          mixed={mixedFields.has("lineHeight")}
-          onValueChange={(value) =>
-            onUpdate({ lineHeight: clampLineHeight(value) })
-          }
-        />
-      </EditorNumberCell>
-      <EditorNumberCell label={labels.letterSpacing}>
-        <NumberField
-          variant="scrubber"
-          ariaLabel={labels.letterSpacing}
-          decreaseLabel={decreaseLabel(labels.letterSpacing)}
-          increaseLabel={increaseLabel(labels.letterSpacing)}
-          min={MIN_LETTER_SPACING_EM}
-          max={MAX_LETTER_SPACING_EM}
-          step={LETTER_SPACING_STEP_EM}
-          precision={2}
-          value={letterSpacing}
-          disabled={disabled}
-          mixed={mixedFields.has("letterSpacing")}
-          unit="em"
-          onValueChange={(value) =>
-            onUpdate({ letterSpacing: clampLetterSpacingEm(value) })
-          }
-        />
-      </EditorNumberCell>
-      <EditorNumberCell label={labels.fontWidth}>
-        <NumberField
-          variant="scrubber"
-          ariaLabel={labels.fontWidth}
-          decreaseLabel={decreaseLabel(labels.fontWidth)}
-          increaseLabel={increaseLabel(labels.fontWidth)}
-          min={MIN_FONT_WIDTH_SCALE * 100}
-          max={MAX_FONT_WIDTH_SCALE * 100}
-          step={FONT_WIDTH_SCALE_STEP * 100}
-          precision={0}
-          value={fontWidthScale * 100}
-          disabled={disabled}
-          mixed={mixedFields.has("fontWidthScale")}
-          unit="%"
-          onValueChange={(value) =>
-            onUpdate({ fontWidthScale: clampFontWidthScale(value / 100) })
-          }
-        />
-      </EditorNumberCell>
+      <EditorNumberField
+        label={t("format.lineHeight")}
+        min={MIN_LINE_HEIGHT * 100}
+        max={MAX_LINE_HEIGHT * 100}
+        step={LINE_HEIGHT_STEP * 100}
+        precision={0}
+        unit="%"
+        value={Math.round(clampLineHeight(values.lineHeight) * 100)}
+        disabled={disabled}
+        mixed={mixed.lineHeight}
+        onChange={(value) =>
+          onChange({ lineHeight: clampLineHeight(value / 100) })
+        }
+      />
+      <EditorNumberField
+        label={t("format.letterSpacing")}
+        min={MIN_LETTER_SPACING_EM}
+        max={MAX_LETTER_SPACING_EM}
+        step={LETTER_SPACING_STEP_EM}
+        precision={2}
+        unit="em"
+        value={clampLetterSpacingEm(values.letterSpacingEm)}
+        disabled={disabled}
+        mixed={mixed.letterSpacingEm}
+        onChange={(value) =>
+          onChange({ letterSpacingEm: clampLetterSpacingEm(value) })
+        }
+      />
+      <EditorNumberField
+        label={t("format.fontWidth")}
+        min={MIN_FONT_WIDTH_SCALE * 100}
+        max={MAX_FONT_WIDTH_SCALE * 100}
+        step={FONT_WIDTH_SCALE_STEP * 100}
+        precision={0}
+        unit="%"
+        value={Math.round(clampFontWidthScale(values.fontWidthScale) * 100)}
+        disabled={disabled}
+        mixed={mixed.fontWidthScale}
+        onChange={(value) =>
+          onChange({ fontWidthScale: clampFontWidthScale(value / 100) })
+        }
+      />
     </>
-  );
-}
-
-function EditorNumberCell({
-  children,
-  label,
-}: {
-  children: React.ReactNode;
-  label: string;
-}): React.JSX.Element {
-  return (
-    <div className="editor-format-number-cell">
-      <span>{label}</span>
-      {children}
-    </div>
   );
 }

@@ -363,7 +363,34 @@
       }
     },
     "blockScope": "已選 {{count}} 個區塊 · 基本格式",
-    "singleBlockScope": "文字區塊預設格式"
+    "singleBlockScope": "文字區塊預設格式",
+    "characterFormat": {
+      "editText": "編輯文字區塊譯文",
+      "title": "字元格式",
+      "emphasis": "字元強調",
+      "underline": "底線",
+      "strikethrough": "刪除線",
+      "emphasisMark": "著重號",
+      "effects": "更多字元效果",
+      "scopePrefix": "套用於：",
+      "scope": {
+        "block": "文字區塊中的所有字元",
+        "selection": "選取的字元",
+        "caret": "之後輸入的字元",
+        "blocks": "選取的 {{count}} 個文字區塊的所有字元"
+      },
+      "selectAll": "全選",
+      "selectAllTitle": "選取整段譯文，逐字套用格式",
+      "selectOutputLine": "選取輸出行",
+      "selectOutputLineTitle": "選取畫布上目前輸出的整行",
+      "finishEditing": "結束編輯",
+      "finishEditingTitle": "結束文字編輯並將格式套用至整個文字區塊"
+    },
+    "blockSettings": {
+      "title": "整個文字區塊設定",
+      "description": "無論選取哪些字元，一律套用至整個文字區塊。",
+      "descriptionMultiple": "套用至選取的全部 {{count}} 個文字區塊。"
+    }
   },
   "transform": {
     "title": "變形",
@@ -511,6 +538,7 @@
   "editor": {
     "text": "文字",
     "translatedText": "譯文",
+    "sourceText": "原文 OCR",
     "eraseOriginal": "清除原文",
     "fitBubble": "對話框適配",
     "moreActions": "更多文字區塊操作",

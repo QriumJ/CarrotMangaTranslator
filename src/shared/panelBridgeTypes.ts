@@ -1,4 +1,4 @@
-import type { TranslationBlock } from "./textTypes";
+import type { TextEffect, TranslationBlock } from "./textTypes";
 import {
   BLOCK_FORMAT_FIELD_KEYS,
   type BlockFormatGroupId,
@@ -31,7 +31,10 @@ export const PANEL_FORMAT_FIELD_KEYS = [
 export type PanelFormatFieldKey = (typeof PANEL_FORMAT_FIELD_KEYS)[number];
 export type PanelFormatPatch = Partial<
   Pick<TranslationBlock, PanelFormatFieldKey>
->;
+> & {
+  /** Transient edit intent, never stored on a block. Preserves mixed effect fields. */
+  textEffectFields?: readonly (keyof TextEffect)[];
+};
 export type PanelFormatSelection = {
   common: PanelFormatPatch;
   mixedFields: PanelFormatFieldKey[];
@@ -52,6 +55,7 @@ export type PanelSyncState = {
   selectionKey: string;
   formatSelection: PanelFormatSelection;
   editorTextTabRequestToken: number;
+  editorTextResetToken?: number;
   editorDisabled: boolean;
   disableChapterApply: boolean;
   areaTranslateAvailable: boolean;
@@ -69,7 +73,19 @@ export type PanelSyncState = {
  * A command sent from a popped-out panel window back to the main window, which
  * applies it through the existing session action handlers.
  */
+export type PanelTextSelection = {
+  blockId: string;
+  translatedText: string;
+  start: number;
+  end: number;
+};
+
 export type PanelCommand =
+  | {
+      type: "previewTextSelection";
+      selectionKey: string;
+      selection: PanelTextSelection;
+    }
   | { type: "finishPageEdits"; requestId: string; error?: string }
   | {
       type: "updateBlock";
@@ -143,7 +159,11 @@ export function pickPanelFormatPatch(
       safe[key] = patch[key];
     }
   }
-  return safe as PanelFormatPatch;
+  const effectFields = (patch as PanelFormatPatch).textEffectFields;
+  return {
+    ...safe,
+    ...(effectFields ? { textEffectFields: [...effectFields] } : {}),
+  } as PanelFormatPatch;
 }
 
 export function buildPanelFormatSelection(

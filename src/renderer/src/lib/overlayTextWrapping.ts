@@ -1,4 +1,10 @@
+import type {
+  RenderedTextStyleRun,
+  BlockTextLine,
+  WrappedTextMeasurement,
+} from "./textLineTypes";
 /* eslint-disable max-lines -- one wrapping module owns the shared styled-grapheme measurement and line-break contract */
+import { applyInlineLineMetrics } from "./inlineLineMetrics";
 import { resolveFontWeight } from "../../../shared/blockFontWeight";
 import type { TextStyleRun } from "../../../shared/richTextMarkup";
 import {
@@ -17,39 +23,9 @@ import type {
   TextRunStyleResolver,
 } from "./textStyleRunResolution";
 
-type RenderedTextStyleRun = TextStyleRun & {
-  renderedFontSizePx?: number;
-  renderedFontFamily?: string;
-  renderedOpacity?: number;
-};
-
-export type BlockTextLine = {
-  runs: RenderedTextStyleRun[];
-  width: number;
-  /** Consumed source characters, including whitespace omitted at a soft wrap. */
-  sourceTextLength?: number;
-  slot?: TextLineSlot;
-};
-
-export type TextLineSlot = {
-  /** Block-axis position: line top for horizontal, column left for vertical. */
-  blockOffsetPx: number;
-  /** Inline-axis position: line left for horizontal, column top for vertical. */
-  inlineOffsetPx: number;
-  /** Inline-axis room available after any applicable font-width scaling. */
-  availableWidth: number;
-  regionIndex: number;
-};
-
-export type WrappedTextMeasurement = {
-  lines: BlockTextLine[];
-  lineCount: number;
-  totalHeight: number;
-  maxLineWidth: number;
-};
-
 export type StyledGrapheme = TextStyleRun & {
   width: number;
+  spacingPx?: number;
   renderedFontSizePx?: number;
   renderedFontFamily?: string;
   renderedOpacity?: number;
@@ -95,6 +71,7 @@ export function measureStyledWrappedText(
     letterSpacingPx,
     resolveTextWordBreak(wordBreak),
     trimLineEnds,
+    fontSize,
   );
 }
 
@@ -124,6 +101,8 @@ export function measureUniformStyledWrappedText(
     lineHeightPx,
     0,
     resolveTextWordBreak(wordBreak),
+    false,
+    graphemeAdvancePx,
   );
 }
 
@@ -169,6 +148,9 @@ export function measureStyledGraphemes(
     graphemes.push({
       ...run,
       text: segment,
+      ...(run.letterSpacing === undefined
+        ? {}
+        : { spacingPx: run.letterSpacing * style.fontSizePx }),
       width:
         segment === "\n"
           ? 0
@@ -227,6 +209,7 @@ function measureWrappedGraphemes(
   letterSpacingPx: number,
   wordBreak: TextWordBreak,
   trimLineEnds = false,
+  fontSizePx = lineHeightPx,
 ): WrappedTextMeasurement {
   const lines: BlockTextLine[] = [];
   let paragraph: StyledGrapheme[] = [];
@@ -246,7 +229,13 @@ function measureWrappedGraphemes(
 
   for (const grapheme of graphemes) {
     if (grapheme.text === "\n") {
+      const empty = paragraph.length === 0;
       flushParagraph();
+      if (empty && grapheme.lineHeight !== undefined) {
+        lines[lines.length - 1].leadingRuns = [
+          createRenderedTextStyleRun(grapheme),
+        ];
+      }
     } else {
       paragraph.push(grapheme);
     }
@@ -260,7 +249,7 @@ function measureWrappedGraphemes(
   return {
     lines,
     lineCount: lines.length,
-    totalHeight: lines.length * lineHeightPx,
+    totalHeight: applyInlineLineMetrics(lines, lineHeightPx, fontSizePx),
     maxLineWidth,
   };
 }
@@ -320,7 +309,11 @@ function wrapNaturalUnits(
       trimLineEnds,
     );
     const combinedWidth =
-      lineWidth + (line.length > 0 ? letterSpacingPx : 0) + visibleUnitWidth;
+      lineWidth +
+      (line.length > 0
+        ? resolveGraphemeSpacing(line.at(-1), letterSpacingPx)
+        : 0) +
+      visibleUnitWidth;
     if (line.length > 0 && combinedWidth > maxWidth) {
       pushLine();
     }
@@ -342,7 +335,7 @@ function wrapNaturalUnits(
     }
 
     if (line.length > 0) {
-      lineWidth += letterSpacingPx;
+      lineWidth += resolveGraphemeSpacing(line.at(-1), letterSpacingPx);
     }
     line.push(...unit);
     lineWidth += unitWidth;
@@ -374,7 +367,11 @@ function wrapEagerly(
   };
 
   for (const grapheme of graphemes) {
-    const advance = grapheme.width + (line.length > 0 ? letterSpacingPx : 0);
+    const advance =
+      grapheme.width +
+      (line.length > 0
+        ? resolveGraphemeSpacing(line.at(-1), letterSpacingPx)
+        : 0);
     if (
       line.length > 0 &&
       lineWidth + advance > maxWidth &&
@@ -383,7 +380,7 @@ function wrapEagerly(
       pushLine();
     }
     if (line.length > 0) {
-      lineWidth += letterSpacingPx;
+      lineWidth += resolveGraphemeSpacing(line.at(-1), letterSpacingPx);
     }
     line.push(grapheme);
     lineWidth += grapheme.width;
@@ -433,7 +430,11 @@ export function measureGraphemeSequence(
     : graphemes;
   return measured.reduce(
     (width, grapheme, index) =>
-      width + grapheme.width + (index > 0 ? letterSpacingPx : 0),
+      width +
+      grapheme.width +
+      (index > 0
+        ? resolveGraphemeSpacing(measured[index - 1], letterSpacingPx)
+        : 0),
     0,
   );
 }
@@ -462,6 +463,10 @@ export function toBlockTextLine(
   return {
     runs,
     width,
+    ...(end === 0 &&
+    graphemes.some((grapheme) => grapheme.lineHeight !== undefined)
+      ? { leadingRuns: graphemes.map(createRenderedTextStyleRun) }
+      : {}),
     ...(end < graphemes.length
       ? {
           sourceTextLength: graphemes.reduce(
@@ -482,7 +487,7 @@ function visibleEnd(graphemes: readonly StyledGrapheme[]): number {
 function createRenderedTextStyleRun(
   grapheme: StyledGrapheme,
 ): RenderedTextStyleRun {
-  const { width: _width, ...run } = grapheme;
+  const { width: _width, spacingPx: _spacingPx, ...run } = grapheme;
   return {
     ...run,
   };
@@ -499,6 +504,8 @@ const RUN_STYLE_KEYS = [
   "fontFamily",
   "opacity",
   "widthScale",
+  "lineHeight",
+  "letterSpacing",
   "color",
   "backgroundColor",
   "outlineColor",
@@ -508,6 +515,12 @@ const RUN_STYLE_KEYS = [
   "glowColor",
   "glowBlurPx",
   "glowOpacity",
+  "shadowEnabled",
+  "shadowColor",
+  "shadowOffsetXpx",
+  "shadowOffsetYpx",
+  "shadowBlurPx",
+  "shadowOpacity",
 ] as const satisfies readonly (keyof TextStyleRun)[];
 
 function haveSameRunStyle(left: TextStyleRun, right: TextStyleRun): boolean {
@@ -560,4 +573,11 @@ function buildFontForStyle(
   const style = italic ? "italic " : "";
   const weight = resolveFontWeight({ bold, fontWeight });
   return `${style}${weight} ${fontSize}px ${fontFamily}`;
+}
+
+export function resolveGraphemeSpacing(
+  grapheme: StyledGrapheme | undefined,
+  fallback: number,
+): number {
+  return grapheme?.spacingPx ?? fallback;
 }

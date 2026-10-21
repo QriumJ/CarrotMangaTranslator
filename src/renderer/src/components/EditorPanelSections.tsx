@@ -1,12 +1,16 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
+import type { PanelTextSelection } from "../../../shared/panelBridgeTypes";
 import type { TranslationBlock } from "../../../shared/textTypes";
 import { useStickyTextareaHeight } from "../hooks/useStickyTextareaHeight";
 import {
   deriveSingleTextReplacement,
   type ConsistentEditSuggestion,
 } from "../lib/consistentEditSuggestion";
+import { EditorDisclosure } from "./EditorDisclosure";
+import type { CharacterFormatTarget } from "./editorCharacterFormatTarget";
 import { Button } from "./ui/Button";
+import { IconButton } from "./ui/IconButton";
 import { RestoreIcon, TextareaHeightIcon } from "./ui/icons";
 import { RichTranslationEditor } from "./RichTranslationEditor";
 import styles from "./EditorPanelSections.module.css";
@@ -20,11 +24,23 @@ type BlockSectionProps = {
   onUpdate: BlockPatchHandler;
 };
 
-type BlockTextActionProps = {
+type BlockTextEditorProps = {
+  onPreviewTextSelection?: (selection: PanelTextSelection) => void;
+  pageSize?: { width: number; height: number } | null;
+  renderCharacterFormat?: (target: CharacterFormatTarget) => React.ReactNode;
+  resolvedFontSizePx?: number | null;
+  selectionKey?: string;
+  textEditRequestToken?: number;
+  textResetToken?: number;
+  onSuggestConsistentEdit?: (find: string, replace: string) => void;
+  /** Image actions on the active block's original text and bubble. */
+  sourceActions?: SourceActions;
+};
+
+type SourceActions = {
   aiUnavailable?: boolean;
   onEraseOriginal?: () => void;
   onFitBubble?: () => void;
-  onSuggestConsistentEdit?: (find: string, replace: string) => void;
 };
 
 export function BubbleLayoutOption({
@@ -58,74 +74,142 @@ export function BubbleLayoutOption({
 export function TextEditorGroup({
   block,
   disabled,
-  aiUnavailable,
-  onEraseOriginal,
-  onFitBubble,
   onSuggestConsistentEdit,
   onUpdate,
-}: BlockSectionProps & BlockTextActionProps): React.JSX.Element {
-  const { refCallback: translatedTextareaRef, reset: resetTranslatedHeight } =
-    useStickyTextareaHeight("editor.textareaHeight.translated");
-  const { refCallback: sourceTextareaRef, reset: resetSourceHeight } =
-    useStickyTextareaHeight("editor.textareaHeight.source");
+  sourceActions,
+  ...editorProps
+}: BlockSectionProps & BlockTextEditorProps): React.JSX.Element {
+  const { t } = useTranslation("components");
+  const heights = useEditorTextareaHeights();
   const translatedEditorRootRef = React.useRef<HTMLDivElement | null>(null);
   const sourceRef = React.useRef<HTMLTextAreaElement | null>(null);
-  const drafts = useBlockTextDrafts(
-    block,
-    onUpdate,
-    translatedEditorRootRef,
-    sourceRef,
-  );
+  const drafts = useBlockTextDrafts(block, onUpdate);
   const setSourceRef = React.useCallback(
     (element: HTMLTextAreaElement | null) => {
       sourceRef.current = element;
-      sourceTextareaRef(element);
+      heights.sourceRef(element);
     },
-    [sourceTextareaRef],
+    [heights],
   );
-  const resetTextareaHeights = React.useCallback(() => {
-    resetTranslatedHeight();
-    resetSourceHeight();
-  }, [resetTranslatedHeight, resetSourceHeight]);
 
   return (
     <div className="editor-group editor-text-group">
-      <TextBlockActions
-        {...{
-          disabled: disabled || aiUnavailable === true,
-          onEraseOriginal,
-          onFitBubble,
-        }}
-      />
-      <GeneratedLetteringOption
-        block={block}
-        disabled={disabled}
-        onUpdate={onUpdate}
-      />
       <RichTranslationEditor
+        {...editorProps}
         block={block}
         value={drafts.translated}
         disabled={disabled}
         editorRootRef={translatedEditorRootRef}
-        heightRefCallback={translatedTextareaRef}
+        heightRefCallback={heights.translatedRef}
         onChange={drafts.changeTranslated}
+        afterInput={
+          <>
+            <GeneratedLetteringOption
+              block={block}
+              disabled={disabled}
+              onUpdate={onUpdate}
+            />
+            <ConsistentEditSuggestionButton
+              suggestion={drafts.suggestion}
+              disabled={disabled}
+              onApply={onSuggestConsistentEdit}
+              onClear={drafts.clearSuggestion}
+            />
+          </>
+        }
         afterEditor={
-          <SourceTextField
-            disabled={disabled}
-            refCallback={setSourceRef}
-            onResetHeights={resetTextareaHeights}
-            value={drafts.source}
-            onChange={drafts.changeSource}
-          />
+          <EditorDisclosure
+            id="source"
+            label={t("editor.sourceText")}
+            headerExtra={
+              <SourceActionButtons disabled={disabled} {...sourceActions} />
+            }
+            actions={<ResetTextareaHeightsButton onReset={heights.reset} />}
+          >
+            <Textarea
+              ref={setSourceRef}
+              className={styles.sourceText}
+              aria-label={t("editor.sourceText")}
+              rows={2}
+              value={drafts.source}
+              readOnly={disabled}
+              onChange={(event) => {
+                if (!disabled) drafts.changeSource(event.target.value);
+              }}
+            />
+          </EditorDisclosure>
         }
       />
-      <ConsistentEditSuggestionButton
-        suggestion={drafts.suggestion}
-        disabled={disabled}
-        onApply={onSuggestConsistentEdit}
-        onClear={drafts.clearSuggestion}
-      />
     </div>
+  );
+}
+
+function SourceActionButtons({
+  aiUnavailable,
+  disabled,
+  onEraseOriginal,
+  onFitBubble,
+}: SourceActions & { disabled: boolean }): React.JSX.Element | null {
+  const { t } = useTranslation("components");
+  if (!onEraseOriginal && !onFitBubble) return null;
+  const actionDisabled = disabled || aiUnavailable === true;
+  return (
+    <div className={styles.sourceActions}>
+      {onEraseOriginal ? (
+        <Button size="sm" disabled={actionDisabled} onClick={onEraseOriginal}>
+          {t("editor.eraseOriginal")}
+        </Button>
+      ) : null}
+      {onFitBubble ? (
+        <Button size="sm" disabled={actionDisabled} onClick={onFitBubble}>
+          {t("editor.fitBubble")}
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+/** Remembered heights of the translation and OCR inputs. */
+function useEditorTextareaHeights(): {
+  translatedRef: (element: HTMLElement | null) => void;
+  sourceRef: (element: HTMLTextAreaElement | null) => void;
+  reset: () => void;
+} {
+  const translated = useStickyTextareaHeight(
+    "editor.textareaHeight.translated",
+  );
+  const source = useStickyTextareaHeight("editor.textareaHeight.source");
+  const resetTranslated = translated.reset;
+  const resetSource = source.reset;
+  const reset = React.useCallback(() => {
+    resetTranslated();
+    resetSource();
+  }, [resetTranslated, resetSource]);
+  return React.useMemo(
+    () => ({
+      translatedRef: translated.refCallback,
+      sourceRef: source.refCallback,
+      reset,
+    }),
+    [translated.refCallback, source.refCallback, reset],
+  );
+}
+
+function ResetTextareaHeightsButton({
+  onReset,
+}: {
+  onReset: () => void;
+}): React.JSX.Element {
+  const { t } = useTranslation("components");
+  return (
+    <IconButton
+      size="sm"
+      label={t("editor.markupToolbar.resetHeight")}
+      title={t("editor.markupToolbar.resetHeight")}
+      onClick={onReset}
+    >
+      <TextareaHeightIcon size={14} />
+    </IconButton>
   );
 }
 
@@ -168,89 +252,19 @@ function GeneratedLetteringOption({
   );
 }
 
-function TextBlockActions({
-  disabled,
-  onEraseOriginal,
-  onFitBubble,
-}: { disabled: boolean } & BlockTextActionProps): React.JSX.Element {
-  const { t } = useTranslation("components");
-  if (!onEraseOriginal && !onFitBubble) return <></>;
-  return (
-    <div className="editor-text-actions">
-      {onEraseOriginal ? (
-        <Button
-          fullWidth
-          size="sm"
-          disabled={disabled}
-          onClick={onEraseOriginal}
-        >
-          {t("editor.eraseOriginal")}
-        </Button>
-      ) : null}
-      {onFitBubble ? (
-        <Button fullWidth size="sm" disabled={disabled} onClick={onFitBubble}>
-          {t("editor.fitBubble")}
-        </Button>
-      ) : null}
-    </div>
-  );
-}
-
-function SourceTextField({
-  disabled,
-  refCallback,
-  value,
-  onChange,
-  onResetHeights,
-}: {
-  disabled: boolean;
-  refCallback: (element: HTMLTextAreaElement | null) => void;
-  value: string;
-  onChange: (value: string) => void;
-  onResetHeights: () => void;
-}): React.JSX.Element {
-  const { t } = useTranslation("components");
-  return (
-    <div className="editor-source-field">
-      <span className="editor-source-field-head">
-        <span>OCR</span>
-        <Button
-          size="sm"
-          variant="secondary"
-          iconLeft={<TextareaHeightIcon size={14} />}
-          onClick={onResetHeights}
-        >
-          {t("editor.markupToolbar.resetHeight")}
-        </Button>
-      </span>
-      <Textarea
-        ref={refCallback}
-        aria-label="OCR"
-        value={value}
-        readOnly={disabled}
-        onChange={(event) => {
-          if (!disabled) onChange(event.target.value);
-        }}
-      />
-    </div>
-  );
-}
-
 /**
  * Local, optimistic text state for the editor textareas so typing stays instant
  * and cursor-stable even when updates round-trip through the panel bridge (in a
  * popped-out window). Upstream values re-sync on block switch, or on external
- * edits while the field is not focused — never clobbering an active edit.
+ * edits including undo while focused. Queued acknowledgements never replace a newer local draft.
  */
 function useBlockTextDrafts(
   block: TranslationBlock,
   onUpdate: BlockPatchHandler,
-  translatedEditorRootRef: React.RefObject<HTMLDivElement | null>,
-  sourceRef: React.RefObject<HTMLTextAreaElement | null>,
 ): {
   translated: string;
   source: string;
-  changeTranslated: (value: string) => void;
+  changeTranslated: (value: string, patch?: Partial<TranslationBlock>) => void;
   changeSource: (value: string) => void;
   suggestion: ConsistentEditSuggestion | null;
   clearSuggestion: () => void;
@@ -261,36 +275,47 @@ function useBlockTextDrafts(
     string | null
   >(null);
   const blockIdRef = React.useRef(block.id);
+  const pendingTranslated = React.useRef<string[]>([]);
+  const pendingSource = React.useRef<string[]>([]);
 
   React.useEffect(() => {
     const switched = blockIdRef.current !== block.id;
     blockIdRef.current = block.id;
-    if (
-      switched ||
-      !translatedEditorRootRef.current
-        ?.querySelector("[data-rich-translated-input]")
-        ?.contains(document.activeElement)
-    ) {
-      setTranslated(block.translatedText);
-      setTranslatedBaseline(null);
-    }
-    if (switched || document.activeElement !== sourceRef.current) {
-      setSource(block.sourceText);
-    }
-  }, [
-    block.id,
-    block.translatedText,
-    block.sourceText,
-    translatedEditorRootRef,
-    sourceRef,
-  ]);
+    const sync = (
+      incoming: string,
+      pending: string[],
+      update: (value: string) => void,
+    ): void => {
+      if (switched) pending.length = 0;
+      const acknowledged = pending.indexOf(incoming);
+      if (acknowledged >= 0) {
+        pending.splice(0, acknowledged + 1);
+        if (pending.length) return;
+      } else pending.length = 0;
+      update(incoming);
+    };
+    sync(block.translatedText, pendingTranslated.current, setTranslated);
+    sync(block.sourceText, pendingSource.current, setSource);
+    if (switched) setTranslatedBaseline(null);
+  }, [block.id, block.translatedText, block.sourceText]);
 
-  const changeTranslated = (value: string): void => {
+  const changeTranslated = (
+    value: string,
+    patch?: Partial<TranslationBlock>,
+  ): void => {
+    // A whole-block format change that leaves the markup untouched is sent as
+    // the block patch alone, so it reads as formatting rather than a text edit.
+    if (patch && value === translated) {
+      React.startTransition(() => onUpdate(patch));
+      return;
+    }
+    pendingTranslated.current.push(value);
     setTranslatedBaseline((current) => current ?? translated);
     setTranslated(value);
-    React.startTransition(() => onUpdate({ translatedText: value }));
+    React.startTransition(() => onUpdate({ ...patch, translatedText: value }));
   };
   const changeSource = (value: string): void => {
+    pendingSource.current.push(value);
     setSource(value);
     React.startTransition(() => onUpdate({ sourceText: value }));
   };

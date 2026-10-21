@@ -18,6 +18,7 @@ type EditingCallbacks = Pick<
   | "onRemoveBubbleLayout"
   | "onUpdateBlock"
   | "onUpdateFormat"
+  | "onPreviewTextSelection"
 >;
 
 type PanelChromeCallbacks = Pick<
@@ -69,6 +70,7 @@ export function useStablePanelSessionValue(
       editorFloating: value.editorFloating,
       editorPoppedOut: value.editorPoppedOut,
       editorTextTabRequestToken: value.editorTextTabRequestToken,
+      editorTextResetToken: value.editorTextResetToken,
       formatSelection,
       selectionKey: value.selectionKey,
       selectedBlock: value.selectedBlock,
@@ -96,6 +98,7 @@ export function useStablePanelSessionValue(
       value.editorFloating,
       value.editorPoppedOut,
       value.editorTextTabRequestToken,
+      value.editorTextResetToken,
       value.selectionKey,
       value.selectedBlock,
       value.selectedBlockCount,
@@ -140,6 +143,11 @@ function useStableEditingCallbacks(value: PanelSessionValue): EditingCallbacks {
   const onFitBlockBubble = useEventCallback(value.onFitBlockBubble);
   const onRemoveBubbleLayout = useEventCallback(value.onRemoveBubbleLayout);
   const onUpdateBlock = useEventCallback(value.onUpdateBlock);
+  const onPreviewTextSelection = useEventCallback(
+    (
+      selection: import("../../../shared/panelBridgeTypes").PanelTextSelection,
+    ) => value.onPreviewTextSelection?.(selection),
+  );
   const onUpdateFormat = useEventCallback(value.onUpdateFormat);
 
   return React.useMemo<EditingCallbacks>(
@@ -157,6 +165,7 @@ function useStableEditingCallbacks(value: PanelSessionValue): EditingCallbacks {
       onRemoveBubbleLayout,
       onUpdateBlock,
       onUpdateFormat,
+      onPreviewTextSelection,
     }),
     [
       onAdjustFontSize,
@@ -172,6 +181,7 @@ function useStableEditingCallbacks(value: PanelSessionValue): EditingCallbacks {
       onRemoveBubbleLayout,
       onUpdateBlock,
       onUpdateFormat,
+      onPreviewTextSelection,
     ],
   );
 }

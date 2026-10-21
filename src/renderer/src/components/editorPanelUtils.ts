@@ -41,10 +41,10 @@ export function clampFontSize(value: number): number {
 export function readStoredEditorTab(): EditorTabId {
   try {
     const stored = window.localStorage.getItem(EDITOR_TAB_STORAGE_KEY);
-    return EDITOR_TABS.find((tab) => tab === stored) ?? "text";
+    return EDITOR_TABS.find((tab) => tab === stored) ?? "format";
   } catch (error) {
     console.warn("Editor tab state read failed", error);
-    return "text";
+    return "format";
   }
 }
 
@@ -60,5 +60,5 @@ import { normalizeRenderDirection } from "../../../shared/geometry";
 import type { TranslationBlock } from "../../../shared/textTypes";
 import type { EditorTabId } from "./EditorPanelChrome";
 
-const EDITOR_TABS: EditorTabId[] = ["text", "layout", "format"];
+const EDITOR_TABS: EditorTabId[] = ["format", "layout"];
 const EDITOR_TAB_STORAGE_KEY = "editor.activeTab.v1";

@@ -9,6 +9,8 @@ export type InlineStyleTagName =
   | "font"
   | "opacity"
   | "width"
+  | "line-height"
+  | "letter-spacing"
   | "color"
   | "background"
   | "outline-color"
@@ -17,7 +19,13 @@ export type InlineStyleTagName =
   | "outer-outline-width"
   | "glow-color"
   | "glow-blur"
-  | "glow-opacity";
+  | "glow-opacity"
+  | "shadow-enabled"
+  | "shadow-color"
+  | "shadow-x"
+  | "shadow-y"
+  | "shadow-blur"
+  | "shadow-opacity";
 
 export type InlineBooleanStyleTagName = "underline" | "strike" | "emphasis";
 

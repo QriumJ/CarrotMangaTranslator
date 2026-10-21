@@ -103,6 +103,15 @@ function useSessionCommands(
     setShowTextBlocks: chapter.uiState.setShowTextBlocks,
     openTranslateOptions: chapter.uiState.openTranslateOptions,
     openChat: chapter.uiState.openChat,
+    editBlockText: () => {
+      if (
+        !chapter.derivedState.selectedBlock ||
+        chapter.derivedState.selectedPageEditLocked
+      )
+        return;
+      chapter.uiState.setRightRailMode("block-editor");
+      chapter.uiState.requestEditorTextTab();
+    },
     openWorkContext: chapter.uiState.openWorkContext,
     setTranslationSourceOpen: chapter.importShareModal.setTranslationSourceOpen,
     setAddPagesChapter: chapter.importShareModal.setAddPagesChapter,

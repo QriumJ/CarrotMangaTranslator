@@ -363,7 +363,34 @@
       }
     },
     "blockScope": "{{count}} selected blocks · Base style",
-    "singleBlockScope": "Block defaults"
+    "singleBlockScope": "Block defaults",
+    "characterFormat": {
+      "editText": "Edit block text",
+      "title": "Character format",
+      "emphasis": "Character emphasis",
+      "underline": "Underline",
+      "strikethrough": "Strikethrough",
+      "emphasisMark": "Emphasis mark",
+      "effects": "More character effects",
+      "scopePrefix": "Applies to: ",
+      "scope": {
+        "block": "every character in the block",
+        "selection": "selected characters",
+        "caret": "characters typed next",
+        "blocks": "every character in {{count}} selected blocks"
+      },
+      "selectAll": "Select all",
+      "selectAllTitle": "Select the whole translation to format it character by character",
+      "selectOutputLine": "Select output line",
+      "selectOutputLineTitle": "Select the current line as rendered on the canvas",
+      "finishEditing": "Finish editing",
+      "finishEditingTitle": "Finish text editing and format the whole block"
+    },
+    "blockSettings": {
+      "title": "Whole-block settings",
+      "description": "Always applies to the whole block, regardless of the selected characters.",
+      "descriptionMultiple": "Applies to all {{count}} selected blocks."
+    }
   },
   "transform": {
     "title": "Transform",
@@ -511,6 +538,7 @@
   "editor": {
     "text": "Text",
     "translatedText": "Translation",
+    "sourceText": "Source OCR",
     "eraseOriginal": "Erase source text",
     "fitBubble": "Bubble fitting",
     "moreActions": "More block actions",

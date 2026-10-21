@@ -1,3 +1,4 @@
+import { publishTextSelectionPreview } from "../../lib/textSelectionPreview";
 import type { PanelCommand } from "../../../../shared/panelBridgeTypes";
 
 type UpdateBlockCommand = Extract<PanelCommand, { type: "updateBlock" }>;
@@ -137,6 +138,14 @@ export function dispatchPanelCommand({
   selectedBlockId: string | null;
   selectionKey: string;
 }): boolean {
+  if (command.type === "previewTextSelection") {
+    return dispatchTextSelectionPreview(
+      command,
+      busy,
+      selectionKey,
+      selectedBlockId,
+    );
+  }
   if (isAlwaysAvailablePanelCommand(command)) {
     dispatchAlwaysAvailablePanelCommand(actions, command);
     return true;
@@ -292,4 +301,20 @@ function applyPanelToolCommand(
     return true;
   }
   return false;
+}
+
+function dispatchTextSelectionPreview(
+  command: Extract<PanelCommand, { type: "previewTextSelection" }>,
+  busy: boolean,
+  selectionKey: string,
+  selectedBlockId: string | null,
+): boolean {
+  if (
+    busy ||
+    command.selectionKey !== selectionKey ||
+    command.selection.blockId !== selectedBlockId
+  )
+    return false;
+  publishTextSelectionPreview(command.selection);
+  return true;
 }

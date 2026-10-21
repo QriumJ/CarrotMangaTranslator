@@ -1,3 +1,4 @@
+import { resolveRunTextEffect } from "../../../shared/richTextShadow";
 import {
   parseRichText,
   type TextStylePatch,
@@ -12,6 +13,7 @@ import {
 import type { TranslationBlock } from "../../../shared/textTypes";
 import type { RichTextEditorSelection } from "../lib/richTextEditorDom";
 import type { RichTranslationSelectionValues } from "./richTranslationEditorTypes";
+import { applyTypingStyleToValues } from "./richTranslationTypingStyleValues";
 
 export function resolveRichTranslationSelectionValues(
   runs: readonly TextStyleRun[],
@@ -21,16 +23,17 @@ export function resolveRichTranslationSelectionValues(
   typingStyle: TextStylePatch | null,
 ): RichTranslationSelectionValues {
   const selected = selectRuns(runs, selection.start, selection.end);
+  const inherited = caretRun ?? findCaretRun(runs, selection.start);
   const candidates =
-    selected.length > 0 ? selected : caretRun ? [caretRun] : [];
+    selected.length > 0 ? selected : inherited ? [inherited] : [];
   const base = createBaseSelectionValues(block);
   if (candidates.length === 0) {
-    return applyTypingStyleToValues(base, typingStyle, block);
+    return applyTypingStyleToValues(base, typingStyle, base);
   }
   return applyTypingStyleToValues(
-    resolveCandidateSelectionValues(candidates, block, base),
+    resolveMixedSelectionValues(candidates, block, base),
     typingStyle,
-    block,
+    base,
   );
 }
 
@@ -87,6 +90,8 @@ function resolveCandidateSelectionValues(
     emphasisMark: candidates.every(
       (run) => Boolean(block.emphasisMark) || run.emphasisMark,
     ),
+    lineHeightPercent: metrics.lineHeights[0] ?? base.lineHeightPercent,
+    letterSpacingEm: metrics.letterSpacings[0] ?? base.letterSpacingEm,
     sizePx: metrics.sizes[0] ?? block.fontSizePx,
     sizeMixed: !allEqual(metrics.sizes),
     fontFamily: metrics.fonts[0],
@@ -99,6 +104,32 @@ function resolveCandidateSelectionValues(
     backgroundEnabled: metrics.backgrounds.every(Boolean),
     backgroundColor: metrics.backgrounds.find(Boolean) ?? base.backgroundColor,
     ...resolveCandidateEffects(metrics, base),
+    ...shadowValues(block, candidates[0]),
+  };
+}
+
+/** Aggregate flags, not letter attributes, so never reported as mixed. */
+const SUMMARY_FIELDS: ReadonlySet<keyof RichTranslationSelectionValues> =
+  new Set(["mixedFields", "sizeMixed", "fontMixed", "opacityMixed"]);
+
+function resolveMixedSelectionValues(
+  candidates: readonly TextStyleRun[],
+  block: TranslationBlock,
+  base: RichTranslationSelectionValues,
+): RichTranslationSelectionValues {
+  const values = resolveCandidateSelectionValues(candidates, block, base);
+  const individual = candidates.map((run) =>
+    resolveCandidateSelectionValues([run], block, base),
+  );
+  return {
+    ...values,
+    mixedFields: (
+      Object.keys(values) as (keyof RichTranslationSelectionValues)[]
+    ).filter(
+      (key) =>
+        !SUMMARY_FIELDS.has(key) &&
+        !allEqual(individual.map((value) => value[key])),
+    ),
   };
 }
 
@@ -107,6 +138,12 @@ function collectCandidateMetrics(
   block: TranslationBlock,
 ) {
   return {
+    lineHeights: candidates.map(
+      (run) => (run.lineHeight ?? block.lineHeight) * 100,
+    ),
+    letterSpacings: candidates.map(
+      (run) => run.letterSpacing ?? block.letterSpacing ?? 0,
+    ),
     sizes: candidates.map((run) => run.sizePx ?? block.fontSizePx),
     fonts: candidates.map((run) => run.fontFamily ?? block.fontFamily),
     opacities: candidates.map(
@@ -180,6 +217,9 @@ function createBaseSelectionValues(
     block.fontSizePx,
   );
   return {
+    lineHeightPercent: block.lineHeight * 100,
+    letterSpacingEm: block.letterSpacing ?? 0,
+    mixedFields: [],
     bold: Boolean(block.bold),
     italic: Boolean(block.italic),
     underline: Boolean(block.underline),
@@ -201,6 +241,7 @@ function createBaseSelectionValues(
     outerOutlineEnabled: (block.outerOutlineWidthPx ?? 0) > 0,
     outerOutlineColor: block.outerOutlineColor ?? "#111111",
     outerOutlineWidthPx: block.outerOutlineWidthPx ?? 0,
+    ...shadowValues(block),
     glowEnabled: glow.enabled,
     glowColor: glow.color,
     glowBlurPx: glow.blurPx,
@@ -227,6 +268,18 @@ function resolveSelectionGlow(block: TranslationBlock, run: TextStyleRun) {
   };
 }
 
+function findCaretRun(
+  runs: readonly TextStyleRun[],
+  offset: number,
+): TextStyleRun | null {
+  let consumed = 0;
+  for (const run of runs) {
+    consumed += run.text.length;
+    if (offset <= consumed) return run;
+  }
+  return null;
+}
+
 function selectRuns(
   runs: readonly TextStyleRun[],
   start: number,
@@ -243,144 +296,6 @@ function selectRuns(
   return selected;
 }
 
-function applyTypingStyleToValues(
-  values: RichTranslationSelectionValues,
-  patch: TextStylePatch | null,
-  block: TranslationBlock,
-): RichTranslationSelectionValues {
-  if (!patch) return values;
-  const fallback = createBaseSelectionValues(block);
-  return {
-    ...values,
-    ...resolveTypingEmphasis(patch, block, fallback),
-    ...resolveTypingTypography(patch, block),
-    ...resolveTypingAppearance(patch, fallback),
-    ...resolveTypingEffects(patch, fallback),
-  };
-}
-
-function resolveTypingEmphasis(
-  patch: TextStylePatch,
-  block: TranslationBlock,
-  fallback: RichTranslationSelectionValues,
-): Partial<RichTranslationSelectionValues> {
-  return {
-    ...(patch.bold === undefined
-      ? {}
-      : { bold: patch.bold ?? Boolean(block.bold) }),
-    ...(patch.italic === undefined
-      ? {}
-      : { italic: patch.italic ?? Boolean(block.italic) }),
-    ...(patch.underline === undefined
-      ? {}
-      : { underline: patch.underline ?? fallback.underline }),
-    ...(patch.strikethrough === undefined
-      ? {}
-      : { strikethrough: patch.strikethrough ?? fallback.strikethrough }),
-    ...(patch.emphasisMark === undefined
-      ? {}
-      : { emphasisMark: patch.emphasisMark ?? fallback.emphasisMark }),
-  };
-}
-
-function resolveTypingTypography(
-  patch: TextStylePatch,
-  block: TranslationBlock,
-): Partial<RichTranslationSelectionValues> {
-  return {
-    ...(patch.sizePx === undefined
-      ? {}
-      : { sizePx: patch.sizePx ?? block.fontSizePx, sizeMixed: false }),
-    ...(patch.fontFamily === undefined
-      ? {}
-      : { fontFamily: patch.fontFamily ?? block.fontFamily, fontMixed: false }),
-    ...(patch.opacity === undefined
-      ? {}
-      : {
-          opacityPercent:
-            (patch.opacity ?? normalizeRichTextOpacity(block.textOpacity)) *
-            100,
-          opacityMixed: false,
-        }),
-    ...(patch.widthScale === undefined
-      ? {}
-      : {
-          widthPercent: (patch.widthScale ?? block.fontWidthScale ?? 1) * 100,
-        }),
-  };
-}
-
-function resolveTypingAppearance(
-  patch: TextStylePatch,
-  fallback: RichTranslationSelectionValues,
-): Partial<RichTranslationSelectionValues> {
-  return {
-    ...(patch.color === undefined
-      ? {}
-      : { color: patch.color ?? fallback.color }),
-    ...(patch.backgroundColor === undefined
-      ? {}
-      : {
-          backgroundEnabled: patch.backgroundColor !== null,
-          backgroundColor: patch.backgroundColor ?? fallback.backgroundColor,
-        }),
-  };
-}
-
-function resolveTypingEffects(
-  patch: TextStylePatch,
-  fallback: RichTranslationSelectionValues,
-): Partial<RichTranslationSelectionValues> {
-  return {
-    ...(patch.outlineColor === undefined
-      ? {}
-      : { outlineColor: patch.outlineColor ?? fallback.outlineColor }),
-    ...(patch.outlineWidthPx === undefined
-      ? {}
-      : {
-          outlineEnabled: (patch.outlineWidthPx ?? fallback.outlineWidthPx) > 0,
-          outlineWidthPx: patch.outlineWidthPx ?? fallback.outlineWidthPx,
-        }),
-    ...(patch.outerOutlineColor === undefined
-      ? {}
-      : {
-          outerOutlineColor:
-            patch.outerOutlineColor ?? fallback.outerOutlineColor,
-        }),
-    ...(patch.outerOutlineWidthPx === undefined
-      ? {}
-      : {
-          outerOutlineEnabled:
-            (patch.outerOutlineWidthPx ?? fallback.outerOutlineWidthPx) > 0,
-          outerOutlineWidthPx:
-            patch.outerOutlineWidthPx ?? fallback.outerOutlineWidthPx,
-        }),
-    ...resolveTypingGlow(patch, fallback),
-  };
-}
-
-function resolveTypingGlow(
-  patch: TextStylePatch,
-  fallback: RichTranslationSelectionValues,
-): Partial<RichTranslationSelectionValues> {
-  return {
-    ...(patch.glowColor === undefined
-      ? {}
-      : { glowColor: patch.glowColor ?? fallback.glowColor }),
-    ...(patch.glowBlurPx === undefined
-      ? {}
-      : { glowBlurPx: patch.glowBlurPx ?? fallback.glowBlurPx }),
-    ...(patch.glowOpacity === undefined
-      ? {}
-      : {
-          glowEnabled:
-            (patch.glowOpacity ?? fallback.glowOpacityPercent / 100) > 0,
-          glowOpacityPercent:
-            (patch.glowOpacity ?? fallback.glowOpacityPercent / 100) * 100,
-        }),
-  };
-}
-
 function allEqual<T>(values: readonly T[]): boolean {
   return values.every((value) => Object.is(value, values[0]));
 }
@@ -393,15 +308,27 @@ function resolveCollapsedCodeSelection(
   start: number,
   plainTextLength: number,
 ): RichTextEditorSelection {
-  if (plainTextLength === 0) return { start: 0, end: 0 };
   const caret = Math.min(start, plainTextLength);
-  return caret < plainTextLength
-    ? { start: caret, end: caret + 1 }
-    : { start: Math.max(0, caret - 1), end: caret };
+  return { start: caret, end: caret };
 }
 
 function findUnusedSelectionMarker(value: string, initial: string): string {
   let marker = initial;
   while (value.includes(marker)) marker += initial;
   return marker;
+}
+
+function shadowValues(block: TranslationBlock, run?: TextStyleRun) {
+  const effect = resolveRunTextEffect(
+    block,
+    run ?? { bold: false, italic: false },
+  );
+  return {
+    shadowEnabled: effect.enabled,
+    shadowColor: effect.color,
+    shadowOffsetXpx: effect.offsetXpx,
+    shadowOffsetYpx: effect.offsetYpx,
+    shadowBlurPx: effect.blurPx,
+    shadowOpacityPercent: effect.opacity * 100,
+  };
 }

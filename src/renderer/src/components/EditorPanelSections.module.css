@@ -15,3 +15,16 @@
   word-break: keep-all;
   overflow-wrap: anywhere;
 }
+
+/* OCR is reference text: it starts compact and keeps its resized height. */
+.sourceText {
+  width: 100%;
+  min-height: 52px;
+}
+
+/* Image actions on the source art share the OCR title row. */
+.sourceActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}

@@ -363,7 +363,34 @@
       }
     },
     "blockScope": "已选 {{count}} 个区块 · 基本格式",
-    "singleBlockScope": "文本块默认格式"
+    "singleBlockScope": "文本块默认格式",
+    "characterFormat": {
+      "editText": "编辑文本块译文",
+      "title": "字符格式",
+      "emphasis": "字符强调",
+      "underline": "下划线",
+      "strikethrough": "删除线",
+      "emphasisMark": "着重号",
+      "effects": "更多字符效果",
+      "scopePrefix": "应用于：",
+      "scope": {
+        "block": "文本块中的所有字符",
+        "selection": "所选字符",
+        "caret": "之后输入的字符",
+        "blocks": "所选 {{count}} 个文本块的所有字符"
+      },
+      "selectAll": "全选",
+      "selectAllTitle": "选中整段译文，按字符应用格式",
+      "selectOutputLine": "选择输出行",
+      "selectOutputLineTitle": "选中画布上当前输出的整行",
+      "finishEditing": "结束编辑",
+      "finishEditingTitle": "结束文本编辑并将格式应用于整个文本块"
+    },
+    "blockSettings": {
+      "title": "整个文本块设置",
+      "description": "无论选中哪些字符，始终应用于整个文本块。",
+      "descriptionMultiple": "应用于所选的全部 {{count}} 个文本块。"
+    }
   },
   "transform": {
     "title": "变形",
@@ -511,6 +538,7 @@
   "editor": {
     "text": "文本",
     "translatedText": "译文",
+    "sourceText": "原文 OCR",
     "eraseOriginal": "擦除原文",
     "fitBubble": "气泡适配",
     "moreActions": "更多文本块操作",

@@ -1,3 +1,4 @@
+import { hasInlineTextShadow } from "../../../shared/richTextShadow";
 import { resolveFontWeight } from "../../../shared/blockFontWeight";
 import React from "react";
 import type { CurveLayout, TranslationBlock } from "../../../shared/textTypes";
@@ -5,10 +6,6 @@ import {
   resolveEffectiveTextColor,
   resolveEffectiveTextOutlineColor,
 } from "../../../shared/textOutline";
-import {
-  resolveTextGlow,
-  resolveTextGlowCssShadow,
-} from "../../../shared/textGlow";
 import {
   parseRichText,
   type TextStyleRun,
@@ -25,7 +22,11 @@ import {
   createTextRunStyleResolver,
   type TextRunStyleResolver,
 } from "../lib/textStyleRunResolution";
-import { resolveRunTextDecorations } from "../lib/textRunVisualStyles";
+import {
+  resolveRunTextDecorations,
+  resolveRunShadowCss,
+  resolveRunGlow,
+} from "../lib/textRunVisualStyles";
 import { CurveGlyphDecorations } from "./CurveGlyphDecorations";
 import { resolveBlockTextOutlinePx } from "./overlayTextStyles";
 
@@ -87,7 +88,7 @@ export function CurveText({
       viewBox={`0 0 ${layout.layoutWidth} ${layout.layoutHeight}`}
       width={layout.layoutWidth}
     >
-      {(["background", "outer", "outline", "main"] as const).map((layer) => (
+      {curvePaintPlanes(glyphs).map((layer) => (
         <g key={layer} data-text-layer={layer}>
           {positioned.map((glyph, index) => (
             <CurveGlyph
@@ -104,6 +105,19 @@ export function CurveText({
       ))}
     </svg>
   );
+}
+
+function curvePaintPlanes(glyphs: MeasuredCurveGlyph[]) {
+  const partial = glyphs.some(
+    (glyph) => glyph.style && hasInlineTextShadow(glyph.style),
+  );
+  return [
+    ...(partial ? ["shadow" as const] : []),
+    "background",
+    "outer",
+    "outline",
+    "main",
+  ] as const;
 }
 
 function measureGlyphs(
@@ -135,7 +149,7 @@ function CurveGlyph({
   outlineWidth,
   widthScale,
 }: {
-  layer: "background" | "outer" | "outline" | "main";
+  layer: "background" | "outer" | "outline" | "main" | "shadow";
   block: TranslationBlock;
   glyph: ReturnType<typeof layoutGlyphsOnCurve>[number];
   layoutFontSizePx: number;
@@ -158,27 +172,16 @@ function CurveGlyph({
           layoutFontSizePx={layoutFontSizePx}
         />
       ) : null}
-      {layer === "outer" && appearance.outerWidth > 0 ? (
-        <CurveGlyphText
-          color="transparent"
-          fill="none"
-          glyph={glyph}
-          stroke={appearance.outerColor}
-          strokeWidth={(appearance.innerWidth + appearance.outerWidth) * 2}
-          widthScale={appearance.widthScale}
-        />
-      ) : null}
-      {layer === "outline" ? (
-        <CurveGlyphText
-          color="transparent"
-          fill="none"
-          glyph={glyph}
-          stroke={appearance.innerWidth > 0 ? appearance.innerColor : "none"}
-          strokeWidth={appearance.innerWidth * 2}
-          style={{ filter: appearance.glowFilter }}
-          widthScale={appearance.widthScale}
-        />
-      ) : null}
+      <CurveGlyphEffectPlane
+        layer={layer}
+        appearance={appearance}
+        glyph={glyph}
+        shadow={resolveRunShadowCss(
+          block,
+          glyph.style ?? glyph,
+          layoutFontSizePx,
+        )}
+      />
       {layer === "main" ? (
         <>
           <CurveGlyphText
@@ -205,6 +208,44 @@ function CurveGlyph({
         </>
       ) : null}
     </g>
+  );
+}
+
+function CurveGlyphEffectPlane({
+  layer,
+  appearance,
+  glyph,
+  shadow,
+}: {
+  layer: "background" | "outer" | "outline" | "main" | "shadow";
+  appearance: CurveGlyphAppearance;
+  glyph: ReturnType<typeof layoutGlyphsOnCurve>[number];
+  shadow?: string;
+}): React.JSX.Element | null {
+  if (layer === "main" || layer === "background") return null;
+  if (layer === "outer" && appearance.outerWidth <= 0) return null;
+  const outer = layer === "outer";
+  const isShadow = layer === "shadow";
+  return (
+    <CurveGlyphText
+      color="transparent"
+      fill={isShadow ? "transparent" : "none"}
+      glyph={glyph}
+      widthScale={appearance.widthScale}
+      stroke={outer ? appearance.outerColor : appearance.innerColor}
+      strokeWidth={
+        isShadow
+          ? 0
+          : (appearance.innerWidth + (outer ? appearance.outerWidth : 0)) * 2
+      }
+      style={
+        isShadow
+          ? { textShadow: shadow }
+          : outer
+            ? undefined
+            : { filter: appearance.glowFilter }
+      }
+    />
   );
 }
 
@@ -244,11 +285,12 @@ function resolveCurveGlyphAppearance({
     style.outerOutlineWidthPx === undefined
       ? Math.max(0, block.outerOutlineWidthPx ?? 0)
       : style.outerOutlineWidthPx * scale;
+  const glow = resolveRunGlow(block, style, scale);
   return {
     backgroundColor: style.backgroundColor,
     decorations: resolveRunTextDecorations(block, style),
     emphasis: Boolean(block.emphasisMark || style.emphasisMark),
-    glowFilter: resolveCurveGlowFilter(block, style, scale),
+    glowFilter: curveGlowFilter(glow),
     innerColor: style.outlineColor ?? resolveEffectiveTextOutlineColor(block),
     innerWidth,
     mainColor: style.color ?? resolveEffectiveTextColor(block),
@@ -344,30 +386,6 @@ function CurveGlyphText({
   );
 }
 
-function resolveCurveGlowFilter(
-  block: TranslationBlock,
-  style: Omit<TextStyleRun, "text">,
-  scale: number,
-): string | undefined {
-  const hasInline =
-    style.glowColor !== undefined ||
-    style.glowBlurPx !== undefined ||
-    style.glowOpacity !== undefined;
-  const base = resolveTextGlow(block.textGlow);
-  const shadow = resolveTextGlowCssShadow(
-    hasInline
-      ? {
-          enabled: true,
-          color: style.glowColor ?? base.color,
-          blurPx: style.glowBlurPx ?? base.blurPx,
-          opacity: style.glowOpacity ?? base.opacity,
-        }
-      : block.textGlow,
-    scale,
-  );
-  return shadow ? `drop-shadow(${shadow})` : undefined;
-}
-
 function stripRunText(run: TextStyleRun): Omit<TextStyleRun, "text"> {
   const { text: _text, ...style } = run;
   return style;
@@ -386,4 +404,8 @@ function getMeasureContext(): CanvasRenderingContext2D {
   const context = measureCanvas.getContext("2d");
   if (!context) throw new Error("Canvas context is not available");
   return context;
+}
+
+function curveGlowFilter(shadow: string | undefined): string | undefined {
+  return shadow ? `drop-shadow(${shadow})` : undefined;
 }

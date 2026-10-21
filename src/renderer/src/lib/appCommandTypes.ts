@@ -1,6 +1,7 @@
 export const APP_COMMAND_IDS = [
   "open-translate-options",
   "open-chat",
+  "edit-block-text",
   "translate-region",
   "translate-pending",
   "translate-all",

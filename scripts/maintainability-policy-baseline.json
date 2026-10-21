@@ -44,7 +44,6 @@
     "src/main/workContextResearchGemma.ts": "and bounded repair ordering auditable, complexity, credit accounting, evidence collection, max-depth, max-lines, max-lines-per-function -- one Tavily research transaction keeps endpoint lifetime",
     "src/main/workContextResearchNormalize.ts": "max-lines -- glossary and character proposal normalization share one duplicate/manual-protection contract",
     "src/main/workContextResearchPrompt.ts": "and the strict output schema in one auditable contract, compact dossier selection, complexity, max-lines, max-lines-per-function -- research prompts keep evidence ranking",
-    "src/renderer/src/lib/overlayTextWrapping.ts": "max-lines -- one wrapping module owns the shared styled-grapheme measurement and line-break contract",
     "src/shared/conditionalBatchEngine.ts": "complexity, max-lines, max-lines-per-function -- the exhaustive typed rule evaluator keeps preview and apply on one deterministic pipeline",
     "src/shared/conditionalBatchFieldRegistry.ts": "complexity, max-lines, max-lines-per-function -- field metadata and exhaustive typed readers stay co-located as the single registry contract",
     "src/shared/conditionalBatchRules.ts": "and validation form one compatibility boundary, complexity, max-lines, max-lines-per-function -- versioned schemas, migration, recipe constructors",

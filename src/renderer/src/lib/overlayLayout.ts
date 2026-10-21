@@ -20,7 +20,7 @@ import {
 } from "./blockTextMeasurement";
 import { resolveBubbleWrappedText } from "./bubbleBlockTextLayout";
 import { resolveSourceMatchedBubbleFontSize } from "./bubbleFontSizeFitting";
-import { type BlockTextLine } from "./overlayTextWrapping";
+import type { BlockTextLine } from "./textLineTypes";
 import { resolveSourceMatchedFontSizeCapPx } from "./sourceFontSizeMatching";
 
 const MIN_FONT_SIZE_PX = MIN_READABLE_FONT_SIZE_PX;

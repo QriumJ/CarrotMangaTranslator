@@ -1,6 +1,16 @@
 // F14 moved every session branch into the application service. Enforce the
 // historical branch floor on its actual owner, not by adding fake facade branches.
 const EXTRACTED_BRANCH_OWNERS = new Map([
+  // Integrated formatting moved mixed-value and numeric control branches into
+  // the shared number-field owner. Keep both original 100% floors enforced.
+  [
+    "src/renderer/src/components/BlockSpacingFields.tsx",
+    "src/renderer/src/components/EditorNumberField.tsx",
+  ],
+  [
+    "src/renderer/src/components/BlockTextOpacityField.tsx",
+    "src/renderer/src/components/EditorNumberField.tsx",
+  ],
   // Issue #149 consolidated both timing views into the workflow presentation.
   [
     "src/renderer/src/components/pageList/PageTimingDialog.tsx",

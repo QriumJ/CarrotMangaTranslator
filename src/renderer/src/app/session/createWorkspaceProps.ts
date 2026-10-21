@@ -102,7 +102,13 @@ function createWorkspaceInteractionProps({
   | "commandRegistry"
 >) {
   return {
-    onBlockPointerDown: pointerHandlers.onBlockPointerDown,
+    onBlockPointerDown: (
+      ...args: Parameters<typeof pointerHandlers.onBlockPointerDown>
+    ) => {
+      uiState.resetEditorTextSelection();
+      pointerHandlers.onBlockPointerDown(...args);
+    },
+    onEditBlockText: commandRegistry.byId["edit-block-text"].run,
     onWarpTransformCommit: (
       blockId: Parameters<typeof blockEditingActions.updateBlock>[0],
       transform: Parameters<

@@ -1,3 +1,4 @@
+import { buildOutputCommands } from "../lib/appOutputCommands";
 import { buildWorkContextCommand } from "../lib/workContextCommand";
 import { buildInpaintingCommands } from "../lib/appInpaintingCommands";
 import { useMemo } from "react";
@@ -25,6 +26,7 @@ type UseAppCommandsOptions = {
   runAnalysis: (runMode: "pending" | "all") => void;
   openTranslateOptions: () => void;
   openChat?: () => void;
+  editBlockText?: () => void;
   openWorkContext?: (workId: string) => void;
   runCurrentPageInpainting: () => void;
   cancelJob: () => void;
@@ -73,6 +75,7 @@ export function useAppCommands(
         openTextView: options.openTextView,
         openTranslateOptions: options.openTranslateOptions,
         openChat: options.openChat,
+        editBlockText: options.editBlockText,
         openWorkContext: options.openWorkContext,
         openTranslationSource: options.openTranslationSource,
         openAddChapterPages: options.openAddChapterPages,
@@ -104,6 +107,7 @@ export function useAppCommands(
       options.openTextView,
       options.openTranslateOptions,
       options.openChat,
+      options.editBlockText,
       options.openWorkContext,
       options.openTranslationSource,
       options.openAddChapterPages,
@@ -153,6 +157,7 @@ function buildAppCommandRegistry(
 }
 
 type TranslationCommandId =
+  | "edit-block-text"
   | "translate-region"
   | "open-translate-options"
   | "open-chat"
@@ -160,6 +165,8 @@ type TranslationCommandId =
   | "translate-all";
 
 function buildTranslationCommands({
+  editBlockText,
+  componentText,
   startRegionTranslation,
   currentChapter,
   translationUnavailable,
@@ -183,6 +190,12 @@ function buildTranslationCommands({
       label: t("commands.chat.label"),
       paletteVisible: true,
       run: () => openChat?.(),
+    },
+    "edit-block-text": {
+      id: "edit-block-text",
+      label: componentText("format.characterFormat.editText"),
+      paletteVisible: Boolean(currentChapter && editBlockText),
+      run: () => editBlockText?.(),
     },
     "translate-region": {
       id: "translate-region",
@@ -285,38 +298,6 @@ function buildChapterCommands({
       keywords: t("commands.gatherText.keywords"),
       paletteVisible,
       run: openTextView,
-    },
-  };
-}
-
-type OutputCommandId = "open-export-options" | "open-psd-export-options";
-
-function buildOutputCommands({
-  currentChapter,
-  componentText,
-  openExportOptions,
-  t,
-}: LocalizedCommandOptions): Pick<AppCommandMap, OutputCommandId> {
-  // Export covers the whole chapter, so it needs pages but no selected page,
-  // and like the completion-card entry it stays open beside running jobs.
-  const available = Boolean(currentChapter?.pages.length && openExportOptions);
-  const open = (kind: "raster" | "psd") => () => {
-    if (available) openExportOptions?.(kind);
-  };
-  return {
-    "open-export-options": {
-      id: "open-export-options",
-      label: componentText("inpainting.export.resultAction"),
-      keywords: t("commands.exportResults.keywords"),
-      paletteVisible: available,
-      run: open("raster"),
-    },
-    "open-psd-export-options": {
-      id: "open-psd-export-options",
-      label: componentText("inpainting.export.psdAction"),
-      keywords: t("commands.exportPsd.keywords"),
-      paletteVisible: available,
-      run: open("psd"),
     },
   };
 }
