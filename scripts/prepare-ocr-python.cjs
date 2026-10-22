@@ -1,24 +1,34 @@
 const {
-  createWriteStream,
   existsSync,
   mkdirSync,
   readFileSync,
   readdirSync,
   writeFileSync,
 } = require("node:fs");
-const { get } = require("node:https");
 const { join } = require("node:path");
 const { spawnSync } = require("node:child_process");
 
+const {
+  RUNTIME_INTEGRITY_MANIFEST,
+  resolvePinnedRemoteAsset,
+} = require("../src/main/runtime/runtime-integrity.cjs");
+const {
+  downloadHfFileWithProgress,
+} = require("../src/main/runtime/simple-page-download-utils.cjs");
+const {
+  MAX_REMOTE_RUNTIME_ARCHIVE_BYTES,
+  MAX_REMOTE_SUPPORT_ASSET_BYTES,
+} = require("../src/main/runtime/transport/download-budgets.cjs");
+
 const root = join(__dirname, "..");
+const managedPython = RUNTIME_INTEGRITY_MANIFEST.managedPython;
 const pythonVersion =
-  process.env.MANGA_TRANSLATOR_EMBED_PYTHON_VERSION || "3.12.7";
+  process.env.MANGA_TRANSLATOR_EMBED_PYTHON_VERSION || managedPython.version;
 const pythonUrl =
   process.env.MANGA_TRANSLATOR_EMBED_PYTHON_URL ||
   `https://www.python.org/ftp/python/${pythonVersion}/python-${pythonVersion}-embed-amd64.zip`;
 const getPipUrl =
-  process.env.MANGA_TRANSLATOR_GET_PIP_URL ||
-  "https://bootstrap.pypa.io/get-pip.py";
+  process.env.MANGA_TRANSLATOR_GET_PIP_URL || managedPython.getPip.url;
 const toolsDir = join(root, "tools");
 const pythonDir = join(toolsDir, "python");
 const tmpDir = join(root, ".tmp", "ocr-python");
@@ -43,50 +53,40 @@ async function main() {
 
   const zipPath = join(tmpDir, "python-embed-amd64.zip");
   const getPipPath = join(tmpDir, "get-pip.py");
-  await download(pythonUrl, zipPath);
+  const pythonAsset = resolvePinnedRemoteAsset({
+    defaultUrl: managedPython.archive.url,
+    defaultSha256: managedPython.archive.sha256,
+    url: pythonUrl,
+    overrideSha256: process.env.MANGA_TRANSLATOR_EMBED_PYTHON_SHA256,
+    label: "OCR build Python",
+  });
+  await downloadHfFileWithProgress({
+    label: "OCR build Python",
+    file: "python-embed-amd64.zip",
+    url: pythonAsset.url,
+    destination: zipPath,
+    maximumBytes: MAX_REMOTE_RUNTIME_ARCHIVE_BYTES,
+    expectedSha256: pythonAsset.sha256,
+  });
   expandArchive(zipPath, pythonDir);
   sanitizePythonPathFile(pythonDir);
-  await download(getPipUrl, getPipPath);
+  const pipAsset = resolvePinnedRemoteAsset({
+    defaultUrl: managedPython.getPip.url,
+    defaultSha256: managedPython.getPip.sha256,
+    url: getPipUrl,
+    overrideSha256: process.env.MANGA_TRANSLATOR_GET_PIP_SHA256,
+    label: "OCR build pip",
+  });
+  await downloadHfFileWithProgress({
+    label: "OCR build pip",
+    file: "get-pip.py",
+    url: pipAsset.url,
+    destination: getPipPath,
+    maximumBytes: MAX_REMOTE_SUPPORT_ASSET_BYTES,
+    expectedSha256: pipAsset.sha256,
+  });
   run(pythonExe, [getPipPath, "--no-warn-script-location"]);
   console.log(`[ocr-python] prepared: ${pythonExe}`);
-}
-
-/**
- * @param {string} url
- * @param {string} outputPath
- * @returns {Promise<void>}
- */
-function download(url, outputPath) {
-  return new Promise((resolve, reject) => {
-    console.log(`[ocr-python] downloading ${url}`);
-    const file = createWriteStream(outputPath);
-    get(url, (response) => {
-      if (
-        [301, 302, 303, 307, 308].includes(response.statusCode || 0) &&
-        response.headers.location
-      ) {
-        file.close();
-        download(response.headers.location, outputPath).then(resolve, reject);
-        return;
-      }
-      if (response.statusCode !== 200) {
-        file.close();
-        reject(
-          new Error(`Download failed (${response.statusCode}) for ${url}`),
-        );
-        return;
-      }
-      response.pipe(file);
-      file.on("finish", () => {
-        file.close(() => {
-          resolve();
-        });
-      });
-    }).on("error", (error) => {
-      file.close();
-      reject(error);
-    });
-  });
 }
 
 /**

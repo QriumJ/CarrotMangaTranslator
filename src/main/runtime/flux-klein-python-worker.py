@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import traceback
 from pathlib import Path
@@ -29,9 +30,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--backend", choices=["rocm", "cpu"], required=True)
     parser.add_argument("--mode", choices=["klein-edit-composite", "flux-fill"], default="klein-edit-composite")
     parser.add_argument("--model-id", required=True)
+    parser.add_argument("--revision", required=True)
     parser.add_argument("--cache-dir", required=True)
     parser.add_argument("--gguf-transformer")
-    return parser.parse_args()
+    args = parser.parse_args()
+    if not re.fullmatch(r"[a-f0-9]{40}", args.revision):
+        parser.error("--revision must be a full commit hash")
+    return args
 
 
 def load_pipeline(args: argparse.Namespace):
@@ -50,7 +55,7 @@ def load_pipeline(args: argparse.Namespace):
         dtype = resolve_torch_dtype(torch, args.backend)
 
     errors: list[str] = []
-    transformer = load_gguf_transformer(diffusers, torch, args.gguf_transformer, args.model_id, args.cache_dir, dtype) if args.gguf_transformer else None
+    transformer = load_gguf_transformer(diffusers, torch, args.gguf_transformer, args.model_id, args.cache_dir, dtype, args.revision) if args.gguf_transformer else None
     for class_name in resolve_pipeline_classes(args.mode):
         pipeline_class = getattr(diffusers, class_name, None)
         if pipeline_class is None:
@@ -59,6 +64,8 @@ def load_pipeline(args: argparse.Namespace):
             load_kwargs = {
                 "cache_dir": args.cache_dir,
                 "torch_dtype": dtype,
+                "revision": args.revision,
+                "local_files_only": True,
             }
             if transformer is not None:
                 load_kwargs["transformer"] = transformer
@@ -77,7 +84,7 @@ def load_pipeline(args: argparse.Namespace):
     raise RuntimeError("No usable Diffusers inpainting pipeline was found. " + " | ".join(errors[-3:]))
 
 
-def load_gguf_transformer(diffusers, torch, gguf_path: str | None, model_id: str, cache_dir: str, dtype):
+def load_gguf_transformer(diffusers, torch, gguf_path: str | None, model_id: str, cache_dir: str, dtype, revision: str):
     if not gguf_path:
         return None
     path = Path(gguf_path)
@@ -99,8 +106,9 @@ def load_gguf_transformer(diffusers, torch, gguf_path: str | None, model_id: str
                 "config": model_id,
                 "subfolder": "transformer",
                 "cache_dir": cache_dir,
+                "revision": revision,
+                "local_files_only": True,
             },
-            {},
         )
         for extra_kwargs in attempts:
             try:

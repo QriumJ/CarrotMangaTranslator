@@ -7,7 +7,6 @@ const workerFile = "flux-klein-sdcpp-worker.py";
 const manifestFile = "mgt-flux-rocm-runtime.json";
 const outputFileName = `mgt-flux-rocm-win-x64-rocm${rocmVersion}-py${pythonVersion}-sdcpp.zip`;
 const pythonUrl = `https://www.python.org/ftp/python/${pythonVersion}/python-${pythonVersion}-embed-amd64.zip`;
-const getPipUrl = "https://bootstrap.pypa.io/get-pip.py";
 const rocmBaseUrl = `https://repo.radeon.com/rocm/windows/rocm-rel-${rocmVersion}`;
 const rocmPackageUrls = [
   `${rocmBaseUrl}/rocm_sdk_core-${rocmVersion}-py3-none-win_amd64.whl`,
@@ -64,7 +63,6 @@ module.exports = {
   buildPackages,
   defaultAmdGpuTargets,
   fluxPackages,
-  getPipUrl,
   manifestFile,
   minimumBuildFreeBytes,
   minimumOutputFreeBytes,

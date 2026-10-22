@@ -137,6 +137,9 @@ export const WINDOWS_SYSTEM_IMPORT_LIB_NAMES = [
 
 export const FLUX_ROCM_PREBUILT_RUNTIME_MANIFEST = "mgt-flux-rocm-runtime.json";
 
+export const FLUX_DIFFUSERS_MODEL_REVISION =
+  "e7b7dc27f91deacad38e78976d1f2b499d76a294";
+
 export const FLUX_DIFFUSERS_MODEL_ID = "black-forest-labs/FLUX.2-klein-4B";
 
 export const FLUX_SDCPP_VAE_FILE = "full_encoder_small_decoder.safetensors";
@@ -197,8 +200,6 @@ export const FLUX_ROCM_PREBUILT_EXTRACTION_LIMITS = {
 } as const;
 
 export const FLUX_ROCM_PREBUILT_EXTRACTION_DEADLINE_MS = 30 * 60 * 1000;
-
-export const FLUX_GET_PIP_URL = "https://bootstrap.pypa.io/get-pip.py";
 
 export const FLUX_BOOTSTRAP_PYTHON_MARKER = ".mgt-flux-bootstrap-python.json";
 

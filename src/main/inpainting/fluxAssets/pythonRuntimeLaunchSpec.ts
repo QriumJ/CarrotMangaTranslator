@@ -1,6 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import {
   FLUX_DIFFUSERS_MODEL_ID,
+  FLUX_DIFFUSERS_MODEL_REVISION,
   FLUX_MODEL_FILE,
   FLUX_MODEL_REPO,
   FLUX_MODEL_REVISION,
@@ -157,11 +158,16 @@ async function buildCpuFluxPythonLaunchSpec(options: {
     process.env.MANGA_TRANSLATOR_FLUX_PYTHON_MODEL_ID ??
     process.env.MGT_FLUX_PYTHON_MODEL_ID ??
     FLUX_DIFFUSERS_MODEL_ID;
+  const revision =
+    process.env.MANGA_TRANSLATOR_FLUX_PYTHON_MODEL_REVISION ??
+    process.env.MGT_FLUX_PYTHON_MODEL_REVISION ??
+    (modelId === FLUX_DIFFUSERS_MODEL_ID ? FLUX_DIFFUSERS_MODEL_REVISION : "");
   const mode = resolveFluxPythonMode();
   await ensureFluxPythonModelCache({
     pythonRuntime: options.pythonRuntime,
     modelDir: options.modelDir,
     modelId,
+    revision,
     ignorePatterns: [],
     signal: options.signal,
     onProgress: options.onProgress,
@@ -185,6 +191,8 @@ async function buildCpuFluxPythonLaunchSpec(options: {
       "cpu",
       "--model-id",
       modelId,
+      "--revision",
+      revision,
       "--mode",
       mode,
       "--cache-dir",

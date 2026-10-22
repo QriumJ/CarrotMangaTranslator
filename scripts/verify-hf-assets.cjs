@@ -8,6 +8,9 @@ const {
 const {
   resolvePinnedGemmaAsset,
 } = require("../src/main/runtime/model/hf-model-download-tasks.cjs");
+const {
+  RUNTIME_INTEGRITY_MANIFEST,
+} = require("../src/main/runtime/runtime-integrity.cjs");
 
 const ROOT = path.resolve(__dirname, "..");
 const MAX_CONCURRENCY = 4;
@@ -24,6 +27,22 @@ const animeTextContract = JSON.parse(
 );
 
 const assets = [
+  {
+    label: "Microsoft Visual C++ x64",
+    url: RUNTIME_INTEGRITY_MANIFEST.vcredistX64.url,
+    expectedSha256: RUNTIME_INTEGRITY_MANIFEST.vcredistX64.sha256,
+  },
+  ...[
+    RUNTIME_INTEGRITY_MANIFEST.managedPython,
+    RUNTIME_INTEGRITY_MANIFEST.hayaiManagedPython,
+    RUNTIME_INTEGRITY_MANIFEST.fluxManagedPython,
+  ].flatMap((python, index) =>
+    [python.archive, python.getPip].map((asset) => ({
+      label: `${["PaddleOCR", "HayaiOCR", "Flux"][index]} bootstrap: ${new URL(asset.url).pathname.split("/").at(-1)}`,
+      url: asset.url,
+      expectedSha256: asset.sha256,
+    })),
+  ),
   ...readHunyuanAssets(),
   pinnedGemmaAsset(
     "Gemma 12B model",
