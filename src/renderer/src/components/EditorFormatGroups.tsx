@@ -13,9 +13,7 @@ import { FormatEditorGroup } from "./EditorFormatControls";
 import { resolveEditorPanelModel } from "./editorPanelUtils";
 
 type EditorFormatGroupsProps = {
-  activeStylePresetId: string;
   block: TranslationBlock;
-  canCreateStylePreset?: boolean;
   disabled: boolean;
   disableChapterApply?: boolean;
   mixedFields: ReadonlySet<PanelFormatFieldKey>;
@@ -24,6 +22,18 @@ type EditorFormatGroupsProps = {
     scope: FormatApplyScope,
     groupIds: BlockFormatGroupId[],
   ) => void;
+  onUpdate: (patch: Partial<TranslationBlock>) => void;
+  resolvedFontSizePx?: number | null;
+  selectedBlockCount: number;
+  selectionKey?: string;
+  bubblePaddingRatio?: number | null;
+  onApplyBubblePadding?: (paddingRatio: number) => void;
+};
+
+export type EditorStylePresetProps = {
+  activeStylePresetId: string;
+  canCreateStylePreset?: boolean;
+  disabled: boolean;
   onApplyStylePreset: (presetId: string) => void;
   onCreateStylePreset?: (
     input: CreateBlockStylePresetInput,
@@ -35,12 +45,6 @@ type EditorFormatGroupsProps = {
     presetId: string,
     name: string,
   ) => boolean | Promise<boolean>;
-  onUpdate: (patch: Partial<TranslationBlock>) => void;
-  resolvedFontSizePx?: number | null;
-  selectedBlockCount: number;
-  selectionKey?: string;
-  bubblePaddingRatio?: number | null;
-  onApplyBubblePadding?: (paddingRatio: number) => void;
   showStylePresets?: boolean;
   stylePresets?: readonly BlockStylePresetSummary[];
 };
@@ -48,7 +52,7 @@ type EditorFormatGroupsProps = {
 const EMPTY_STYLE_PRESETS: readonly BlockStylePresetSummary[] = [];
 const NOOP_RESULT = (): boolean => false;
 
-/** Whole-block settings, editor display and style presets. */
+/** Whole-block settings and editor display. */
 export function EditorFormatGroups(
   props: EditorFormatGroupsProps,
 ): React.JSX.Element {
@@ -77,15 +81,15 @@ export function EditorFormatGroups(
         onApply={props.onApplyBlockBackgroundOpacity}
         onUpdate={onUpdate}
       />
-      <EditorStylePresetControls props={props} />
     </>
   );
 }
 
-function EditorStylePresetControls({
+/** Style presets; the editor places them first in the letter formatting. */
+export function EditorStylePresetControls({
   props,
 }: {
-  props: EditorFormatGroupsProps;
+  props: EditorStylePresetProps;
 }): React.JSX.Element | null {
   if (props.showStylePresets === false) return null;
   return (

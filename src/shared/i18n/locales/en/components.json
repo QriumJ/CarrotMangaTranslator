@@ -328,7 +328,9 @@
     "textColor": "Text color",
     "textBackground": {
       "enabled": "Text area background",
-      "color": "Background color"
+      "color": "Background color",
+      "opacity": "Background opacity",
+      "opacityLabel": "Text area background opacity"
     },
     "outline": "Outline",
     "outerOutline": {
@@ -594,6 +596,7 @@
       "font": "Character font",
       "opacity": "Text opacity",
       "background": "Character background",
+      "backgroundOpacity": "Letter background opacity",
       "effects": "Outline & glow",
       "mixed": "Mixed",
       "placeholder": "Enter translation",

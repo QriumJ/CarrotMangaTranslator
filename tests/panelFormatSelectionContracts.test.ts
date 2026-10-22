@@ -151,6 +151,7 @@ describe("panel multi-selection format contracts", () => {
       textColor: "#123456",
       textBackgroundEnabled: true,
       textBackgroundColor: "#fff0aa",
+      textBackgroundOpacity: 0.4,
       textOpacity: 0.8,
       backgroundColor: "#abcdef",
       opacity: 0.7,

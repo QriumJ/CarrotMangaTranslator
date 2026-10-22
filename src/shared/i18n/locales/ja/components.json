@@ -328,7 +328,9 @@
     "textColor": "文字色",
     "textBackground": {
       "enabled": "文字領域の背景",
-      "color": "背景色"
+      "color": "背景色",
+      "opacity": "背景の不透明度",
+      "opacityLabel": "文字領域の背景の不透明度"
     },
     "outline": "縁取り",
     "outerOutline": {
@@ -594,6 +596,7 @@
       "font": "文字フォント",
       "opacity": "文字の不透明度",
       "background": "文字背景",
+      "backgroundOpacity": "文字背景の不透明度",
       "effects": "縁取り・光彩",
       "mixed": "混在",
       "placeholder": "翻訳文を入力",

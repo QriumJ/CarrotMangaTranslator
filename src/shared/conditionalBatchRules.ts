@@ -333,6 +333,7 @@ const BlockStylePresetFormatSchema = z
     outerOutlineWidthPx: z.number().finite().min(0).max(64).optional(),
     textBackgroundEnabled: z.boolean().optional(),
     textBackgroundColor: HexColorSchema.optional(),
+    textBackgroundOpacity: z.number().finite().min(0).max(1).optional(),
     textEffect: TextEffectSchema.optional(),
     textGlow: TextGlowSchema.optional(),
     rotationDeg: z.number().finite().min(-180).max(180).optional(),

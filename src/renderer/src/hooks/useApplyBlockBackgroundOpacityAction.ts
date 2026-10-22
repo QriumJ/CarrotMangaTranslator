@@ -13,6 +13,7 @@ type Options = {
   selectedBlock: TranslationBlock | null;
   selectedPage: MangaPage | null;
   selectedPageEditLocked: boolean;
+  setShowBlockChrome?: (visible: boolean) => void;
   updateCurrentChapter: UpdateCurrentChapter;
 };
 
@@ -23,6 +24,7 @@ export function useApplyBlockBackgroundOpacityAction({
   selectedBlock,
   selectedPage,
   selectedPageEditLocked,
+  setShowBlockChrome,
   updateCurrentChapter,
 }: Options): (scope: BlockBackgroundApplyScope) => void {
   const { t } = useTranslation("renderer");
@@ -62,6 +64,7 @@ export function useApplyBlockBackgroundOpacityAction({
           label: t("workspaceHistory.blockBackgroundOpacity"),
         },
       );
+      setShowBlockChrome?.(true);
       if (!applied) return;
       pushStatus(
         t(
@@ -78,6 +81,7 @@ export function useApplyBlockBackgroundOpacityAction({
       selectedBlock,
       selectedPage,
       selectedPageEditLocked,
+      setShowBlockChrome,
       t,
       updateCurrentChapter,
     ],

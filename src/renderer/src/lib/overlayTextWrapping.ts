@@ -508,6 +508,7 @@ const RUN_STYLE_KEYS = [
   "letterSpacing",
   "color",
   "backgroundColor",
+  "backgroundOpacity",
   "outlineColor",
   "outlineWidthPx",
   "outerOutlineColor",

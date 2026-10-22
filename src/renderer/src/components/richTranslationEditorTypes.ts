@@ -19,6 +19,8 @@ export type RichTranslationSelectionValues = {
   color: string;
   backgroundEnabled: boolean;
   backgroundColor: string;
+  /** Letter background fill opacity, separate from the glyph opacity. */
+  backgroundOpacityPercent: number;
   outlineEnabled: boolean;
   outlineColor: string;
   outlineWidthPx: number;

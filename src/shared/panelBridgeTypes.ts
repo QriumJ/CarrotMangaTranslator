@@ -8,6 +8,7 @@ import type {
   CreateBlockStylePresetInput,
 } from "./blockStylePresets";
 import type { BlockLibraryEntryV1 } from "./blockLibrary";
+import { resolveTextBackgroundOpacity } from "./textBackground";
 
 /**
  * Panels that can be popped out into their own OS window. Kept as a closed
@@ -222,5 +223,9 @@ function readPanelFormatValue(
   block: TranslationBlock,
   key: PanelFormatFieldKey,
 ): unknown {
-  return key === "inpaintExcluded" ? Boolean(block[key]) : block[key];
+  // Absent values keep their legacy meaning, so they never read as mixed.
+  if (key === "inpaintExcluded") return Boolean(block[key]);
+  if (key === "textBackgroundOpacity")
+    return resolveTextBackgroundOpacity(block);
+  return block[key];
 }

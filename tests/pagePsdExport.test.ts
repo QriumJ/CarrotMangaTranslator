@@ -296,6 +296,11 @@ describe("layered PSD export", () => {
     ).toBeNull();
     const unsupportedStyles: Partial<TranslationBlock>[] = [
       { textBackgroundEnabled: true, textBackgroundColor: "#ffffff" },
+      {
+        textBackgroundEnabled: true,
+        textBackgroundColor: "#ffffff",
+        textBackgroundOpacity: 0.4,
+      },
       { outerOutlineColor: "#111111", outerOutlineWidthPx: 2 },
       { underline: true },
       { strikethrough: true },

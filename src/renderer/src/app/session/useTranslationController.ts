@@ -84,6 +84,7 @@ export function useTranslationController(
     stageRef: chapter.core.stageRef,
     setSelectedBlockId: chapter.core.setSelectedBlockId,
     setSelectedBlockIds: chapter.core.setSelectedBlockIds,
+    setShowBlockChrome: chapter.uiState.setShowBlockChrome,
     updateCurrentChapter,
   });
 

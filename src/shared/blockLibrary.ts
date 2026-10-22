@@ -44,6 +44,7 @@ const BlockLibraryTemplateSchema = TranslationBlockObjectSchema.pick({
   emphasisMark: true,
   textBackgroundEnabled: true,
   textBackgroundColor: true,
+  textBackgroundOpacity: true,
   backgroundColor: true,
   opacity: true,
   autoFitText: true,
@@ -286,6 +287,7 @@ const OPTIONAL_TEMPLATE_FIELDS = [
   "emphasisMark",
   "textBackgroundEnabled",
   "textBackgroundColor",
+  "textBackgroundOpacity",
   "autoFitText",
 ] as const;
 

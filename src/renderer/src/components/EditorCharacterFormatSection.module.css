@@ -4,6 +4,15 @@
   min-width: 0;
 }
 
+/* Block-wide presets and text-area background, divided from letter controls. */
+.blockControls {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--border-soft);
+}
+
 /* The edit target, read next to the section title. */
 .scope {
   min-width: 0;

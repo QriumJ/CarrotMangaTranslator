@@ -586,7 +586,8 @@ describe("production cleanup coverage floor gate", () => {
     expect(Object.keys(manifest.introducedFloors)).toEqual(scope.added);
     expect(manifest.deletedFiles).toEqual(scope.deleted);
     // Issue #157 touches the Diffusers cache owner; its original measured floor is retained.
-    expect(scope.existing).toHaveLength(863);
+    // Block-background visibility adds its batch action with the original floor.
+    expect(scope.existing).toHaveLength(864);
     // Includes global chat, shared actions, OpenCode help, MCP event streams, shared
     // translation instructions and image budget; inherited floors remain unchanged.
     // inherited floors remain unchanged.
@@ -605,7 +606,8 @@ describe("production cleanup coverage floor gate", () => {
     // Hunyuan adds 11 OCR runtime, domain and production UI owners.
     // Integrated formatting replaces four inline owners with 23 shared owners.
     // Balloon padding and workflow progress add three owners and touch three baseline owners.
-    expect(scope.added).toHaveLength(1570);
+    // Text-area background opacity adds its default and preset compatibility owner.
+    expect(scope.added).toHaveLength(1571);
     expect(scope.deleted).toHaveLength(12);
   });
 });

@@ -1,5 +1,9 @@
 import type { BlockFormatDefaults, BlockFormatGroupId } from "./blockFormat";
 import { normalizeFontWeight } from "./blockFontWeight";
+import {
+  textBackgroundFormat,
+  textBackgroundOpacityFormat,
+} from "./textBackground";
 import type { TranslationBlock } from "./textTypes";
 import {
   DEFAULT_TEXT_EFFECT,
@@ -54,6 +58,7 @@ export type BlockStylePresetFormat = Partial<
     | "textColor"
     | "textBackgroundEnabled"
     | "textBackgroundColor"
+    | "textBackgroundOpacity"
     | "textOpacity"
     | "outlineColor"
     | "outlineWidthPx"
@@ -102,12 +107,7 @@ const BLOCK_FORMAT_BUILDERS: Record<
   fontWidth: (block) => ({ fontWidthScale: block.fontWidthScale ?? 1 }),
   color: (block) => ({
     textColor: block.textColor,
-    ...(block.textBackgroundEnabled === undefined
-      ? {}
-      : { textBackgroundEnabled: block.textBackgroundEnabled }),
-    ...(block.textBackgroundColor === undefined
-      ? {}
-      : { textBackgroundColor: block.textBackgroundColor }),
+    ...textBackgroundFormat(block),
   }),
   outline: (block) => ({
     outlineColor: block.outlineColor,
@@ -266,6 +266,7 @@ const NORMALIZED_FORMAT_BUILDERS: Record<
             "#ffffff",
           ),
         }),
+    ...textBackgroundOpacityFormat(record),
   }),
   outline: (record) => {
     const outlineWidthPx = optionalRangedNumber(record.outlineWidthPx, 0, 64);
@@ -342,12 +343,7 @@ const PATCH_BUILDERS: Record<
   fontWidth: (format) => ({ fontWidthScale: format.fontWidthScale ?? 1 }),
   color: (format) => ({
     textColor: format.textColor ?? "#111111",
-    ...(format.textBackgroundEnabled === undefined
-      ? {}
-      : { textBackgroundEnabled: format.textBackgroundEnabled }),
-    ...(format.textBackgroundColor === undefined
-      ? {}
-      : { textBackgroundColor: format.textBackgroundColor }),
+    ...textBackgroundFormat(format),
   }),
   outline: (format) => ({
     outlineColor: format.outlineColor,

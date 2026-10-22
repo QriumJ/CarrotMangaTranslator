@@ -272,6 +272,7 @@ function hasUnsupportedRunStyle(run: TextStyleRun): boolean {
     run.letterSpacing,
     run.color,
     run.backgroundColor,
+    run.backgroundOpacity,
     run.outlineColor,
     run.outlineWidthPx,
     run.outerOutlineColor,

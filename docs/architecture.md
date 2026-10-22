@@ -1,5 +1,21 @@
 # 코드 경계와 품질 규칙
 
+## 2026-10-22 글자 영역 배경 투명도
+
+`shared/textBackground`가 배경 채움의 기본 불투명도 1과 이전 프리셋 호환을 소유한다.
+편집기와 출력의 공용 `PageArtwork`에서 배경 레이어에만 적용하며 문자 불투명도와 분리한다.
+저장·분리 패널·다중 선택·보관 블록·프리셋 계약을 기존 경로로 확장했다.
+새 모듈의 최초 Windows focused coverage는 네 지표 모두 100%다. 측정 출처는
+`C:/tmp/cov-text-bg-opacity/coverage-summary.json`, SHA-256은
+`01f4fc01cf5584444fbdc994ad2178cdb1ab3006abc9c12e6b769d4c09bc386a`다.
+기존 커버리지 기준은 유지하며 `textBackgroundOpacity.test.tsx`가 렌더·저장·프리셋 호환을 검증한다.
+기본값·범위 해석을 복제하지 않고 공용 소유자를 직접 쓰는 소비자 1개로 `PageArtwork`의 직접
+runtime import 상한은 17→18이다. 전역 상한은 변경하지 않는다.
+글자별 배경은 기존 rich-text 서식에 `background-opacity`(0~1)를 더해 선택 범위를 보존한다.
+`textRunVisualStyles`의 공용 배경색 계산을 일반 글자와 곡선 글자가 함께 사용하고,
+`characterBackgroundOpacity.test.tsx`가 마크업·DOM 왕복, 선택 범위 및 편집기/출력 일치를 검증한다.
+글자 영역 배경과 글자 배경은 같은 2열 컨트롤로 색상과 투명도를 나란히 표시한다.
+
 ## 2026-10-21 Hunyuan 영역 OCR
 
 Hunyuan은 기존 OCR 선택/영역 전처리/작업 경계를 사용하며 별도의 네이티브 서버를 소유한다.

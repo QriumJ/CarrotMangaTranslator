@@ -58,6 +58,7 @@ export const BLOCK_FORMAT_FIELD_KEYS = [
   "textColor",
   "textBackgroundEnabled",
   "textBackgroundColor",
+  "textBackgroundOpacity",
   "outlineColor",
   "outlineWidthPx",
   "outlineWidthScale",
@@ -106,7 +107,12 @@ export const BLOCK_FORMAT_GROUPS: readonly BlockFormatGroup[] = [
   {
     id: "color",
     label: "글자·배경색",
-    keys: ["textColor", "textBackgroundEnabled", "textBackgroundColor"],
+    keys: [
+      "textColor",
+      "textBackgroundEnabled",
+      "textBackgroundColor",
+      "textBackgroundOpacity",
+    ],
   },
   {
     id: "outline",

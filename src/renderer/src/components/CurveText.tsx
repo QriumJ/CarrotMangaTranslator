@@ -23,6 +23,7 @@ import {
   type TextRunStyleResolver,
 } from "../lib/textStyleRunResolution";
 import {
+  resolveRunBackgroundFill,
   resolveRunTextDecorations,
   resolveRunShadowCss,
   resolveRunGlow,
@@ -287,7 +288,7 @@ function resolveCurveGlyphAppearance({
       : style.outerOutlineWidthPx * scale;
   const glow = resolveRunGlow(block, style, scale);
   return {
-    backgroundColor: style.backgroundColor,
+    backgroundColor: resolveRunBackgroundFill(style),
     decorations: resolveRunTextDecorations(block, style),
     emphasis: Boolean(block.emphasisMark || style.emphasisMark),
     glowFilter: curveGlowFilter(glow),

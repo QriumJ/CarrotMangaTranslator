@@ -24,6 +24,7 @@ export type StylePresetEditorValues = BlockFormatDefaults & {
   emphasisMark: boolean;
   textBackgroundEnabled: boolean;
   textBackgroundColor: string;
+  textBackgroundOpacity: number;
   outerOutlineColor: string;
   outerOutlineWidthPx: number;
 };
@@ -33,55 +34,44 @@ type PresetFormat = BlockStylePreset["format"];
 type EditorField = keyof StylePresetEditorValues;
 type PresetFormatField = keyof PresetFormat;
 
+/** Preset format keys per group; every one is also an editor field. */
+const PRESET_FIELDS_BY_GROUP = {
+  font: ["fontFamily"],
+  size: ["fontSizePx", "autoFitText"],
+  align: ["textAlign"],
+  wordBreak: ["wordBreak"],
+  direction: ["renderDirection"],
+  emphasis: ["bold", "italic", "underline", "strikethrough", "emphasisMark"],
+  lineSpacing: ["lineHeight"],
+  letterSpacing: ["letterSpacing"],
+  fontWidth: ["fontWidthScale"],
+  color: [
+    "textColor",
+    "textBackgroundEnabled",
+    "textBackgroundColor",
+    "textBackgroundOpacity",
+  ],
+  outline: [
+    "outlineColor",
+    "outlineWidthPx",
+    "outlineWidthScale",
+    "outerOutlineColor",
+    "outerOutlineWidthPx",
+  ],
+  effect: ["textEffect", "textGlow"],
+  transform: ["rotationDeg", "textOpacity"],
+} as const satisfies Record<
+  BlockFormatGroupId,
+  readonly (EditorField & PresetFormatField)[]
+>;
+
+/** The editor adds only the outline on/off switch, which presets never store. */
 const EDITOR_FIELDS_BY_GROUP: Record<
   BlockFormatGroupId,
   readonly EditorField[]
 > = {
-  font: ["fontFamily"],
-  size: ["fontSizePx", "autoFitText"],
-  align: ["textAlign"],
-  wordBreak: ["wordBreak"],
-  direction: ["renderDirection"],
-  emphasis: ["bold", "italic", "underline", "strikethrough", "emphasisMark"],
-  lineSpacing: ["lineHeight"],
-  letterSpacing: ["letterSpacing"],
-  fontWidth: ["fontWidthScale"],
-  color: ["textColor", "textBackgroundEnabled", "textBackgroundColor"],
-  outline: [
-    "outlineEnabled",
-    "outlineColor",
-    "outlineWidthPx",
-    "outlineWidthScale",
-    "outerOutlineColor",
-    "outerOutlineWidthPx",
-  ],
-  effect: ["textEffect", "textGlow"],
-  transform: ["rotationDeg", "textOpacity"],
-};
-
-const PRESET_FIELDS_BY_GROUP: Record<
-  BlockFormatGroupId,
-  readonly PresetFormatField[]
-> = {
-  font: ["fontFamily"],
-  size: ["fontSizePx", "autoFitText"],
-  align: ["textAlign"],
-  wordBreak: ["wordBreak"],
-  direction: ["renderDirection"],
-  emphasis: ["bold", "italic", "underline", "strikethrough", "emphasisMark"],
-  lineSpacing: ["lineHeight"],
-  letterSpacing: ["letterSpacing"],
-  fontWidth: ["fontWidthScale"],
-  color: ["textColor", "textBackgroundEnabled", "textBackgroundColor"],
-  outline: [
-    "outlineColor",
-    "outlineWidthPx",
-    "outlineWidthScale",
-    "outerOutlineColor",
-    "outerOutlineWidthPx",
-  ],
-  effect: ["textEffect", "textGlow"],
-  transform: ["rotationDeg", "textOpacity"],
+  ...PRESET_FIELDS_BY_GROUP,
+  outline: ["outlineEnabled", ...PRESET_FIELDS_BY_GROUP.outline],
 };
 
 export function resolveStylePresetEditorValues(
@@ -98,6 +88,7 @@ export function resolveStylePresetEditorValues(
     emphasisMark: false,
     textBackgroundEnabled: false,
     textBackgroundColor: "#ffffff",
+    textBackgroundOpacity: 1,
     outerOutlineColor: "#111111",
     outerOutlineWidthPx: 0,
   };
@@ -147,6 +138,7 @@ function buildEditorGroupValues(
       textColor: format.textColor ?? defaults.textColor,
       textBackgroundEnabled: format.textBackgroundEnabled ?? false,
       textBackgroundColor: format.textBackgroundColor ?? "#ffffff",
+      textBackgroundOpacity: format.textBackgroundOpacity ?? 1,
     }),
     outline: () => ({
       outlineEnabled:
@@ -248,6 +240,7 @@ const OPTIONAL_NEW_PRESET_FIELDS = [
   "emphasisMark",
   "textBackgroundEnabled",
   "textBackgroundColor",
+  "textBackgroundOpacity",
   "outerOutlineColor",
   "outerOutlineWidthPx",
   "textGlow",
@@ -308,6 +301,7 @@ function buildGroupFormat(
       textColor: values.textColor,
       textBackgroundEnabled: values.textBackgroundEnabled,
       textBackgroundColor: values.textBackgroundColor,
+      textBackgroundOpacity: values.textBackgroundOpacity,
     }),
     outline: () =>
       values.outlineEnabled

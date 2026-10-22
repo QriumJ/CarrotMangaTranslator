@@ -23,6 +23,7 @@ export type UseBlockEditingActionsOptions = {
   selectedBlockIds: string[];
   selectedPage: MangaPage | null;
   selectedPageEditLocked: boolean;
+  setShowBlockChrome?: (visible: boolean) => void;
   stageRef?: RefObject<HTMLDivElement | null>;
   setSelectedBlockId: Dispatch<SetStateAction<string | null>>;
   setSelectedBlockIds: Dispatch<SetStateAction<string[]>>;
