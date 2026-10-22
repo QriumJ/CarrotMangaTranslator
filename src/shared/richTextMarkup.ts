@@ -38,6 +38,8 @@ export type TextStyleRun = {
   letterSpacing?: number;
   color?: string;
   backgroundColor?: string;
+  /** Opacity of the letter background fill only; absent means opaque. */
+  backgroundOpacity?: number;
   outlineColor?: string;
   outlineWidthPx?: number;
   outerOutlineColor?: string;
@@ -72,6 +74,7 @@ export type TextStylePatch = {
   letterSpacing?: number | null;
   color?: string | null;
   backgroundColor?: string | null;
+  backgroundOpacity?: number | null;
   outlineColor?: string | null;
   outlineWidthPx?: number | null;
   outerOutlineColor?: string | null;
@@ -105,6 +108,7 @@ type StyleTagName =
   | "width"
   | "color"
   | "background"
+  | "background-opacity"
   | "outline-color"
   | "outline-width"
   | "outer-outline-color"
@@ -230,6 +234,7 @@ export function clearTextStylesFromRuns(
     letterSpacing: null,
     color: null,
     backgroundColor: null,
+    backgroundOpacity: null,
     outlineColor: null,
     outlineWidthPx: null,
     outerOutlineColor: null,
@@ -514,6 +519,7 @@ const NUMBER_TAG_DEFINITIONS: Partial<
   "shadow-blur": { key: "shadowBlurPx", min: 0, max: 64 },
   "shadow-opacity": { key: "shadowOpacity", min: 0, max: 1 },
   "glow-opacity": { key: "glowOpacity", min: 0, max: 1 },
+  "background-opacity": { key: "backgroundOpacity", min: 0, max: 1 },
 };
 
 function findClosingStyleTag(
@@ -656,6 +662,7 @@ function valuedStyleTags(
     ["outer-outline-color", run.outerOutlineColor],
     ["outline-width", run.outlineWidthPx],
     ["outline-color", run.outlineColor],
+    ["background-opacity", run.backgroundOpacity],
     ["background", run.backgroundColor],
     ["color", run.color],
     [
@@ -738,6 +745,7 @@ function applyStylePatch(
   applyOptionalPatch(next, "letterSpacing", patch.letterSpacing);
   applyOptionalPatch(next, "color", patch.color);
   applyOptionalPatch(next, "backgroundColor", patch.backgroundColor);
+  applyOptionalPatch(next, "backgroundOpacity", patch.backgroundOpacity);
   applyOptionalPatch(next, "outlineColor", patch.outlineColor);
   applyOptionalPatch(next, "outlineWidthPx", patch.outlineWidthPx);
   applyOptionalPatch(next, "outerOutlineColor", patch.outerOutlineColor);
@@ -781,6 +789,7 @@ function applyOptionalPatch<
     | "widthScale"
     | "color"
     | "backgroundColor"
+    | "backgroundOpacity"
     | "outlineColor"
     | "outlineWidthPx"
     | "outerOutlineColor"
@@ -833,6 +842,7 @@ function normalizeRun(run: TextStyleRun): TextStyleRun {
   copyNormalizedCoreValues(run, next);
   copyColor(run, next, "color");
   copyColor(run, next, "backgroundColor");
+  copyNumber(run, next, "backgroundOpacity", 0, 1);
   copyColor(run, next, "outlineColor");
   copyColor(run, next, "outerOutlineColor");
   copyColor(run, next, "glowColor");
@@ -898,6 +908,7 @@ const STYLE_COMPARISON_FIELDS = [
   "letterSpacing",
   "color",
   "backgroundColor",
+  "backgroundOpacity",
   "outlineColor",
   "outlineWidthPx",
   "outerOutlineColor",
@@ -934,6 +945,7 @@ function copyNumber<
     | "outerOutlineWidthPx"
     | "glowBlurPx"
     | "glowOpacity"
+    | "backgroundOpacity"
     | "lineHeight"
     | "letterSpacing"
     | "shadowOffsetXpx"

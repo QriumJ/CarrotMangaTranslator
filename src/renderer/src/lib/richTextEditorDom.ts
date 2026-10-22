@@ -291,6 +291,7 @@ const NUMBER_RUN_STYLE_FIELDS = [
   "outerOutlineWidthPx",
   "glowBlurPx",
   "glowOpacity",
+  "backgroundOpacity",
   "shadowOffsetXpx",
   "shadowOffsetYpx",
   "shadowBlurPx",

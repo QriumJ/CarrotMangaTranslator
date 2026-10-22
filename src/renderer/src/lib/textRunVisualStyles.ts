@@ -2,6 +2,7 @@ import { resolveRunTextEffect } from "../../../shared/richTextShadow";
 import { resolveTextEffectCssShadow } from "../../../shared/textEffect";
 import type React from "react";
 import { getTextMeasureContext } from "./blockTextMeasurement";
+import { hexToRgba } from "./cssColor";
 import type { TextStyleRun } from "../../../shared/richTextMarkup";
 import {
   resolveTextGlow,
@@ -57,6 +58,19 @@ export function resolveRunTextDecorations(
   };
 }
 
+/**
+ * The letter background fill. Only the fill takes its own opacity; legacy runs
+ * without one keep their exact opaque color.
+ */
+export function resolveRunBackgroundFill(
+  run: Pick<TextStyleRun, "backgroundColor" | "backgroundOpacity">,
+): string | undefined {
+  if (!run.backgroundColor) return undefined;
+  return run.backgroundOpacity === undefined || run.backgroundOpacity >= 1
+    ? run.backgroundColor
+    : hexToRgba(run.backgroundColor, run.backgroundOpacity);
+}
+
 export function resolveMainRunVisualStyle(
   block: TranslationBlock,
   run: TextStyleRun,
@@ -72,7 +86,7 @@ export function resolveMainRunVisualStyle(
   );
   return {
     color: run.color ?? resolveEffectiveTextColor(block),
-    backgroundColor: run.backgroundColor,
+    backgroundColor: resolveRunBackgroundFill(run),
     WebkitTextStrokeColor:
       outlineWidth > 0
         ? (run.outlineColor ?? resolveEffectiveTextOutlineColor(block))

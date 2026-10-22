@@ -10,7 +10,11 @@ import {
   type CharacterFormatTarget,
 } from "./editorCharacterFormatTarget";
 import { EditorCharacterFormatSection } from "./EditorCharacterFormatSection";
-import { EditorFormatGroups } from "./EditorFormatGroups";
+import { TextBackgroundSettings } from "./EditorFormatControls";
+import {
+  EditorFormatGroups,
+  EditorStylePresetControls,
+} from "./EditorFormatGroups";
 import { EditorTabPanel, type EditorTabId } from "./EditorPanelChrome";
 import { TextEditorGroup } from "./EditorPanelSections";
 import type {
@@ -62,6 +66,8 @@ export function EditorPanelBody(
  * The active block's text and its letter formatting first, then settings that
  * always cover the whole selection. Letter formatting follows the text
  * controller; without an active text edit it covers every selected block.
+ * Presets and the text-area background lead the letter formatting as
+ * block-wide controls, so repeated picks need no scroll.
  */
 function EditorFormatTab(props: EditorPanelBodyProps): React.JSX.Element {
   const { block } = props;
@@ -75,7 +81,10 @@ function EditorFormatTab(props: EditorPanelBodyProps): React.JSX.Element {
     block.id,
     props.editorTextTabRequestToken ?? 0,
   );
-  const { renderCharacterFormat, updateFormat } = useFormatTargets(props);
+  const { renderCharacterFormat, updateFormat } = useFormatTargets(
+    props,
+    mixedFields,
+  );
   return (
     <>
       <TextEditorGroup
@@ -113,11 +122,8 @@ function EditorFormatTab(props: EditorPanelBodyProps): React.JSX.Element {
       />
       <EditorFormatGroups
         {...props}
-        activeStylePresetId={props.presetSelection.activePresetId}
         mixedFields={mixedFields}
         selectedBlockCount={blockCount}
-        onApplyStylePreset={props.presetSelection.apply}
-        onDeleteStylePreset={props.presetSelection.delete}
         onUpdate={updateFormat}
       />
     </>
@@ -125,7 +131,10 @@ function EditorFormatTab(props: EditorPanelBodyProps): React.JSX.Element {
 }
 
 /** Shared character-section renderer; direct formatting drops the preset. */
-function useFormatTargets(props: EditorPanelBodyProps): {
+function useFormatTargets(
+  props: EditorPanelBodyProps,
+  mixedFields: ReadonlySet<PanelFormatFieldKey>,
+): {
   renderCharacterFormat: (target: CharacterFormatTarget) => React.ReactNode;
   updateFormat: (patch: Partial<TranslationBlock>) => void;
 } {
@@ -153,6 +162,24 @@ function useFormatTargets(props: EditorPanelBodyProps): {
       onAdjustFontSize={props.onAdjustFontSize}
       onFontFamilyDraftChange={setFontFamilyDraft}
       onOpenFontManager={props.onOpenFontManager}
+      blockControls={
+        <>
+          <EditorStylePresetControls
+            props={{
+              ...props,
+              activeStylePresetId: props.presetSelection.activePresetId,
+              onApplyStylePreset: props.presetSelection.apply,
+              onDeleteStylePreset: props.presetSelection.delete,
+            }}
+          />
+          <TextBackgroundSettings
+            block={block}
+            disabled={props.disabled}
+            mixedFields={mixedFields}
+            onUpdate={updateFormat}
+          />
+        </>
+      }
     />
   );
   return { renderCharacterFormat, updateFormat };

@@ -11,6 +11,7 @@ import {
 import { getActiveGeneratedLettering } from "../../../shared/generatedLettering";
 import { normalizeCurveLayout } from "../../../shared/blockTransforms";
 import type { PageArtworkSnapshot } from "../../../shared/pageExportContracts";
+import { resolveTextBackgroundOpacity } from "../../../shared/textBackground";
 import type { TranslationBlock } from "../../../shared/textTypes";
 import { resolveTextEffectFilter } from "../../../shared/textEffect";
 import type { BlockFontCatalog } from "../lib/fonts";
@@ -96,11 +97,16 @@ function TextBackgroundLayer({
   block: TranslationBlock;
 }): React.JSX.Element | null {
   if (!block.textBackgroundEnabled) return null;
+  // Only this fill layer fades; the text layer beside it stays opaque.
+  const opacity = resolveTextBackgroundOpacity(block);
   return (
     <div
       aria-hidden="true"
       className="text-background-layer"
-      style={{ backgroundColor: block.textBackgroundColor ?? "#ffffff" }}
+      style={{
+        backgroundColor: block.textBackgroundColor ?? "#ffffff",
+        ...(opacity < 1 ? { opacity } : {}),
+      }}
     />
   );
 }

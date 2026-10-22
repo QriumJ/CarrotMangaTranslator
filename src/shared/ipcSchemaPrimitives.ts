@@ -362,6 +362,7 @@ export const TranslationBlockObjectSchema = z
     emphasisMark: z.boolean().optional(),
     textBackgroundEnabled: z.boolean().optional(),
     textBackgroundColor: hexColor.optional(),
+    textBackgroundOpacity: finiteNumber.min(0).max(1).optional(),
     backgroundColor: hexColor,
     opacity: finiteNumber.min(0).max(1),
     autoFitText: z.boolean().optional(),

@@ -103,6 +103,8 @@ function resolveCandidateSelectionValues(
     color: metrics.colors[0] ?? base.color,
     backgroundEnabled: metrics.backgrounds.every(Boolean),
     backgroundColor: metrics.backgrounds.find(Boolean) ?? base.backgroundColor,
+    backgroundOpacityPercent:
+      metrics.backgroundOpacities[0] ?? base.backgroundOpacityPercent,
     ...resolveCandidateEffects(metrics, base),
     ...shadowValues(block, candidates[0]),
   };
@@ -157,6 +159,9 @@ function collectCandidateMetrics(
       (run) => run.color ?? resolveEffectiveTextColor(block),
     ),
     backgrounds: candidates.map((run) => run.backgroundColor),
+    backgroundOpacities: candidates.map(
+      (run) => (run.backgroundOpacity ?? 1) * 100,
+    ),
     outlineColors: candidates.map(
       (run) => run.outlineColor ?? resolveEffectiveTextOutlineColor(block),
     ),
@@ -235,6 +240,7 @@ function createBaseSelectionValues(
     color: resolveEffectiveTextColor(block),
     backgroundEnabled: false,
     backgroundColor: "#ffffff",
+    backgroundOpacityPercent: 100,
     outlineEnabled: outlineWidthPx > 0,
     outlineColor: resolveEffectiveTextOutlineColor(block),
     outlineWidthPx,

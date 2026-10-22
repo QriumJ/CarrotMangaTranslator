@@ -328,7 +328,9 @@
     "textColor": "文字颜色",
     "textBackground": {
       "enabled": "文字区域背景",
-      "color": "背景颜色"
+      "color": "背景颜色",
+      "opacity": "背景不透明度",
+      "opacityLabel": "文字区域背景不透明度"
     },
     "outline": "描边",
     "outerOutline": {
@@ -594,6 +596,7 @@
       "font": "字符字体",
       "opacity": "文字不透明度",
       "background": "字符背景",
+      "backgroundOpacity": "文字背景不透明度",
       "effects": "描边与辉光",
       "mixed": "混合",
       "placeholder": "输入译文",

@@ -66,6 +66,7 @@ export function useFormatDefaultsEditor({
             emphasisMark: false,
             textBackgroundEnabled: false,
             textBackgroundColor: "#ffffff",
+            textBackgroundOpacity: 1,
             outerOutlineColor: "#111111",
             outerOutlineWidthPx: 0,
           },

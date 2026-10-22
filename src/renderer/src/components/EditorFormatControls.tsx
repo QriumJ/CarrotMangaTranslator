@@ -99,9 +99,6 @@ export function FormatEditorGroup({
         <AutoFitField {...props} model={model} />
       </div>
       <TextWrappingField {...props} />
-      <div className="editor-appearance-list">
-        <TextBackgroundField {...props} />
-      </div>
       <EditorBubbleLayoutSettings
         {...props}
         selectedBlockCount={selectedBlockCount}
@@ -110,6 +107,20 @@ export function FormatEditorGroup({
         onApplyBubblePadding={onApplyBubblePadding}
       />
     </section>
+  );
+}
+
+/**
+ * The full text-area background. It covers the whole block (or every selected
+ * block) and sits with the presets above the letter formatting.
+ */
+export function TextBackgroundSettings(
+  props: BlockSectionProps,
+): React.JSX.Element {
+  return (
+    <div className="editor-appearance-list">
+      <TextBackgroundField {...props} />
+    </div>
   );
 }
 

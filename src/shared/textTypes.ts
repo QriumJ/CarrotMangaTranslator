@@ -175,6 +175,8 @@ export type TranslationBlock = {
   /** Paint the complete text box before drawing text, including exports. */
   textBackgroundEnabled?: boolean;
   textBackgroundColor?: string;
+  /** 0..1 opacity of that background fill only; absent means opaque. */
+  textBackgroundOpacity?: number;
   backgroundColor: string;
   /** Opacity of the editor-only text-block background/chrome. */
   opacity: number;

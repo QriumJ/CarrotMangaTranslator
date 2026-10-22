@@ -328,7 +328,9 @@
     "textColor": "글자색",
     "textBackground": {
       "enabled": "글자 영역 배경",
-      "color": "배경색"
+      "color": "배경색",
+      "opacity": "배경 투명도",
+      "opacityLabel": "글자 영역 배경 투명도"
     },
     "outline": "외곽선",
     "outerOutline": {
@@ -594,6 +596,7 @@
       "font": "글자 폰트",
       "opacity": "글자 투명도",
       "background": "글자 배경",
+      "backgroundOpacity": "글자 배경 투명도",
       "effects": "외곽선 · 광선",
       "mixed": "혼합",
       "placeholder": "번역문을 입력하세요",

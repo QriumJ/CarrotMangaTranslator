@@ -101,6 +101,12 @@ function resolveTypingAppearance(
       backgroundEnabled: backgroundColor !== null,
       backgroundColor: backgroundColor ?? fallback.backgroundColor,
     })),
+    ...pick(patch, "backgroundOpacity", (backgroundOpacity) => ({
+      backgroundOpacityPercent:
+        backgroundOpacity === null
+          ? fallback.backgroundOpacityPercent
+          : backgroundOpacity * 100,
+    })),
   };
 }
 

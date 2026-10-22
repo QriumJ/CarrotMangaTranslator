@@ -46,6 +46,7 @@ const PanelFormatPatchSchema = TranslationBlockObjectSchema.pick({
   textColor: true,
   textBackgroundEnabled: true,
   textBackgroundColor: true,
+  textBackgroundOpacity: true,
   textOpacity: true,
   backgroundColor: true,
   opacity: true,

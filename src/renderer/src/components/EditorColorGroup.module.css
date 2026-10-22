@@ -6,3 +6,16 @@
   gap: var(--sp-1);
   min-width: 0;
 }
+
+/* The enable switch doubles as the cell title, typeset like the size/leading
+ * titles; the box overhangs the line instead of making the row taller. */
+.fillTitle {
+  gap: var(--sp-1);
+  color: var(--text-dim);
+  font-size: var(--font-xs);
+  line-height: 1.25;
+}
+
+.fillTitleBox {
+  margin-block: -2px;
+}

@@ -23,6 +23,7 @@ import type { UpdateCurrentChapter } from "./useCurrentChapterUpdater";
 type UpdateBlockOptions = {
   selectedPage: MangaPage | null;
   selectedPageEditLocked: boolean;
+  setShowBlockChrome?: (visible: boolean) => void;
   updateCurrentChapter: UpdateCurrentChapter;
 };
 
@@ -45,6 +46,7 @@ function resolveBlockEditMergeKey(
 export function useUpdateBlockAction({
   selectedPage,
   selectedPageEditLocked,
+  setShowBlockChrome,
   updateCurrentChapter,
 }: UpdateBlockOptions): (
   blockId: string,
@@ -72,8 +74,15 @@ export function useUpdateBlockAction({
           mergeKey,
         },
       );
+      if (patch.opacity !== undefined) setShowBlockChrome?.(true);
     },
-    [selectedPage, selectedPageEditLocked, t, updateCurrentChapter],
+    [
+      selectedPage,
+      selectedPageEditLocked,
+      setShowBlockChrome,
+      t,
+      updateCurrentChapter,
+    ],
   );
 }
 

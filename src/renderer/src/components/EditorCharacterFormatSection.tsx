@@ -32,6 +32,11 @@ export type EditorCharacterFormatSectionProps = {
   onAdjustFontSize: (adjustment: -1 | 1) => void;
   onFontFamilyDraftChange?: (fontFamily?: string) => void;
   onOpenFontManager?: () => void;
+  /**
+   * Block-wide presets and text-area background, fenced off above the letter
+   * controls so they never read as part of a letter-range edit.
+   */
+  blockControls: React.ReactNode;
 };
 
 /**
@@ -51,6 +56,7 @@ export function EditorCharacterFormatSection(
         headerExtra={<CharacterScopeChip target={props.target} />}
       >
         <div className={styles.body} data-character-scope={props.target.scope}>
+          <div className={styles.blockControls}>{props.blockControls}</div>
           <CharacterFontField {...props} />
           <CharacterEmphasisButtons {...props} />
           <EditorCharacterNumberFields {...props} />

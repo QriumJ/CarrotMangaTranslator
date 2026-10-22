@@ -7,7 +7,7 @@ import {
 } from "../../../shared/textOutline";
 import type { TextStylePatch } from "../../../shared/richTextMarkup";
 import type { TextEffect, TextGlow } from "../../../shared/textTypes";
-import { ColorField } from "./ColorField";
+import { BackgroundFillFields } from "./EditorColorGroup";
 import type { CharacterFormatTarget } from "./editorCharacterFormatTarget";
 import {
   OutlineControl,
@@ -17,7 +17,6 @@ import {
   TextEffectControls,
   TextGlowControls,
 } from "./EditorTextEffectControls";
-import { CheckboxField } from "./ui/CheckboxField";
 
 type EffectProps = { disabled: boolean; target: CharacterFormatTarget };
 
@@ -187,6 +186,10 @@ function CharacterGlow({ disabled, target }: EffectProps): React.JSX.Element {
   );
 }
 
+/**
+ * Letter background for the format target's letters. Its opacity fades only
+ * the fill; 100% is stored as no value so plain backgrounds stay unchanged.
+ */
 function CharacterBackground({
   disabled,
   target,
@@ -194,31 +197,32 @@ function CharacterBackground({
   const { t } = useTranslation("components");
   const { mixed, values } = target;
   return (
-    <div className="editor-appearance-row">
-      <CheckboxField
-        className="editor-appearance-toggle"
-        label={t("editor.richText.background")}
-        checked={values.backgroundEnabled}
-        indeterminate={mixed.has("backgroundEnabled")}
-        disabled={disabled}
-        onCheckedChange={(enabled) =>
-          target.apply({
-            backgroundColor: enabled ? values.backgroundColor : null,
-          })
-        }
-      />
-      {values.backgroundEnabled || mixed.has("backgroundEnabled") ? (
-        <ColorField
-          className="editor-appearance-color"
-          label={t("format.textBackground.color")}
-          labelHidden
-          value={values.backgroundColor}
-          disabled={disabled}
-          mixed={mixed.has("backgroundColor")}
-          onChange={(backgroundColor) => target.apply({ backgroundColor })}
-        />
-      ) : null}
-    </div>
+    <BackgroundFillFields
+      disabled={disabled}
+      enabledLabel={t("editor.richText.background")}
+      opacityLabel={t("editor.richText.backgroundOpacity")}
+      fill={{
+        enabled: values.backgroundEnabled,
+        enabledMixed: mixed.has("backgroundEnabled"),
+        color: values.backgroundColor,
+        colorMixed: mixed.has("backgroundColor"),
+        opacityPercent: Math.round(values.backgroundOpacityPercent),
+        opacityMixed: mixed.has("backgroundOpacityPercent"),
+      }}
+      onToggle={(enabled) =>
+        target.apply(
+          enabled
+            ? { backgroundColor: values.backgroundColor }
+            : { backgroundColor: null, backgroundOpacity: null },
+        )
+      }
+      onColorChange={(backgroundColor) => target.apply({ backgroundColor })}
+      onOpacityChange={(percent) =>
+        target.apply({
+          backgroundOpacity: percent >= 100 ? null : percent / 100,
+        })
+      }
+    />
   );
 }
 

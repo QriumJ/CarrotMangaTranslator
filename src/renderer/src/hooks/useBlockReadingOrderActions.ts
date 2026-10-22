@@ -107,6 +107,7 @@ export function useUpdateSelectedBlocksAction({
   selectedBlockIds,
   selectedPage,
   selectedPageEditLocked,
+  setShowBlockChrome,
   updateCurrentChapter,
 }: UseBlockEditingActionsOptions): BlockEditingActions["updateSelectedBlocks"] {
   const { t } = useTranslation("renderer");
@@ -139,12 +140,14 @@ export function useUpdateSelectedBlocksAction({
         },
         { label: t("workspaceHistory.blockEdit") },
       );
+      if (patch.opacity !== undefined) setShowBlockChrome?.(true);
     },
     [
       selectedBlock,
       selectedBlockIds,
       selectedPage,
       selectedPageEditLocked,
+      setShowBlockChrome,
       t,
       updateCurrentChapter,
     ],
