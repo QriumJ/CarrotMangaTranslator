@@ -73,7 +73,7 @@ export class CodexChatRuntime implements AgentRuntime {
         session.nativeThreadId ? "thread/resume" : "thread/start",
         {
           ...(session.nativeThreadId
-            ? { threadId: session.nativeThreadId }
+            ? { threadId: session.nativeThreadId, excludeTurns: true }
             : { ephemeral: false, serviceName: "carrot_global_chat" }),
           cwd: this.cwd,
           approvalPolicy: "never",

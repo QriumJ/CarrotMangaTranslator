@@ -14,23 +14,28 @@ export function chatMessageInput(
     .slice(-30)
     .map(({ toolName, record }) => ({ toolName, record }));
   const undelivered = session.items
+    .slice(
+      0,
+      session.items.findIndex((item) => item.id === request.messageId),
+    )
     .filter(
       (item) =>
         item.role === "user" &&
         item.id !== request.messageId &&
         (item.delivery === "pending" || item.delivery === "uncertain"),
     )
-    .map(({ id, text, context, delivery }) => ({
+    .map(({ id, text, context, delivery, imageIds }) => ({
       id,
       text,
       context,
       delivery,
+      imageIds,
     }));
   return (
     `${request.text}\n\n<carrot-current-view>${JSON.stringify(request.context)}</carrot-current-view>\n` +
     `The view above is a reference, not a restriction. Other works remain accessible.\n` +
     (undelivered.length
-      ? `<carrot-interrupted-messages>${JSON.stringify(undelivered)}</carrot-interrupted-messages>\nThese messages may not have reached you. Check app receipts before resuming; never blindly replay edits or generation.\n`
+      ? `<carrot-interrupted-messages>${JSON.stringify(undelivered)}</carrot-interrupted-messages>\nImages from pending messages are attached in message order, followed by this message's images (duplicate IDs appear once). Uncertain messages may already have reached you; their images are not replayed. Check app receipts before resuming; never blindly replay edits or generation.\n`
       : "") +
     (checkpoint.length
       ? `<carrot-recent-operation-references>${JSON.stringify(checkpoint)}</carrot-recent-operation-references>\nEarlier receipts remain accessible through Carrot history tools; inspect before repeating work.`

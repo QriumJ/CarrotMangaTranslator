@@ -1,13 +1,21 @@
+import { chatSnapshot, chatSummary } from "../../shared/chatSnapshot";
 import { randomUUID } from "node:crypto";
 import type {
   ChatEvent,
   ChatSendRequest,
   ChatSession,
+  ChatSnapshot,
   ChatSummary,
 } from "../../shared/chatTypes";
 import type { RuntimeLease, AgentRuntimeEvents } from "./chatRuntimePorts";
 import type { ChatRepository } from "../chat/chatRepository";
-import { chatMessageInput } from "../chat/chatInstructions";
+import { deliverChatMessage } from "./chatDelivery";
+import {
+  cancelPendingChatOperations,
+  closeChatRuntime,
+  stopAndSaveChat,
+  stopChatRuntime,
+} from "./chatRuntimeLifecycle";
 import {
   addChatStatus,
   reduceChatNotification,
@@ -37,6 +45,8 @@ export class ChatService {
   private sending = new Map<string, Promise<void>>();
   private saves = new Map<string, ReturnType<typeof setTimeout>>();
   private generations = new Map<string, number>();
+  private stopping = new Map<string, Promise<ChatSnapshot>>();
+  private runtimeEpochs = new Map<string, symbol>();
   private deleted = new Set<string>();
   private closed = false;
   constructor(private readonly ports: Ports) {}
@@ -44,27 +54,24 @@ export class ChatService {
     const saved = await this.ports.repository.list();
     return Promise.all(
       saved.map(async (item) => {
+        if (item.loadError) return item;
         const current = this.sessions.has(item.id)
           ? await this.get(item.id)
           : item;
-        const { id, title, updatedAt, model, effort, runtime } = current;
         return {
-          id,
-          title,
-          updatedAt,
-          model,
-          effort,
-          runtime,
+          ...chatSummary(current),
           state: restoredState(current.state, this.runtimes.has(item.id)),
         };
       }),
     );
   }
-  async create(runtime?: ChatSession["runtime"]): Promise<ChatSession> {
+  async create(runtime?: ChatSession["runtime"]): Promise<ChatSnapshot> {
     this.assertOpen();
     const history = await this.list();
-    runtime ??= history[0]?.runtime ?? "codex";
-    const previous = history.find((entry) => entry.runtime === runtime);
+    runtime ??= history.find((entry) => !entry.loadError)?.runtime ?? "codex";
+    const previous = history.find(
+      (entry) => !entry.loadError && entry.runtime === runtime,
+    );
     const now = Date.now();
     const session: ChatSession = {
       version: 1,
@@ -83,10 +90,10 @@ export class ChatService {
     };
     await this.ports.repository.save(session);
     this.sessions.set(session.id, Promise.resolve(session));
-    return structuredClone(session);
+    return chatSnapshot(session);
   }
-  async read(id: string) {
-    return structuredClone(await this.get(id));
+  async read(id: string, before?: number) {
+    return chatSnapshot(await this.get(id), before);
   }
   async delete(id: string): Promise<void> {
     this.assertOpen();
@@ -103,9 +110,8 @@ export class ChatService {
       const lease = await this.runtimes.get(id);
       if (lease) {
         try {
-          await lease.runtime.close();
+          await closeChatRuntime(lease);
         } finally {
-          lease.release();
           this.runtimes.delete(id);
         }
       }
@@ -118,17 +124,18 @@ export class ChatService {
       throw error;
     }
   }
-  async send(request: ChatSendRequest): Promise<ChatSession> {
+  async send(request: ChatSendRequest): Promise<ChatSnapshot> {
     this.assertOpen();
+    await this.stopping.get(request.sessionId);
     const session = await this.get(request.sessionId);
     if (session.items.some((item) => item.id === request.messageId))
-      return structuredClone(session);
+      return chatSnapshot(session);
     await Promise.all(
       request.imageIds.map((id) => this.ports.repository.image(session.id, id)),
     );
     this.assertOpen();
     if (session.items.some((item) => item.id === request.messageId))
-      return structuredClone(session);
+      return chatSnapshot(session);
     this.assertAvailable(session.id);
     const generation = this.generations.get(session.id) ?? 0;
     session.items.push({
@@ -149,61 +156,89 @@ export class ChatService {
     await this.save(session);
     const previous = this.sending.get(session.id) ?? Promise.resolve();
     const next = previous
-      .then(() => this.runSend(session, request, generation))
-      .catch((error: unknown) => this.fail(session, error));
+      .then(() =>
+        deliverChatMessage(session, request, {
+          stopped: () => this.shouldStop(session, generation),
+          runtime: () => this.runtime(session),
+          save: (value) => this.save(value),
+          repository: this.ports.repository,
+        }),
+      )
+      .catch((error: unknown) => {
+        if (this.shouldStop(session, generation)) this.ports.reportError(error);
+        else return this.fail(session, error);
+      });
     this.sending.set(session.id, next);
-    return structuredClone(session);
+    return chatSnapshot(session);
   }
-  async stop(id: string): Promise<ChatSession> {
+  stop(id: string): Promise<ChatSnapshot> {
+    const existing = this.stopping.get(id);
+    if (existing) return existing;
+    const pending = this.runStop(id).finally(() => this.stopping.delete(id));
+    this.stopping.set(id, pending);
+    return pending;
+  }
+  private async runStop(id: string): Promise<ChatSnapshot> {
     const session = await this.get(id);
     this.generations.set(id, (this.generations.get(id) ?? 0) + 1);
     session.state = "paused";
     session.question = null;
-    await this.save(session);
-    const lease = await this.runtimes.get(id);
-    if (lease) {
-      await lease.runtime.stop();
-      await this.cancelPending(session, lease);
-    }
-    return structuredClone(session);
+    this.runtimeEpochs.delete(id);
+    const pending = this.runtimes.get(id);
+    this.runtimes.delete(id);
+    await stopAndSaveChat(
+      pending,
+      session,
+      (value) => this.save(value),
+      this.ports.reportError,
+    );
+    return chatSnapshot(session);
   }
-  async compact(id: string): Promise<ChatSession> {
+  async compact(id: string): Promise<ChatSnapshot> {
+    this.assertOpen();
+    await this.stopping.get(id);
     const session = await this.get(id);
     this.assertAvailable(id);
     if (["running", "compacting", "needs-input"].includes(session.state))
       throw new Error("현재 작업이 끝난 뒤 압축할 수 있습니다.");
     session.state = "compacting";
+    const generation = this.generations.get(id) ?? 0;
     try {
       const lease = await this.runtime(session);
+      if (this.shouldStop(session, generation)) return chatSnapshot(session);
       session.nativeThreadId = await lease.runtime.prepare(session);
       await this.save(session);
+      if (this.shouldStop(session, generation)) return chatSnapshot(session);
       await lease.runtime.compact();
     } catch (error) {
-      await this.fail(session, error);
+      if (this.shouldStop(session, generation)) this.ports.reportError(error);
+      else await this.fail(session, error);
     }
-    return structuredClone(session);
+    return chatSnapshot(session);
   }
   async answer(
     id: string,
     questionId: string,
     answers: Record<string, string>,
-  ): Promise<ChatSession> {
+  ): Promise<ChatSnapshot> {
     const session = await this.get(id);
     if (session.question?.id !== questionId)
       throw new Error("질문 상태가 변경되었습니다. 대화를 다시 확인해 주세요.");
     const lease = await this.runtimes.get(id);
     if (!lease) throw new Error("대화를 다시 연결해 주세요.");
+    if (session.question?.id !== questionId)
+      throw new Error("질문 상태가 변경되었습니다. 대화를 다시 확인해 주세요.");
     lease.runtime.answer(questionId, answers);
     session.question = null;
     session.state = "running";
     await this.save(session);
-    return structuredClone(session);
+    return chatSnapshot(session);
   }
   async attachImage(id: string, name: string, dataUrl: string) {
     return this.ports.repository.addImage(id, name, dataUrl);
   }
-  async image(id: string, imageId: string) {
-    return this.ports.repository.image(id, imageId);
+  async image(id: string, imageId: string, preview = false) {
+    return this.ports.repository.image(id, imageId, preview);
   }
   async dispose(): Promise<void> {
     this.closed = true;
@@ -216,17 +251,9 @@ export class ChatService {
       [...this.sessions].map(async ([id, value]) => {
         const session = await value;
         this.generations.set(id, (this.generations.get(id) ?? 0) + 1);
-        const lease = await this.runtimes.get(id);
         try {
-          if (lease) {
-            try {
-              await lease.runtime.stop();
-            } finally {
-              await lease.runtime.close();
-            }
-          }
+          await stopChatRuntime(this.runtimes.get(id), session);
         } finally {
-          lease?.release();
           this.runtimes.delete(id);
           session.state = restoredState(session.state, false);
           session.question = null;
@@ -255,60 +282,32 @@ export class ChatService {
     }
     return entry;
   }
-  private async runSend(
-    session: ChatSession,
-    request: ChatSendRequest,
-    generation: number,
-  ) {
-    if (this.shouldStop(session, generation)) return;
-    const lease = await this.runtime(session);
-    if (this.shouldStop(session, generation)) return;
-    session.nativeThreadId = await lease.runtime.prepare(session);
-    await this.save(session);
-    const images = await Promise.all(
-      request.imageIds.map((id) => this.ports.repository.image(session.id, id)),
-    );
-    if (this.shouldStop(session, generation)) return;
-    const message = session.items.find((item) => item.id === request.messageId);
-    if (message) message.delivery = "uncertain";
-    await this.save(session);
-    await lease.runtime.send(
-      request.messageId,
-      [
-        { type: "text", text: chatMessageInput(request, session) },
-        ...images.map((image) => ({
-          type: "image" as const,
-          url: image.dataUrl,
-        })),
-      ],
-      request.model,
-      request.effort,
-    );
-    if (message)
-      message.delivery = this.shouldStop(session, generation)
-        ? "uncertain"
-        : "sent";
-    await this.save(session);
-  }
+
   private runtime(session: ChatSession): Promise<RuntimeLease> {
     let pending = this.runtimes.get(session.id);
     if (!pending) {
+      const epoch = Symbol(session.id);
+      this.runtimeEpochs.set(session.id, epoch);
+      const current = () =>
+        !this.closed &&
+        !this.deleted.has(session.id) &&
+        this.runtimeEpochs.get(session.id) === epoch;
       pending = this.ports.runtime(
         session,
         {
           notification: (value) => {
-            if (this.deleted.has(session.id)) return;
+            if (!current()) return;
             if (reduceChatNotification(session, value))
               this.scheduleSave(session);
           },
           question: (question) => {
-            if (this.deleted.has(session.id)) return;
+            if (!current()) return;
             session.question = question;
             session.state = "needs-input";
             this.scheduleSave(session);
           },
           failed: (error) => {
-            if (this.deleted.has(session.id)) return;
+            if (!current()) return;
             void this.disconnect(session, error).catch(this.ports.reportError);
           },
         },
@@ -317,17 +316,26 @@ export class ChatService {
           await observeChatTool(session, value, this.ports.repository);
           await this.save(session);
           if (
-            session.state === "paused" &&
+            (!current() || session.state === "paused") &&
             !/^carrot_(get|list|cancel)_/.test(value.name)
           ) {
-            const lease = await this.runtimes.get(session.id);
-            if (lease) await this.cancelPending(session, lease);
+            const lease = await pending;
+            if (lease)
+              await cancelPendingChatOperations(
+                session,
+                lease,
+                (value) => this.save(value),
+                this.ports.reportError,
+              );
           }
         },
       );
       this.runtimes.set(session.id, pending);
       void pending.catch((error: unknown) => {
-        this.runtimes.delete(session.id);
+        if (this.runtimeEpochs.get(session.id) === epoch) {
+          this.runtimeEpochs.delete(session.id);
+          this.runtimes.delete(session.id);
+        }
         this.ports.reportError(error);
       });
     }
@@ -344,27 +352,16 @@ export class ChatService {
       }, 150),
     );
   }
-  private async cancelPending(session: ChatSession, lease: RuntimeLease) {
-    try {
-      await lease.cancelOperations(session);
-    } catch (error) {
-      this.ports.reportError(error);
-      addChatStatus(
-        session,
-        "일부 앱 작업의 중지 상태를 확인하지 못했습니다. 작업 기록을 확인해 주세요.",
-        "failed",
-      );
-      await this.save(session);
-    }
-  }
+
   private async save(session: ChatSession) {
     if (this.deleted.has(session.id)) return;
     session.updatedAt = Math.max(Date.now(), session.updatedAt + 1);
+    const snapshot = chatSnapshot(session);
     await this.ports.repository.save(session);
     if (this.deleted.has(session.id)) return;
     this.ports.publish({
       sessionId: session.id,
-      session: structuredClone(session),
+      session: snapshot,
     });
   }
   private async fail(session: ChatSession, error: unknown) {
@@ -380,13 +377,15 @@ export class ChatService {
   private async disconnect(session: ChatSession, error: unknown) {
     const pending = this.runtimes.get(session.id);
     this.runtimes.delete(session.id);
-    await this.fail(session, error);
-    if (!pending) return;
-    const lease = await pending;
+    this.runtimeEpochs.delete(session.id);
+    this.generations.set(
+      session.id,
+      (this.generations.get(session.id) ?? 0) + 1,
+    );
     try {
-      await lease.runtime.close();
+      await this.fail(session, error);
     } finally {
-      lease.release();
+      if (pending) await closeChatRuntime(await pending);
     }
   }
   private assertOpen() {
@@ -397,7 +396,9 @@ export class ChatService {
   }
   private shouldStop(session: ChatSession, generation: number) {
     return (
-      this.closed || generation !== (this.generations.get(session.id) ?? 0)
+      this.closed ||
+      this.deleted.has(session.id) ||
+      generation !== (this.generations.get(session.id) ?? 0)
     );
   }
 }

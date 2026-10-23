@@ -24,6 +24,55 @@ function childFixture() {
 }
 
 describe("Codex pipe disconnections", () => {
+  it("rejects an oversized unterminated response and terminates only its peer", async () => {
+    const child = childFixture();
+    const transport = new CodexAppServerTransport(child, "test");
+    const results = Promise.allSettled([
+      transport.request("thread/resume"),
+      transport.waitForNotification(() => false, 30000),
+    ]);
+    const chunk = Buffer.alloc(1024 * 1024, 65);
+    expect(() => {
+      for (let index = 0; index < 65; index++) child.stdout.emit("data", chunk);
+    }).not.toThrow();
+    expect(await results).toEqual([
+      expect.objectContaining({ status: "rejected" }),
+      expect.objectContaining({ status: "rejected" }),
+    ]);
+    expect(child.killed).toBe(true);
+    await expect(transport.request("account/read")).rejects.toThrow("bytes");
+    await transport.dispose(true);
+  });
+  it("delivers large notifications live without retaining an unbounded diagnostic history", async () => {
+    const child = childFixture();
+    const transport = new CodexAppServerTransport(child, "test");
+    const received = transport.waitForNotification(
+      (value) => value.method === "item/completed",
+      30000,
+    );
+    child.stdout.emit(
+      "data",
+      Buffer.from(
+        JSON.stringify({
+          method: "item/completed",
+          params: {
+            threadId: "t",
+            turnId: "a",
+            item: { text: "x".repeat(3 * 1024 * 1024) },
+          },
+        }) + "\n",
+      ),
+    );
+    expect((await received).method).toBe("item/completed");
+    await expect(
+      transport.waitForNotification(
+        (value) => value.method === "item/completed",
+        1000,
+      ),
+    ).resolves.toMatchObject({ method: "item/completed" });
+    expect(transport.readTurnDiagnostics("t", "a").notifications).toEqual([]);
+    await transport.dispose(true);
+  });
   it.each(["stdin", "stdout", "stderr"] as const)(
     "rejects requests and turn waiters on %s failure without escaping through Electron",
     async (channel) => {

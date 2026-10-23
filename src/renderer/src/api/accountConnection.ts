@@ -26,10 +26,20 @@ export function createAccountConnection<T>(read: () => Promise<T>) {
       const started = revision;
       // A read that throws synchronously still settles as a rejection.
       pending = (async () => read())()
-        .then((next) => {
-          if (revision === started) connection.publish(next);
-          return snapshot;
-        })
+        .then(
+          (next) => {
+            if (revision === started) connection.publish(next);
+            return snapshot;
+          },
+          (error: unknown) => {
+            if (revision !== started) return snapshot;
+            // Connectivity failure is not proof of logout; retain authenticated state.
+            checked = true;
+            revision++;
+            for (const listener of listeners) listener();
+            throw error;
+          },
+        )
         .finally(() => {
           pending = null;
         });

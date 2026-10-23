@@ -16,8 +16,10 @@ export function registerChatIpc(context: IpcContext) {
     (_event, runtime?: "codex" | "claude" | "grok") =>
       service().create(runtime),
   );
-  trustedHandleContract(context, chatIpcContracts.readChat, (_event, id) =>
-    service().read(id),
+  trustedHandleContract(
+    context,
+    chatIpcContracts.readChat,
+    (_event, id: string, before?: number) => service().read(id, before),
   );
   trustedHandleContract(context, chatIpcContracts.deleteChat, (_event, id) =>
     service().delete(id),
@@ -44,6 +46,7 @@ export function registerChatIpc(context: IpcContext) {
   trustedHandleContract(
     context,
     chatIpcContracts.readChatImage,
-    (_event, id, image) => service().image(id, image),
+    (_event, id: string, image: string, preview?: boolean) =>
+      service().image(id, image, preview),
   );
 }

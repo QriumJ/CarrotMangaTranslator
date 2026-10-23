@@ -306,7 +306,10 @@ it("settles an account read that throws synchronously as a rejected refresh", as
     throw new Error("bridge missing");
   });
   await expect(connection.refresh()).rejects.toThrow("bridge missing");
-  expect(connection.isChecked()).toBe(false);
+  expect(connection.isChecked()).toBe(true);
+  expect(connection.getSnapshot()).toBeNull();
+  // Finish the initial loading state and permit a later focus/poll retry.
+  await expect(connection.refresh()).rejects.toThrow("bridge missing");
 });
 
 it("sends selected images with a Grok message through the shared composer", async () => {

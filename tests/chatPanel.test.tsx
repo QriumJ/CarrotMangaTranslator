@@ -87,6 +87,28 @@ function setup(
   return { session, send, stop, emit: (event: ChatEvent) => emit(event) };
 }
 
+it("continues in the same conversation without clearing an unfinished draft", async () => {
+  const f = setup();
+  render(<ChatPanel enabled />);
+  const input = await screen.findByRole("textbox", { name: "메시지" });
+  await waitFor(() => expect(input.hasAttribute("disabled")).toBe(false));
+  fireEvent.change(input, { target: { value: "나중에 보낼 추가 지시" } });
+  act(() =>
+    f.emit({
+      sessionId: f.session.id,
+      session: { ...f.session, state: "paused" },
+    }),
+  );
+  fireEvent.click(await screen.findByRole("button", { name: "이어서 진행" }));
+  await waitFor(() => expect(f.send).toHaveBeenCalledOnce());
+  expect(f.send.mock.calls[0][0]).toMatchObject({
+    sessionId: f.session.id,
+    imageIds: [],
+  });
+  expect(f.send.mock.calls[0][0].text).toContain("중복 실행하지 마");
+  expect((input as HTMLTextAreaElement).value).toBe("나중에 보낼 추가 지시");
+});
+
 it("deletes the selected session, ignores late events and creates a fresh chat after the last deletion", async () => {
   const remove = vi.fn<ChatApi["deleteChat"]>(async () => undefined);
   const create = vi.fn<ChatApi["createChat"]>(async () => ({

@@ -56,7 +56,10 @@ export type ChatSession = {
 export type ChatSummary = Pick<
   ChatSession,
   "id" | "title" | "state" | "updatedAt" | "model" | "effort" | "runtime"
->;
+> & { loadError?: string };
+export type ChatSnapshot = ChatSession & {
+  itemWindow?: { start: number; total: number };
+};
 export type ChatSendRequest = {
   sessionId: string;
   messageId: string;
@@ -66,25 +69,29 @@ export type ChatSendRequest = {
   model: string | null;
   effort: string | null;
 };
-export type ChatEvent = { sessionId: string; session: ChatSession };
+export type ChatEvent = { sessionId: string; session: ChatSnapshot };
 export type ChatApi = {
   listChats: () => Promise<ChatSummary[]>;
-  createChat: (runtime?: ChatSession["runtime"]) => Promise<ChatSession>;
-  readChat: (id: string) => Promise<ChatSession>;
+  createChat: (runtime?: ChatSession["runtime"]) => Promise<ChatSnapshot>;
+  readChat: (id: string, before?: number) => Promise<ChatSnapshot>;
   deleteChat: (id: string) => Promise<void>;
-  sendChat: (request: ChatSendRequest) => Promise<ChatSession>;
-  stopChat: (id: string) => Promise<ChatSession>;
-  compactChat: (id: string) => Promise<ChatSession>;
+  sendChat: (request: ChatSendRequest) => Promise<ChatSnapshot>;
+  stopChat: (id: string) => Promise<ChatSnapshot>;
+  compactChat: (id: string) => Promise<ChatSnapshot>;
   answerChat: (
     id: string,
     questionId: string,
     answers: Record<string, string>,
-  ) => Promise<ChatSession>;
+  ) => Promise<ChatSnapshot>;
   attachChatImage: (
     id: string,
     name: string,
     dataUrl: string,
   ) => Promise<ChatImage>;
-  readChatImage: (id: string, imageId: string) => Promise<ChatImage>;
+  readChatImage: (
+    id: string,
+    imageId: string,
+    preview?: boolean,
+  ) => Promise<ChatImage>;
   onChatEvent: (callback: (event: ChatEvent) => void) => () => void;
 };

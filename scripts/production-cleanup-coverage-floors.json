@@ -19072,6 +19072,50 @@
         "pct": 90.9
       }
     },
+    "src/main/application/chatDelivery.ts": {
+      "lines": {
+        "covered": 28,
+        "total": 30,
+        "pct": 93.33
+      },
+      "statements": {
+        "covered": 31,
+        "total": 37,
+        "pct": 83.78
+      },
+      "functions": {
+        "covered": 6,
+        "total": 6,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 11,
+        "total": 16,
+        "pct": 68.75
+      }
+    },
+    "src/main/application/chatRuntimeLifecycle.ts": {
+      "lines": {
+        "covered": 25,
+        "total": 29,
+        "pct": 86.2
+      },
+      "statements": {
+        "covered": 29,
+        "total": 33,
+        "pct": 87.87
+      },
+      "functions": {
+        "covered": 7,
+        "total": 7,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 8,
+        "total": 8,
+        "pct": 100
+      }
+    },
     "src/main/application/chatRuntimePorts.ts": {
       "lines": {
         "covered": 0,
@@ -22460,6 +22504,28 @@
         "pct": 71.91
       }
     },
+    "src/main/chat/chatImagePreview.ts": {
+      "lines": {
+        "covered": 0,
+        "total": 6,
+        "pct": 0
+      },
+      "statements": {
+        "covered": 0,
+        "total": 7,
+        "pct": 0
+      },
+      "functions": {
+        "covered": 0,
+        "total": 1,
+        "pct": 0
+      },
+      "branches": {
+        "covered": 0,
+        "total": 2,
+        "pct": 0
+      }
+    },
     "src/main/chat/chatInstructions.ts": {
       "lines": {
         "covered": 6,
@@ -22854,6 +22920,28 @@
         "total": 50,
         "covered": 32,
         "pct": 64
+      }
+    },
+    "src/main/codexAppServerDiagnostics.ts": {
+      "lines": {
+        "covered": 34,
+        "total": 37,
+        "pct": 91.89
+      },
+      "statements": {
+        "covered": 37,
+        "total": 40,
+        "pct": 92.5
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 16,
+        "total": 20,
+        "pct": 80
       }
     },
     "src/main/codexAppServerEndpoint.ts": {
@@ -36980,6 +37068,28 @@
         "pct": 78.57
       }
     },
+    "src/main/runtimeSupport/boundedJsonLines.ts": {
+      "lines": {
+        "covered": 27,
+        "total": 27,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 30,
+        "total": 30,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 16,
+        "total": 16,
+        "pct": 100
+      }
+    },
     "src/main/runtimeSupport/cliRuntimePlan.ts": {
       "lines": {
         "covered": 6,
@@ -46352,6 +46462,28 @@
         "pct": 8.45
       }
     },
+    "src/renderer/src/features/chat/chatImageLoader.ts": {
+      "lines": {
+        "covered": 15,
+        "total": 15,
+        "pct": 100
+      },
+      "statements": {
+        "covered": 16,
+        "total": 16,
+        "pct": 100
+      },
+      "functions": {
+        "covered": 6,
+        "total": 6,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      }
+    },
     "src/renderer/src/features/chat/chatRuntimes.ts": {
       "lines": {
         "covered": 2,
@@ -49254,6 +49386,28 @@
         "covered": 0,
         "total": 2,
         "pct": 0
+      }
+    },
+    "src/shared/chatSnapshot.ts": {
+      "lines": {
+        "covered": 21,
+        "total": 22,
+        "pct": 95.45
+      },
+      "statements": {
+        "covered": 25,
+        "total": 26,
+        "pct": 96.15
+      },
+      "functions": {
+        "covered": 4,
+        "total": 4,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 23,
+        "total": 27,
+        "pct": 85.18
       }
     },
     "src/shared/chatTypes.ts": {
