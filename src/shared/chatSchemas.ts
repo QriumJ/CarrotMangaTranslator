@@ -93,7 +93,7 @@ export const ChatSummarySchema = ChatSessionSchema.pick({
   updatedAt: true,
   model: true,
   effort: true,
-});
+}).extend({ loadError: z.string().optional() });
 export const ChatSendRequestSchema = z
   .object({
     sessionId: id,
@@ -109,6 +109,15 @@ export const ChatSendRequestSchema = z
     (value) => Boolean(value.text.trim() || value.imageIds.length),
     "메시지 또는 이미지를 추가하세요.",
   );
+export const ChatSnapshotSchema = ChatSessionSchema.extend({
+  itemWindow: z
+    .object({
+      start: z.number().int().nonnegative(),
+      total: z.number().int().nonnegative(),
+    })
+    .strict()
+    .optional(),
+});
 export const ChatEventSchema = z
-  .object({ sessionId: id, session: ChatSessionSchema })
+  .object({ sessionId: id, session: ChatSnapshotSchema })
   .strict();

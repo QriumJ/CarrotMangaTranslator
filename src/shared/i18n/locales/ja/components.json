@@ -3428,7 +3428,10 @@
     "grokLoginHint": "Grok にログインするとチャットを開始できます。",
     "downloadLogin": "ダウンロードして ChatGPT にログイン",
     "downloadLoginRetry": "再ダウンロードして ChatGPT にログイン",
-    "moreImages": "画像をあと{{count}}件表示"
+    "moreImages": "画像をあと{{count}}件表示",
+    "resume": "続きを進める",
+    "resumeRequest": "前の依頼を続けてください。まず作業記録と現在の状態を確認し、完了済みの編集や生成は繰り返さないでください。",
+    "recoveryHint": "会話と添付を保持し、作業記録を確認してから続けます。"
   },
   "chapterBulkDelete": {
     "title": "話を選んで削除",

@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import type {
   ChatImage,
-  ChatSession,
+  ChatSnapshot,
   CurrentViewContext,
 } from "../../../../shared/chatTypes";
 import { useChat } from "./useChat";
@@ -111,7 +111,7 @@ export function ChatPanel(props: {
   );
 }
 function ChatConversation(props: {
-  session: ChatSession;
+  session: ChatSnapshot;
   chat: ReturnType<typeof useChat>;
   send: (text: string, images: ChatImage[]) => Promise<boolean>;
   running: boolean;
@@ -126,6 +126,16 @@ function ChatConversation(props: {
     <>
       <ChatTranscript
         session={session}
+        onOlder={chat.loadOlder}
+        busy={chat.busy}
+        onContinue={
+          props.authenticated
+            ? () =>
+                void chat.perform(async () => {
+                  await props.send(t("chat.resumeRequest"), []);
+                })
+            : undefined
+        }
         onPage={props.onPage}
         onUndo={(item) =>
           void chat.perform(async () => {

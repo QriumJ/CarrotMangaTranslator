@@ -3428,7 +3428,10 @@
     "grokLoginHint": "登录 Grok 后即可开始聊天。",
     "downloadLogin": "下载并登录 ChatGPT",
     "downloadLoginRetry": "重新下载并登录 ChatGPT",
-    "moreImages": "再显示 {{count}} 张图片"
+    "moreImages": "再显示 {{count}} 张图片",
+    "resume": "继续处理",
+    "resumeRequest": "继续上一个请求。请先检查操作记录和当前状态，不要重复已完成的编辑或生成。",
+    "recoveryHint": "保留对话和附件，检查操作记录后继续。"
   },
   "chapterBulkDelete": {
     "title": "选择章节删除",

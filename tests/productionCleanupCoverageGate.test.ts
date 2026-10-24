@@ -607,7 +607,8 @@ describe("production cleanup coverage floor gate", () => {
     // Integrated formatting replaces four inline owners with 23 shared owners.
     // Balloon padding and workflow progress add three owners and touch three baseline owners.
     // Text-area background opacity adds its default and preset compatibility owner.
-    expect(scope.added).toHaveLength(1571);
+    // Chat reliability adds seven transport, lifecycle and view owners.
+    expect(scope.added).toHaveLength(1578);
     expect(scope.deleted).toHaveLength(12);
   });
 });

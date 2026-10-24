@@ -3428,7 +3428,10 @@
     "grokLoginHint": "登入 Grok 後即可開始聊天。",
     "downloadLogin": "下載並登入 ChatGPT",
     "downloadLoginRetry": "重新下載並登入 ChatGPT",
-    "moreImages": "再顯示 {{count}} 張圖片"
+    "moreImages": "再顯示 {{count}} 張圖片",
+    "resume": "繼續處理",
+    "resumeRequest": "繼續上一個請求。請先檢查操作紀錄與目前狀態，不要重複已完成的編輯或生成。",
+    "recoveryHint": "保留對話與附件，檢查操作紀錄後繼續。"
   },
   "chapterBulkDelete": {
     "title": "選擇章節刪除",

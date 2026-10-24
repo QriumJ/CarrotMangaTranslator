@@ -263,6 +263,7 @@
   font-size: 12px;
 }
 .activityNotice {
+  flex-wrap: wrap;
   padding: var(--sp-2) var(--sp-3);
   border-radius: var(--r-md);
   background: var(--surface-panel);

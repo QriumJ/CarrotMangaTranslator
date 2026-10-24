@@ -16,7 +16,6 @@ export function useAccountConnection<T>(
       initial = false;
       void connection.refresh().catch((error: unknown) => {
         console.error("Account refresh failed", error);
-        connection.publish(null);
       });
     };
     refresh();

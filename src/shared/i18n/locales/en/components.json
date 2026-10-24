@@ -3428,7 +3428,10 @@
     "grokLoginHint": "Sign in to Grok to start chatting.",
     "downloadLogin": "Download and sign in to ChatGPT",
     "downloadLoginRetry": "Retry download and sign in to ChatGPT",
-    "moreImages": "Show {{count}} more images"
+    "moreImages": "Show {{count}} more images",
+    "resume": "Continue",
+    "resumeRequest": "Continue the previous request. First check operation records and the current state; do not repeat edits or generation that already completed.",
+    "recoveryHint": "Keep this conversation and its attachments, check operation records, then continue."
   },
   "chapterBulkDelete": {
     "title": "Delete selected chapters",

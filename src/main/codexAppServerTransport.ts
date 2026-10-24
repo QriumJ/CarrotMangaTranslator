@@ -1,15 +1,14 @@
+import { CodexAppServerDiagnostics } from "./codexAppServerDiagnostics";
 import { observeCodexTurnAccounting } from "./codexAppServerAccounting";
 import type { ChildProcessWithoutNullStreams } from "node:child_process";
-import { createInterface, type Interface } from "node:readline";
+import { BoundedJsonLines } from "./runtimeSupport/boundedJsonLines";
 import { asRecord, type JsonRecord } from "./codexAppServerProtocol";
 import { CodexAppServerPreviewHost } from "./codexAppServerPreviewTool";
 import { observeProcessErrors } from "./runtimeSupport/observeProcessErrors";
 import { normalizeCodexAuthenticationError } from "./codexAuthentication";
 
 const RPC_REQUEST_TIMEOUT_MS = 30_000;
-const MAX_RECENT_NOTIFICATIONS = 256;
-const MAX_STDERR_LINES = 24;
-const MAX_STDERR_LINE_LENGTH = 2_000;
+const MAX_RESPONSE_BYTES = 64 * 1024 * 1024;
 
 type NotificationListener = (notification: JsonRecord) => void;
 type FailureListener = (error: Error) => void;
@@ -25,13 +24,11 @@ export class CodexAppServerTransport {
   readonly previews = new CodexAppServerPreviewHost();
   readonly version: string;
   private readonly child: ChildProcessWithoutNullStreams;
-  private readonly lines: Interface;
+  private readonly lines = new BoundedJsonLines(MAX_RESPONSE_BYTES);
   private readonly pending = new Map<number, PendingRequest>();
   private readonly listeners = new Set<NotificationListener>();
   private readonly failureListeners = new Set<FailureListener>();
-  private readonly recentNotifications: JsonRecord[] = [];
-  private readonly recentStderr: string[] = [];
-  private stderrSequence = 0;
+  private readonly diagnostics = new CodexAppServerDiagnostics();
   private nextRequestId = 1;
   private closed = false;
   private exitError: Error | null = null;
@@ -46,11 +43,29 @@ export class CodexAppServerTransport {
     // Keep listeners attached through shutdown so a second disconnect is safe.
     const fail = (error: Error) => this.handleProcessFailure(error);
     observeProcessErrors(child, fail);
-    this.lines = createInterface({ input: child.stdout, crlfDelay: Infinity });
-    this.lines.on("error", fail);
-    this.lines.on("line", (line) => this.handleStdoutLine(line));
+    child.stdout.on("data", (chunk: Buffer) => {
+      if (this.closed || this.exitError) return;
+      try {
+        this.lines.push(chunk, (line) => this.handleStdoutLine(line));
+      } catch (error) {
+        this.handleProcessFailure(error);
+      }
+    });
+    child.stdout.on("end", () => {
+      if (this.closed || this.exitError) return;
+      try {
+        this.lines.end((line) => this.handleStdoutLine(line));
+        this.handleProcessFailure(
+          new Error("Codex App Server 출력 스트림이 종료되었습니다."),
+        );
+      } catch (error) {
+        this.handleProcessFailure(error);
+      }
+    });
     child.stderr.setEncoding("utf8");
-    child.stderr.on("data", (chunk: string) => this.captureStderr(chunk));
+    child.stderr.on("data", (chunk: string) =>
+      this.diagnostics.captureStderr(chunk),
+    );
     child.once("exit", (code, signal) => {
       if (this.closed) return;
       this.handleProcessFailure(
@@ -66,7 +81,7 @@ export class CodexAppServerTransport {
   }
 
   get stderrCursor(): number {
-    return this.stderrSequence;
+    return this.diagnostics.stderrSequence;
   }
 
   subscribe(
@@ -111,21 +126,7 @@ export class CodexAppServerTransport {
     turnId: string | null,
     stderrSince = 0,
   ) {
-    const retainedStart = this.stderrSequence - this.recentStderr.length;
-    return {
-      notifications: this.recentNotifications.filter((notification) => {
-        const params = asRecord(notification.params);
-        return (
-          params?.threadId === threadId &&
-          turnId !== null &&
-          (params.turnId === turnId || asRecord(params.turn)?.id === turnId)
-        );
-      }),
-      // Process-wide context; stderr is not attributed to a particular turn.
-      processStderr: this.recentStderr
-        .slice(Math.max(0, stderrSince - retainedStart))
-        .join("\n"),
-    };
+    return this.diagnostics.read(threadId, turnId, stderrSince);
   }
 
   request(
@@ -205,7 +206,9 @@ export class CodexAppServerTransport {
     signal?: AbortSignal,
   ): Promise<JsonRecord> {
     throwIfAborted(signal);
-    const recent = [...this.recentNotifications].reverse().find(predicate);
+    const recent = [...this.diagnostics.recentNotifications]
+      .reverse()
+      .find(predicate);
     if (recent) return Promise.resolve(recent);
     if (this.exitError) return Promise.reject(this.exitError);
     throwIfAborted(signal);
@@ -243,7 +246,8 @@ export class CodexAppServerTransport {
     if (this.closed) return;
     this.closed = true;
     this.previews.clear();
-    this.lines.close();
+    this.lines.clear();
+    this.diagnostics.clear();
     const error = new Error("Codex App Server 연결이 종료되었습니다.");
     this.rejectPending(error);
     this.rejectWaiters(error);
@@ -349,23 +353,8 @@ export class CodexAppServerTransport {
   }
 
   private publishNotification(notification: JsonRecord): void {
-    this.recentNotifications.push(notification);
-    if (this.recentNotifications.length > MAX_RECENT_NOTIFICATIONS) {
-      this.recentNotifications.shift();
-    }
+    this.diagnostics.remember(notification);
     for (const listener of this.listeners) listener(notification);
-  }
-
-  private captureStderr(chunk: string): void {
-    for (const rawLine of chunk.split(/\r?\n/u)) {
-      const line = rawLine.trim();
-      if (!line) continue;
-      this.stderrSequence++;
-      this.recentStderr.push(line.slice(0, MAX_STDERR_LINE_LENGTH));
-      if (this.recentStderr.length > MAX_STDERR_LINES) {
-        this.recentStderr.shift();
-      }
-    }
   }
 
   private handleProcessFailure(reason: unknown): void {
@@ -374,11 +363,13 @@ export class CodexAppServerTransport {
     const cause = normalizeError(reason);
     this.exitError = new Error(cause.message, { cause });
     Object.assign(this.exitError, {
-      recentStderr: this.recentStderr.join("\n"),
+      recentStderr: this.diagnostics.recentStderr.join("\n"),
       codexVersion: this.version,
     });
     this.rejectPending(this.exitError);
     this.rejectWaiters(this.exitError);
+    this.lines.clear();
+    if (!this.child.killed) this.child.kill();
   }
 
   private rejectPending(error: Error): void {

@@ -33,15 +33,23 @@ export function ChatTranscript({
   session,
   onPage,
   onUndo,
+  onOlder,
+  busy,
+  onContinue,
 }: {
-  session: ChatSession;
+  session: ChatSession & { itemWindow?: { start: number; total: number } };
+  onOlder?: () => Promise<void>;
+  busy?: boolean;
+  onContinue?: () => void;
   onPage?: (chapterId: string, pageId: string) => void;
   onUndo: (item: ChatItem) => void;
 }) {
   const { t } = useTranslation("components");
   const [count, setCount] = useState(80);
   const entries = groupItems(session.items);
-  const { scroller, content, onScroll } = useBottomPinning(session.updatedAt);
+  const { scroller, content, onScroll, readOlder } = useBottomPinning(
+    `${session.updatedAt}:${session.items.length}:${count}`,
+  );
   return (
     <div
       className={styles.transcript}
@@ -52,11 +60,16 @@ export function ChatTranscript({
       onScroll={onScroll}
     >
       <div ref={content} className={styles.transcriptContent}>
-        {entries.length > count && (
+        {(entries.length > count || Boolean(session.itemWindow?.start)) && (
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setCount(count + 80)}
+            disabled={busy}
+            onClick={() => {
+              readOlder();
+              setCount(count + 80);
+              if (entries.length <= count) void onOlder?.();
+            }}
           >
             {t("chat.older")}
           </Button>
@@ -81,7 +94,11 @@ export function ChatTranscript({
               />
             ),
           )}
-        <ChatActivity state={session.state} />
+        <ChatActivity
+          state={session.state}
+          onContinue={onContinue}
+          disabled={busy}
+        />
       </div>
     </div>
   );
@@ -91,15 +108,21 @@ export function ChatTranscript({
  * Keeps the newest output in view while the reader is at the bottom, including
  * when images or expanded rows grow the content after the update arrived.
  */
-function useBottomPinning(updatedAt: number) {
+function useBottomPinning(revision: string) {
   const scroller = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
   const following = useRef(true);
+  const anchor = useRef<{ height: number; top: number } | null>(null);
   const pin = () => {
     const node = scroller.current;
+    if (node && anchor.current && node.scrollHeight > anchor.current.height) {
+      node.scrollTop =
+        anchor.current.top + node.scrollHeight - anchor.current.height;
+      anchor.current = null;
+    }
     if (following.current && node) node.scrollTop = node.scrollHeight;
   };
-  useLayoutEffect(pin, [updatedAt]);
+  useLayoutEffect(pin, [revision]);
   useEffect(() => {
     const node = content.current;
     if (!node || typeof ResizeObserver === "undefined") return;
@@ -113,10 +136,24 @@ function useBottomPinning(updatedAt: number) {
       following.current =
         node.scrollHeight - node.scrollTop - node.clientHeight < 90;
   };
-  return { scroller, content, onScroll };
+  const readOlder = () => {
+    following.current = false;
+    const node = scroller.current;
+    if (node)
+      anchor.current = { height: node.scrollHeight, top: node.scrollTop };
+  };
+  return { scroller, content, onScroll, readOlder };
 }
 
-function ChatActivity({ state }: { state: ChatSession["state"] }) {
+function ChatActivity({
+  state,
+  onContinue,
+  disabled,
+}: {
+  state: ChatSession["state"];
+  onContinue?: () => void;
+  disabled?: boolean;
+}) {
   const { t } = useTranslation("components");
   if (state === "idle") return null;
   const busy = state === "running" || state === "compacting";
@@ -129,6 +166,17 @@ function ChatActivity({ state }: { state: ChatSession["state"] }) {
         <span className={styles.activityDots} aria-hidden="true" />
       ) : null}
       <span>{t(`chat.state.${state}`)}</span>
+      {(state === "paused" || state === "failed") && onContinue && (
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={disabled}
+          title={t("chat.recoveryHint")}
+          onClick={onContinue}
+        >
+          {t("chat.resume")}
+        </Button>
+      )}
     </div>
   );
 }
@@ -181,6 +229,7 @@ function ChatToolGroup({
 }) {
   const { t } = useTranslation("components");
   const [expanded, setExpanded] = useState(false);
+  const [visibleTools, setVisibleTools] = useState(40);
   const bodyId = React.useId();
   const images = items.flatMap((item) => item.imageIds ?? []);
   const last = items[items.length - 1];
@@ -216,7 +265,16 @@ function ChatToolGroup({
       </Button>
       {expanded ? (
         <div id={bodyId} className={styles.toolGroupBody}>
-          {items.map((item) => (
+          {items.length > visibleTools && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setVisibleTools(visibleTools + 40)}
+            >
+              {t("chat.older")}
+            </Button>
+          )}
+          {items.slice(-visibleTools).map((item) => (
             <ChatTool
               key={item.id}
               item={item}
@@ -229,8 +287,11 @@ function ChatToolGroup({
       <ChatImages
         sessionId={sessionId}
         ids={images}
-        limit={expanded ? undefined : PREVIEW_IMAGES}
-        onShowMore={() => setExpanded(true)}
+        limit={expanded ? visibleTools : PREVIEW_IMAGES}
+        onShowMore={() => {
+          setExpanded(true);
+          setVisibleTools(visibleTools + 40);
+        }}
       />
     </div>
   );

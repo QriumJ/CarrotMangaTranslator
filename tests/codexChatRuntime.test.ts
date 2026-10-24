@@ -38,7 +38,7 @@ it("persists and resumes the native thread, steers with IDs, and uses actual com
   await f.runtime.compact();
   const audit = await f.audit();
   expect(audit.find((x) => x.method === "thread/resume")?.params).toMatchObject(
-    { threadId: "persistent", sandbox: "read-only" },
+    { threadId: "persistent", sandbox: "read-only", excludeTurns: true },
   );
   const external = await handleMcpMessage(
     {
