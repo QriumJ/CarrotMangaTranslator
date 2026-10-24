@@ -9,6 +9,8 @@ export const appGateway = createMangaDomainGateway("App", [
   "getActiveAppOperations",
   "cancelAppOperation",
   "copyErrorReport",
+  "githubReportAccount",
+  "submitGitHubReport",
   "getActiveAppOperation",
   "getLogPath",
   "onErrorIncident",

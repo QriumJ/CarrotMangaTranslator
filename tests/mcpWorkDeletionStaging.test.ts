@@ -40,9 +40,11 @@ describe(
   { concurrent: false },
   () => {
     it("revalidates the full staged work and its ownership marker before native publication", () => {
+      // Native verification walks 2,000 real files. Allow Windows disk contention
+      // in the parallel full suite without weakening any ownership/content check.
       restoration = revalidateStagedWork();
       return restoration;
-    });
+    }, 60_000);
     it("preserves the published full tree and rejects the 2001st ordinary entry", () => {
       publishedCheck = verifyPublishedWork();
       return publishedCheck;

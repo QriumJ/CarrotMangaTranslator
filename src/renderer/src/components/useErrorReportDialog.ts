@@ -5,6 +5,8 @@ import type {
   ErrorReportDraft,
 } from "../../../shared/errorReportTypes";
 import { errorReportGateway } from "../lib/errorReportGateway";
+import type { SubmitGitHubReport } from "../../../shared/githubReport";
+import { useGitHubReportAccount } from "./useGitHubReportAccount";
 
 export type ReportAction = "copy" | "github" | "logs" | "restart";
 
@@ -29,6 +31,8 @@ type ReportDraftState = {
 };
 
 type ReportActionState = {
+  submissionStarted: boolean;
+  submitted: boolean;
   activeAction: ReportAction | null;
   feedback: ActionFeedback | null;
   handleCopy: () => void;
@@ -37,10 +41,27 @@ type ReportActionState = {
   handleRestart: () => void;
 };
 
+export type ReportPrimaryAction = {
+  /** `errorReport.*` key of the footer's single primary action. */
+  label:
+    | "accountSignIn"
+    | "accountWorking"
+    | "deviceReopen"
+    | "openGitHub"
+    | "openingGitHub"
+    | "retrySubmit"
+    | "openSubmittedIssue";
+  disabled: boolean;
+  run: () => void;
+};
+
 export type ErrorReportDialogModel = ReportActionState &
   Omit<ReportDraftState, "draft"> & {
     draftReady: boolean;
     canShare: boolean;
+    canSubmit: boolean;
+    githubAccount: ReturnType<typeof useGitHubReportAccount>;
+    primaryAction: ReportPrimaryAction;
   };
 
 export function useErrorReportDialogModel(
@@ -48,14 +69,37 @@ export function useErrorReportDialogModel(
   onRestart: (() => unknown | Promise<unknown>) | undefined,
 ): ErrorReportDialogModel {
   const draftState = useReportDraft(context);
+  const githubAccount = useGitHubReportAccount();
   const actionState = useReportActions({
     body: draftState.reportBody,
-    title: draftState.title,
     onRestart,
+    submission: draftState.draft?.reportId
+      ? {
+          reportId: draftState.draft.reportId,
+          title: draftState.title.trim(),
+          description: draftState.description,
+          includeLogs: draftState.includeLogs,
+          includeSystem: draftState.includeSystem,
+        }
+      : undefined,
   });
+  const canSubmit = Boolean(
+    githubAccount.account?.login &&
+    draftState.draft?.reportId &&
+    draftState.title.trim() &&
+    actionState.activeAction === null &&
+    !githubAccount.busy,
+  );
   return {
     ...draftState,
     ...actionState,
+    githubAccount,
+    canSubmit,
+    primaryAction: getReportPrimaryAction({
+      actionState,
+      canSubmit,
+      githubAccount,
+    }),
     draftReady: draftState.draft !== null,
     canShare:
       draftState.draft !== null &&
@@ -142,14 +186,21 @@ function useReportDraft(context: ErrorReportContext): ReportDraftState {
 
 function useReportActions({
   body,
-  title,
   onRestart,
+  submission,
 }: {
   body: string;
-  title: string;
   onRestart: (() => unknown | Promise<unknown>) | undefined;
+  submission: SubmitGitHubReport | undefined;
 }): ReportActionState {
   const { t } = useTranslation("components");
+  // Keyed by report ID so a new snapshot resets them without an effect that
+  // could flush after a fast first click and unlock the submitted form.
+  const [startedReportId, setStartedReportId] = React.useState<string>();
+  const [submittedReportId, setSubmittedReportId] = React.useState<string>();
+  const reportId = submission?.reportId;
+  const submissionStarted = Boolean(reportId) && startedReportId === reportId;
+  const submitted = Boolean(reportId) && submittedReportId === reportId;
   const { activeAction, feedback, runAction } = useActionRunner();
   const handleCopy = (): void => {
     void runAction("copy", async () => {
@@ -159,16 +210,18 @@ function useReportActions({
   };
   const handleOpenIssue = (): void => {
     void runAction("github", async () => {
-      const result = await errorReportGateway.openErrorReportIssue({
-        title: title.trim(),
-        body,
-      });
-      if (!result.opened) {
-        throw new Error("GitHub issue page was not opened.");
-      }
-      return result.mode === "clipboard"
-        ? t("errorReport.clipboardFallback")
-        : t("errorReport.githubOpened");
+      if (!submission) throw new Error("Full report snapshot is not ready.");
+      setStartedReportId(submission.reportId);
+      const result = await errorReportGateway.submitGitHubReport(submission);
+      setSubmittedReportId(submission.reportId);
+      return t(
+        result.opened
+          ? "errorReport.submitted"
+          : "errorReport.submittedBrowserFailed",
+        {
+          url: result.issueUrl,
+        },
+      );
     });
   };
   const handleOpenLogs = (): void => {
@@ -184,12 +237,54 @@ function useReportActions({
     }
   };
   return {
+    submissionStarted,
+    submitted,
     activeAction,
     feedback,
     handleCopy,
     handleOpenIssue,
     handleOpenLogs,
     handleRestart,
+  };
+}
+
+/**
+ * The footer always offers the next real step instead of a dimmed "report"
+ * button: sign in, reopen GitHub's approval page, report, retry the same snapshot,
+ * or reopen the issue the idempotent submission journal already created.
+ */
+function getReportPrimaryAction({
+  actionState,
+  canSubmit,
+  githubAccount,
+}: {
+  actionState: ReportActionState;
+  canSubmit: boolean;
+  githubAccount: ReturnType<typeof useGitHubReportAccount>;
+}): ReportPrimaryAction {
+  const submit = actionState.handleOpenIssue;
+  if (actionState.activeAction === "github")
+    return { label: "openingGitHub", disabled: true, run: submit };
+  if (githubAccount.phase === "signedOut")
+    return {
+      label: githubAccount.busy ? "accountWorking" : "accountSignIn",
+      disabled: githubAccount.busy || actionState.activeAction !== null,
+      run: () => void githubAccount.act("start"),
+    };
+  if (githubAccount.phase === "pending")
+    return {
+      label: "deviceReopen",
+      disabled: githubAccount.busy || actionState.activeAction !== null,
+      run: () => void githubAccount.act("reopen"),
+    };
+  return {
+    label: actionState.submitted
+      ? "openSubmittedIssue"
+      : actionState.submissionStarted
+        ? "retrySubmit"
+        : "openGitHub",
+    disabled: !canSubmit,
+    run: submit,
   };
 }
 

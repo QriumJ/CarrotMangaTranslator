@@ -10,23 +10,29 @@ import {
   truncateUtf8,
 } from "./errorReportLogs";
 import { resolveBuildChannel } from "./buildChannel";
+import { captureReportSnapshot } from "./errorReportSnapshot";
 import {
   collectErrorReportEnvironment,
   buildSystemMarkdown,
   type ErrorReportBuildEnvironment,
 } from "./errorReportEnvironment";
 
-const ERROR_SECTION_MAX_BYTES = 10 * 1024;
+const ERROR_SECTION_MAX_BYTES = 32 * 1024;
 const SYSTEM_SECTION_MAX_BYTES = 4 * 1024;
 const ERROR_REPORT_DRAFT_MAX_BYTES = 54 * 1024;
 
 export async function prepareErrorReportDraft(
   ...args: Parameters<typeof collectErrorReportEnvironment>
 ): Promise<ErrorReportDraft> {
-  return buildErrorReportDraft(
-    args[0],
-    await collectErrorReportEnvironment(...args),
-  );
+  const environment = await collectErrorReportEnvironment(...args);
+  const snapshot = await captureReportSnapshot(args[0], environment);
+  return {
+    ...(await buildErrorReportDraft(args[0], environment)),
+    reportId: snapshot.id,
+    fullLogBytes: snapshot.parts
+      .filter((part) => part.kind === "current" || part.kind === "previous")
+      .reduce((total, part) => total + part.bytes, 0),
+  };
 }
 
 export async function buildErrorReportDraft(
@@ -38,41 +44,47 @@ export async function buildErrorReportDraft(
     homeDir: environment.homeDir,
   };
   let redactionCount = 0;
-  let truncated = false;
 
-  const errorRedaction = redactDiagnosticText(
-    buildErrorMarkdown(context, environment.executionDiagnostics),
-    redactionOptions,
-  );
-  redactionCount += errorRedaction.redactionCount;
+  const redact = (text: string) => {
+    const result = redactDiagnosticText(text, redactionOptions);
+    redactionCount += result.redactionCount;
+    return result.text;
+  };
+  const safeContext = Object.fromEntries(
+    Object.entries(context).map(([key, value]) => [
+      key,
+      typeof value === "string" ? redact(value) : value,
+    ]),
+  ) as ErrorReportContext;
+  const errorRedaction = {
+    text: buildErrorMarkdown(
+      safeContext,
+      environment.executionDiagnostics
+        ? redact(JSON.stringify(environment.executionDiagnostics))
+        : undefined,
+    ),
+  };
   const boundedError = truncateUtf8(
     errorRedaction.text,
     ERROR_SECTION_MAX_BYTES,
   );
-  truncated ||= boundedError.truncated;
 
-  const systemRedaction = redactDiagnosticText(
-    buildSystemMarkdown(environment),
-    redactionOptions,
-  );
-  redactionCount += systemRedaction.redactionCount;
+  const systemRedaction = { text: redact(buildSystemMarkdown(environment)) };
   const boundedSystem = truncateUtf8(
     systemRedaction.text,
     SYSTEM_SECTION_MAX_BYTES,
   );
-  truncated ||= boundedSystem.truncated;
 
   const collection = await readRecentDiagnosticLogEntries(
     environment.previousLogPath,
     environment.currentLogPath,
     context.executionId,
+    context.jobId,
   );
-  truncated ||= collection.omitted > 0;
-  const redactedLogEntries = collection.entries.map((entry) => {
-    const result = redactDiagnosticText(entry.line, redactionOptions);
-    redactionCount += result.redactionCount;
-    return { ...entry, line: result.text };
-  });
+  const redactedLogEntries = collection.entries.map((entry) => ({
+    ...entry,
+    line: redact(entry.line),
+  }));
   const bytesRemaining =
     ERROR_REPORT_DRAFT_MAX_BYTES -
     utf8ByteLength(boundedError.text) -
@@ -82,7 +94,6 @@ export async function buildErrorReportDraft(
     Math.min(ERROR_REPORT_LOG_MAX_BYTES, Math.max(bytesRemaining, 0)),
     collection.omitted,
   );
-  truncated ||= renderedLogs.truncated;
 
   return {
     defaultTitle: defaultTitleForSource(
@@ -97,7 +108,11 @@ export async function buildErrorReportDraft(
     systemMarkdown: boundedSystem.text,
     logsMarkdown: renderedLogs.text,
     redactionCount,
-    truncated,
+    truncated:
+      boundedError.truncated ||
+      boundedSystem.truncated ||
+      collection.omitted > 0 ||
+      renderedLogs.truncated,
   };
 }
 
@@ -111,12 +126,6 @@ function buildErrorMarkdown(
   appendOptionalListItem(lines, "Job ID", context.jobId, true);
   appendOptionalListItem(lines, "Execution ID", context.executionId, true);
   appendOptionalListItem(lines, "Incident time", context.incidentAt, true);
-  if (executionDiagnostics)
-    appendOptionalCodeSection(
-      lines,
-      "Execution diagnostics",
-      JSON.stringify(executionDiagnostics),
-    );
   appendOptionalCodeSection(lines, "Message", context.message);
   appendOptionalCodeSection(lines, "Stack", context.stack);
   appendOptionalCodeSection(
@@ -124,6 +133,12 @@ function buildErrorMarkdown(
     "React component stack",
     context.componentStack,
   );
+  if (executionDiagnostics)
+    appendOptionalCodeSection(
+      lines,
+      "Execution diagnostics",
+      String(executionDiagnostics),
+    );
   const hasDetails = [
     context.summary,
     context.message,

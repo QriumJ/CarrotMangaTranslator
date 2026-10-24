@@ -22,6 +22,10 @@
     "src/renderer/src/app/useAppSessionModel.ts": 14
   },
   "allow": {
+    "src/main/libraryStore/libraryTransactionStorage.ts": {
+      "maxImportedBy": 27,
+      "reason": "GitHub diagnostic snapshots, encrypted credentials and upload journals reuse the existing fsync/atomic-rename adapter. Measured direct consumers total 27. No persistence algorithm move or global ceiling change; recovery and integrity tests are in githubReport.test.ts."
+    },
     "src/main/settings/appSettingsDefaults.ts": {
       "maxRuntimeImports": 15,
       "reason": "Issue 149 initializes safe export preferences from the same shared defaults used by stored-settings normalization. This is one measured direct import, avoiding duplicated defaults; existing settings default/provider regression tests verify consistency. Global and legacy budgets are unchanged."

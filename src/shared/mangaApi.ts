@@ -1,4 +1,10 @@
 /* eslint-disable max-lines -- the preload-facing API type intentionally enumerates the complete renderer contract */
+import type {
+  GitHubReportAuthAction,
+  GitHubReportAuthState,
+  SubmitGitHubReport,
+  GitHubReportResult,
+} from "./githubReport";
 import type { EditPageOrganizationRequest } from "./pageOrganization";
 import type { ExportPreferences } from "./exportPreferences";
 import type {
@@ -494,6 +500,12 @@ export interface MangaApi extends McpApi, ChatApi, ClaudeApi, GrokApi {
   prepareErrorReport: (
     context: ErrorReportContext,
   ) => Promise<ErrorReportDraft>;
+  githubReportAccount: (
+    action: GitHubReportAuthAction,
+  ) => Promise<GitHubReportAuthState>;
+  submitGitHubReport: (
+    request: SubmitGitHubReport,
+  ) => Promise<GitHubReportResult>;
   copyErrorReport: (body: string) => Promise<CopyErrorReportResult>;
   openErrorReportIssue: (
     request: OpenErrorReportIssueRequest,

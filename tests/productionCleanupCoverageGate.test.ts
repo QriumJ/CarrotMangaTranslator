@@ -587,7 +587,8 @@ describe("production cleanup coverage floor gate", () => {
     expect(manifest.deletedFiles).toEqual(scope.deleted);
     // Issue #157 touches the Diffusers cache owner; its original measured floor is retained.
     // Block-background visibility adds its batch action with the original floor.
-    expect(scope.existing).toHaveLength(864);
+    // Complete diagnostics touch logger rotation and the renderer error boundary.
+    expect(scope.existing).toHaveLength(866);
     // Includes global chat, shared actions, OpenCode help, MCP event streams, shared
     // translation instructions and image budget; inherited floors remain unchanged.
     // inherited floors remain unchanged.
@@ -608,7 +609,8 @@ describe("production cleanup coverage floor gate", () => {
     // Balloon padding and workflow progress add three owners and touch three baseline owners.
     // Text-area background opacity adds its default and preset compatibility owner.
     // Chat reliability adds seven transport, lifecycle and view owners.
-    expect(scope.added).toHaveLength(1578);
+    // GitHub device auth, complete snapshots, verified Gist uploads and account UI add ten owners.
+    expect(scope.added).toHaveLength(1588);
     expect(scope.deleted).toHaveLength(12);
   });
 });

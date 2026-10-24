@@ -66,7 +66,7 @@ function createHttpFailureError(options, requestSummary, response, rawText) {
     apiProfileId: options.apiProfileId,
     status: response.status,
     statusText: response.statusText,
-    rawTextPreview: truncateSensitiveText(rawText, options, 4000),
+    rawTextPreview: redactConfiguredApiKeys(rawText, options),
     ...(usageLimitFailure
       ? {
           usageLimitReached: true,
@@ -489,7 +489,7 @@ function createEmptyOutputError(parsed, rawText, requestSummary, options) {
   if (!failure) {
     return createDetailedError("Model returned an empty response.", {
       requestSummary,
-      rawTextPreview: truncateSensitiveText(rawText, options, 4000),
+      rawTextPreview: redactConfiguredApiKeys(rawText, options),
       rawResponse: redactSensitivePayload(parsed, options),
       failureCategory: "empty-model-response",
     });
@@ -499,7 +499,7 @@ function createEmptyOutputError(parsed, rawText, requestSummary, options) {
     : null;
   return createDetailedError(truncation?.message ?? failure.message, {
     requestSummary,
-    rawTextPreview: truncateSensitiveText(rawText, options, 4000),
+    rawTextPreview: redactConfiguredApiKeys(rawText, options),
     rawResponse: redactSensitivePayload(parsed, options),
     failureCategory: failure.failureCategory,
     ...(failure.nonRetriable ? { nonRetriable: true } : {}),

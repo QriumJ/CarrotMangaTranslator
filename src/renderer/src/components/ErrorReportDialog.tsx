@@ -9,8 +9,11 @@ import { ModalActionBar, ModalActionButtons } from "./ui/ModalActionBar";
 import {
   useErrorReportDialogModel,
   type ReportAction,
+  type ReportPrimaryAction,
+  type ErrorReportDialogModel,
 } from "./useErrorReportDialog";
 import { CheckboxField } from "./ui/CheckboxField";
+import { GitHubReportAccount } from "./GitHubReportAccount";
 
 export type ErrorReportDialogProps = {
   context: ErrorReportContext;
@@ -44,11 +47,11 @@ export function ErrorReportDialog({
         <ErrorReportFooter
           activeAction={model.activeAction}
           canShare={model.canShare}
+          primary={model.primaryAction}
           fatal={fatal}
           hasRestart={Boolean(onRestart)}
           onClose={onClose}
           onCopy={model.handleCopy}
-          onGitHub={model.handleOpenIssue}
           onOpenLogs={model.handleOpenLogs}
           onRestart={model.handleRestart}
         />
@@ -57,7 +60,9 @@ export function ErrorReportDialog({
       {fatal ? (
         <p className={styles.fatalHint}>{t("errorReport.fatalHint")}</p>
       ) : null}
+      <GitHubReportAccount model={model.githubAccount} disabled={busy} />
       <p className={styles.privacyNotice} role="note">
+        <strong>{t("errorReport.privacyLabel")}</strong>{" "}
         {t("errorReport.privacyWarning")}
       </p>
       {model.loadError ? (
@@ -68,35 +73,47 @@ export function ErrorReportDialog({
           </Button>
         </div>
       ) : model.draftReady ? (
-        <ErrorReportForm
-          description={model.description}
-          includeLogs={model.includeLogs}
-          includeSystem={model.includeSystem}
-          reportBody={model.reportBody}
-          title={model.title}
-          onDescriptionChange={model.setDescription}
-          onIncludeLogsChange={model.setIncludeLogs}
-          onIncludeSystemChange={model.setIncludeSystem}
-          onTitleChange={model.setTitle}
-        />
+        <fieldset
+          className={styles.formGuard}
+          disabled={busy || model.submissionStarted}
+        >
+          <ErrorReportForm
+            description={model.description}
+            includeLogs={model.includeLogs}
+            includeSystem={model.includeSystem}
+            reportBody={model.reportBody}
+            title={model.title}
+            onDescriptionChange={model.setDescription}
+            onIncludeLogsChange={model.setIncludeLogs}
+            onIncludeSystemChange={model.setIncludeSystem}
+            onTitleChange={model.setTitle}
+          />
+        </fieldset>
       ) : (
         <p className={styles.loading} role="status">
           {t("errorReport.preparing")}
         </p>
       )}
-      {model.feedback ? (
-        <p
-          className={
-            model.feedback.kind === "error"
-              ? styles.actionError
-              : styles.actionSuccess
-          }
-          role={model.feedback.kind === "error" ? "alert" : "status"}
-        >
-          {model.feedback.message}
-        </p>
-      ) : null}
+      <ErrorReportFeedback feedback={model.feedback} />
     </Modal>
+  );
+}
+
+function ErrorReportFeedback({
+  feedback,
+}: {
+  feedback: ErrorReportDialogModel["feedback"];
+}) {
+  if (!feedback) return null;
+  return (
+    <p
+      className={
+        feedback.kind === "error" ? styles.actionError : styles.actionSuccess
+      }
+      role={feedback.kind === "error" ? "alert" : "status"}
+    >
+      {feedback.message}
+    </p>
   );
 }
 
@@ -172,27 +189,29 @@ function ErrorReportForm({
   );
 }
 
-function ErrorReportFooter({
-  activeAction,
-  canShare,
-  fatal,
-  hasRestart,
-  onClose,
-  onCopy,
-  onGitHub,
-  onOpenLogs,
-  onRestart,
-}: {
+type ErrorReportFooterProps = {
   activeAction: ReportAction | null;
   canShare: boolean;
+  primary: ReportPrimaryAction;
   fatal: boolean;
   hasRestart: boolean;
   onClose: () => void;
   onCopy: () => void;
-  onGitHub: () => void;
   onOpenLogs: () => void;
   onRestart: () => void;
-}): React.JSX.Element {
+};
+
+function ErrorReportFooter({
+  activeAction,
+  canShare,
+  primary,
+  fatal,
+  hasRestart,
+  onClose,
+  onCopy,
+  onOpenLogs,
+  onRestart,
+}: ErrorReportFooterProps): React.JSX.Element {
   const { t } = useTranslation("components");
   const busy = activeAction !== null;
   return (
@@ -239,12 +258,9 @@ function ErrorReportFooter({
               disabled: busy,
             }}
             confirm={{
-              label:
-                activeAction === "github"
-                  ? t("errorReport.openingGitHub")
-                  : t("errorReport.openGitHub"),
-              onClick: onGitHub,
-              disabled: !canShare,
+              label: t(`errorReport.${primary.label}`),
+              onClick: primary.run,
+              disabled: primary.disabled,
             }}
           />
         </>

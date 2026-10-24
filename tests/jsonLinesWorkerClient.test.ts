@@ -247,6 +247,7 @@ function createManualScheduler() {
 }
 
 type FakeClientOptions = FakeWorkerOptions & {
+  onStderr?: (text: string) => void;
   requestTimeoutMs?: number;
   shutdownGraceMs?: number;
   terminationGate?: Promise<void>;
@@ -274,7 +275,7 @@ function makeFakeClient(options: FakeClientOptions = {}) {
     buildExitError: (code, stderr) => new Error(`exit ${code} ${stderr}`),
     buildNotRunningError: (stderr) => new Error(`not running ${stderr}`),
     sanitizeStderr: (text) => text,
-    onStderr: () => {},
+    onStderr: options.onStderr ?? (() => {}),
     onTerminationError: options.onTerminationError ?? (() => {}),
     runtime: {
       spawnWorker,
@@ -291,6 +292,25 @@ function makeFakeClient(options: FakeClientOptions = {}) {
 }
 
 describe("JsonLinesWorkerClient", () => {
+  it("preserves the entire stderr chunk for logging while bounding the exit summary", async () => {
+    const onStderr = vi.fn();
+    const payload = "NATIVE_ROOT_CAUSE" + "x".repeat(40000) + "NATIVE_TAIL";
+    const { client } = makeFakeClient({
+      onStderr,
+      onRequest(request, control) {
+        control.sendStderr(payload);
+        control.sendStdout(JSON.stringify({ id: request.id, ok: true }) + "\n");
+      },
+    });
+    try {
+      await client.startRequest({ type: "run" }).response;
+      expect(onStderr).toHaveBeenCalledWith(payload);
+      expect(client.getStderr().length).toBeLessThanOrEqual(16000);
+      expect(client.getStderr()).toContain("NATIVE_TAIL");
+    } finally {
+      await client.dispose();
+    }
+  });
   it("preserves split UTF-8 responses and independent split stderr bytes", async () => {
     const text = "안녕 漢字 カタカナ 🥕";
     const { client } = makeFakeClient({

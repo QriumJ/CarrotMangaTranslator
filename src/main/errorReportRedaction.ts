@@ -9,15 +9,9 @@ export function redactDiagnosticText(
   value: string,
   options: DiagnosticRedactionOptions = {},
 ): { text: string; redactionCount: number } {
-  // Legacy response exceptions can quote user text in message, stack and cause.
-  // Their free-text delimiters are not trustworthy; omit the whole diagnostic.
-  if (/\bpreview=/i.test(value))
-    return {
-      text: "[Legacy model-response diagnostic omitted: contained raw user content.]",
-      redactionCount: 1,
-    };
-  let text = value;
-  let redactionCount = 0;
+  const initial = redactLegacyDiagnostic(value, options);
+  let text = initial.text;
+  let redactionCount = initial.redactionCount;
 
   const replace = (
     pattern: RegExp,
@@ -89,6 +83,48 @@ export function redactDiagnosticText(
   );
 
   return { text, redactionCount };
+}
+
+function redactLegacyDiagnostic(
+  value: string,
+  options: DiagnosticRedactionOptions,
+) {
+  if (!/\bpreview=/i.test(value)) return { text: value, redactionCount: 0 };
+  // Isolate unsafe legacy strings; retain sibling status/request/cause metadata.
+  return (
+    redactLegacyRecord(value, options) ?? {
+      text: "[Legacy model-response diagnostic omitted: contained raw user content.]",
+      redactionCount: 1,
+    }
+  );
+}
+
+function redactLegacyRecord(
+  value: string,
+  options: DiagnosticRedactionOptions,
+) {
+  const start = value.indexOf("{");
+  if (start < 0) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value.slice(start));
+  } catch (_error) {
+    // error-policy-allow: invalid legacy JSON is wholly redacted by the caller.
+    return null;
+  }
+  let redactionCount = 0;
+  const safe = JSON.stringify(parsed, (_key, child: unknown) => {
+    if (typeof child !== "string" || !/\bpreview=/i.test(child)) return child;
+    // A legacy string cannot use another object's braces to expose its tail.
+    redactionCount += 1;
+    return "[Legacy model-response diagnostic omitted: contained raw user content.]";
+  });
+  if (!redactionCount) return null;
+  const prefix = redactDiagnosticText(value.slice(0, start), options);
+  return {
+    text: prefix.text + safe,
+    redactionCount: redactionCount + prefix.redactionCount,
+  };
 }
 
 function diagnosticPathReplacements(

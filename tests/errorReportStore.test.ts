@@ -20,6 +20,23 @@ describe("error report incident store", () => {
       onErrorIncident: () => () => undefined,
     });
     initializeGlobalErrorReporting();
+    const detailedError = Object.assign(new Error("long diagnostic"), {
+      cause: Object.assign(new Error("NESTED_RENDERER_CAUSE"), {
+        code: "UNKNOWN_FUTURE_CODE",
+      }),
+      extra: "x".repeat(40000) + "RENDERER_DETAIL_TAIL",
+    });
+    window.dispatchEvent(new ErrorEvent("error", { error: detailedError }));
+    expect(JSON.stringify(writeLog.mock.calls)).toContain(
+      "NESTED_RENDERER_CAUSE",
+    );
+    expect(JSON.stringify(writeLog.mock.calls)).toContain(
+      "UNKNOWN_FUTURE_CODE",
+    );
+    expect(JSON.stringify(writeLog.mock.calls)).toContain(
+      "RENDERER_DETAIL_TAIL",
+    );
+    closeErrorReport();
     window.dispatchEvent(
       new ErrorEvent("error", { error: new Error("한".repeat(1200)) }),
     );
@@ -45,7 +62,7 @@ describe("error report incident store", () => {
       closeErrorReport();
     }
     await Promise.resolve();
-    expect(writeLog).toHaveBeenCalledTimes(4);
+    expect(writeLog).toHaveBeenCalledTimes(5);
   });
   afterEach(() => {
     resetErrorReportStoreForTests();
@@ -96,7 +113,7 @@ describe("error report incident store", () => {
     ]);
   });
 
-  it("keeps one active incident and normalizes oversized renderer details", () => {
+  it("bounds display metadata while preserving complete renderer evidence", () => {
     expect(
       openErrorReport({
         source: "renderer-global",
@@ -118,8 +135,8 @@ describe("error report incident store", () => {
     expect(getErrorReportIncident()).toMatchObject({
       source: "renderer-global",
       summary: `${"한".repeat(999)}…`,
-      message: `${"m".repeat(15_999)}…`,
-      stack: `${"s".repeat(31_999)}…`,
+      message: "m".repeat(17_000),
+      stack: "s".repeat(33_000),
       jobId: "run-1",
       executionId: "attempt-2",
     });

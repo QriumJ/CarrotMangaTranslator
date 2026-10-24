@@ -16,6 +16,7 @@ const FORBIDDEN_ROOT_DIRECTORIES = Object.freeze([
   "fonts",
   "library",
   "logs",
+  "github-report-private",
   "results",
   "testProject1",
 ]);

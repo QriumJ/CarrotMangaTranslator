@@ -12,6 +12,7 @@ import {
 } from "../../shared/errorReportTypes";
 import type { AppPaths } from "../appPaths";
 import { prepareErrorReportDraft } from "../errorReport";
+import { GitHubReportService } from "../githubReportService";
 import type { ActiveJobStore } from "../jobs/activeJob";
 import {
   type RegisteredRendererIpcContext,
@@ -21,9 +22,9 @@ import {
 } from "./trustedIpc";
 
 const CLIPBOARD_FALLBACK_BODY = [
-  "A compact diagnostic report is included below. Full details were copied to the clipboard.",
+  "The report below is shortened to fit the browser URL. The expanded report was copied to the clipboard.",
   "",
-  "You can replace this summary with the copied report before submitting this public issue.",
+  "You can paste the expanded report before submitting. The app logs retain more diagnostic detail.",
 ].join("\n");
 
 export type ErrorReportIpcContext = RegisteredRendererIpcContext & {
@@ -61,6 +62,19 @@ export function registerErrorReportIpc(
   runtime: ErrorReportIpcRuntime = productionErrorReportIpcRuntime,
 ): void {
   let restartScheduled = false;
+  const github = new GitHubReportService(context.appPaths.dataRoot);
+  registeredRendererHandleContract(
+    context,
+    errorReportIpcContracts.githubReportAccount,
+    (_event, action) => github.account(action),
+    runtime,
+  );
+  registeredRendererHandleContract(
+    context,
+    errorReportIpcContracts.submitGitHubReport,
+    (_event, request) => github.submit(request),
+    runtime,
+  );
 
   registeredRendererHandleContract(
     context,
@@ -129,48 +143,85 @@ export async function openErrorReportIssue(
 }
 
 function compactIssueBody(title: string, body: string): string {
-  const allSections = body
+  const sections = body
     .split(/(?=^## )/m)
-    .filter((section) => section.trim());
-  const diagnosticSections = allSections.filter((section) =>
-    /^## (?:Error|System information|Recent )/.test(section),
-  );
-  const sections = [
-    ...diagnosticSections,
-    ...allSections.filter((section) => !diagnosticSections.includes(section)),
-  ].slice(0, 4);
+    .filter((section) => section.trim())
+    .map((section) =>
+      prioritizeErrorMessage(section).replace(/```(?:text)?/g, ""),
+    );
   const overhead = buildGitHubIssueUrl(
     title,
-    `${CLIPBOARD_FALLBACK_BODY}\n\n`,
+    CLIPBOARD_FALLBACK_BODY + "\n\n" + sections.map(() => "").join("\n\n"),
   ).length;
-  const budget = Math.max(
-    0,
-    ERROR_REPORT_GITHUB_URL_MAX_LENGTH - overhead - 32,
-  );
-  const quota = Math.floor(budget / sections.length);
-  const compact = sections.map((section) => {
-    // Keep the latest diagnostics as well as the section heading.
-    const lines = prioritizeErrorMessage(section).split("\n");
-    const candidates =
-      /logs|warnings and errors/i.test(lines[0]) && lines.length > 4
-        ? [lines[0], ...lines.slice(-24)]
-        : lines;
-    const value = candidates.join("\n").replace(/```(?:text)?/g, "");
-    let result = "";
-    for (const point of value) {
-      const next = result + point;
-      if (
-        new URLSearchParams({ body: `${next}\n[section shortened]` }).toString()
-          .length > quota
+  if (overhead >= ERROR_REPORT_GITHUB_URL_MAX_LENGTH) {
+    const prefix = CLIPBOARD_FALLBACK_BODY + "\n\n";
+    return (
+      prefix +
+      compactSection(
+        body,
+        Math.max(
+          0,
+          ERROR_REPORT_GITHUB_URL_MAX_LENGTH -
+            buildGitHubIssueUrl(title, prefix).length,
+        ),
       )
-        break;
-      result = next;
+    );
+  }
+  let remaining = Math.max(
+    0,
+    ERROR_REPORT_GITHUB_URL_MAX_LENGTH - overhead - 16,
+  );
+  const sizes = sections.map(encodedLength);
+  const budgets = sections.map(() => 0);
+  // Redistribute unused space from small sections rather than wasting a fixed
+  // quota or dropping everything after the fourth section / 24th log record.
+  while (remaining > 0) {
+    const pending = sizes.flatMap((size, index) =>
+      budgets[index] < size ? [index] : [],
+    );
+    if (!pending.length) break;
+    const share = Math.max(1, Math.floor(remaining / pending.length));
+    for (const index of pending) {
+      const added = Math.min(remaining, share, sizes[index] - budgets[index]);
+      budgets[index] += added;
+      remaining -= added;
     }
-    return result.length < value.length
-      ? `${result}\n[section shortened]`
-      : result;
-  });
-  return `${CLIPBOARD_FALLBACK_BODY}\n\n${compact.join("\n\n")}`;
+  }
+  return (
+    CLIPBOARD_FALLBACK_BODY +
+    "\n\n" +
+    sections
+      .map((section, index) => compactSection(section, budgets[index]))
+      .join("\n\n")
+  );
+}
+
+function encodedLength(text: string): number {
+  return new URLSearchParams({ body: text }).toString().length - 5;
+}
+
+function compactSection(value: string, budget: number): string {
+  if (encodedLength(value) <= budget) return value;
+  const marker = "\n[... middle omitted ...]\n";
+  if (encodedLength(marker) > budget) return "";
+  const points = Array.from(value);
+  const candidate = (count: number) => {
+    const head = Math.ceil(count / 2),
+      tail = Math.floor(count / 2);
+    return (
+      points.slice(0, head).join("") +
+      marker +
+      points.slice(points.length - tail).join("")
+    );
+  };
+  let low = 0,
+    high = points.length;
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2);
+    if (encodedLength(candidate(middle)) <= budget) low = middle;
+    else high = middle - 1;
+  }
+  return candidate(low);
 }
 
 function prioritizeErrorMessage(section: string): string {
