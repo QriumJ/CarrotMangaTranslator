@@ -104,7 +104,11 @@ it("fails closed on corrupt durable metadata and preserves all existing page byt
     expect(await readFile(f.chapterPath)).toEqual(saved);
     await expect(f.restart()).rejects.toThrow();
     const names = await readdir(join(f.env.libraryDir, ".mcp-retained"));
-    expect(names.filter((name) => name !== "index.json")).toHaveLength(1);
+    expect(
+      names.filter(
+        (name) => name !== "index.json" && !name.startsWith("catalog-"),
+      ),
+    ).toHaveLength(1);
   } finally {
     await f.close();
   }

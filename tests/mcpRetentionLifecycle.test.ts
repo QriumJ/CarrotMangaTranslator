@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { ok } from "node:assert";
 import { readFile, writeFile, access } from "node:fs/promises";
 import { expect, it, vi } from "vitest";
 import { retentionFixture } from "./mcpRetention.fixture";
@@ -107,7 +108,10 @@ it("expires records without touching current images and prunes only expired stor
       JSON.stringify(await f.codec.seal(index)),
     );
     expect((await f.list()).items[0].available).toBe(false);
-    await expect(f.inspect(expired)).rejects.toThrow();
+    expect(await f.inspect(expired)).toMatchObject({
+      state: "expired",
+      canUndo: false,
+    });
     await f.edit("next unrelated text commit");
     expect((await f.list()).total).toBe(1);
     await expect(access(await f.storage.path(expired))).rejects.toMatchObject({
@@ -119,9 +123,8 @@ it("expires records without touching current images and prunes only expired stor
   }
 });
 
-it("fails closed at the bounded catalog capacity without evicting another connection or changing the page", async () => {
+it("rotates eligible history at 4096 entries and retains identity without deleting unknown records", async () => {
   const f = await retentionFixture();
-  const { mcpToolError } = await import("../src/main/mcp/mcpToolResult");
   try {
     await f.edit("kept history");
     const index = await f.storage.index();
@@ -130,22 +133,37 @@ it("fails closed at the bounded catalog capacity without evicting another connec
       ...first,
       id: i ? randomUUID() : first.id,
       owner: i ? "different-owner" : first.owner,
+      createdAt: first.createdAt + i,
     }));
     await writeFile(
       await f.storage.path(),
       JSON.stringify(await f.codec.seal(index)),
     );
-    const before = await readFile(f.chapterPath);
-    const failure = await f
-      .edit("capacity must not evict history")
-      .catch((error: unknown) => error);
-    expect(mcpToolError(failure).structuredContent).toMatchObject({
-      error: "retention_full",
-      retryable: false,
+    await f.edit("new save succeeds at capacity");
+    const next = await f.storage.index();
+    expect(next.entries).toHaveLength(MCP_RETENTION_CAPACITY + 1);
+    expect(next.entries[0]).toMatchObject({
+      id: first.id,
+      bytes: 0,
+      reclaimedAt: expect.any(Number),
     });
-    expect(await readFile(f.chapterPath)).toEqual(before);
-    expect((await f.storage.index()).entries).toEqual(index.entries);
-    expect((await f.list()).total).toBe(1);
+    expect(next.entries.slice(1, MCP_RETENTION_CAPACITY)).toEqual(
+      index.entries.slice(1),
+    );
+    await expect(access(await f.storage.path(first.id))).rejects.toMatchObject({
+      code: "ENOENT",
+    });
+    expect(await f.inspect(first.id)).toMatchObject({
+      state: "reclaimed",
+      canUndo: false,
+    });
+    const latest = (await f.list()).items.find((item) => item.id !== first.id);
+    ok(latest);
+    await f.restart();
+    await f.recover(latest.id, "undo");
+    expect((await f.snapshot()).pages[0].blocks[0].translatedText).toBe(
+      "kept history",
+    );
   } finally {
     await f.close();
   }
@@ -189,9 +207,8 @@ it("continues from an existing 256-record profile without evicting history and c
   }
 });
 
-it("preflights the unchanged byte quota before image work without pruning or touching the page", async () => {
+it("saves image work at the old byte limit and keeps the newest change recoverable after restart", async () => {
   const f = await retentionFixture();
-  const { mcpToolError } = await import("../src/main/mcp/mcpToolResult");
   try {
     await f.edit("kept image source");
     const index = await f.storage.index();
@@ -200,38 +217,23 @@ it("preflights the unchanged byte quota before image work without pruning or tou
       await f.storage.path(),
       JSON.stringify(await f.codec.seal(index)),
     );
-    const before = await readFile(f.chapterPath);
+    const before = (await f.snapshot()).pages[0];
     const result = await f.paint();
-    expect(result.status).toBe("failed");
-    expect(JSON.stringify(result)).toContain("retention_full");
-    const nativeJobs = f.app.jobs.all.length;
-    const page = (await f.snapshot()).pages[0];
-    const started = await f.invoke("carrot_run_page_erasure", {
-      chapterId: "chapter",
-      pageId: page.id,
-      revision: createPageRevision(page),
-      requestId: randomUUID(),
-      localModel: "aot-inpainting",
-    });
-    const jobId = (started.structuredContent as { jobId: string }).jobId;
-    await vi.waitFor(async () => {
-      const job = await f.invoke("carrot_get_job", { jobId });
-      expect(job.structuredContent).toMatchObject({
-        status: "failed",
-        error: { code: "retention_full" },
-      });
-    });
-    expect(f.app.jobs.all.length).toBe(nativeJobs);
-    expect(await readFile(f.chapterPath)).toEqual(before);
-    expect(await f.storage.index()).toEqual(index);
-    await f.storage.assertCanAdd().then(
-      () => {
-        throw new Error("Expected full quota");
-      },
-      (error: unknown) => {
-        expect(mcpToolError(error).structuredContent.retryable).toBe(false);
-      },
+    expect(result.status).toBe("completed");
+    const history = await f.list();
+    expect(
+      history.items.find((item) => item.id === index.entries[0].id)?.state,
+    ).toBe("reclaimed");
+    const latest = history.items.find((item) => item.state === "retained");
+    ok(latest);
+    await f.storage.assertCanAdd();
+    await f.restart();
+    await f.recover(latest.id, "undo");
+    expect((await f.snapshot()).pages[0].inpaintedImagePath).toBe(
+      before.inpaintedImagePath,
     );
+    await f.recover(latest.id, "redo");
+    expect((await f.snapshot()).pages[0].inpaintedImagePath).toBeTruthy();
   } finally {
     await f.close();
   }

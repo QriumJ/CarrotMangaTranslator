@@ -23,8 +23,8 @@
   },
   "allow": {
     "src/main/libraryStore/libraryTransactionStorage.ts": {
-      "maxImportedBy": 27,
-      "reason": "GitHub diagnostic snapshots, encrypted credentials and upload journals reuse the existing fsync/atomic-rename adapter. Measured direct consumers total 27. No persistence algorithm move or global ceiling change; recovery and integrity tests are in githubReport.test.ts."
+      "maxImportedBy": 28,
+      "reason": "Encrypted paged MCP retention indexes add one direct consumer of the canonical durable JSON writer (28 total). Native atomic publication and crash recovery stay unchanged; mcpRetentionIndex and mcpRetentionRotation integration tests cover migration, corruption and rollback. No global ceiling change."
     },
     "src/main/settings/appSettingsDefaults.ts": {
       "maxRuntimeImports": 15,

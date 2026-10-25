@@ -46,6 +46,7 @@ const descriptor = z
       .regex(/^[a-f0-9]{64}$/)
       .nullable(),
     available: z.boolean(),
+    state: z.enum(["retained", "reclaimed", "expired"]),
   })
   .strict();
 const window = z
@@ -58,6 +59,9 @@ const window = z
     items: z.array(descriptor).max(25),
     retention: z.literal(
       "seven-days; same-profile-and-owner; no-automatic-reexecution",
+    ),
+    historyPolicy: z.literal(
+      "ordinary-history-rotates; essential-records-protected",
     ),
   })
   .strict();

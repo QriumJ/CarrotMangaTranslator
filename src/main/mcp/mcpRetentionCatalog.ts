@@ -11,6 +11,7 @@ import {
 import { readRetainedOutput, checkOutputPages } from "./mcpRetainedOutputs";
 import type { RetentionEntry } from "./mcpRetentionRecords";
 import { inspectRetainedFile } from "./mcpRetentionEvidence";
+import { isLibraryArtifactRetained } from "../libraryStore/libraryArtifactRetention";
 import { mcpArtifactRequiresImages } from "../../shared/mcpOutputFormats";
 import type { McpArtifactMime } from "../../shared/mcpOutputFormats";
 import { diagnoseRetainedOutput } from "./mcpRetentionDiagnostics";
@@ -68,6 +69,8 @@ export class McpRetentionCatalog {
           .map((item) => describeRetained(item, this.storage.now())),
         retention:
           "seven-days; same-profile-and-owner; no-automatic-reexecution" as const,
+        historyPolicy:
+          "ordinary-history-rotates; essential-records-protected" as const,
       };
     });
   }
@@ -75,6 +78,27 @@ export class McpRetentionCatalog {
     const check = this.check(guard);
     check();
     return withLibraryRead(async () => {
+      const historical = (await this.storage.index()).entries.find(
+        (item) =>
+          item.id === id && item.owner === owner && item.kind === "change",
+      );
+      check();
+      if (
+        historical &&
+        (historical.reclaimedAt !== undefined ||
+          historical.expiresAt <= this.storage.now())
+      )
+        return {
+          ...describeRetained(historical, this.storage.now()),
+          pages: [],
+          canUndo: false,
+          canRedo: false,
+          warnings: [
+            historical.reclaimedAt !== undefined
+              ? "history_reclaimed_saved_pages_intact"
+              : "history_expired",
+          ],
+        };
       const { entry, record } = await readRetainedChange(
         this.storage,
         owner,
@@ -181,6 +205,11 @@ export class McpRetentionCatalog {
           "Retained record is not owned by this connection.",
         );
       const kind = entry.kind;
+      if (isLibraryArtifactRetained(await this.storage.path(id)))
+        throw new McpEditError(
+          "editor_busy",
+          "Recovery is using this retained record. Wait for it to settle.",
+        );
       this.assertDiscardable?.(kind, id);
       if (
         kind === "chapter-deletion" ||
@@ -220,6 +249,17 @@ export class McpRetentionCatalog {
   }
 }
 function describeRetained(entry: RetentionEntry, now: number) {
-  const { owner: _owner, bytes, ...metadata } = entry;
-  return { ...metadata, storageBytes: bytes, available: entry.expiresAt > now };
+  const { owner: _owner, bytes, reclaimedAt, ...metadata } = entry;
+  const state =
+    entry.expiresAt <= now
+      ? "expired"
+      : reclaimedAt !== undefined
+        ? "reclaimed"
+        : "retained";
+  return {
+    ...metadata,
+    storageBytes: bytes,
+    state,
+    available: state === "retained",
+  };
 }

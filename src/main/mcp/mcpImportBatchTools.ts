@@ -194,7 +194,7 @@ function readTools(
       scopes: ["carrot.read"],
       write: false,
       description:
-        "List this connection's seven-day retained multi-URL plans. Metadata only. Recheck a plan with carrot_get_import_batch; listing never resumes work. Same shared 256-record/1-GiB catalog, without source images or filesystem paths.",
+        "List this connection's seven-day retained multi-URL plans. Metadata only. Recheck a plan with carrot_get_import_batch; listing never resumes work. Protected from ordinary page-history rotation, without source images or filesystem paths.",
       execute: (args, owner, check) =>
         catalog.list(
           owner,

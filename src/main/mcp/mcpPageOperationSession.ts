@@ -86,14 +86,18 @@ export function createMcpPageOperationSession(options: PageSessionOptions) {
     close: async () => {
       auxiliary.stop();
       parents?.stop();
-      await closePageSession(
-        operations,
-        artifacts,
-        recovery,
-        auxiliary,
-        parents,
-        retained,
-      );
+      try {
+        await closePageSession(
+          operations,
+          artifacts,
+          recovery,
+          auxiliary,
+          parents,
+          retained,
+        );
+      } finally {
+        resources.releaseRetentionActivity?.();
+      }
     },
   };
 }

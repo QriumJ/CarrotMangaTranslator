@@ -75,7 +75,7 @@ export function createMcpWorkDeletionTools(
       "carrot_list_work_deletions",
       McpRetentionListSchema,
       false,
-      "List owned work removal recovery IDs after restart. Metadata only; catalog snapshot required for pagination. Existing same-profile/owner seven-day, shared 256-record/1-GiB retention. Expiry may permanently prune recovery, not a permanent trash bin.",
+      "List owned work removal recovery IDs after restart. Metadata only; catalog snapshot required for pagination. Same-profile/owner seven-day retention, protected from ordinary history rotation. Expiry may permanently prune recovery, not a permanent trash bin.",
       (args, owner, guard) =>
         catalog.list(
           owner,

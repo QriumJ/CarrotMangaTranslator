@@ -610,7 +610,8 @@ describe("production cleanup coverage floor gate", () => {
     // Text-area background opacity adds its default and preset compatibility owner.
     // Chat reliability adds seven transport, lifecycle and view owners.
     // GitHub device auth, complete snapshots, verified Gist uploads and account UI add ten owners.
-    expect(scope.added).toHaveLength(1588);
+    // Retention rotation adds the shared policy and paged encrypted catalog owners.
+    expect(scope.added).toHaveLength(1590);
     expect(scope.deleted).toHaveLength(12);
   });
 });

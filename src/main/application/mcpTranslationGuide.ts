@@ -17,6 +17,12 @@ import { inspectTranslationSavedQuality } from "./mcpTranslationQuality";
 
 const steps = [
   {
+    id: "saving-and-history",
+    tools: ["carrot_list_changes", "carrot_get_change"],
+    instruction:
+      "The app automatically rotates older ordinary undo history while saving new changes with recovery. The history target is not a reason to stop work or ask the user to clean records. Outputs, removed-original recovery and native workflow receipts have separate lifetimes. A reclaimed history entry describes completed work: read current pages, never repeat a saved operation to recreate its undo record. Report actual disk, encryption or integrity failures accurately; do not claim a successful save was blocked because older history rotated.",
+  },
+  {
     id: "detailed-default",
     tools: [
       "carrot_inspect_translation_source",

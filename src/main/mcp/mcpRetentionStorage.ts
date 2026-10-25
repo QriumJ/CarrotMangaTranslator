@@ -10,11 +10,18 @@ import {
   writeDurableFile,
 } from "../libraryStore/libraryTransactionStorage";
 import { retainInlineImages, restoreInlineImages } from "./mcpRetentionImages";
+import { readRetentionIndex, stageRetentionIndex } from "./mcpRetentionIndex";
+import {
+  isRetentionActive,
+  observeRetentionActivity,
+  protectedRetentionIds,
+  rotateRetentionHistory,
+} from "./mcpRetentionPolicy";
+import { retainLibraryArtifacts } from "../libraryStore/libraryArtifactRetention";
 import { McpEditError } from "../application/mcpEditPolicy";
 import {
   RetentionIndexSchema,
-  MCP_RETENTION_CAPACITY,
-  MCP_RETENTION_BYTES,
+  MCP_RETENTION_CLEANUP_BATCH,
   type RetentionIndex,
   type RetentionEntry,
 } from "./mcpRetentionRecords";
@@ -26,11 +33,27 @@ export type McpRetentionCodec = {
 /** All writes join an existing native library transaction under the native write lock.
  * The index and record metadata are encrypted and bound to the current data profile. */
 export class McpRetentionStorage {
+  private readonly touched = new WeakMap<LibraryTransaction, Set<string>>();
+  private readonly stagedRecords = new WeakMap<
+    LibraryTransaction,
+    Map<string, unknown>
+  >();
   constructor(
     readonly codec: McpRetentionCodec,
     readonly now = Date.now,
     private readonly activeSettlement: (id: string) => boolean = () => false,
   ) {}
+  observeActivity() {
+    return observeRetentionActivity(getLibraryRoot(), this.activeSettlement);
+  }
+  async withRecordLease<T>(id: string, operation: () => Promise<T>) {
+    const release = retainLibraryArtifacts([await this.path(id)]);
+    try {
+      return await operation();
+    } finally {
+      release();
+    }
+  }
   async path(id?: string, asset?: string): Promise<string> {
     if (id) z.string().uuid().parse(id);
     if (asset)
@@ -53,7 +76,8 @@ export class McpRetentionStorage {
   async index(): Promise<RetentionIndex> {
     const path = await this.path();
     const value = await this.read(path, true);
-    if (value !== null) return RetentionIndexSchema.parse(value);
+    if (value !== null)
+      return readRetentionIndex(path, value, this.read.bind(this));
     const entries = await readdir(dirname(path)).catch(
       (error: NodeJS.ErrnoException) => {
         if (error.code === "ENOENT") return [];
@@ -93,6 +117,11 @@ export class McpRetentionStorage {
         "not_found",
         "Retained record is missing, expired or owned by another connection.",
       );
+    if (entry.reclaimedAt !== undefined)
+      throw new McpEditError(
+        "history_reclaimed",
+        "Older recovery history was automatically rotated. The saved page remains intact; do not repeat the original operation.",
+      );
     return { index, entry };
   }
   async record(id: string): Promise<unknown> {
@@ -100,21 +129,21 @@ export class McpRetentionStorage {
   }
   async stageIndex(transaction: LibraryTransaction, index: RetentionIndex) {
     const checked = RetentionIndexSchema.parse(index);
-    if (
-      checked.entries.reduce((sum, entry) => sum + entry.bytes, 0) >
-      MCP_RETENTION_BYTES
-    )
-      throw new McpEditError(
-        "retention_full",
-        "Retained storage is full (1 GiB). Discard owned records explicitly; no page change was saved.",
-      );
-    await transaction.stageJsonReplacement(
+    const policy = this.policy(checked, transaction);
+    const protectedIds = new Set(this.touched.get(transaction));
+    await rotateRetentionHistory(policy, protectedIds, (id) =>
+      this.retire(transaction, id),
+    );
+    await stageRetentionIndex(
+      transaction,
       await this.path(),
-      await this.sealMetadata(checked),
+      checked,
+      this.read.bind(this),
+      this.sealMetadata.bind(this),
     );
   }
   /** The domain caller validates its record and holds the native write lock.
-   * Metadata-only records share the same quota, encryption and atomic index update. */
+   * Essential metadata keeps its domain lifetime, encryption and atomic index update. */
   async stageMetadataRecord(
     transaction: LibraryTransaction,
     metadata: Omit<
@@ -156,6 +185,11 @@ export class McpRetentionStorage {
     workflowOwner?: { expected: string; next: string },
     stagedIndex?: RetentionIndex,
   ) {
+    this.touch(transaction, id);
+    const records =
+      this.stagedRecords.get(transaction) ?? new Map<string, unknown>();
+    records.set(id, value);
+    this.stagedRecords.set(transaction, records);
     const path = await this.path(id);
     const old = await lstat(path);
     if (!old.isFile() || old.isSymbolicLink())
@@ -168,8 +202,6 @@ export class McpRetentionStorage {
     );
     const sealed = await this.sealMetadata(packed.value);
     const bytes = Buffer.byteLength(JSON.stringify(sealed, null, 2)) + 1;
-    if (bytes > 8 * 1024 * 1024)
-      throw new Error("Retained metadata exceeds 8 MiB.");
     const index = stagedIndex ?? (await this.index());
     const entry = index.entries.find((item) => item.id === id);
     if (!entry) throw new Error("Retained record has no index entry.");
@@ -193,6 +225,7 @@ export class McpRetentionStorage {
     if (!stagedIndex) await this.stageIndex(transaction, index);
   }
   async create(transaction: LibraryTransaction, id: string) {
+    this.touch(transaction, id);
     const base = join(getLibraryRoot(), ".mcp-retained");
     await this.path(id);
     await mkdir(base, { recursive: true, mode: 0o700 });
@@ -207,8 +240,6 @@ export class McpRetentionStorage {
     );
     const sealed = await this.sealMetadata(packed.value);
     const bytes = Buffer.byteLength(JSON.stringify(sealed, null, 2)) + 1;
-    if (bytes > 8 * 1024 * 1024)
-      throw new Error("Retained metadata exceeds 8 MiB.");
     await writeDurableJsonFile(join(directory, "record.json"), sealed);
     await this.verifyRecord(directory, value);
     return bytes + packed.addedBytes;
@@ -228,40 +259,45 @@ export class McpRetentionStorage {
       );
   }
   async prune(transaction: LibraryTransaction, index: RetentionIndex) {
-    const expired = index.entries.filter((entry) => this.expired(entry));
+    if (!index.entries.some((entry) => entry.expiresAt <= this.now()))
+      return index;
+    const protectedIds = await protectedRetentionIds(this.policy(index));
+    const expired = index.entries
+      .filter(
+        (entry) => entry.expiresAt <= this.now() && !protectedIds.has(entry.id),
+      )
+      .slice(0, MCP_RETENTION_CLEANUP_BATCH);
     const retired = new Set(expired.map((entry) => entry.id));
-    for (const entry of expired) await this.retire(transaction, entry.id);
+    for (const entry of expired)
+      if (entry.reclaimedAt === undefined)
+        await this.retire(transaction, entry.id);
     const next = {
       ...index,
       entries: index.entries.filter((entry) => !retired.has(entry.id)),
     };
-    this.assertAvailable(next.entries);
     return next;
   }
-  /** Read-only early check before expensive image work. The caller holds a read
-   * lock; publication still rechecks quotas atomically in the write transaction. */
+  /** Validate readable encrypted state before expensive work. History targets
+   * are enforced by rotation at publication, never by refusing new work. */
   async assertCanAdd() {
-    this.assertAvailable(
-      (await this.index()).entries.filter((entry) => !this.expired(entry)),
-    );
+    await this.index();
   }
-  private expired(entry: RetentionEntry) {
-    return (
-      entry.expiresAt <= this.now() &&
-      (!["output-sync", "composite-workflow"].includes(entry.kind) ||
-        !this.activeSettlement(entry.id))
-    );
+  private policy(index: RetentionIndex, transaction?: LibraryTransaction) {
+    const records = transaction && this.stagedRecords.get(transaction);
+    return {
+      root: getLibraryRoot(),
+      index,
+      now: this.now(),
+      active: (id: string) =>
+        this.activeSettlement(id) || isRetentionActive(getLibraryRoot(), id),
+      read: (id: string) =>
+        records?.has(id) ? Promise.resolve(records.get(id)) : this.record(id),
+    };
   }
-  private assertAvailable(entries: RetentionEntry[]) {
-    if (
-      entries.length >= MCP_RETENTION_CAPACITY ||
-      entries.reduce((sum, entry) => sum + entry.bytes, 0) >=
-        MCP_RETENTION_BYTES
-    )
-      throw new McpEditError(
-        "retention_full",
-        `Recovery storage has reached its ${MCP_RETENTION_CAPACITY}-record or 1 GiB limit. Existing history is preserved; no new page change was saved.`,
-      );
+  private touch(transaction: LibraryTransaction, id: string) {
+    const ids = this.touched.get(transaction) ?? new Set<string>();
+    ids.add(id);
+    this.touched.set(transaction, ids);
   }
   /** The caller verifies ownership under its library lock. A supplied index makes
    * directory retirement and catalog removal one indivisible publication. */
@@ -288,9 +324,17 @@ export class McpRetentionStorage {
     const sealed = JSON.parse(JSON.stringify(await this.codec.seal(value)));
     if (!isDeepStrictEqual(await this.codec.open(sealed), expected))
       throw new Error("Encrypted retained metadata does not match its source.");
+    if (
+      Buffer.byteLength(JSON.stringify(sealed, null, 2)) + 1 >
+      8 * 1024 * 1024
+    )
+      throw new Error("Retained metadata exceeds 8 MiB.");
     return sealed;
   }
   private async read(path: string, missing: boolean): Promise<unknown | null> {
+    await assertPathWithinRootWithoutSymlinks(getLibraryRoot(), path, {
+      allowMissingTarget: missing,
+    });
     const info = await lstat(path).catch((error: NodeJS.ErrnoException) => {
       if (missing && error.code === "ENOENT") return null;
       throw error;

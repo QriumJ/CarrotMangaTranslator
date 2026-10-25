@@ -64,7 +64,7 @@ export function createMcpPageDeletionTools(
       scopes: ["carrot.read"],
       write: false,
       description:
-        "List this approved connection's retained page deletion IDs after restart. Metadata only; use the returned catalog snapshot for pagination. Same-profile/owner seven-day shared 256-record/1-GiB history, not permanent trash. Inspect before recovery.",
+        "List this approved connection's retained page deletion IDs after restart. Metadata only; use the returned catalog snapshot for pagination. Same-profile/owner seven-day recovery, protected from ordinary history rotation. Not permanent trash. Inspect before recovery.",
       execute: (args, owner, guard) =>
         run(guard, (check) =>
           catalog.list(
