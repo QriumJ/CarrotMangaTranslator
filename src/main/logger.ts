@@ -4,11 +4,7 @@ import { getAppPaths } from "./appPaths";
 import { createLoggerRuntime } from "./loggerRuntime";
 import { redactDiagnosticText } from "./errorReportRedaction";
 
-const MAX_SERIALIZED_STRING_LENGTH = 16000;
-const MAX_SERIALIZED_STACK_LENGTH = 32000;
-const MAX_SERIALIZED_ARRAY_ITEMS = 40;
-const MAX_SERIALIZED_OBJECT_KEYS = 60;
-const MAX_SERIALIZATION_DEPTH = 8;
+const MAX_SERIALIZATION_DEPTH = 64;
 const SENSITIVE_LOG_KEY =
   /^(?:api[-_]?key|tavilyApiKey|authorization|proxy[-_]?authorization|access[-_]?token|refresh[-_]?token|token|secret|password|cookie|set[-_]?cookie|customHeadersJson|extraBodyJson|promptOverrideText(?:Preview)?|sourceText|translatedText|ocrText|outputPreview|repairedOutputPreview|story|glossary|characters|imagePath|sourcePath|outputPath|outputDir|fileName|filePath|workName|chapterName|pageName)$/i;
 const SENSITIVE_LOG_KEY_SUFFIX =
@@ -192,18 +188,15 @@ function normalizeMap(
   return {
     type: "Map",
     size: detail.size,
-    entries: Array.from(detail.entries())
-      .slice(0, MAX_SERIALIZED_ARRAY_ITEMS)
-      .map(([key, value]) => {
-        const normalizedKey = normalizeLogValue(key, seen, depth + 1);
-        return [
-          normalizedKey,
-          typeof key === "string" && isSensitiveLogKey(key)
-            ? "<redacted>"
-            : normalizeLogValue(value, seen, depth + 1),
-        ];
-      }),
-    truncatedEntries: Math.max(detail.size - MAX_SERIALIZED_ARRAY_ITEMS, 0),
+    entries: Array.from(detail.entries()).map(([key, value]) => {
+      const normalizedKey = normalizeLogValue(key, seen, depth + 1);
+      return [
+        normalizedKey,
+        typeof key === "string" && isSensitiveLogKey(key)
+          ? "<redacted>"
+          : normalizeLogValue(value, seen, depth + 1),
+      ];
+    }),
   };
 }
 
@@ -215,10 +208,9 @@ function normalizeSet(
   return {
     type: "Set",
     size: detail.size,
-    values: Array.from(detail.values())
-      .slice(0, MAX_SERIALIZED_ARRAY_ITEMS)
-      .map((value) => normalizeLogValue(value, seen, depth + 1)),
-    truncatedEntries: Math.max(detail.size - MAX_SERIALIZED_ARRAY_ITEMS, 0),
+    values: Array.from(detail.values()).map((value) =>
+      normalizeLogValue(value, seen, depth + 1),
+    ),
   };
 }
 
@@ -233,14 +225,9 @@ function normalizeArray(
 
   seen.add(detail);
   try {
-    const values = detail
-      .slice(0, MAX_SERIALIZED_ARRAY_ITEMS)
-      .map((value) => normalizeLogValue(value, seen, depth + 1));
-    if (detail.length > MAX_SERIALIZED_ARRAY_ITEMS) {
-      values.push(
-        `... ${detail.length - MAX_SERIALIZED_ARRAY_ITEMS} more items`,
-      );
-    }
+    const values = detail.map((value) =>
+      normalizeLogValue(value, seen, depth + 1),
+    );
     return values;
   } finally {
     seen.delete(detail);
@@ -258,23 +245,17 @@ function normalizeObject(
 
   seen.add(detail);
   try {
-    const source = detail as Record<string, unknown>;
-    const keys = Object.keys(source);
-    const limitedKeys = keys.slice(0, MAX_SERIALIZED_OBJECT_KEYS);
+    const keys = Object.keys(detail);
     const result: Record<string, unknown> = {};
     const typeName = describeObject(detail);
     if (typeName !== "Object") {
       result.__type = typeName;
     }
 
-    for (const key of limitedKeys) {
+    for (const key of keys) {
       result[key] = isSensitiveLogKey(key)
         ? "<redacted>"
-        : normalizeLogValue(source[key], seen, depth + 1);
-    }
-
-    if (keys.length > limitedKeys.length) {
-      result.__truncatedKeys = keys.length - limitedKeys.length;
+        : normalizeLogProperty(detail, key, seen, depth + 1);
     }
 
     return result;
@@ -296,15 +277,16 @@ function normalizeError(
   try {
     const error = detail as Error & { cause?: unknown };
     const result: Record<string, unknown> = {
-      name: sanitizeLogString(error.name),
-      message: sanitizeLogString(error.message),
-      stack: error.stack
-        ? sanitizeLogString(error.stack, MAX_SERIALIZED_STACK_LENGTH)
-        : undefined,
+      name: normalizeLogProperty(error, "name", seen, depth + 1),
+      message: normalizeLogProperty(error, "message", seen, depth + 1),
+      stack: normalizeLogProperty(error, "stack", seen, depth + 1),
     };
 
-    if ("cause" in error && error.cause !== undefined) {
-      result.cause = normalizeLogValue(error.cause, seen, depth + 1);
+    if (depth >= MAX_SERIALIZATION_DEPTH) {
+      return { ...result, diagnosticDepthLimit: depth };
+    }
+    if ("cause" in error) {
+      result.cause = normalizeLogProperty(error, "cause", seen, depth + 1);
     }
 
     const ownPropertyNames = Object.getOwnPropertyNames(error);
@@ -319,12 +301,30 @@ function normalizeError(
       }
       result[key] = isSensitiveLogKey(key)
         ? "<redacted>"
-        : normalizeLogValue(Reflect.get(error, key), seen, depth + 1);
+        : normalizeLogProperty(error, key, seen, depth + 1);
     }
 
     return stripUndefined(result);
   } finally {
     seen.delete(detail);
+  }
+}
+
+function normalizeLogProperty(
+  detail: object,
+  key: string,
+  seen: WeakSet<object>,
+  depth: number,
+): unknown {
+  try {
+    return normalizeLogValue(Reflect.get(detail, key), seen, depth);
+  } catch (error) {
+    return {
+      serializationError:
+        error instanceof Error
+          ? sanitizeLogString(error.message)
+          : "Property could not be serialized",
+    };
   }
 }
 
@@ -350,22 +350,8 @@ function isSensitiveLogKey(key: string): boolean {
   return SENSITIVE_LOG_KEY.test(key) || SENSITIVE_LOG_KEY_SUFFIX.test(key);
 }
 
-function limitString(
-  value: string,
-  maxLength = MAX_SERIALIZED_STRING_LENGTH,
-): string {
-  if (value.length <= maxLength) {
-    return value;
-  }
-
-  return `${value.slice(0, maxLength)}… [truncated ${value.length - maxLength} chars]`;
-}
-
-function sanitizeLogString(
-  value: string,
-  maxLength = MAX_SERIALIZED_STRING_LENGTH,
-): string {
-  return redactDiagnosticText(limitString(value, maxLength)).text;
+function sanitizeLogString(value: string): string {
+  return redactDiagnosticText(value).text;
 }
 
 const loggerRuntime = createLoggerRuntime({

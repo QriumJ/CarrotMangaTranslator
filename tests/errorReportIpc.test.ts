@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { app, clipboard, shell } from "electron";
 import type { AppPaths } from "../src/main/appPaths";
 import type {
   ErrorReportIpcContext,
@@ -31,7 +32,6 @@ vi.mock("electron", () => ({
     quit: vi.fn(),
     relaunch: vi.fn(),
   },
-  BrowserWindow: class {},
   clipboard: { writeText: vi.fn() },
   ipcMain: { handle: electronMock.handle },
   shell: {
@@ -62,58 +62,96 @@ beforeEach(() => {
 });
 
 describe("error report IPC", () => {
-  it("keeps the actual failure ahead of verbose execution snapshots in the browser summary", async () => {
+  it("uses Electron clipboard/browser/restart ports for legacy callers", async () => {
+    vi.useFakeTimers();
+    try {
+      registerErrorReportIpc(makeContext());
+      const event = eventFor(1, "http://127.0.0.1:5173/");
+      await requiredHandler("error-report:copy")(event, "diagnostic");
+      expect(clipboard.writeText).toHaveBeenCalledWith("diagnostic");
+      await requiredHandler("error-report:open-issue")(event, {
+        title: "failure",
+        body: "details",
+      });
+      expect(shell.openExternal).toHaveBeenCalled();
+      await requiredHandler("error-report:restart-app")(event);
+      expect(app.relaunch).toHaveBeenCalledOnce();
+      await vi.advanceTimersByTimeAsync(100);
+      expect(app.quit).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("uses the URL budget for both ends of evidence and copies the expanded report", async () => {
     const runtime = makeErrorReportRuntime();
-    const body = `## Error\n\n- Source: job-failure\n- Execution ID: attempt-2\n\n### Execution diagnostics\n\n\`\`\`text\n${JSON.stringify({ phase: "model_requesting", settings: "x".repeat(8000) })}\n\`\`\`\n\n### Message\n\n\`\`\`text\nROOT_CAUSE model returned an array\n\`\`\`\n\n## System information\n\nApp version: 3.3.7\n\n## Recent diagnostic logs\n\n[WARN] cancelled`;
-    await openErrorReportIssue({ title: "Failed job", body }, runtime);
+    const body = `ROOT_CAUSE ${"한글😀".repeat(3000)} END_OF_EVIDENCE`;
+    await openErrorReportIssue({ title: "Long report", body }, runtime);
     const url = new URL(
       String(vi.mocked(runtime.openExternal).mock.calls[0][0]),
     );
     expect(url.toString().length).toBeLessThanOrEqual(7000);
-    expect(url.searchParams.get("body")).toContain(
-      "ROOT_CAUSE model returned an array",
-    );
-    expect(url.searchParams.get("body")).toContain("model_requesting");
+    expect(url.searchParams.get("body")).toContain("ROOT_CAUSE");
+    expect(url.searchParams.get("body")).toContain("END_OF_EVIDENCE");
+    expect(url.searchParams.get("body")).toContain("middle omitted");
+    expect(url.toString().length).toBeGreaterThan(6800);
     expect(runtime.writeClipboard).toHaveBeenCalledWith(body);
   });
-  it("includes the latest log tail in a compact report", async () => {
+
+  it("reuses small sections' URL space and retains a fifth diagnostic section", async () => {
     const runtime = makeErrorReportRuntime();
-    const body = `## Recent diagnostic logs\n\n${Array.from({ length: 150 }, (_, i) => `[ERROR] event-${i} ${"details".repeat(15)}`).join("\n")}`;
-    await openErrorReportIssue({ title: "Long logs", body }, runtime);
+    const body = [
+      "## Description\nshort",
+      "## Error\nERROR_HEAD " + "x".repeat(10000) + " ERROR_TAIL",
+      "## System information\nsmall",
+      "## Recent diagnostic logs\nLOG_HEAD " + "y".repeat(10000) + " LOG_TAIL",
+      "## Additional evidence\nFIFTH_SECTION",
+    ].join("\n\n");
+    await openErrorReportIssue(
+      { title: "[macOS Alpha] Failure", body },
+      runtime,
+    );
     const url = new URL(
       String(vi.mocked(runtime.openExternal).mock.calls[0][0]),
     );
+    const compact = url.searchParams.get("body");
+    for (const evidence of [
+      "ERROR_HEAD",
+      "ERROR_TAIL",
+      "LOG_HEAD",
+      "LOG_TAIL",
+      "FIFTH_SECTION",
+    ])
+      expect(compact).toContain(evidence);
+    expect(url.toString().length).toBeGreaterThan(6800);
     expect(url.toString().length).toBeLessThanOrEqual(7000);
-    expect(url.searchParams.get("body")).toContain("event-126");
-    expect(url.searchParams.get("body")).not.toContain("event-0 ");
+    expect(runtime.writeClipboard).toHaveBeenCalledWith(body);
   });
-  it("bounds the final URL even when a report contains hundreds of headings", async () => {
+
+  it.each([
+    "```text".repeat(1200),
+    Array.from(
+      { length: 200 },
+      (_, i) => `## Part ${i}\n${"가😀".repeat(80)}`,
+    ).join("\n"),
+    Array.from(
+      { length: 1500 },
+      (_, i) => `## Part ${i}\n${"x".repeat(10)}`,
+    ).join("\n"),
+    "## Error\n### Stack\n" +
+      "x".repeat(8000) +
+      "\n### Message\nMESSAGE_FIRST\n" +
+      "tail".repeat(2000),
+  ])("keeps a URL bounded for unusual Markdown structure %#", async (body) => {
     const runtime = makeErrorReportRuntime();
-    const body = Array.from(
-      { length: 300 },
-      (_, i) => `## Section ${i}\n${"한글".repeat(20)}`,
-    ).join("\n");
-    await openErrorReportIssue({ title: "😀".repeat(120), body }, runtime);
-    expect(
-      String(vi.mocked(runtime.openExternal).mock.calls[0][0]).length,
-    ).toBeLessThanOrEqual(7000);
+    await openErrorReportIssue({ title: "Unusual report", body }, runtime);
+    const url = String(vi.mocked(runtime.openExternal).mock.calls[0][0]);
+    expect(url.length).toBeLessThanOrEqual(7000);
+    expect(runtime.writeClipboard).toHaveBeenCalledWith(body);
+    if (body.includes("MESSAGE_FIRST"))
+      expect(new URL(url).searchParams.get("body")).toContain("MESSAGE_FIRST");
   });
-  it.each(["한글😀", "diagnostic"])(
-    "prefills useful sections even for a long %s report",
-    async (text) => {
-      const runtime = makeErrorReportRuntime();
-      const body = `## Error\n\n- Execution ID: attempt-2\nROOT_CAUSE\n${text.repeat(3000)}\n\n## System information\n\n- App version: 3.3.7\n\n## Recent diagnostic logs\n\n[ERROR] model request failed\n[WARN] cancelled`;
-      await openErrorReportIssue({ title: "Long report", body }, runtime);
-      const url = new URL(
-        String(vi.mocked(runtime.openExternal).mock.calls[0][0]),
-      );
-      expect(url.toString().length).toBeLessThanOrEqual(7000);
-      expect(url.searchParams.get("body")).toContain("attempt-2");
-      expect(url.searchParams.get("body")).toContain("ROOT_CAUSE");
-      expect(url.searchParams.get("body")).toContain("3.3.7");
-      expect(url.searchParams.get("body")).toContain("cancelled");
-    },
-  );
+
   it.each(["copy", "issue"] as const)(
     "waits for clipboard completion before completing %s",
     async (action) => {

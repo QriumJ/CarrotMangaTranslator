@@ -54,6 +54,8 @@ const reportLogTextSchema = z
 
 export const ErrorReportDraftSchema: z.ZodType<ErrorReportDraft> = z
   .object({
+    reportId: z.string().uuid().optional(),
+    fullLogBytes: z.number().int().nonnegative().optional(),
     defaultTitle: z.string().min(1).max(240),
     errorMarkdown: reportTextSchema,
     systemMarkdown: reportTextSchema,

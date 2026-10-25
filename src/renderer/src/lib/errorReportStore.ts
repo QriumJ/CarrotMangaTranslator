@@ -5,8 +5,6 @@ import { errorReportGateway } from "./errorReportGateway";
 
 const DUPLICATE_WINDOW_MS = 30_000;
 const MAX_RECENT_FINGERPRINTS = 128;
-const MAX_MESSAGE_LENGTH = 4_000;
-const MAX_STACK_LENGTH = 16_000;
 
 const MAX_QUEUED_INCIDENTS = 4;
 
@@ -154,24 +152,24 @@ function emitChange(): void {
 function normalizeUnknownError(value: unknown): {
   message: string;
   stack?: string;
+  details?: unknown;
 } {
   if (value instanceof Error) {
     return {
-      message: limitText(value.message || value.name, MAX_MESSAGE_LENGTH),
-      ...(value.stack
-        ? { stack: limitText(value.stack, MAX_STACK_LENGTH) }
-        : {}),
+      message: value.message || value.name,
+      details: value,
+      ...(value.stack ? { stack: value.stack } : {}),
     };
   }
   if (typeof value === "string") {
-    return { message: limitText(value, MAX_MESSAGE_LENGTH) };
+    return { message: value };
   }
   try {
     return {
-      message: limitText(JSON.stringify(value), MAX_MESSAGE_LENGTH),
+      message: JSON.stringify(value),
     };
   } catch (_error) {
-    return { message: limitText(String(value), MAX_MESSAGE_LENGTH) };
+    return { message: String(value) };
   }
 }
 
@@ -203,10 +201,4 @@ function evictOldestFingerprints(): void {
     }
     recentFingerprints.delete(oldest);
   }
-}
-
-function limitText(value: string, maxLength: number): string {
-  return value.length <= maxLength
-    ? value
-    : `${value.slice(0, maxLength - 1)}…`;
 }

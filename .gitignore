@@ -91,6 +91,7 @@ recent-dialog-paths.json
 
 # OS-encrypted MCP authorization and local connection preferences
 mcp-private/
+github-report-private/
 # Runtime font evidence and generated lettering candidates
 /.mcp-quality/
 

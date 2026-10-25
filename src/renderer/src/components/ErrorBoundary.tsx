@@ -35,6 +35,7 @@ export class ErrorBoundary extends React.Component<
     });
     void errorReportGateway
       .writeLog("error", "렌더러 화면 오류", {
+        error,
         message: error.message,
         stack: error.stack ?? "",
         componentStack: info.componentStack ?? "",

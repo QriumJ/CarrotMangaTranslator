@@ -20,6 +20,10 @@ import {
   resetAppLog,
   serializeLogDetail,
   writeLog,
+  getLogDirectory,
+  logInfo,
+  logWarn,
+  logError,
 } from "../src/main/logger";
 
 const tempDirs: string[] = [];
@@ -32,6 +36,81 @@ afterEach(() => {
 });
 
 describe("logger serialization", () => {
+  it("preserves heterogeneous SDK diagnostics and safely bounds pathological cycles", () => {
+    const array: unknown[] = [];
+    array.push(array);
+    const error = Object.assign(new Error("cycle"), {
+      name: "CustomError",
+      stack: undefined,
+      cause: undefined,
+      token: "private",
+    });
+    error.cause = error as never;
+    let deep: unknown = { bottom: true };
+    for (let i = 0; i < 70; i++) deep = { child: deep };
+    let causes = new Error("bottom");
+    for (let i = 0; i < 70; i++) causes = new Error("chain", { cause: causes });
+    const result = JSON.parse(
+      serializeLogDetail({
+        array,
+        error,
+        deep,
+        causes,
+        dates: [new Date(0), new Date(NaN)],
+        url: new URL("https://example.test"),
+        map: new Map([["code", { value: 12n }]]),
+        set: new Set(["a", "b"]),
+        values: [
+          undefined,
+          null,
+          false,
+          1,
+          Symbol("x"),
+          function nativeDiagnostic() {},
+        ],
+      }),
+    );
+    expect(result.map.entries).toEqual([["code", { value: "12n" }]]);
+    expect(result.set.values).toEqual(["a", "b"]);
+    expect(result.error.cause).toBe("[Circular Error]");
+    expect(result.error.token).toBe("<redacted>");
+    expect(result.array).toEqual([["[Circular]"]]);
+    expect(result.dates).toEqual(["1970-01-01T00:00:00.000Z", "Invalid Date"]);
+    expect(JSON.stringify(result.causes)).toContain("diagnosticDepthLimit");
+    const proxy = new Proxy(
+      {},
+      {
+        ownKeys() {
+          throw new Error("bad metadata");
+        },
+      },
+    );
+    expect(serializeLogDetail(proxy)).toContain("serializationError");
+  });
+  it("writes every severity through the same complete diagnostic serializer", () => {
+    const dir = mkdtempSync(join(tmpdir(), "logger-severity-"));
+    tempDirs.push(dir);
+    const file = join(dir, "app.log");
+    process.env.MANGA_TRANSLATOR_LOG_PATH = file;
+    expect(getLogDirectory()).toBe(dir);
+    logInfo("info", new Set(["FIRST", "LAST"]));
+    logWarn("warn", new Map([["reason", "FULL_REASON"]]));
+    logError("error", "line1\nline2");
+    const saved = readFileSync(file, "utf8");
+    expect(saved).toContain("FIRST");
+    expect(saved).toContain("FULL_REASON");
+    expect(saved).toContain("line1\\nline2");
+  });
+  it("keeps the start of an oversized previous session after restarting", () => {
+    const dir = mkdtempSync(join(tmpdir(), "manga-log-complete-"));
+    tempDirs.push(dir);
+    const logPath = join(dir, "app.log");
+    const original = `[ERROR] ORIGINAL_FAILURE\n${"x".repeat(5 * 1024 * 1024)}\nLAST_RECORD`;
+    writeFileSync(logPath, original);
+    process.env.MANGA_TRANSLATOR_LOG_PATH = logPath;
+    resetAppLog();
+    expect(readFileSync(getPreviousLogPath(logPath), "utf8")).toBe(original);
+  });
   it("preserves nested error metadata for AI-friendly diagnostics", () => {
     const inner = new Error("inner failure");
     const outer = new Error("outer failure") as Error & {
@@ -110,7 +189,7 @@ describe("logger serialization", () => {
     );
 
     const throwingNonSensitiveGetter = Object.defineProperty(
-      {},
+      { rootCause: "KEEP_ROOT_CAUSE" },
       "displayValue",
       {
         enumerable: true,
@@ -120,7 +199,8 @@ describe("logger serialization", () => {
       },
     );
     const serializationFailure = serializeLogDetail(throwingNonSensitiveGetter);
-    expect(serializationFailure).not.toContain("displayValue");
+    expect(serializationFailure).toContain("displayValue");
+    expect(serializationFailure).toContain("KEEP_ROOT_CAUSE");
     expect(serializationFailure).toContain("serializationError");
   });
 

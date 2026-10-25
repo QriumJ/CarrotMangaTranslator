@@ -78,7 +78,6 @@
   --conditional-batch-editor-scheme-menu-popover-z-index: 40;
   --conditional-batch-editor-pattern-menu-z-index: 20;
   --error-report-dialog-privacy-notice-border: var(--warning-bd);
-  --error-report-dialog-privacy-notice-background: var(--warning-soft);
   --error-report-dialog-load-error-background: var(--danger-soft);
   --error-report-dialog-action-error-background: var(--danger-soft);
   --error-report-dialog-action-error-color: var(--danger-text);

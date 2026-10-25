@@ -1,4 +1,14 @@
 import { z } from "zod";
+import {
+  GitHubReportAuthActionSchema,
+  GitHubReportAuthStateSchema,
+  SubmitGitHubReportSchema,
+  GitHubReportResultSchema,
+  type GitHubReportAuthAction,
+  type GitHubReportAuthState,
+  type SubmitGitHubReport,
+  type GitHubReportResult,
+} from "./githubReport";
 import type { PanelCommand, PanelId, PanelSyncState } from "./panelBridgeTypes";
 import {
   PanelCommandSchema,
@@ -205,6 +215,24 @@ export const logsIpcContracts = {
 } as const;
 
 export const errorReportIpcContracts = {
+  githubReportAccount: defineIpcContract<
+    [GitHubReportAuthAction],
+    GitHubReportAuthState
+  >({
+    apiKey: "githubReportAccount",
+    channel: "error-report:github-account",
+    args: z.tuple([GitHubReportAuthActionSchema]),
+    result: GitHubReportAuthStateSchema,
+  }),
+  submitGitHubReport: defineIpcContract<
+    [SubmitGitHubReport],
+    GitHubReportResult
+  >({
+    apiKey: "submitGitHubReport",
+    channel: "error-report:github-submit",
+    args: z.tuple([SubmitGitHubReportSchema]),
+    result: GitHubReportResultSchema,
+  }),
   prepareErrorReport: defineIpcContract<[ErrorReportContext], ErrorReportDraft>(
     {
       apiKey: "prepareErrorReport",

@@ -1,6 +1,6 @@
 # Privacy policy
 
-Last updated: 2026-08-17
+Last updated: 2026-10-25
 
 This notice describes how CarrotMangaTranslator (distributed in Korean as
 `당근망가번역기`) stores data and uses network services. The project does not
@@ -42,15 +42,15 @@ application's settings file.
 Network activity occurs only after the user selects or initiates a feature that
 needs it.
 
-| User action                                               | Information and destination                                                                                                                                                                                                                                                                          |
-| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Use OpenAI Codex or a user-configured external AI API     | The selected service may receive page images or cropped regions, OCR text, prompts, translation instructions, glossaries, character notes, translation rules, story or previous-page context, model parameters, and authentication data needed for the request.                                      |
-| Discover models or test an API connection                 | The configured provider receives a model-list or test request and any authentication data configured for that provider.                                                                                                                                                                              |
-| Use a local AI, OCR, or inpainting engine                 | Page content is processed on the device. Initial setup may still download the selected model, runtime, or software package.                                                                                                                                                                          |
-| Download models and runtimes                              | Download hosts such as GitHub, Hugging Face, Python, PyTorch, NVIDIA, AMD, PaddlePaddle, or their content-delivery providers receive ordinary HTTP request data such as the device's IP address and requested file. Project images and translation text are not included in these download requests. |
-| Check for an application update                           | The current application does not perform a background update check. When the user presses the update button, it opens the project's GitHub Releases page in the default browser. The browser and GitHub then process the request under their own settings and policies.                              |
-| Report a problem                                          | The application does not automatically upload crash reports. It prepares a redacted preview and opens a pre-filled GitHub issue in the default browser. Information is sent to GitHub and becomes public only if the user reviews and submits the issue.                                             |
-| Open a provider, download, documentation, or support link | The link opens in the default browser. The destination site receives normal browser request information and may use its own cookies or account session.                                                                                                                                              |
+| User action                                               | Information and destination                                                                                                                                                                                                                                                                            |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Use OpenAI Codex or a user-configured external AI API     | The selected service may receive page images or cropped regions, OCR text, prompts, translation instructions, glossaries, character notes, translation rules, story or previous-page context, model parameters, and authentication data needed for the request.                                        |
+| Discover models or test an API connection                 | The configured provider receives a model-list or test request and any authentication data configured for that provider.                                                                                                                                                                                |
+| Use a local AI, OCR, or inpainting engine                 | Page content is processed on the device. Initial setup may still download the selected model, runtime, or software package.                                                                                                                                                                            |
+| Download models and runtimes                              | Download hosts such as GitHub, Hugging Face, Python, PyTorch, NVIDIA, AMD, PaddlePaddle, or their content-delivery providers receive ordinary HTTP request data such as the device's IP address and requested file. Project images and translation text are not included in these download requests.   |
+| Check for an application update                           | The current application does not perform a background update check. When the user presses the update button, it opens the project's GitHub Releases page in the default browser. The browser and GitHub then process the request under their own settings and policies.                                |
+| Report a problem                                          | After GitHub authorization, pressing Submit report uploads selected complete, redacted diagnostic logs to unlisted Gists and creates a public issue under the user’s GitHub account. Anyone can access the logs linked from that issue. No separate browser submission or file attachment is required. |
+| Open a provider, download, documentation, or support link | The link opens in the default browser. The destination site receives normal browser request information and may use its own cookies or account session.                                                                                                                                                |
 
 The application does not automatically upload usage telemetry, project files,
 logs, or error reports to the project maintainers.
@@ -99,6 +99,8 @@ own policies and the user's account settings.
 
 ## Logs and support
 
+GitHub authorization uses the system browser and device flow with Gist and public-repository permissions. Access and refresh tokens are kept in OS-encrypted local storage and never sent to the renderer. Sign out removes the local authorization; access can also be revoked in GitHub account settings. Redacted snapshots and upload journals are retained in github-report-private inside the app data folder to preserve evidence and retry interrupted submissions. Gists remain on GitHub if issue submission fails; signing out does not delete uploaded Gists or issues. The on-screen preview is abbreviated; the upload includes all selected available current/previous run logs. No background crash upload occurs.
+
 The application keeps local logs for troubleshooting. Raw logs may contain
 paths or project-related information and are not automatically sanitized.
 Shared diagnostic previews attempt to mask API keys, authorization headers,
@@ -114,7 +116,7 @@ including confidential information.
 
 # 개인정보 처리 안내
 
-최종 수정일: 2026-08-17
+최종 수정일: 2026-10-25
 
 이 문서는 CarrotMangaTranslator(당근망가번역기)가 데이터를 저장하고 네트워크
 서비스를 사용하는 방식을 설명합니다. 프로젝트는 앱용 백엔드 서버, 사용자 계정
@@ -147,15 +149,15 @@ Codex CLI 로그인 정보는 Codex CLI가 관리하며 앱 설정 파일로 복
 
 네트워크 연결은 사용자가 해당 기능을 선택하거나 실행했을 때만 발생합니다.
 
-| 사용자 동작                                        | 전송 정보와 대상                                                                                                                                                                                                    |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OpenAI Codex 또는 사용자가 설정한 외부 AI API 사용 | 선택한 서비스에 페이지 이미지나 자른 영역, OCR 텍스트, 프롬프트, 번역 지침, 용어집, 캐릭터 메모, 번역 규칙, 스토리·이전 페이지 문맥, 모델 요청 값과 인증 정보가 전송될 수 있습니다.                                 |
-| 모델 목록 검색 또는 API 연결 시험                  | 설정한 제공자에 모델 목록·시험 요청과 해당 제공자용 인증 정보가 전송됩니다.                                                                                                                                         |
-| 로컬 AI·OCR·인페인팅 엔진 사용                     | 페이지 내용은 기기에서 처리됩니다. 다만 최초 준비에는 선택한 모델, 런타임 또는 소프트웨어 패키지 다운로드가 필요할 수 있습니다.                                                                                     |
-| 모델과 런타임 다운로드                             | GitHub, Hugging Face, Python, PyTorch, NVIDIA, AMD, PaddlePaddle 또는 해당 CDN에 기기의 IP 주소와 요청한 파일 같은 일반 HTTP 요청 정보가 전달됩니다. 작품 이미지와 번역 텍스트는 다운로드 요청에 포함되지 않습니다. |
-| 앱 업데이트 확인                                   | 현재 앱은 백그라운드 업데이트 확인을 하지 않습니다. 사용자가 업데이트 버튼을 누르면 기본 브라우저에서 프로젝트의 GitHub Releases 페이지를 엽니다. 이후 요청은 브라우저와 GitHub의 설정·정책에 따라 처리됩니다.      |
-| 문제 보고                                          | 앱은 오류 보고서를 자동 업로드하지 않습니다. 정제된 미리보기를 만들고 기본 브라우저에서 미리 채운 GitHub 이슈를 엽니다. 사용자가 내용을 검토하고 직접 제출할 때만 GitHub로 전송되어 공개됩니다.                     |
-| 제공자·다운로드·문서·지원 링크 열기                | 기본 브라우저에서 링크를 엽니다. 대상 사이트는 일반 브라우저 요청 정보를 받고 자체 쿠키나 로그인 세션을 사용할 수 있습니다.                                                                                         |
+| 사용자 동작                                        | 전송 정보와 대상                                                                                                                                                                                                                           |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| OpenAI Codex 또는 사용자가 설정한 외부 AI API 사용 | 선택한 서비스에 페이지 이미지나 자른 영역, OCR 텍스트, 프롬프트, 번역 지침, 용어집, 캐릭터 메모, 번역 규칙, 스토리·이전 페이지 문맥, 모델 요청 값과 인증 정보가 전송될 수 있습니다.                                                        |
+| 모델 목록 검색 또는 API 연결 시험                  | 설정한 제공자에 모델 목록·시험 요청과 해당 제공자용 인증 정보가 전송됩니다.                                                                                                                                                                |
+| 로컬 AI·OCR·인페인팅 엔진 사용                     | 페이지 내용은 기기에서 처리됩니다. 다만 최초 준비에는 선택한 모델, 런타임 또는 소프트웨어 패키지 다운로드가 필요할 수 있습니다.                                                                                                            |
+| 모델과 런타임 다운로드                             | GitHub, Hugging Face, Python, PyTorch, NVIDIA, AMD, PaddlePaddle 또는 해당 CDN에 기기의 IP 주소와 요청한 파일 같은 일반 HTTP 요청 정보가 전달됩니다. 작품 이미지와 번역 텍스트는 다운로드 요청에 포함되지 않습니다.                        |
+| 앱 업데이트 확인                                   | 현재 앱은 백그라운드 업데이트 확인을 하지 않습니다. 사용자가 업데이트 버튼을 누르면 기본 브라우저에서 프로젝트의 GitHub Releases 페이지를 엽니다. 이후 요청은 브라우저와 GitHub의 설정·정책에 따라 처리됩니다.                             |
+| 문제 보고                                          | GitHub 로그인 후 신고하기를 누르면 선택한 전체 진단 로그를 정제하여 비목록 Gist에 업로드하고 사용자 계정으로 공개 이슈를 등록합니다. 이슈에 연결된 로그는 누구나 접근할 수 있습니다. 별도 브라우저 제출이나 파일 첨부는 필요하지 않습니다. |
+| 제공자·다운로드·문서·지원 링크 열기                | 기본 브라우저에서 링크를 엽니다. 대상 사이트는 일반 브라우저 요청 정보를 받고 자체 쿠키나 로그인 세션을 사용할 수 있습니다.                                                                                                                |
 
 앱은 사용 통계, 작품 파일, 로그 또는 오류 보고서를 프로젝트 유지관리자에게 자동으로
 업로드하지 않습니다.
@@ -199,6 +201,8 @@ API 키와 액세스 토큰은 설정에서 지우거나 로컬 설정 금고를
 사용자 계정 설정이 적용됩니다.
 
 ## 로그와 지원
+
+GitHub 로그인은 기본 브라우저와 Device Flow를 사용하며 Gist 및 공개 저장소 권한을 요청합니다. 접근·갱신 토큰은 OS 암호화 저장소에 보관하고 렌더러에 전달하지 않습니다. 로그아웃은 로컬 인증 정보를 지우며, GitHub 계정 설정에서도 접근 권한을 취소할 수 있습니다. 증거 보존과 중단된 신고 재시도를 위해 정제된 스냅샷과 업로드 기록은 앱 데이터 폴더의 github-report-private에 보관합니다. 이슈 등록에 실패해도 이미 업로드된 Gist는 GitHub에 남으며, 로그아웃으로 게시된 Gist·이슈가 삭제되지는 않습니다. 화면 미리보기는 축약될 수 있지만 업로드에는 선택한 현재·이전 실행의 사용 가능한 전체 로그가 포함됩니다. 백그라운드 오류 자동 전송은 하지 않습니다.
 
 앱은 문제 해결을 위해 로컬 로그를 보관합니다. 원본 로그에는 경로나 작품 관련
 정보가 들어갈 수 있고 자동 정제되지 않습니다. 공유용 진단 미리보기는 API 키,

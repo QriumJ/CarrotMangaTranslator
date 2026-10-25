@@ -14,7 +14,9 @@ import { rotateLogFile } from "./logRotation";
 
 const UTF8_BOM = "\ufeff";
 const UTF8_BOM_BYTES = Buffer.from(UTF8_BOM, "utf8");
-const DEFAULT_MAX_ROTATED_LOG_BYTES = 4 * 1024 * 1024;
+// A previous-session failure must remain inspectable after restarting to report it.
+// Keep one complete previous session; the next rotation still replaces that file.
+const DEFAULT_MAX_ROTATED_LOG_BYTES = Number.POSITIVE_INFINITY;
 const DEFAULT_RETAINED_LOG_BYTES = 2 * 1024 * 1024;
 
 type RuntimeLogLevel = "debug" | "info" | "warn" | "error";

@@ -2,16 +2,16 @@ import type { ErrorReportContext } from "./errorReportTypes";
 
 export const ERROR_REPORT_CONTEXT_LIMITS = {
   summary: 1000,
-  message: 16000,
-  stack: 32000,
-  componentStack: 32000,
+  message: Number.POSITIVE_INFINITY,
+  stack: Number.POSITIVE_INFINITY,
+  componentStack: Number.POSITIVE_INFINITY,
   jobStage: 500,
   jobId: 200,
   executionId: 200,
   incidentAt: 100,
 } as const;
 
-/** Bound at producers; the IPC schema still rejects unknown/untrusted fields. */
+/** Bound display metadata, never incident evidence. IPC still rejects unknown fields. */
 export function normalizeErrorReportContext(
   context: ErrorReportContext,
 ): ErrorReportContext {

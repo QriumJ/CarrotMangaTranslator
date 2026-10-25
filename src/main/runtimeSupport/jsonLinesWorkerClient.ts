@@ -545,13 +545,12 @@ export class JsonLinesWorkerClient<
 
   private rememberStderr(text: string): void {
     if (!text) return;
-    const sanitized = this.options
-      .sanitizeStderr(text)
-      .slice(-MAX_STDERR_CHUNK_LENGTH);
-    this.stderrTail.push(sanitized);
+    const sanitized = this.options.sanitizeStderr(text);
+    this.stderrTail.push(sanitized.slice(-MAX_STDERR_CHUNK_LENGTH));
     if (this.stderrTail.length > 80) {
       this.stderrTail.splice(0, this.stderrTail.length - 80);
     }
+    // The bounded in-memory exit summary must not truncate the durable log.
     this.options.onStderr(sanitized);
   }
 }

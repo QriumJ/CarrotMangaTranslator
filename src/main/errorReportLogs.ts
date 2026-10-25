@@ -16,15 +16,19 @@ export async function readRecentDiagnosticLogEntries(
   previousLogPath: string,
   currentLogPath: string,
   executionId?: string,
+  jobId?: string,
 ): Promise<DiagnosticLogCollection> {
-  const buckets: DiagnosticLogEntry[][] = [[], [], [], []];
+  const buckets: DiagnosticLogEntry[][] = [[], [], [], [], [], []];
   let count = 0;
   const append = (entry: DiagnosticLogEntry) => {
     const related = Boolean(
-      executionId && entry.line.includes(JSON.stringify(executionId)),
+      [executionId, jobId].some(
+        (id) => id && entry.line.includes(JSON.stringify(id)),
+      ),
     );
-    const priority =
-      (/\[(?:WARN|ERROR)\]/.test(entry.line) ? 2 : 0) + (related ? 1 : 0);
+    const priority = /\[ERROR\]/.test(entry.line)
+      ? 4 + (related ? 1 : 0)
+      : (related ? 2 : 0) + (/\[WARN\]/.test(entry.line) ? 1 : 0);
     const bucket = buckets[priority];
     count += 1;
     bucket.push(entry);
@@ -32,7 +36,7 @@ export async function readRecentDiagnosticLogEntries(
   };
   await appendDiagnosticLogEntries(append, previousLogPath, "previous");
   await appendDiagnosticLogEntries(append, currentLogPath, "current");
-  const limits = [25, 50, 50, 75].map((limit, index) =>
+  const limits = [100, 100, 150, 150, 200, 300].map((limit, index) =>
     Math.min(limit, buckets[index].length),
   );
   let remaining =
@@ -62,20 +66,12 @@ async function appendDiagnosticLogEntries(
   try {
     for await (const rawLine of lines) {
       const line = rawLine.replace(/^\ufeff/, "");
-      if (
-        /\[(?:WARN|ERROR)\]/.test(line) ||
-        /\[INFO\].*(?:job:|Job execution|workflow|Workflow|runtime cleanup)/.test(
-          line,
-        )
-      )
-        append({ source, line });
+      if (line.trim()) append({ source, line });
     }
   } catch (error) {
-    if (!isMissingFileError(error))
-      append({
-        source,
-        line: `[diagnostic] Failed to read ${source} app log (${errorCode(error)}).`,
-      });
+    // Missing session logs are normal on first launch. Other failures must not
+    // silently produce a report that looks complete.
+    if (!isMissingFileError(error)) throw error;
   } finally {
     lines.close();
     input.destroy();
@@ -86,14 +82,8 @@ function isMissingFileError(error: unknown): boolean {
   return error instanceof Error && "code" in error && error.code === "ENOENT";
 }
 
-function errorCode(error: unknown): string {
-  if (error && typeof error === "object" && "code" in error) {
-    return String(error.code);
-  }
-  return "UNKNOWN";
-}
-
-const TRUNCATION_MARKER = "\n\n_… diagnostic content truncated …_\n";
+const TRUNCATION_MARKER =
+  "\n[... middle omitted; beginning and end retained ...]\n";
 
 export function truncateUtf8(
   value: string,
@@ -112,8 +102,14 @@ export function truncateUtf8(
       truncated: true,
     };
   }
+  const remaining = maxBytes - markerBytes;
+  const headBytes = Math.ceil(remaining / 2);
+  const bytes = Buffer.from(value);
+  let tailStart = bytes.length - (remaining - headBytes);
+  while (tailStart < bytes.length && (bytes[tailStart] & 0xc0) === 0x80)
+    tailStart += 1;
   return {
-    text: `${utf8Prefix(value, maxBytes - markerBytes)}${TRUNCATION_MARKER}`,
+    text: `${utf8Prefix(value, headBytes)}${TRUNCATION_MARKER}${bytes.subarray(tailStart).toString("utf8")}`,
     truncated: true,
   };
 }
@@ -145,16 +141,30 @@ export function renderLogMarkdown(
   const omission = "[entries omitted or shortened]\n";
   const selected: string[] = [];
   let omitted = omittedCount > 0;
-  const entryBudget = Math.max(
+  const available = Math.max(
     0,
-    Math.min(8 * 1024, maxBytes - utf8ByteLength(prefix + suffix + omission)),
+    maxBytes - utf8ByteLength(prefix + suffix + omission),
   );
-  for (let index = entries.length - 1; index >= 0; index -= 1) {
-    const entry = entries[index];
-    const bounded = truncateUtf8(
-      `[${entry.source}] ${entry.line.replace(/```/g, "` ` `")}`,
-      entryBudget,
+  const values = entries.map(
+    (entry) => `[${entry.source}] ${entry.line.replace(/```/g, "` ` `")}`,
+  );
+  const precedingBytes = [0];
+  for (const value of values)
+    precedingBytes.push(
+      precedingBytes[precedingBytes.length - 1] + utf8ByteLength(value) + 1,
     );
+  let usedBytes = 0;
+  for (let index = entries.length - 1; index >= 0; index -= 1) {
+    // Leave space for neighbouring records, while allowing long error details
+    // to use available report space instead of always cutting them at 8 KiB.
+    const remaining = Math.max(0, available - usedBytes);
+    const reserve = Math.min(Math.floor(remaining / 2), precedingBytes[index]);
+    const entryBudget = remaining - reserve;
+    if (entryBudget < Math.min(256, utf8ByteLength(values[index]))) {
+      omitted = true;
+      continue;
+    }
+    const bounded = truncateUtf8(values[index], entryBudget);
     omitted ||= bounded.truncated;
     const candidate = `${prefix}${omission}${[bounded.text, ...selected].join("\n")}${suffix}`;
     if (utf8ByteLength(candidate) > maxBytes) {
@@ -162,6 +172,7 @@ export function renderLogMarkdown(
       continue;
     }
     selected.unshift(bounded.text);
+    usedBytes += utf8ByteLength(bounded.text) + 1;
   }
   const result = truncateUtf8(
     `${prefix}${omitted ? omission : ""}${selected.join("\n")}${suffix}`,

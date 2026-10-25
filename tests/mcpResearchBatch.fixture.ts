@@ -263,7 +263,9 @@ export async function researchBatchFixture(workCount = 3) {
         if ((await get(id)).status === "running")
           throw new Error("Research batch is settling");
       },
-      { timeout: 15000, interval: 20 },
+      // Native durable writes on Windows CI can exceed 15s. Keep this wait
+      // within the existing 45s CI test budget; completion assertions remain.
+      { timeout: 30000, interval: 20 },
     );
     return get(id);
   };

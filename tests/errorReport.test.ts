@@ -32,6 +32,88 @@ afterEach(() => {
 });
 
 describe("error report diagnostics", () => {
+  it("preserves provider response evidence beyond the former 4,000 character limit", () => {
+    const {
+      createHttpFailureError,
+    } = require("../src/main/runtime/transport/model-http-errors.cjs");
+    const raw = JSON.stringify({
+      padding: "x".repeat(10000),
+      error: { code: "FUTURE_PROVIDER_ERROR", message: "END_OF_HTTP_REASON" },
+    });
+    const error = createHttpFailureError(
+      { modelProvider: "openai-api" },
+      {},
+      new Response(raw, { status: 400 }),
+      raw,
+    );
+    expect(JSON.parse(serializeLogDetail(error)).rawTextPreview).toBe(raw);
+  });
+
+  it("keeps a complete long diagnostic entry and arbitrary INFO context when space allows", async () => {
+    const paths = makeAppPaths(createTempDir());
+    mkdirSync(paths.logsDir, { recursive: true });
+    const line =
+      "HEAD " +
+      "x".repeat(15000) +
+      " FUTURE_CAUSE " +
+      "y".repeat(15000) +
+      " TAIL";
+    writeFileSync(
+      paths.logFile,
+      [
+        logLine("INFO", "unfamiliar-subsystem-context"),
+        logLine("ERROR", line),
+      ].join("\n"),
+    );
+    const draft = await buildErrorReportDraft(
+      { source: "manual" },
+      makeEnvironment(paths, join(paths.logsDir, "previous.log")),
+    );
+    // One neighbouring INFO record still leaves enough room for this full error.
+    expect(draft.logsMarkdown).toContain("FUTURE_CAUSE");
+    expect(draft.logsMarkdown).toContain("TAIL");
+    expect(draft.logsMarkdown).toContain("unfamiliar-subsystem-context");
+  });
+
+  it("keeps older errors ahead of a later warning storm and preserves cause tails", async () => {
+    const paths = makeAppPaths(createTempDir());
+    mkdirSync(paths.logsDir, { recursive: true });
+    writeFileSync(
+      paths.logFile,
+      [
+        logLine(
+          "ERROR",
+          "ROOT_CAUSE " + "x".repeat(70000) + " NESTED_CAUSE_TAIL",
+        ),
+        ...Array.from({ length: 1100 }, (_, i) =>
+          logLine("WARN", "warning-" + i),
+        ),
+      ].join("\n"),
+    );
+    const draft = await buildErrorReportDraft(
+      {
+        source: "job-failure",
+        message: "MESSAGE_HEAD " + "가😀".repeat(15000) + " MESSAGE_CAUSE_TAIL",
+      },
+      makeEnvironment(paths, join(paths.logsDir, "previous.log")),
+    );
+    expect(draft.logsMarkdown).toContain("ROOT_CAUSE");
+    expect(draft.logsMarkdown).toContain("NESTED_CAUSE_TAIL");
+    expect(draft.errorMarkdown).toContain("MESSAGE_HEAD");
+    expect(draft.errorMarkdown).toContain("MESSAGE_CAUSE_TAIL");
+    expect(draft.errorMarkdown + draft.logsMarkdown).not.toContain("�");
+    expect(ErrorReportDraftSchema.safeParse(draft).success).toBe(true);
+  });
+  it("omits unstructured legacy previews even when followed by otherwise valid JSON", () => {
+    const result = redactDiagnosticText(
+      'legacy preview=PRIVATE {"status":400}',
+    );
+    expect(result.text).not.toContain("PRIVATE");
+    expect(result.text).toContain("Legacy model-response diagnostic omitted");
+    expect(redactDiagnosticText("failure preview=PRIVATE").text).not.toContain(
+      "PRIVATE",
+    );
+  });
   it("returns partial diagnostics when optional hardware collection never settles", async () => {
     const paths = makeAppPaths(createTempDir());
     vi.stubEnv("MANGA_TRANSLATOR_LOG_PATH", paths.logFile);
@@ -112,7 +194,7 @@ describe("error report diagnostics", () => {
     );
     expect(draft.logsMarkdown).toContain("ROOT_CAUSE");
     expect(draft.logsMarkdown).toContain('"progressCurrent":219');
-    expect(draft.truncated).toBe(true);
+    expect(draft.truncated).toBe(false);
   });
   it.each(["가", "😀"])(
     "keeps root errors around oversized Unicode log entries (%s)",
@@ -148,7 +230,7 @@ describe("error report diagnostics", () => {
     writeFileSync(
       paths.logFile,
       [
-        ...Array.from({ length: 210 }, (_, i) =>
+        ...Array.from({ length: 1010 }, (_, i) =>
           logLine("WARN", `warning-${i}`),
         ),
         logLine(
@@ -252,7 +334,7 @@ describe("error report diagnostics", () => {
     expect(second).toEqual({ text: first.text, redactionCount: 0 });
   });
 
-  it("keeps only the latest 200 WARN/ERROR lines and exposes safe settings", async () => {
+  it("includes more than 200 records and ordinary INFO within the report budget", async () => {
     const dir = createTempDir();
     const paths = makeAppPaths(dir);
     mkdirSync(paths.logsDir, { recursive: true });
@@ -284,12 +366,12 @@ describe("error report diagnostics", () => {
       draft.logsMarkdown.match(/\[(?:current|previous)\]/g)?.length ?? 0;
 
     expect(draft.defaultTitle).toContain("job failed");
-    expect(logEntryCount).toBe(200);
-    expect(draft.logsMarkdown).not.toContain("previous-entry-000");
-    expect(draft.logsMarkdown).not.toContain("previous-entry-019");
+    expect(logEntryCount).toBe(221);
+    expect(draft.logsMarkdown).toContain("previous-entry-000");
+    expect(draft.logsMarkdown).toContain("previous-entry-019");
     expect(draft.logsMarkdown).toContain("previous-entry-020");
     expect(draft.logsMarkdown).toContain("current-entry-009");
-    expect(draft.logsMarkdown).not.toContain("ignored-info");
+    expect(draft.logsMarkdown).toContain("ignored-info");
     expect(draft.systemMarkdown).toContain("openai-api");
     expect(draft.systemMarkdown).toContain("safe-model-id");
     expect(draft.systemMarkdown).toContain(
