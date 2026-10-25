@@ -15,6 +15,7 @@ import { ConditionalBatchSetFieldsEditor } from "../src/renderer/src/components/
 import {
   ConditionalBatchSpeakersContext,
   createConditionalBatchSpeakerCatalog,
+  type ConditionalBatchSpeakerCatalog,
 } from "../src/renderer/src/components/conditionalBatchSpeakers";
 import {
   applyConditionalBatchPreview,
@@ -202,7 +203,7 @@ it("disambiguates duplicate names and retains unnamed IDs already attached to di
 
 it("keeps a saved unknown ID through loading, failure, and empty catalogs without changing it", () => {
   const onChange = vi.fn();
-  const catalog = {
+  const catalog: ConditionalBatchSpeakerCatalog = {
     options: [],
     unassignedCount: 0,
     ready: false,
@@ -232,6 +233,19 @@ it("keeps a saved unknown ID through loading, failure, and empty catalogs withou
   expect(
     screen.getByText(/등록된 인물과 대사에 연결된 화자가 없습니다/),
   ).toBeTruthy();
+  const selector = screen.getByRole("combobox", { name: "화자" });
+  const hintId = selector.getAttribute("aria-describedby");
+  expect(hintId && document.getElementById(hintId)).toBeTruthy();
+  view.rerender(
+    field({
+      ...catalog,
+      ready: true,
+      options: [{ value: "saved-id", label: "아키라" }],
+    }),
+  );
+  expect(selector.textContent).toBe("아키라");
+  expect(selector.hasAttribute("aria-describedby")).toBe(false);
+  expect(screen.queryByText(/이름·원문 이름·별칭으로 검색/)).toBeNull();
   expect(onChange).not.toHaveBeenCalled();
 });
 

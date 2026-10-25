@@ -32,7 +32,6 @@ export function ExportPreflightPanel({
       <div className="export-preflight-header">
         <div>
           <strong>{t("exportOptions.preflight.title")}</strong>
-          <span>{t("exportOptions.preflight.nextStep")}</span>
         </div>
         <PreflightStatus state={preflight} />
       </div>
@@ -126,11 +125,7 @@ function ReadyExportPreflight({
           issues={result.issues}
           onNavigateToIssue={onNavigateToIssue}
         />
-      ) : (
-        <p className="export-preflight-clear">
-          {t("exportOptions.preflight.noIssues")}
-        </p>
-      )}
+      ) : null}
     </>
   );
 }

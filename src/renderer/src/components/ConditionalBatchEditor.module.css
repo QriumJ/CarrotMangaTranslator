@@ -779,13 +779,6 @@
   min-width: 0;
 }
 
-.setFieldIntro {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: var(--font-xs);
-  line-height: 1.45;
-}
-
 .setFieldList {
   display: grid;
   gap: 0;

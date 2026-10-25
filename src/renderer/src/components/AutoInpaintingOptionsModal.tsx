@@ -159,7 +159,6 @@ function AutoInpaintingScopeBody({
         selection={selection}
         onChange={onSelectionChange}
         copy={{
-          prompt: t("autoInpaintingOptions.prompt"),
           currentChapter: t("autoInpaintingOptions.currentChapter"),
           chapterSummary: (count) =>
             t("autoInpaintingOptions.chapterSummary", { count }),
@@ -207,7 +206,6 @@ function BubblePostprocessToggle({
       label={
         <>
           <strong>{t("autoInpaintingOptions.bubbleLayout")}</strong>
-          <small>{t("autoInpaintingOptions.bubbleLayoutHint")}</small>
         </>
       }
       onCheckedChange={onToggle}

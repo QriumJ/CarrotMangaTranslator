@@ -2529,7 +2529,7 @@
         "modelHelp": "F16 is the default. Q4 saves VRAM; both use the same vision model.",
         "device": "Execution device",
         "autoDevice": "Auto",
-        "deviceHelp": "Uses dedicated GPUs with at least 4GB or Apple unified memory with at least 8GB. GPU initialization or memory failures retry once on CPU with the same model."
+        "deviceHelp": "GPU initialization or memory failures retry once on CPU with the same model."
       }
     },
     "format": {

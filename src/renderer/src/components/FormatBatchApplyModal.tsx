@@ -69,7 +69,6 @@ export function FormatBatchApplyModal({
         />
       }
     >
-      <p className="muted-line modal-note">{t("formatBatch.description")}</p>
       <FormatGroupChecklist groupIds={groupIds} onChange={setGroupIds} />
       <FormatScopeSelector
         scope={scope}

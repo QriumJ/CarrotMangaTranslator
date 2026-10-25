@@ -37,26 +37,16 @@ export function GeneralSettingsPanel({
   return (
     <div className="settings-panel-stack">
       <SettingsSection title={t("settings.general.language")}>
-        <ControlTooltip
-          floating
-          content={t("settings.general.languageDescription")}
-        >
-          {(descriptionId) => (
-            <Select
-              ariaDescribedBy={descriptionId}
-              ariaLabel={t("settings.general.language")}
-              value={locale}
-              disabled={disabled}
-              options={UI_LOCALE_OPTIONS.map((option) => ({
-                value: option.id,
-                label: option.nativeName,
-              }))}
-              onValueChange={(nextValue) =>
-                onLocaleChange(nextValue as UiLocale)
-              }
-            />
-          )}
-        </ControlTooltip>
+        <Select
+          ariaLabel={t("settings.general.language")}
+          value={locale}
+          disabled={disabled}
+          options={UI_LOCALE_OPTIONS.map((option) => ({
+            value: option.id,
+            label: option.nativeName,
+          }))}
+          onValueChange={(nextValue) => onLocaleChange(nextValue as UiLocale)}
+        />
       </SettingsSection>
       <SettingsSection title={t("settings.general.wheelZoom.title")}>
         <ControlTooltip

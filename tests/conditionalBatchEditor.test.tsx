@@ -1214,8 +1214,8 @@ describe("beginner conditional batch editor", () => {
       screen.getByText("조건 일치 5 · 실제 변경 2 · 변경 없음 3"),
     ).toBeTruthy();
     expect(
-      screen.getByText(/목록에는 실제로 값이 바뀌는 항목만 표시됩니다/),
-    ).toBeTruthy();
+      screen.queryByText(/목록에는 실제로 값이 바뀌는 항목만 표시됩니다/),
+    ).toBeNull();
     expect(screen.getByText("굵게 · 꺼짐 적용")).toBeTruthy();
     expect(screen.getByText("굵게 · 지정 해제")).toBeTruthy();
     expect(screen.getByText("변경 전")).toBeTruthy();

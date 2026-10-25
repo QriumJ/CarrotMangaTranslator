@@ -187,7 +187,6 @@ function DirectFormatPresetBar({
     <section className="gather-direct-preset-bar">
       <div>
         <strong>{t("stylePresets.title")}</strong>
-        <small>{t("gatherText.presetHint")}</small>
       </div>
       <BlockStylePresetControls
         activePresetId={activePresetId}

@@ -2529,7 +2529,7 @@
         "modelHelp": "F16が標準です。Q4はVRAM節約用で、画像モデルは共通です。",
         "device": "実行デバイス",
         "autoDevice": "自動",
-        "deviceHelp": "専用VRAM 4GB以上またはApple統合メモリ8GB以上ではGPUを使用します。GPU初期化やメモリ不足時は同じモデルでCPUを一度再試行します。"
+        "deviceHelp": "GPU初期化やメモリ不足時は同じモデルでCPUを一度再試行します。"
       }
     },
     "format": {

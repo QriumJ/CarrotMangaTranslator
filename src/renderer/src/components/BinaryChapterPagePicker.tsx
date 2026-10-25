@@ -141,7 +141,6 @@ function createBinaryPickerActions(
 }
 
 type PageSelectionPickerCopy = {
-  prompt: string;
   currentChapter: string;
   chapterSummary: (pageCount: number) => string;
   noSelectedPages: string;
@@ -198,7 +197,6 @@ function PickerHeader({
     <div className="translate-picker-head">
       <div className="translate-picker-heading">
         <div className="translate-picker-worktitle">{work.title}</div>
-        <div className="translate-picker-subtitle">{copy.prompt}</div>
       </div>
       <div className="translate-picker-actions">
         <Button

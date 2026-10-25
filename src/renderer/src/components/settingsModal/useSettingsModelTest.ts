@@ -24,7 +24,6 @@ export function useSettingsModelTest({
   buildSettings,
   canSubmit,
   jobActive,
-  modelProvider,
   setTestState,
   connectionIdentity,
 }: {
@@ -59,7 +58,7 @@ export function useSettingsModelTest({
     setTestState({
       status: "running",
       message: t("settings.test.status.running"),
-      detail: resolveModelTestRunningDetail(modelProvider, t),
+      detail: null,
     });
     const unsubscribe = subscribeModelTestProgress({
       appendTestLogLine,
@@ -94,7 +93,6 @@ export function useSettingsModelTest({
     canSubmit,
     jobActive,
     lifecycleRef,
-    modelProvider,
     setTestState,
     t,
   ]);
@@ -134,20 +132,6 @@ function releaseModelTestSubscription(
   }
   lifecycle.unsubscribe = null;
   unsubscribe();
-}
-
-function resolveModelTestRunningDetail(
-  modelProvider: ModelProvider,
-  t: TFunction<"components">,
-): string {
-  if (modelProvider === "gemma") {
-    return t("settings.test.status.gemmaDetail");
-  }
-  if (modelProvider === "openai-codex") {
-    return t("settings.test.status.codexDetail");
-  }
-  if (modelProvider === "claude-code") return t("settings.claude.testing");
-  return t("settings.test.status.apiDetail");
 }
 
 function subscribeModelTestProgress({

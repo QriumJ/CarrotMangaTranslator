@@ -1,5 +1,4 @@
 import React from "react";
-import { ControlTooltip } from "./ui/ControlTooltip";
 import {
   IconFileTypePdf,
   IconFolderOpen,
@@ -52,35 +51,30 @@ export function TranslateSourceModal({
           disabled={busy}
           icon={<IconPhoto size={23} stroke={1.8} />}
           label={t("translateSource.openImages")}
-          description={t("translateSource.imagesHint")}
           onClick={() => onSelect("images")}
         />
         <SourceChoice
           disabled={busy}
           icon={<IconFolderOpen size={22} stroke={1.8} />}
           label={t("translateSource.openFolder")}
-          description={t("translateSource.folderHint")}
           onClick={() => onSelect("folder")}
         />
         <SourceChoice
           disabled={busy}
           icon={<IconZip size={22} stroke={1.8} />}
           label={t("translateSource.openArchive")}
-          description={t("translateSource.archiveHint")}
           onClick={() => onSelect("zip")}
         />
         <SourceChoice
           disabled={busy}
           icon={<IconFileTypePdf size={22} stroke={1.8} />}
           label={t("translateSource.openPdf")}
-          description={t("translateSource.pdfHint")}
           onClick={() => onSelect("pdf")}
         />
         <SourceChoice
           disabled={busy}
           icon={<IconLink size={22} stroke={1.8} />}
           label={t("translateSource.openWeb")}
-          description={t("translateSource.webHint")}
           onClick={() => onSelect("web")}
         />
       </div>
@@ -89,34 +83,30 @@ export function TranslateSourceModal({
 }
 
 function SourceChoice({
-  description,
   disabled,
   icon,
   label,
   onClick,
 }: {
-  description: string;
   disabled: boolean;
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
 }): React.JSX.Element {
   return (
-    <ControlTooltip floating content={description}>
-      <Button
-        type="button"
-        className="source-choice"
-        disabled={disabled}
-        onClick={onClick}
-        variant="bare"
-      >
-        <span className="source-choice-icon" aria-hidden="true">
-          {icon}
-        </span>
-        <span className="source-choice-copy">
-          <strong>{label}</strong>
-        </span>
-      </Button>
-    </ControlTooltip>
+    <Button
+      type="button"
+      className="source-choice"
+      disabled={disabled}
+      onClick={onClick}
+      variant="bare"
+    >
+      <span className="source-choice-icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="source-choice-copy">
+        <strong>{label}</strong>
+      </span>
+    </Button>
   );
 }

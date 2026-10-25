@@ -270,7 +270,7 @@ describe("Grok in app chat", () => {
     const button = await screen.findByRole("button", {
       name: "내려받고 Grok 로그인",
     });
-    expect(screen.getByText(/공식 Grok Build 실행 파일을/)).toBeTruthy();
+    expect(screen.queryByText(/공식 Grok Build 실행 파일을/)).toBeNull();
 
     emit({ id: "claude-1", kind: "claude-auth" });
     expect(screen.queryByRole("progressbar")).toBeNull();
