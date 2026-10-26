@@ -39,60 +39,62 @@ export function createRecoveryApplication(
     direction: "undo" | "redo",
     guard: () => void,
   ) =>
-    withMcpAuthorization(guard, lifetime, async (check, signal) => {
-      const { record, entry } = await withLibraryRead(() =>
-        readRetainedChange(storage, owner, input.id),
-      );
-      check();
-      const authorize = () => {
-        check();
-        if (entry.expiresAt <= storage.now())
-          throw new McpEditError(
-            "not_found",
-            "Retained history expired before commit.",
-          );
-      };
-      const signature = hashStableValue({ ...input, direction });
-      const previous = prior(record, input.requestId, signature);
-      if (previous) return result(input.id, previous, true);
-      if (record.actions.length >= 32)
-        throw new McpEditError(
-          "editor_busy",
-          "This retained change has reached its 32-action history limit.",
+    storage.withRecordLease(input.id, () =>
+      withMcpAuthorization(guard, lifetime, async (check, signal) => {
+        const { record, entry } = await withLibraryRead(() =>
+          readRetainedChange(storage, owner, input.id),
         );
-      const operation = {
-        id: randomUUID(),
-        signal,
-        assertAuthorized: authorize,
-        progress: () => {},
-      };
-      return runMcpAppJob(
-        app,
-        operation,
-        "mcp-edit",
-        async (context) => {
-          await acquireRecoveryPages(app, record, context);
-          return applyOwned(
-            storage,
-            record,
-            input,
-            direction,
-            signature,
-            context.assertAuthorized,
-            editing,
+        check();
+        const authorize = () => {
+          check();
+          if (entry.expiresAt <= storage.now())
+            throw new McpEditError(
+              "not_found",
+              "Retained history expired before commit.",
+            );
+        };
+        const signature = hashStableValue({ ...input, direction });
+        const previous = prior(record, input.requestId, signature);
+        if (previous) return result(input.id, previous, true);
+        if (record.actions.length >= 32)
+          throw new McpEditError(
+            "editor_busy",
+            "This retained change has reached its 32-action history limit.",
           );
-        },
-        {
-          resources: [...new Set(record.pages.map((item) => item.workId))].map(
-            (scope) => ({
+        const operation = {
+          id: randomUUID(),
+          signal,
+          assertAuthorized: authorize,
+          progress: () => {},
+        };
+        return runMcpAppJob(
+          app,
+          operation,
+          "mcp-edit",
+          async (context) => {
+            await acquireRecoveryPages(app, record, context);
+            return applyOwned(
+              storage,
+              record,
+              input,
+              direction,
+              signature,
+              context.assertAuthorized,
+              editing,
+            );
+          },
+          {
+            resources: [
+              ...new Set(record.pages.map((item) => item.workId)),
+            ].map((scope) => ({
               kind: "work-context" as const,
               scope,
               access: "read" as const,
-            }),
-          ),
-        },
-      );
-    });
+            })),
+          },
+        );
+      }),
+    );
 }
 async function applyOwned(
   storage: McpRetentionStorage,

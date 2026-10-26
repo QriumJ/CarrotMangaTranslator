@@ -14,7 +14,7 @@ import {
   mcpOperationOutputMetadata,
 } from "./mcpOperationOutputs";
 import { hashStableValue } from "../../shared/blockFingerprint";
-import { McpEditError } from "./mcpEditPolicy";
+import { McpEditError, mcpStorageFailure } from "./mcpEditPolicy";
 import {
   MCP_JOB_CAPACITY,
   MCP_JOB_HISTORY_CAPACITY,
@@ -289,11 +289,11 @@ export class McpOperationService {
       entry.error =
         error instanceof McpEditError
           ? { code: error.code, message: error.message }
-          : {
+          : (mcpStorageFailure(error) ?? {
               code: entry.status,
               message:
                 "The app could not finish this job. Inspect the current page and local log before retrying.",
-            };
+            });
       this.reportError(error);
     } finally {
       clearTimeout(deadline);

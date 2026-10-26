@@ -134,6 +134,7 @@ it("registers a read-only complete translation guide and exposes no source paths
     savedQuality: { soundEffects: 2 },
   });
   expect(result.steps.map((step) => step.id)).toEqual([
+    "saving-and-history",
     "detailed-default",
     "context",
     "source",

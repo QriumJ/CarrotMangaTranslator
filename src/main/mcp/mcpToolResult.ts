@@ -1,5 +1,5 @@
 import type { McpTool } from "./mcpReadTools";
-import { McpEditError } from "../application/mcpEditPolicy";
+import { McpEditError, mcpStorageFailure } from "../application/mcpEditPolicy";
 import { mcpOutputSchemas } from "./mcpOutputSchemas";
 import { McpInvalidParams } from "./mcpArguments";
 
@@ -19,25 +19,17 @@ export function mcpToolResult(
 }
 
 export function mcpToolError(error: unknown) {
-  const nativeBusy =
-    error !== null &&
-    typeof error === "object" &&
-    "code" in error &&
-    error.code === "APP_ACTIVITY_BUSY";
-  const code =
-    error instanceof McpInvalidParams
-      ? "invalid_arguments"
-      : error instanceof McpEditError
-        ? error.code
-        : nativeBusy
-          ? "editor_busy"
-          : "operation_failed";
+  const { code, message } = describeFailure(error);
   const guidance: Record<string, string> = {
     revision_conflict:
       "Read the current page and review changes before retrying.",
     editor_busy: "Save local edits or wait for the active app job, then retry.",
     retention_full:
-      "Recovery storage is full. Do not retry unchanged or discard history automatically. Ask the user which owned recovery records may be discarded, or wait for their retention period to expire.",
+      "The app automatically rotates ordinary recovery history. Check the actual storage error; do not ask the user to delete recovery records or repeat completed work.",
+    history_reclaimed:
+      "Older undo history was automatically rotated; saved pages are intact. Read the current page. Do not repeat the original operation or claim that saving failed.",
+    storage_full:
+      "Free space on the storage device, then inspect the current saved state before retrying. Do not delete originals or outputs automatically.",
     not_found: "List current targets or owned jobs before retrying.",
     invalid_edit: "Correct the arguments; do not retry unchanged.",
     invalid_arguments:
@@ -49,12 +41,7 @@ export function mcpToolError(error: unknown) {
   };
   const structuredContent = {
     error: code,
-    message:
-      error instanceof McpEditError || error instanceof McpInvalidParams
-        ? error.message
-        : nativeBusy
-          ? "Another app operation temporarily owns the required resources."
-          : "The app could not complete this operation. Check its local log; no internal paths or error details are returned here.",
+    message,
     retryable: code === "editor_busy",
     nextAction:
       guidance[code] ??
@@ -68,4 +55,28 @@ export function mcpToolError(error: unknown) {
     structuredContent,
     isError: true,
   };
+}
+
+function describeFailure(error: unknown) {
+  if (error instanceof McpInvalidParams)
+    return { code: "invalid_arguments", message: error.message };
+  if (error instanceof McpEditError)
+    return { code: error.code, message: error.message };
+  if (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    error.code === "APP_ACTIVITY_BUSY"
+  )
+    return {
+      code: "editor_busy",
+      message: "Another app operation temporarily owns the required resources.",
+    };
+  return (
+    mcpStorageFailure(error) ?? {
+      code: "operation_failed",
+      message:
+        "The app could not complete this operation. Check its local log; no internal paths or error details are returned here.",
+    }
+  );
 }

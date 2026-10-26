@@ -12,10 +12,11 @@ import { z } from "zod";
 import { LibraryChapterFileSchema } from "../../shared/ipcLibrarySchemas";
 
 export const MCP_RETENTION_MS = 7 * 24 * 60 * 60_000;
-// A chapter can produce many source, cleanup, layout and review commits per page.
-// Keep those recoverable across chapters; the 1 GiB byte quota still bounds disk use.
+// Rotation targets for ordinary page history, not admission limits for the catalog.
 export const MCP_RETENTION_CAPACITY = 4096;
 export const MCP_RETENTION_BYTES = 1024 * 1024 * 1024;
+// Bound each maintenance pass well below the native transaction journal limit.
+export const MCP_RETENTION_CLEANUP_BATCH = 128;
 export const MCP_RETAINED_FILE_BYTES = 128 * 1024 * 1024;
 const id = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 const count = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
@@ -101,14 +102,21 @@ const entry = z
     pageCount: count.max(1000),
     mimeType: z.enum(MCP_ARTIFACT_MIME_TYPES).nullable(),
     sha256: hash.nullable(),
+    reclaimedAt: count.optional(),
   })
   .strict()
-  .superRefine(validateRetentionEntry);
+  .superRefine(validateRetentionEntry)
+  .refine(
+    (value) =>
+      value.reclaimedAt === undefined ||
+      (value.kind === "change" && value.bytes === 0),
+    "Only retired page history may have a payload-free receipt.",
+  );
 export type RetentionEntry = z.infer<typeof entry>;
 export const RetentionIndexSchema = z
   .object({
     version: z.literal(1),
-    entries: z.array(entry).max(MCP_RETENTION_CAPACITY),
+    entries: z.array(entry),
   })
   .strict()
   .refine(

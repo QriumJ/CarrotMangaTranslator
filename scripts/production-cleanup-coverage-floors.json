@@ -32514,6 +32514,50 @@
         "pct": 78.57
       }
     },
+    "src/main/mcp/mcpRetentionIndex.ts": {
+      "lines": {
+        "covered": 33,
+        "total": 34,
+        "pct": 97.05
+      },
+      "statements": {
+        "covered": 36,
+        "total": 37,
+        "pct": 97.29
+      },
+      "functions": {
+        "covered": 5,
+        "total": 5,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 26,
+        "total": 27,
+        "pct": 96.29
+      }
+    },
+    "src/main/mcp/mcpRetentionPolicy.ts": {
+      "lines": {
+        "covered": 73,
+        "total": 79,
+        "pct": 92.4
+      },
+      "statements": {
+        "covered": 81,
+        "total": 88,
+        "pct": 92.04
+      },
+      "functions": {
+        "covered": 18,
+        "total": 18,
+        "pct": 100
+      },
+      "branches": {
+        "covered": 64,
+        "total": 71,
+        "pct": 90.14
+      }
+    },
     "src/main/mcp/mcpRetentionRecords.ts": {
       "lines": {
         "covered": 18,

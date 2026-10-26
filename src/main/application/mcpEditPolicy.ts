@@ -8,6 +8,7 @@ export class McpEditError extends Error {
       | "revision_conflict"
       | "editor_busy"
       | "retention_full"
+      | "history_reclaimed"
       | "editor_open"
       | "not_found"
       | "invalid_edit"
@@ -17,6 +18,21 @@ export class McpEditError extends Error {
   ) {
     super(message, options);
   }
+}
+/** Public storage diagnosis shared by immediate tools and background jobs. */
+export function mcpStorageFailure(error: unknown) {
+  if (
+    error &&
+    typeof error === "object" &&
+    "code" in error &&
+    (error.code === "ENOSPC" || error.code === "EDQUOT")
+  )
+    return {
+      code: "storage_full",
+      message:
+        "The storage device has no writable space. Ordinary history rotation cannot guarantee space for this save. Inspect the current page and free disk space before retrying.",
+    };
+  return undefined;
 }
 /** Only these public text and geometry fields leave the app. No artifacts or paths. */
 export function projectMcpBlocks(

@@ -66,7 +66,7 @@ export function createMcpChapterDeletionTools(
       scopes: ["carrot.read"],
       write: false,
       description:
-        "List this approved connection's retained chapter removal IDs after restart. Metadata only; use the catalog snapshot for pagination and inspect before recovery. Same profile/owner, seven days, shared 256-record/1-GiB catalog; not a permanent trash archive.",
+        "List this approved connection's retained chapter removal IDs after restart. Metadata only; use the catalog snapshot for pagination and inspect before recovery. Same profile/owner, seven days; removed-original recovery is protected from ordinary history rotation. Not a permanent trash archive.",
       execute: (args, owner, guard) =>
         run(guard, (check) =>
           catalog.list(

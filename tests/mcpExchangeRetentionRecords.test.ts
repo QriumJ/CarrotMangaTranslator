@@ -188,6 +188,7 @@ it.each([0, 1, 50, 1000])(
         nextOffset: null,
         retention:
           "seven-days; same-profile-and-owner; no-automatic-reexecution",
+        historyPolicy: "ordinary-history-rotates; essential-records-protected",
         items: [
           {
             ...metadata,
@@ -195,6 +196,7 @@ it.each([0, 1, 50, 1000])(
             pageCount,
             storageBytes: bytes,
             available: true,
+            state: "retained",
           },
         ],
       }).items,

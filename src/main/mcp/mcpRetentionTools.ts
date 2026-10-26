@@ -111,7 +111,7 @@ function readRetentionTools(service: Service) {
         schema: McpRetentionListSchema,
         scopes: ["carrot.read"],
         write: false,
-        description: `List this connection's durable saved page changes or retained text/context/raster/PSD/ZIP/working-file outputs. Metadata only; no image, path, model or page mutation. Records survive restart in the same encrypted profile for seven days, within ${MCP_RETENTION_CAPACITY} records/1 GiB. Pagination after offset zero requires the returned catalog snapshot. A new unrelated OAuth connection cannot inherit these records.`,
+        description: `List this connection's saved page history or retained outputs. Metadata only. Ordinary undo history automatically rotates oldest eligible payloads toward ${MCP_RETENTION_CAPACITY} records/1 GiB, up to seven days. Reclaimed receipts identify completed work, never permission to repeat it. Outputs and essential native records are excluded from this rotation budget. Pagination after offset zero requires the returned snapshot. Same encrypted profile and approved owner; unrelated connections cannot inherit records.`,
         execute: (args, owner, guard) =>
           service.list(
             owner,

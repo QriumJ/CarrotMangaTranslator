@@ -16,6 +16,29 @@ function request(
   };
 }
 describe("MCP long-operation receipts", () => {
+  it("reports disk exhaustion consistently for asynchronous saves without exposing native paths", async () => {
+    const service = new McpOperationService(() => {});
+    try {
+      const input = request(async () => {
+        throw Object.assign(new Error("C:/private/library"), {
+          code: "ENOSPC",
+        });
+      });
+      const started = await service.start(input);
+      const result = await service.waitForCompletion(
+        started.jobId,
+        input.owner,
+        new AbortController().signal,
+      );
+      expect(result).toMatchObject({
+        status: "failed",
+        error: { code: "storage_full" },
+      });
+      expect(JSON.stringify(result)).not.toContain("C:/private");
+    } finally {
+      await service.close();
+    }
+  });
   it("returns promptly, deduplicates exact retries and isolates connections", async () => {
     let finish!: () => void;
     let calls = 0;

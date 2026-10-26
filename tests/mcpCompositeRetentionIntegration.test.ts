@@ -124,7 +124,7 @@ it("pins only live composite settlement through expiry while ordinary expired hi
     expect(ids).not.toContain(inactive.id);
     expect(ids).not.toContain(ordinary);
     expect(t.activeSettlement.mock.calls.some(([id]) => id === ordinary)).toBe(
-      false,
+      true,
     );
     await expect(
       t.repository.load(compositeOwner, prepared.id),

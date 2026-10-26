@@ -58,6 +58,7 @@ export function createMcpPageRetentionSession(
       )
     : undefined;
   return {
+    releaseRetentionActivity: storage?.observeActivity(),
     artifacts,
     retained,
     storage,

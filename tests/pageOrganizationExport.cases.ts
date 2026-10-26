@@ -1,5 +1,5 @@
 import { it, expect, vi, type Mock } from "vitest";
-import { readdir } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import type {
   ChapterSnapshot,
@@ -45,6 +45,55 @@ export function registerPageOrganizationExportCases({
   makeContext,
   runPageImageExportJob,
 }: Fixture) {
+  it.each([
+    { preserveSourceNames: false, ending: " " },
+    { preserveSourceNames: false, ending: "." },
+    { preserveSourceNames: false, ending: " . " },
+    { preserveSourceNames: true, ending: " " },
+    { preserveSourceNames: true, ending: "." },
+    { preserveSourceNames: true, ending: " . " },
+  ])(
+    "exports into portable truncated folders: $preserveSourceNames / '$ending' (issue #163)",
+    async ({ preserveSourceNames, ending }) => {
+      const outputDir = await makeTempDir();
+      const safeName = "가".repeat(80 - ending.length);
+      const longName = `${safeName}${ending}나머지`;
+      const page = {
+        ...makePage("page-1", "001.png"),
+        sourceFileName: "001.png",
+        sourceRelativePath: `${longName}/001.png`,
+      };
+      const chapter = makeChapter("chapter-1", longName, [page]);
+      const png = makeRasterPng(10, 10, [255, 255, 255, 255]);
+      const harness = makeDependencies(makeLibrary([chapter]), [chapter], {
+        renderPage: async () => png,
+      });
+
+      await runPageImageExportJob({
+        context: makeContext(outputDir),
+        request: {
+          workId: "work-1",
+          selections: [{ chapterId: chapter.id, mode: "all" }],
+          outputFormat: "png",
+          preserveSourceNames,
+          destinationMode: "fixed",
+          collisionPolicy: "replace",
+        },
+        outputParentDir: outputDir,
+        id: "portable-folder-export",
+        abortController: new AbortController(),
+        emit: vi.fn(),
+        dependencies: harness.dependencies,
+      });
+
+      const folder = preserveSourceNames ? safeName : `001-${safeName}`;
+      const file = preserveSourceNames ? "001.png" : "001-001.png";
+      expect(await readdir(outputDir)).toEqual([folder]);
+      expect(await readdir(join(outputDir, folder))).toEqual([file]);
+      expect(await readFile(join(outputDir, folder, file))).toEqual(png);
+    },
+  );
+
   it.each(["png", "psd"] as const)(
     "uses exact edited names for %s and preserves legacy numbering",
     async (outputFormat) => {
