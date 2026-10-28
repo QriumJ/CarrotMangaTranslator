@@ -80,3 +80,12 @@ Windows에서 `codex-cli 0.160.0`과 격리된 App Server의 `initialize`·`acco
 응답을 확인했다. 공식 native 배포는 기존과 동일한 45개 파일 구조를 유지한다.
 Codex 및 설치 구성 테스트 47개 파일의 512개 테스트와 빌드가 통과했다.
 실제 계정의 번역·이미지 생성 요청과 macOS 실행 검증은 이번 확인에 포함하지 않았다.
+
+## 2026-10-27 실행기 업데이트
+
+Codex를 npm `latest` 0.164.0으로 갱신했다. npm/lockfile, production 실행기와
+패키징 버전 검사, Windows x64/macOS arm64 자동 설치 URL·byte size·SHA-256,
+QA 브리지와 테스트를 함께 맞췄다. 공식 archive의 registry SHA-512와 내부 버전을
+대조했고 빈 data root에서 실제 원격 설치·재사용·`--version`과 production
+App Server initialize/account read를 확인했다. Claude/Grok 동시 갱신 및
+검증 범위는 `docs/grok-build-integration.md`의 2026-10-27 기록을 따른다.

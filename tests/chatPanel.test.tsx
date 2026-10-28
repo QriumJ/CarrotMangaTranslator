@@ -79,7 +79,7 @@ function setup(
       email: null,
       planType: "plus",
       requiresOpenaiAuth: true,
-      appServerVersion: "0.160.0",
+      appServerVersion: "0.164.0",
       models,
     }),
     ...extra,
