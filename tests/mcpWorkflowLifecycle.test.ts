@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { expect, it, vi } from "vitest";
 import { workflowFixture } from "./mcpWorkflow.fixture";
+import { createPageRevision } from "../src/shared/pageRevision";
 
 it("holds cancellation until native model cleanup and retries only after explicit permission", async () => {
   const f = await workflowFixture();
@@ -22,7 +23,18 @@ it("holds cancellation until native model cleanup and retries only after explici
     f.dispose.mockImplementationOnce(async () => {
       await cleanup;
     });
-    const plan = await f.prepare();
+    const chapter = await f.library.openChapter("chapter");
+    const page = chapter.pages[0];
+    // One page exercises cancellation, restart, retry consent and export without
+    // duplicating the multi-page durable I/O covered by the next test on slow CI.
+    const plan = await f.prepare(undefined, {
+      chapters: [
+        {
+          chapterId: chapter.id,
+          pages: [{ pageId: page.id, revision: createPageRevision(page) }],
+        },
+      ],
+    });
     await f.run(plan.id);
     await vi.waitFor(() => expect(f.request).toHaveBeenCalledTimes(1), {
       timeout: 10000,
@@ -55,7 +67,10 @@ it("holds cancellation until native model cleanup and retries only after explici
     expect((await f.done(plan.id)).status, JSON.stringify(f.errors)).toBe(
       "completed",
     );
-    expect(f.render).toHaveBeenCalledTimes(2);
+    expect(f.render).toHaveBeenCalledTimes(1);
+    expect((await f.library.openChapter("chapter")).pages[1]).toEqual(
+      chapter.pages[1],
+    );
   } finally {
     finishRequest();
     release();
