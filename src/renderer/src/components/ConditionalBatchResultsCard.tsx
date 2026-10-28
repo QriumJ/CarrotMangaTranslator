@@ -98,12 +98,6 @@ function ResultScopeSummary({
         조건 일치 {preview.matchedCount} · 실제 변경 {preview.results.length} ·
         변경 없음 {preview.unchangedMatchCount}
       </span>
-      {preview.unchangedMatchCount > 0 ? (
-        <small>
-          목록에는 실제로 값이 바뀌는 항목만 표시됩니다. 이미 같은 값이거나 작업
-          결과가 같으면 제외됩니다.
-        </small>
-      ) : null}
     </div>
   );
 }

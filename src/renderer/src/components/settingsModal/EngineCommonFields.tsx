@@ -43,19 +43,21 @@ export function TranslationEngineSelector({
   );
 }
 
+type ModelProviderCardsProps = {
+  ariaLabel: string;
+  controlsBusy: boolean;
+  onProviderChange: (provider: ModelProvider) => void;
+  providers: readonly ModelProvider[];
+  selectedProvider: ModelProvider;
+};
+
 export function ModelProviderCards({
   ariaLabel,
   controlsBusy,
   onProviderChange,
   providers,
   selectedProvider,
-}: {
-  ariaLabel: string;
-  controlsBusy: boolean;
-  onProviderChange: (provider: ModelProvider) => void;
-  providers: readonly ModelProvider[];
-  selectedProvider: ModelProvider;
-}): React.JSX.Element {
+}: ModelProviderCardsProps): React.JSX.Element {
   const { t } = useTranslation("components");
   const visibleOptions = MODEL_PROVIDER_OPTIONS.filter((option) =>
     providers.includes(option.id),
@@ -92,13 +94,10 @@ export function ModelProviderCards({
       role="radiogroup"
       aria-label={ariaLabel}
     >
-      {visibleOptions.map((option) => (
-        <ControlTooltip
-          floating
-          key={option.id}
-          content={t(option.descriptionKey)}
-        >
+      {visibleOptions.map((option) => {
+        const control = (
           <SelectionSurface
+            key={option.id}
             as="button"
             type="button"
             role="radio"
@@ -116,8 +115,19 @@ export function ModelProviderCards({
               <span className="settings-provider-marker" aria-hidden="true" />
             </span>
           </SelectionSurface>
-        </ControlTooltip>
-      ))}
+        );
+        return option.id === "openai-api" ? (
+          <ControlTooltip
+            floating
+            key={option.id}
+            content={t(option.descriptionKey)}
+          >
+            {control}
+          </ControlTooltip>
+        ) : (
+          control
+        );
+      })}
     </div>
   );
 }

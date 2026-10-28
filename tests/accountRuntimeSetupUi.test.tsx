@@ -141,7 +141,7 @@ describe("resolveAccountConnectStage", () => {
 });
 
 describe("Claude account first use", () => {
-  it("explains the one-time download, shows live progress with cancel, retries after failure and ends connected", async () => {
+  it("shows the download action and live progress with cancel, retries after failure and ends connected", async () => {
     const first = deferred<ClaudeAccount>();
     const login = vi
       .fn<MangaApi["loginClaudeAccount"]>()
@@ -155,7 +155,7 @@ describe("Claude account first use", () => {
     expect(
       screen.getByText("Claude Code 실행 파일이 아직 없습니다"),
     ).toBeTruthy();
-    expect(screen.getByText(/한 번만 내려받아 이 PC에 보관/)).toBeTruthy();
+    expect(screen.queryByText(/한 번만 내려받아 이 PC에 보관/)).toBeNull();
     expect(
       screen.getByRole("button", { name: "내려받고 API 계정 연결" }),
     ).toBeTruthy();
@@ -305,7 +305,7 @@ describe("Codex account first use", () => {
 });
 
 describe("chat sign-in first use", () => {
-  it("explains the download and shows the same cancellable operation", async () => {
+  it("offers the download and shows the same cancellable operation", async () => {
     const session: ChatSession = {
       version: 1,
       id: "00000000-0000-4000-a000-000000000001",
@@ -336,11 +336,20 @@ describe("chat sign-in first use", () => {
     const button = await screen.findByRole("button", {
       name: "내려받고 ChatGPT 로그인",
     });
-    expect(screen.getByText(/공식 Codex 실행 파일을 한 번만/)).toBeTruthy();
+    expect(screen.queryByText(/공식 Codex 실행 파일을 한 번만/)).toBeNull();
     fireEvent.click(button);
     expect(login).toHaveBeenCalledOnce();
     const operation = emitOperation({ kind: "codex-auth" });
     expect(screen.getByRole("progressbar")).toBeTruthy();
+    emitOperation({
+      kind: "codex-auth",
+      progressUnit: "percent",
+      progressCurrent: 25,
+      progressTotal: 100,
+    });
+    expect(screen.getByRole("progressbar").getAttribute("aria-valuetext")).toBe(
+      "25%",
+    );
     fireEvent.click(screen.getByRole("button", { name: "현재 작업 취소" }));
     expect(cancel).toHaveBeenCalledWith(operation.id);
     await act(async () => pending.resolve(codexMissing));

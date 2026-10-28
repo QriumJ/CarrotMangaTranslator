@@ -30,7 +30,7 @@ const grokMissing: GrokAccount = {
 const grokConnected: GrokAccount = {
   authenticated: true,
   runtimeInstalled: true,
-  version: "1.0.62",
+  version: "1.0.70",
   models: [
     {
       id: "grok-build",
@@ -193,7 +193,7 @@ describe("Grok app-chat account management", () => {
       screen.getByRole("button", { name: "다시 내려받고 Grok 로그인" }),
     );
     expect(
-      await screen.findByText("Grok 연결됨 · Grok Build 1.0.62"),
+      await screen.findByText("Grok 연결됨 · Grok Build 1.0.70"),
     ).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
 
@@ -270,7 +270,7 @@ describe("Grok in app chat", () => {
     const button = await screen.findByRole("button", {
       name: "내려받고 Grok 로그인",
     });
-    expect(screen.getByText(/공식 Grok Build 실행 파일을/)).toBeTruthy();
+    expect(screen.queryByText(/공식 Grok Build 실행 파일을/)).toBeNull();
 
     emit({ id: "claude-1", kind: "claude-auth" });
     expect(screen.queryByRole("progressbar")).toBeNull();

@@ -17,7 +17,7 @@ import type {
 import type { AppPaths } from "../appPaths";
 import type { ClaudeEffort } from "../../shared/claudeTypes";
 
-export const CLAUDE_VERSION = "2.1.294";
+export const CLAUDE_VERSION = "2.1.311";
 const requireHere = createRequire(__filename);
 
 export function claudeBinary(

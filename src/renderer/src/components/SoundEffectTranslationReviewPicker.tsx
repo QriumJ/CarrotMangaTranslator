@@ -217,7 +217,6 @@ function SoundEffectReviewComplete(): React.JSX.Element {
   return (
     <div className={styles.complete} role="status">
       <strong>{t("soundEffectReview.allComplete")}</strong>
-      <span>{t("soundEffectReview.allCompleteHint")}</span>
     </div>
   );
 }

@@ -41,7 +41,6 @@ function McpServerSection({ status, error, busy, run }: Props) {
   return (
     <Section
       title={t("mcp.title")}
-      description={t("mcp.description")}
       density="compact"
       bodyClassName={styles.body}
       actions={<McpServerActions status={status} busy={busy} run={run} />}

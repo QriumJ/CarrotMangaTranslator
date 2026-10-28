@@ -32,7 +32,6 @@ export function ExportPagePicker({
       onChange={onChange}
       pageMetadataOnly
       copy={{
-        prompt: t("exportOptions.prompt"),
         currentChapter: t("exportOptions.currentChapter"),
         chapterSummary: (count) => t("exportOptions.chapterSummary", { count }),
         noSelectedPages: t("exportOptions.noSelectedPages"),

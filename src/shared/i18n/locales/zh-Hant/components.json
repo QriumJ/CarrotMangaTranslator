@@ -2529,7 +2529,7 @@
         "modelHelp": "預設使用F16。Q4可節省顯示記憶體，兩者使用相同影像模型。",
         "device": "執行裝置",
         "autoDevice": "自動",
-        "deviceHelp": "獨立顯示記憶體至少4GB或Apple統一記憶體至少8GB時使用GPU。GPU初始化失敗或記憶體不足時，同一模型會在CPU上重試一次。"
+        "deviceHelp": "GPU初始化失敗或記憶體不足時，同一模型會在CPU上重試一次。"
       }
     },
     "format": {

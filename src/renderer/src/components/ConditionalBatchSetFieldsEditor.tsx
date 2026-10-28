@@ -48,10 +48,6 @@ export function ConditionalBatchSetFieldsEditor({
   );
   return (
     <div className={styles.setFieldsEditor}>
-      <p className={styles.setFieldIntro}>
-        각 속성을 선택한 결과로 바꿉니다. 필요한 관련 속성은 자동으로 함께
-        추가됩니다.
-      </p>
       <SetFieldRows
         action={action}
         writableFields={writableFields}

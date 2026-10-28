@@ -2529,7 +2529,7 @@
         "modelHelp": "F16이 기본입니다. Q4는 VRAM 절약 옵션이며 이미지 모델은 동일합니다.",
         "device": "실행 장치",
         "autoDevice": "자동",
-        "deviceHelp": "4GB 이상 전용 GPU 또는 8GB 이상 Apple 통합 메모리는 GPU를 사용합니다. GPU 초기화·메모리 부족 시 같은 모델로 CPU에서 한 번 재시도합니다."
+        "deviceHelp": "GPU 초기화·메모리 부족 시 같은 모델로 CPU에서 한 번 재시도합니다."
       }
     },
     "format": {

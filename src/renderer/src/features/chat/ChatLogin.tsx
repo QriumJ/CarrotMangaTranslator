@@ -1,10 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { AppOperationActivityEvent } from "../../../../shared/appOperationTypes";
-import {
-  ACCOUNT_CLI_NAMES,
-  type AccountConnectStage,
-} from "../../lib/accountRuntimePresentation";
+import type { AccountConnectStage } from "../../lib/accountRuntimePresentation";
 import { Button } from "../../components/ui/Button";
 import { ProgressBar } from "../../components/ui/ProgressBar";
 import {
@@ -42,12 +39,6 @@ const LOGIN_LABELS = {
   },
 } as const satisfies Record<ChatRuntime, Record<AccountConnectStage, string>>;
 
-const LOGIN_HINTS = {
-  claude: "chat.claudeLoginHint",
-  codex: "chat.loginHint",
-  grok: "chat.grokLoginHint",
-} as const satisfies Record<ChatRuntime, string>;
-
 /** Sign-in prompt; the first sign-in downloads the official CLI once. */
 export function ChatLogin({
   chat,
@@ -61,13 +52,6 @@ export function ChatLogin({
   const { runtime } = signIn;
   return (
     <div className={styles.login}>
-      <p>
-        {model.runtimeMissing
-          ? t("settings.accountRuntime.missingDetail", {
-              name: ACCOUNT_CLI_NAMES[runtime],
-            })
-          : t(LOGIN_HINTS[runtime])}
-      </p>
       <Button
         onClick={signIn.login}
         disabled={chat.busy || signIn.activity !== null}

@@ -59,7 +59,6 @@ function InactiveWarpEditor({
   const { t } = useTranslation("components");
   return (
     <div className="transform-mode-panel warp-editor-panel warp-editor-empty">
-      <p>{t("transform.warp.disabledDescription")}</p>
       <Button
         className="warp-action-button primary"
         disabled={disabled}
@@ -71,7 +70,6 @@ function InactiveWarpEditor({
       >
         {t("transform.warp.start")}
       </Button>
-      <p className="transform-help">{t("transform.hints.warp")}</p>
     </div>
   );
 }

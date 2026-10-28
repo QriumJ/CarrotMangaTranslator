@@ -65,23 +65,27 @@ function SpeakerField({
       ? "화자 이름을 불러오는 중입니다."
       : catalog.options.length === 0
         ? "등록된 인물과 대사에 연결된 화자가 없습니다. 작품의 인물 정보를 먼저 확인하세요."
-        : "이름·원문 이름·별칭으로 검색할 수 있습니다.";
+        : null;
   return (
     <Field
       as="div"
       label={label}
       hint={
-        <span id={hintId}>
-          {status}
-          {catalog.unassignedCount > 0
-            ? ` 현재 화에서 화자가 연결되지 않은 대사: ${catalog.unassignedCount}개.`
-            : null}
-        </span>
+        status || catalog.unassignedCount > 0 ? (
+          <span id={hintId}>
+            {status}
+            {catalog.unassignedCount > 0
+              ? ` 현재 화에서 화자가 연결되지 않은 대사: ${catalog.unassignedCount}개.`
+              : null}
+          </span>
+        ) : undefined
       }
     >
       <Select
         ariaLabel={label}
-        ariaDescribedBy={hintId}
+        ariaDescribedBy={
+          status || catalog.unassignedCount > 0 ? hintId : undefined
+        }
         searchable
         searchPlaceholder="화자 이름·별칭 검색"
         placeholder="화자 선택"

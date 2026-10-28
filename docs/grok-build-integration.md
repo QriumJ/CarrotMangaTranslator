@@ -1,6 +1,6 @@
 # Grok Build 앱 채팅 연결
 
-2026-10-19: 공식 Grok Build CLI 1.0.62를 첫 연결 시 내려받아 앱 채팅에서 사용한다.
+현재 공식 Grok Build CLI 1.0.70을 첫 연결 시 내려받아 앱 채팅에서 사용한다.
 설정의 AI 앱 연결(MCP) → 앱 채팅 · Grok 계정에서 로그인하며 채팅의 도우미 선택에서
 Grok을 고른다. 직접 OCR/번역 엔진이나 이미지 생성 provider를 새로 등록한 것은 아니다.
 앱 채팅은 기존 당근 MCP 도구로 보관함 조회, 번역, 편집을 요청할 수 있다.
@@ -39,6 +39,21 @@ production GrokChatRuntime에서도 이미지와 MCP 도구 결과 `ORANGE-7193`
 질문은 기존 앱 질문 UI로 전달한다. reasoning chunk는 앱 대화에 저장하지 않는다.
 
 ## 검증과 유지보수
+
+### 2026-10-27 런타임 갱신
+
+Grok 1.0.70, Codex 0.164.0, Claude Code 2.1.311(Agent SDK 0.3.311)로
+고정 버전을 갱신했다. Windows x64/macOS arm64의 공식 npm archive 6개를
+다운로드해 registry SHA-512, 실제 byte size/SHA-256, 내부 package version을
+검증했다. 다운로드 URL과 검증 값의 권위는 `cliRuntimePlan.ts`다.
+
+Windows의 빈 임시 data root에서 세 런타임의 production installer로 실제 원격
+설치, `--version`, 재다운로드 없는 재사용을 확인했다. production adapter로
+Codex App Server initialize/account read, Claude SDK initialize/models,
+Grok ACP initialize가 통과했다. 관련 테스트 8개 파일/106개와 타입 검사·빌드가
+통과했다. 검증 로그와 manifest는 `.tmp/cli-update-20261027/`에 보존한다.
+이번 범위는 설치와 연결 초기화이며 실제 모델 응답·이미지·MCP 도구 호출과
+macOS 실행은 재검증하지 않았다. 아래는 최초 통합 당시의 검증 기록이다.
 
 - `tests/grokRuntime.test.ts`: ACP 분할 응답, 오류/시간 초과/종료, 이미지 전달,
   모델·추론 선택, 세션 복원, MCP 권한, 질문/취소, 텍스트·도구 순서.

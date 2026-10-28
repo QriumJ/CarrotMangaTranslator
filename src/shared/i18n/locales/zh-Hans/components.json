@@ -2529,7 +2529,7 @@
         "modelHelp": "默认使用F16。Q4可节省显存，两者使用相同图像模型。",
         "device": "运行设备",
         "autoDevice": "自动",
-        "deviceHelp": "独立显存至少4GB或Apple统一内存至少8GB时使用GPU。GPU初始化失败或显存不足时，同一模型会在CPU上重试一次。"
+        "deviceHelp": "GPU初始化失败或显存不足时，同一模型会在CPU上重试一次。"
       }
     },
     "format": {

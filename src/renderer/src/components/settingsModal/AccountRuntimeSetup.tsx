@@ -11,9 +11,8 @@ import { InlineMessage } from "../ui/InlineMessage";
 import styles from "./AccountRuntimeSetup.module.css";
 
 /**
- * First-use state of an account that signs in through an AI CLI: why the
- * official runtime is downloaded once, its live download/sign-in progress
- * (the same operation as the status dock) and a failure that can be retried.
+ * Account runtime availability, live download/sign-in progress (the same
+ * operation as the status dock), and failures that can be retried.
  */
 export function AccountRuntimeSetup({
   runtime,
@@ -56,12 +55,11 @@ export function AccountRuntimeSetup({
               : "settings.accountRuntime.connectFailed",
             { name },
           )}
-          detail={`${signInError}\n${t("settings.accountRuntime.retryHint")}`}
+          detail={signInError}
         />
       ) : (
         <InlineMessage
           title={t("settings.accountRuntime.missingTitle", { name })}
-          detail={t("settings.accountRuntime.missingDetail", { name })}
         />
       )}
     </div>
