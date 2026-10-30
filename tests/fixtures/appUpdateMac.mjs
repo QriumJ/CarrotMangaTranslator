@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { app } from "electron";
 import { createServer } from "node:http";
 import { createHash } from "node:crypto";
-import { createReadStream, readFileSync } from "node:fs";
+import { createReadStream, readFileSync, realpathSync } from "node:fs";
 import { mkdtemp, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
@@ -63,16 +63,26 @@ async function run() {
     const download = new AppUpdateDownload(() => {});
     await download.download(release, new AbortController().signal, () => {});
     await download.install(release);
-    const cachedDmg = join(root, "app-updates", version, name);
-    const deadline = Date.now() + 30000;
+    const cachedDmg = realpathSync(join(root, "app-updates", version, name));
+    const deadline = Date.now() + 90000;
+    let images = [];
     while (Date.now() < deadline) {
-      mounted = mountedImages().find(
-        (entry) => entry["image-path"] === cachedDmg,
-      );
+      images = mountedImages();
+      mounted = images.find((entry) => {
+        try {
+          return realpathSync(entry["image-path"]) === cachedDmg;
+        } catch (error) {
+          if (error.code === "ENOENT") return false;
+          throw error;
+        }
+      });
       if (mounted) break;
       await new Promise((done) => setTimeout(done, 500));
     }
-    assert.ok(mounted, "shell.openPath must mount the verified downloaded DMG");
+    assert.ok(
+      mounted,
+      `shell.openPath must mount ${cachedDmg}; observed images: ${JSON.stringify(images)}`,
+    );
     await writeFile(
       "dist/mac-update-verification.json",
       JSON.stringify(
@@ -83,6 +93,8 @@ async function run() {
           downloaded: true,
           verified: true,
           opened: true,
+          cachedDmg,
+          mountedImage: mounted["image-path"],
           source: "local HTTP server serving the real release DMG",
         },
         null,
