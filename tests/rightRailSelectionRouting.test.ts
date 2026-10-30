@@ -260,8 +260,12 @@ describe("right rail block selection routing", () => {
       },
       linkedWorkspace: {
         status: linkedWorkspaceStatus,
+        statuses: new Map(),
         viewBusy: true,
         viewResults,
+        openPreviousFolder: vi.fn(),
+        organize: vi.fn(),
+        isOrganizing: () => false,
       },
       uiState: {
         ...model.uiState,

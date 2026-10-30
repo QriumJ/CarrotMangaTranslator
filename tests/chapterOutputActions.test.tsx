@@ -120,9 +120,116 @@ describe("chapter output row in the task hub", () => {
         linkedWorkspaceStatus={linkedStatus("disabled")}
       />,
     );
-    expect(screen.queryByRole("button", { name: "결과물 보기" })).toBeNull();
+    // Results stay reachable while automatic saving is off.
+    fireEvent.click(screen.getByRole("button", { name: "결과물 보기" }));
+    expect(props.onViewLinkedResults).toHaveBeenCalledTimes(2);
     expect(exportButton("결과물 출력").disabled).toBe(false);
     expect(screen.getByText("결과물 자동 저장 꺼짐")).not.toBeNull();
+  });
+
+  it("names the current folder and shows a move in progress", () => {
+    const status = { ...linkedStatus("idle"), rootName: "프롤로그" };
+    const view = render(
+      <ChapterTaskHub {...makeHubProps({ linkedWorkspaceStatus: status })} />,
+    );
+    expect(screen.getByRole("status").textContent).toBe(
+      "‘프롤로그’ 폴더에 저장됨",
+    );
+
+    view.rerender(
+      <ChapterTaskHub
+        {...makeHubProps({
+          linkedWorkspaceStatus: {
+            ...status,
+            organization: { state: "moving" },
+          },
+        })}
+      />,
+    );
+    expect(screen.getByRole("status").textContent).toBe("결과 폴더 옮기는 중…");
+    expect(screen.queryByRole("button", { name: "다시 시도" })).toBeNull();
+  });
+
+  it("offers a local retry for a failed move without sending users to settings", () => {
+    const props = makeHubProps({
+      linkedWorkspaceStatus: {
+        ...linkedStatus("idle"),
+        organization: { state: "failed", error: "폴더를 사용 중입니다." },
+      },
+    });
+    render(<ChapterTaskHub {...props} />);
+
+    const alert = screen.getByRole("alert");
+    expect(alert.textContent).toBe(
+      "결과 폴더를 옮기지 못했습니다폴더를 사용 중입니다.",
+    );
+    expect(document.body.textContent).not.toContain("설정");
+    expect(document.body.textContent).not.toContain("자동 저장 실패");
+    expect(screen.getByRole("status").textContent).toBe(
+      "파일 보호를 위해 자동 저장 중지",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    expect(props.onRetryLinkedResults).toHaveBeenCalledOnce();
+  });
+
+  it("keeps long failure details expandable without losing the original reason", () => {
+    const reason = `앱 밖에서 변경된 파일이 있습니다: C:/${"long-folder/".repeat(25)}001.png`;
+    render(
+      <ChapterTaskHub
+        {...makeHubProps({
+          linkedWorkspaceStatus: {
+            ...linkedStatus("idle"),
+            organization: { state: "failed", error: reason },
+          },
+        })}
+      />,
+    );
+    const details = screen.getByRole("button", { name: "오류 내용 펼치기" });
+    expect(details.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(details);
+    expect(
+      screen
+        .getByRole("button", { name: "오류 내용 접기" })
+        .getAttribute("aria-expanded"),
+    ).toBe("true");
+    expect(screen.getByText(reason).getAttribute("data-expanded")).toBe("true");
+  });
+
+  it("tells preserved files apart from failures and opens the previous folder", () => {
+    const props = makeHubProps({
+      linkedWorkspaceStatus: {
+        ...linkedStatus("idle"),
+        organization: {
+          state: "idle",
+          preservedRootPaths: ["C:/results/old/1화"],
+        },
+      },
+    });
+    render(<ChapterTaskHub {...props} />);
+
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByText("이전 폴더에 남은 파일이 있습니다")).not.toBeNull();
+    expect(document.body.textContent).not.toContain("C:/results");
+    fireEvent.click(screen.getByRole("button", { name: "이전 폴더 열기" }));
+    expect(props.onOpenPreviousLinkedResults).toHaveBeenCalledOnce();
+  });
+
+  it("shows the sync error itself instead of a settings instruction", () => {
+    render(
+      <ChapterTaskHub
+        {...makeHubProps({
+          linkedWorkspaceStatus: {
+            ...linkedStatus("failed"),
+            lastError: "디스크 공간이 부족합니다.",
+          },
+        })}
+      />,
+    );
+    expect(screen.getByRole("status").textContent).toBe("자동 저장 실패");
+    expect(screen.getByRole("alert").textContent).toBe(
+      "디스크 공간이 부족합니다.",
+    );
+    expect(document.body.textContent).not.toContain("설정");
   });
 
   it("names the buttons from the shared command labels", () => {
@@ -330,6 +437,10 @@ function makeHubProps(
     jobActive: false,
     linkedWorkspaceStatus: null,
     linkedWorkspaceViewBusy: false,
+    linkedWorkspaceOrganizing: false,
+    viewResultsLabel: "결과물 보기",
+    onRetryLinkedResults: vi.fn(),
+    onOpenPreviousLinkedResults: vi.fn(),
     onOpenAutoInpaintingOptions: vi.fn(),
     onOpenChat: vi.fn(),
     onOpenExport: vi.fn(),

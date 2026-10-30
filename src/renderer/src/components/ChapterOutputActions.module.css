@@ -12,7 +12,8 @@
 }
 
 .exportRow > button,
-.linkedRow > button {
+.linkedRow > button,
+.issueRow > button {
   min-width: 0;
   overflow: hidden;
 }
@@ -24,8 +25,9 @@
   text-overflow: ellipsis;
 }
 
-/* Sync status reads first; viewing the synced folder is a quiet trailing action. */
-.linkedRow {
+/* Result state reads first; opening or repairing the folder is a quiet trailing action. */
+.linkedRow,
+.issueRow {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -33,6 +35,66 @@
   min-width: 0;
 }
 
-.linkedRow > button {
+.linkedRow > button,
+.issueRow > button {
   max-width: 100%;
+  flex-shrink: 0;
+}
+
+.statusText {
+  overflow: hidden;
+  padding: 1px 2px 0;
+  color: var(--text-muted);
+  font-size: var(--font-xs);
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusText[data-tone="busy"],
+.statusText[data-tone="pending"],
+.statusText[data-tone="syncing"] {
+  color: var(--accent-hi);
+}
+
+.statusText[data-tone="failed"] {
+  color: var(--danger-text);
+}
+
+.issueRow p {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+  margin: 0;
+  padding-inline: 2px;
+  font-size: var(--font-xs);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.issueRow[data-tone="danger"] p > span {
+  color: var(--danger-text);
+}
+
+.issueRow[data-tone="muted"] p > span,
+.issueRow p > small {
+  color: var(--text-muted);
+}
+
+.reason {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.reason[data-expanded="true"] {
+  display: block;
+  max-height: 120px;
+  overflow: auto;
+}
+
+.detailsAction {
+  justify-self: start;
 }

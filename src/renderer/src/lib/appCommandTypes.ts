@@ -29,6 +29,10 @@ export const APP_COMMAND_IDS = [
   "prepare-redaction-chapter",
   "prepare-redaction-work",
   "open-work-context",
+  "view-linked-results",
+  "open-previous-linked-results",
+  "organize-linked-results",
+  "organize-all-linked-results",
 ] as const;
 
 export type AppCommandId = (typeof APP_COMMAND_IDS)[number];

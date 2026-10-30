@@ -991,12 +991,31 @@
       "duplicateCounts": "Skip {{skipped}} · Import {{remaining}}"
     }
   },
-  "linkedWorkspaceFolders": {
-    "label": "Automatic-save folder roles",
-    "result": "Final images",
-    "originals": "Recovery originals",
-    "inpainted": "Text-erased images",
-    "mask": "Erased areas"
+  "linkedResults": {
+    "organize": "Match folder name to title",
+    "organizeAll": "Match all result folder names to titles",
+    "moving": "Moving result folder…",
+    "moveFailed": "Couldn't move the result folder",
+    "retry": "Retry",
+    "preserved": "Some files stayed in the previous folder",
+    "openPrevious": "Open previous folder",
+    "savedIn": "Saved in “{{name}}”",
+    "openFailed": "Couldn't open the result folder.",
+    "organizeFailed": "Couldn't organize result folders.",
+    "organizeDone": "Matched {{count}} result folders to their titles.",
+    "organizeUpToDate": "Result folders already match their titles.",
+    "organizePartial": "Couldn't move folders for {{count}} chapters.",
+    "workIssueCount": "Result folder problems: {{count}}",
+    "issue": {
+      "moving": "Moving folder…",
+      "moveFailed": "Folder move failed",
+      "syncFailed": "Automatic save failed",
+      "preserved": "Files left in previous folder"
+    },
+    "savingPaused": "Auto-save paused to protect files",
+    "details": "Show error details",
+    "hideDetails": "Hide error details",
+    "refreshFailed": "Could not refresh result folder status."
   },
   "rename": {
     "workTitle": "Rename work",
@@ -1006,7 +1025,8 @@
     "newName": "New name",
     "deleteWorkWarning": "Deleting this work also removes all of its chapters, pages, translation results, and terminology/memory.",
     "deleteChapterWarning": "Deleting this chapter also removes all of its pages and translation results.",
-    "deleteChapters": "Delete selected chapters…"
+    "deleteChapters": "Delete selected chapters…",
+    "moveResultFolders": "Rename result folders too"
   },
   "shareExport": {
     "title": "Export work",
@@ -1859,7 +1879,7 @@
       "psdAction": "Export PSD",
       "syncing": "Syncing results",
       "pendingSync": "{{count}} changed pages waiting",
-      "syncFailed": "Automatic save failed · Retry from Settings",
+      "syncFailed": "Automatic save failed",
       "syncDisabled": "Automatic result saving is off",
       "synced": "Latest results saved",
       "description": "Refine block fonts, colors, and positions, then export a finished PNG or layered PSD.",

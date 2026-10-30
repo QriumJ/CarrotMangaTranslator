@@ -22,6 +22,7 @@ import { SidebarWidthResizer } from "./SidebarWidthResizer";
 import { MacAlphaBadge } from "./MacAlphaBadge";
 import {
   resolveAppCommandLabel,
+  type AppCommand,
   type AppCommandId,
   type AppCommandLabels,
 } from "../lib/appCommandTypes";
@@ -57,6 +58,10 @@ type AppSidebarProps = {
   onOpenShareImport: () => void;
   onOpenChapter: (chapterId: string) => void;
   contextActions?: LibraryContextActions;
+  /** Explicit all-works result folder repair, shared with the palette. */
+  organizeAllResults?: AppCommand<"organize-all-linked-results"> & {
+    busy: boolean;
+  };
   onRenameWork: (workId: string) => void;
   onRenameChapter: (chapterId: string) => void;
   onReorderChapter: (
@@ -144,6 +149,7 @@ function LibrarySidebarContent({
         onOpenShareExport={props.onOpenShareExport}
         onOpenShareImport={props.onOpenShareImport}
         onOpenTranslationSource={props.onOpenTranslationSource}
+        organizeAllResults={props.organizeAllResults}
         settingsBusy={props.settingsBusy}
         settingsOpen={props.settingsOpen}
       />
@@ -255,6 +261,7 @@ type SidebarToolbarProps = Pick<
   | "onOpenShareExport"
   | "onOpenShareImport"
   | "onOpenTranslationSource"
+  | "organizeAllResults"
   | "settingsBusy"
   | "settingsOpen"
 > & {
@@ -274,6 +281,7 @@ function SidebarToolbar({
   onOpenShareExport,
   onOpenShareImport,
   onOpenTranslationSource,
+  organizeAllResults,
   settingsBusy,
   settingsOpen,
 }: SidebarToolbarProps): React.JSX.Element {
@@ -319,6 +327,7 @@ function SidebarToolbar({
           onOpenLibraryFolder={onOpenLibraryFolder}
           onOpenShareExport={onOpenShareExport}
           onOpenShareImport={onOpenShareImport}
+          organizeAllResults={organizeAllResults}
         />
       </div>
     </section>
@@ -333,6 +342,7 @@ function SidebarMoreMenu({
   onOpenLibraryFolder,
   onOpenShareExport,
   onOpenShareImport,
+  organizeAllResults,
 }: Pick<
   SidebarToolbarProps,
   | "commandLabels"
@@ -341,6 +351,7 @@ function SidebarMoreMenu({
   | "onOpenLibraryFolder"
   | "onOpenShareExport"
   | "onOpenShareImport"
+  | "organizeAllResults"
 >): React.JSX.Element {
   const { t } = useTranslation("components");
   const label = (id: AppCommandId, fallback: string): string =>
@@ -366,6 +377,15 @@ function SidebarMoreMenu({
           run: onOpenShareImport,
           disabled: jobActive,
         },
+        ...(organizeAllResults?.paletteVisible
+          ? [
+              {
+                label: organizeAllResults.label,
+                run: organizeAllResults.run,
+                disabled: organizeAllResults.busy,
+              },
+            ]
+          : []),
       ]}
     />
   );

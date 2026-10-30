@@ -1,61 +1,7 @@
-.linked-workspace-inline-status {
-  display: block;
-  overflow: hidden;
-  padding: 1px 2px 0;
-  color: var(--text-muted);
-  font-size: var(--font-xs);
-  line-height: 1.4;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.linked-workspace-inline-status.pending,
-.linked-workspace-inline-status.syncing {
-  color: var(--accent-hi);
-}
-
-.linked-workspace-inline-status.failed {
-  color: var(--danger-text, var(--danger-text));
-}
-
 .linked-workspace-settings {
   display: grid;
   min-width: 0;
   gap: 12px;
-}
-
-/* A one-line legend of the mirrored folders, not four boxed tiles. */
-.linked-workspace-folder-roles {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-1) var(--sp-6);
-  min-width: 0;
-  margin: 0;
-}
-
-.linked-workspace-folder-roles > div {
-  display: flex;
-  min-width: 0;
-  align-items: baseline;
-  gap: var(--sp-2);
-}
-
-.linked-workspace-folder-roles dt,
-.linked-workspace-folder-roles dd {
-  min-width: 0;
-  margin: 0;
-  white-space: nowrap;
-}
-
-.linked-workspace-folder-roles dt {
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: var(--font-xs);
-}
-
-.linked-workspace-folder-roles dd {
-  color: var(--text-muted);
-  font-size: var(--font-xs);
 }
 
 .linked-workspace-settings-message,

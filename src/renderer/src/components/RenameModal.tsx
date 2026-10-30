@@ -1,6 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "./ui/Button";
+import { CheckboxField } from "./ui/CheckboxField";
 import { TextField } from "./ui/Field";
 import { Modal } from "./ui/Modal";
 import { ModalActionBar } from "./ui/ModalActionBar";
@@ -10,7 +11,7 @@ type RenameModalProps = {
   initialTitle: string;
   busy: boolean;
   onCancel: () => void;
-  onSubmit: (title: string) => void;
+  onSubmit: (title: string, moveResultFolders: boolean) => void;
 };
 
 export function RenameModal({
@@ -22,6 +23,7 @@ export function RenameModal({
 }: RenameModalProps): React.JSX.Element {
   const { t } = useTranslation("components");
   const [title, setTitle] = React.useState(initialTitle);
+  const [moveResultFolders, setMoveResultFolders] = React.useState(true);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
 
   React.useEffect(() => {
@@ -49,7 +51,7 @@ export function RenameModal({
               </Button>
               <Button
                 variant="primary"
-                onClick={() => onSubmit(trimmed)}
+                onClick={() => onSubmit(trimmed, moveResultFolders)}
                 disabled={busy || !trimmed}
               >
                 {t("common.save")}
@@ -66,10 +68,16 @@ export function RenameModal({
         disabled={busy}
         onChange={(event) => setTitle(event.target.value)}
         onKeyDown={(event) => {
-          if (event.key === "Enter" && trimmed) {
-            onSubmit(trimmed);
+          if (event.key === "Enter" && trimmed && !busy) {
+            onSubmit(trimmed, moveResultFolders);
           }
         }}
+      />
+      <CheckboxField
+        label={t("rename.moveResultFolders")}
+        checked={moveResultFolders}
+        onCheckedChange={setMoveResultFolders}
+        disabled={busy}
       />
     </Modal>
   );

@@ -10,7 +10,7 @@ export function LibraryEditModals({
   renameTarget,
 }: {
   onCancelRename: () => void;
-  onSubmitRename: (title: string) => void;
+  onSubmitRename: (title: string, moveResultFolders: boolean) => void;
   renameBusy: boolean;
   renameTarget: RenameTarget | null;
 }): React.JSX.Element {
@@ -18,6 +18,7 @@ export function LibraryEditModals({
     <>
       {renameTarget ? (
         <RenameModal
+          key={`${renameTarget.kind}:${renameTarget.id}`}
           kind={renameTarget.kind}
           initialTitle={renameTarget.title}
           busy={renameBusy}

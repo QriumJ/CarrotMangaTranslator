@@ -991,12 +991,31 @@
       "duplicateCounts": "跳过 {{skipped}} 项 · 导入 {{remaining}} 项"
     }
   },
-  "linkedWorkspaceFolders": {
-    "label": "自动保存文件夹用途",
-    "result": "最终图像",
-    "originals": "恢复用原图",
-    "inpainted": "已去原文",
-    "mask": "擦除区域"
+  "linkedResults": {
+    "organize": "按标题修改文件夹名称",
+    "organizeAll": "按标题修改所有结果文件夹名称",
+    "moving": "正在移动结果文件夹…",
+    "moveFailed": "无法移动结果文件夹",
+    "retry": "重试",
+    "preserved": "旧文件夹中仍有文件",
+    "openPrevious": "打开旧文件夹",
+    "savedIn": "已保存到“{{name}}”",
+    "openFailed": "无法打开结果文件夹。",
+    "organizeFailed": "无法整理结果文件夹。",
+    "organizeDone": "已按标题重命名 {{count}} 个结果文件夹。",
+    "organizeUpToDate": "结果文件夹已与标题一致。",
+    "organizePartial": "{{count}} 个章节的文件夹未能移动。",
+    "workIssueCount": "结果文件夹问题 {{count}} 个",
+    "issue": {
+      "moving": "正在移动文件夹…",
+      "moveFailed": "文件夹移动失败",
+      "syncFailed": "自动保存失败",
+      "preserved": "旧文件夹中有文件"
+    },
+    "savingPaused": "已暂停自动保存以保护文件",
+    "details": "展开错误详情",
+    "hideDetails": "收起错误详情",
+    "refreshFailed": "无法刷新结果文件夹状态。"
   },
   "rename": {
     "workTitle": "重命名作品",
@@ -1006,7 +1025,8 @@
     "newName": "新名称",
     "deleteWorkWarning": "删除作品时，其中所有章节、页面、翻译结果和术语/记忆也会一并删除。",
     "deleteChapterWarning": "删除章节时，其中所有页面和翻译结果也会一并删除。",
-    "deleteChapters": "选择章节删除…"
+    "deleteChapters": "选择章节删除…",
+    "moveResultFolders": "同时修改结果文件夹"
   },
   "shareExport": {
     "title": "导出项目",
@@ -1859,7 +1879,7 @@
       "psdAction": "导出 PSD",
       "syncing": "正在同步结果",
       "pendingSync": "{{count}}个更改页面等待中",
-      "syncFailed": "自动保存失败 · 请在设置中重试",
+      "syncFailed": "自动保存失败",
       "syncDisabled": "结果自动保存已关闭",
       "synced": "最新结果已保存",
       "description": "调整文本块的字体、颜色和位置，然后导出成品 PNG 或分层 PSD。",

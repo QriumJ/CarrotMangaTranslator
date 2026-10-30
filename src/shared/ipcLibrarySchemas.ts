@@ -297,10 +297,10 @@ export const CreateImportRequestSchema = z
   .strict();
 
 export const RenameWorkRequestSchema = z
-  .object({ workId: uuid, title })
+  .object({ workId: uuid, title, moveResultFolders: z.boolean().optional() })
   .strict();
 export const RenameChapterRequestSchema = z
-  .object({ chapterId: uuid, title })
+  .object({ chapterId: uuid, title, moveResultFolders: z.boolean().optional() })
   .strict();
 export const DeleteWorkRequestSchema = z.object({ workId: uuid }).strict();
 export const DeleteChapterRequestSchema = z

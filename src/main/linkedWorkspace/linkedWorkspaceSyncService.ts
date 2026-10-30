@@ -4,6 +4,15 @@ import {
   validateLinkedPageOutputNames,
 } from "./linkedPageOutputNames";
 import { randomUUID } from "node:crypto";
+import {
+  relocateLinkedResults,
+  verifyLinkedResultOwnership,
+} from "./linkedWorkspaceRelocation";
+import { recoverLinkedRelocations } from "./linkedWorkspaceRelocationRecovery";
+import {
+  assertManagedResultRoot,
+  linkedPathExists,
+} from "./linkedWorkspaceRelocationFiles";
 import { mkdir, readFile, readdir, rename, stat } from "node:fs/promises";
 import { basename, dirname, extname, join, resolve } from "node:path";
 import { app, shell, type BrowserWindow } from "electron";
@@ -18,6 +27,9 @@ import type {
   LinkedWorkspaceDestinationKind,
   LinkedWorkspaceRecordV1,
   LinkedWorkspaceStatus,
+  OrganizeLinkedResultsResult,
+  OrganizeLinkedResultsRequest,
+  OpenPreservedLinkedResultsRequest,
   UpdateLinkedWorkspaceRequest,
   ViewLinkedResultsRequest,
   ViewLinkedResultsResult,
@@ -155,6 +167,12 @@ export class LinkedWorkspaceSyncService {
     promise: Promise<LinkedWorkspaceStatus>;
   }>();
   private lastActivityAt = Date.now();
+  private relocating = 0;
+  private relocationTail: Promise<unknown> = Promise.resolve();
+  private organizationTails = new Map<
+    string,
+    Promise<OrganizeLinkedResultsResult>
+  >();
 
   constructor(options: ServiceOptions) {
     this.options = options;
@@ -207,6 +225,14 @@ export class LinkedWorkspaceSyncService {
     this.records = new Map(
       registry.records.map((record) => [record.id, record]),
     );
+    await recoverLinkedRelocations(this.options.dataRoot, registry.records);
+    for (const record of this.records.values()) {
+      if (record.organization)
+        await this.saveOrganizationOutcome(
+          record.id,
+          record.organization.error,
+        );
+    }
     this.queue = new Map(
       queue.items
         .filter((item) => this.records.has(item.connectionId))
@@ -276,6 +302,18 @@ export class LinkedWorkspaceSyncService {
         ? { notice: this.notices.get(record.id) }
         : {}),
       ...(lastError ? { lastError } : {}),
+      ...(record.organization || this.organizationTails.has(record.id)
+        ? {
+            organization: {
+              ...record.organization,
+              state: this.organizationTails.has(record.id)
+                ? ("moving" as const)
+                : record.organization?.error
+                  ? ("failed" as const)
+                  : ("idle" as const),
+            },
+          }
+        : {}),
     };
   }
 
@@ -348,6 +386,15 @@ export class LinkedWorkspaceSyncService {
       sourceFingerprints,
       originalFingerprints,
       artifacts: sameRoot ? (current?.artifacts ?? {}) : {},
+      ...(current?.organization
+        ? {
+            organization: sameRoot
+              ? current.organization
+              : {
+                  preservedRootPaths: current.organization.preservedRootPaths,
+                },
+          }
+        : {}),
       createdAt: current?.createdAt ?? now,
       updatedAt: now,
     };
@@ -490,6 +537,238 @@ export class LinkedWorkspaceSyncService {
     return countLinkedWorkspaceConflicts(rootPath);
   }
 
+  organizeManagedResults(
+    target?: OrganizeLinkedResultsRequest,
+  ): Promise<OrganizeLinkedResultsResult> {
+    if (this.disposed)
+      return Promise.reject(new Error("결과 폴더 서비스를 종료 중입니다."));
+    const chapter = target?.chapterId
+      ? this.findRecordByChapter(target.chapterId)
+      : undefined;
+    if (chapter && chapter.workId !== target?.workId)
+      return Promise.reject(new Error("선택한 작품과 화가 일치하지 않습니다."));
+    const affected = this.managedOrganizationRecords(target);
+    const run = this.relocationTail
+      .then(() => this.organizeManagedResultsNow(target))
+      .finally(() => {
+        for (const record of affected) {
+          if (this.organizationTails.get(record.id) === run)
+            this.organizationTails.delete(record.id);
+        }
+        this.emitStatuses();
+      });
+    for (const record of affected) this.organizationTails.set(record.id, run);
+    this.emitStatuses();
+    this.relocationTail = run.catch((error: unknown) => {
+      this.options.reportError("Result folder organization failed", error);
+    });
+    return run;
+  }
+
+  private managedOrganizationRecords(target?: OrganizeLinkedResultsRequest) {
+    return [...this.records.values()].filter(
+      (record) =>
+        (record.destinationKind ?? "managed") === "managed" &&
+        (!target ||
+          (record.workId === target.workId &&
+            (!target.chapterId || record.chapterId === target.chapterId))),
+    );
+  }
+
+  private async organizeManagedResultsNow(
+    target?: OrganizeLinkedResultsRequest,
+  ): Promise<OrganizeLinkedResultsResult> {
+    const result: OrganizeLinkedResultsResult = {
+      moved: 0,
+      unchanged: 0,
+      preserved: 0,
+      failures: [],
+    };
+    const records = this.managedOrganizationRecords(target);
+    if (records.length === 0) return result;
+    this.relocating++;
+    this.invalidateRenders();
+    try {
+      if (this.activeDrainPromise) await this.activeDrainPromise;
+      for (const record of records) {
+        try {
+          await this.changeDestination(record, async () =>
+            withLibraryContentEdit(
+              [
+                libraryStructureResource("work", record.workId, "read"),
+                libraryStructureResource("chapter", record.chapterId),
+                await outputPathResource(
+                  join(this.options.dataRoot, "results"),
+                  true,
+                ),
+              ],
+              () =>
+                this.runSerializedMetadata(async () => {
+                  const current = this.records.get(record.id);
+                  if (!current || current.destinationKind !== "managed") {
+                    result.unchanged++;
+                    return this.getStatus(record.chapterId);
+                  }
+                  const moved = await this.relocateManagedRecord(current);
+                  if (moved === null) result.unchanged++;
+                  else {
+                    result.moved++;
+                    if (moved) result.preserved++;
+                  }
+                  await this.saveOrganizationOutcome(record.id);
+                  return this.getStatus(record.chapterId);
+                }),
+              AbortSignal.timeout(30_000),
+            ),
+          );
+          const chapter = await this.dependencies.openChapter(
+            record.chapterId,
+            record.workId,
+          );
+          await this.runSerializedMetadata(() =>
+            this.queuePages(chapter.id, chapter.pageOrder, {}),
+          );
+        } catch (error) {
+          const message = (
+            error instanceof Error ? error.message : String(error)
+          ).slice(0, 4000);
+          await this.runSerializedMetadata(() =>
+            this.saveOrganizationOutcome(record.id, message),
+          );
+          result.failures.push({ chapterId: record.chapterId, message });
+        }
+      }
+    } finally {
+      this.relocating--;
+      this.emitStatuses();
+      this.schedule(IDLE_DELAY_MS);
+    }
+    return result;
+  }
+
+  private async saveOrganizationOutcome(
+    recordId: string,
+    error?: string,
+  ): Promise<void> {
+    const record = this.records.get(recordId);
+    if (!record) return;
+    const preservedRootPaths: string[] = [];
+    for (const path of record.organization?.preservedRootPaths ?? []) {
+      if (await linkedPathExists(path)) preservedRootPaths.push(path);
+    }
+    const next = {
+      ...record,
+      organization: { ...(error ? { error } : {}), preservedRootPaths },
+    };
+    await this.store.replaceReviewedRecords([record], [next], {
+      committed: async () => {
+        this.records.set(next.id, next);
+      },
+    });
+  }
+
+  async openPreservedResults(
+    request: OpenPreservedLinkedResultsRequest,
+  ): Promise<ViewLinkedResultsResult> {
+    const initial = this.findRecordByChapter(request.chapterId);
+    if (initial) await this.organizationTails.get(initial.id);
+    const record = this.findRecordByChapter(request.chapterId);
+    const path = record?.organization?.preservedRootPaths?.[request.index ?? 0];
+    if (!path)
+      return { status: "failed", message: "보존된 이전 폴더가 없습니다." };
+    await assertManagedResultRoot(this.options.dataRoot, path);
+    if (!(await linkedPathExists(path)) || !(await stat(path)).isDirectory())
+      return { status: "failed", message: "이전 폴더를 찾을 수 없습니다." };
+    const error = await shell.openPath(path);
+    return error
+      ? { status: "failed", message: error }
+      : { status: "opened", syncedPages: 0 };
+  }
+
+  private async relocateManagedRecord(
+    record: LinkedWorkspaceRecordV1,
+  ): Promise<boolean | null> {
+    const chapter = await this.dependencies.openChapter(
+      record.chapterId,
+      record.workId,
+    );
+    const library = await this.dependencies.listLibrary();
+    const workTitle = library.works.find(
+      (work) => work.id === record.workId,
+    )?.title;
+    if (!workTitle) throw new Error("작품을 찾지 못했습니다.");
+    const activeSources = chapter.pages.flatMap((page) =>
+      [page.imagePath, page.inpaintedImagePath].filter((path): path is string =>
+        Boolean(path),
+      ),
+    );
+    for (const current of this.records.values()) {
+      activeSources.push(
+        ...Object.values(current.originalFingerprints ?? {}).map(
+          (item) => item.path,
+        ),
+      );
+      activeSources.push(
+        ...Object.values(current.artifacts).flatMap((artifacts) =>
+          [artifacts.inpainted?.sourcePath, artifacts.mask?.sourcePath].filter(
+            (path): path is string => Boolean(path),
+          ),
+        ),
+      );
+    }
+    if (
+      activeSources.some((path) =>
+        overlappingResultRoots(path, record.rootPath),
+      )
+    )
+      throw new Error(
+        "보관함에서 원본으로 사용하는 파일이 있어 기존 폴더를 보존했습니다.",
+      );
+    const preferred = join(
+      this.options.dataRoot,
+      "results",
+      safeResultPathSegment(workTitle, "작품"),
+      safeResultPathSegment(chapter.title, "화"),
+    );
+    // Retain an allocated collision suffix; repeated cleanup must be idempotent.
+    const currentName = basename(record.rootPath);
+    if (
+      sameFilePath(dirname(record.rootPath), dirname(preferred)) &&
+      (currentName === basename(preferred) ||
+        (currentName.startsWith(`${basename(preferred)} (`) &&
+          /^\([2-9]\d*\)$|^\(1\d+\)$/.test(
+            currentName.slice(basename(preferred).length + 1),
+          )))
+    ) {
+      if (record.organization?.error) await verifyLinkedResultOwnership(record);
+      return null;
+    }
+    if (
+      [...this.records.values()].some(
+        (other) =>
+          other.id !== record.id &&
+          (overlappingResultRoots(other.rootPath, record.rootPath) ||
+            resultRootContains(other.rootPath, dirname(preferred))),
+      )
+    )
+      throw new Error("다른 저장 연결과 겹치는 폴더는 정리하지 않습니다.");
+    const moved = await relocateLinkedResults({
+      dataRoot: this.options.dataRoot,
+      record,
+      preferred,
+      workTitle,
+      chapterTitle: chapter.title,
+      publish: (next, committed) =>
+        this.store.replaceReviewedRecords([record], [next], {
+          committed: async () => {
+            this.records.set(next.id, next);
+            committed();
+          },
+        }),
+    });
+    return moved.preserved;
+  }
+
   private assertNotDeleting(chapterId: string, workId?: string): void {
     if (
       this.deletingChapters.has(chapterId) ||
@@ -610,7 +889,9 @@ export class LinkedWorkspaceSyncService {
       organizationChanged?: boolean;
     } = {},
   ): Promise<void> {
-    await this.queuePages(chapterId, pageIds, options);
+    await this.runSerializedMetadata(() =>
+      this.queuePages(chapterId, pageIds, options),
+    );
   }
 
   reportActivity(request: LinkedWorkspaceActivityRequest): void {
@@ -632,6 +913,8 @@ export class LinkedWorkspaceSyncService {
   async viewResults(
     request: ViewLinkedResultsRequest,
   ): Promise<ViewLinkedResultsResult> {
+    const initial = this.findRecordByChapter(request.chapterId);
+    if (initial) await this.organizationTails.get(initial.id);
     const record = this.findRecordByChapter(request.chapterId);
     if (!record) {
       return {
@@ -639,17 +922,20 @@ export class LinkedWorkspaceSyncService {
         message: "이 화에 저장된 자동 결과물이 없습니다.",
       };
     }
-    if (!record.enabled) return this.openResultDirectory(record, 0);
+    if (!record.enabled || record.organization?.error)
+      return this.openResultDirectory(record, 0);
     const chapter = await this.dependencies.openChapter(
       request.chapterId,
       record.workId,
     );
-    await this.queuePages(chapter.id, chapter.pageOrder, {
-      immediate: true,
-      priority: 60,
-      currentPageId: request.currentPageId,
-      ensurePublishedOutput: true,
-    });
+    await this.runSerializedMetadata(() =>
+      this.queuePages(chapter.id, chapter.pageOrder, {
+        immediate: true,
+        priority: 60,
+        currentPageId: request.currentPageId,
+        ensurePublishedOutput: true,
+      }),
+    );
     const pending = this.pendingCount(record.id);
     if (pending === 0) return this.openResultDirectory(record, 0);
     this.forceConnections.add(record.id);
@@ -690,7 +976,7 @@ export class LinkedWorkspaceSyncService {
     } = {},
   ): Promise<void> {
     const record = this.findRecordByChapter(chapterId);
-    if (!record || !record.enabled) return;
+    if (!record || !record.enabled || record.organization?.error) return;
     const chapter = await this.dependencies.openChapter(
       chapterId,
       record.workId,
@@ -813,7 +1099,7 @@ export class LinkedWorkspaceSyncService {
   }
 
   private async drain(): Promise<void> {
-    if (this.disposed || this.running) return;
+    if (this.disposed || this.running || this.relocating > 0) return;
     if (this.activeInteractions.size > 0) {
       this.schedule(250);
       return;
@@ -904,6 +1190,7 @@ export class LinkedWorkspaceSyncService {
           const record = this.records.get(item.connectionId);
           return (
             record?.enabled === true &&
+            !record.organization?.error &&
             !this.deletingChapters.has(item.chapterId) &&
             !this.deletingWorks.has(record.workId) &&
             item.attempts < RETRY_DELAYS_MS.length &&
@@ -1577,6 +1864,7 @@ export class LinkedWorkspaceSyncService {
     const now = Date.now();
     const missingMirrors = new Map<string, boolean>();
     recordLoop: for (const record of this.records.values()) {
+      if (record.organization?.error) continue;
       let chapter: ChapterSnapshot;
       try {
         chapter = await this.dependencies.openChapter(
@@ -1794,15 +2082,25 @@ export class LinkedWorkspaceSyncService {
     record: LinkedWorkspaceRecordV1,
     syncedPages: number,
   ): Promise<ViewLinkedResultsResult> {
-    const resultDirectory = resolvePathInside(
-      record.rootPath,
-      "result/.probe",
-    ).replace(/[\\/]\.probe$/, "");
-    await mkdir(resultDirectory, { recursive: true });
-    const error = await shell.openPath(resultDirectory);
-    return error
-      ? { status: "failed", message: error }
-      : { status: "opened", syncedPages };
+    return this.runSerializedMetadata(async () => {
+      // A title change may have moved the folder while output was preparing.
+      const current = this.records.get(record.id);
+      if (!current)
+        return { status: "failed", message: "결과 폴더를 찾을 수 없습니다." };
+      let directory = resolvePathInside(
+        current.rootPath,
+        "result/.probe",
+      ).replace(/[\\/]\.probe$/, "");
+      if (current.organization?.error) {
+        if (!(await linkedPathExists(directory))) directory = current.rootPath;
+        if (!(await linkedPathExists(directory)))
+          return { status: "failed", message: "결과 폴더를 찾을 수 없습니다." };
+      } else await mkdir(directory, { recursive: true });
+      const error = await shell.openPath(directory);
+      return error
+        ? { status: "failed", message: error }
+        : { status: "opened", syncedPages };
+    });
   }
 
   private resolveDrainWaiters(
@@ -1989,7 +2287,9 @@ export class LinkedWorkspaceSyncService {
       .filter((item) => {
         const record = this.records.get(item.connectionId);
         return (
-          record?.enabled === true && item.attempts < RETRY_DELAYS_MS.length
+          record?.enabled === true &&
+          !record.organization?.error &&
+          item.attempts < RETRY_DELAYS_MS.length
         );
       })
       .reduce(
@@ -2555,6 +2855,16 @@ function isMissingFileError(error: unknown): boolean {
 
 function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === "AbortError";
+}
+
+function overlappingResultRoots(left: string, right: string): boolean {
+  return resultRootContains(left, right) || resultRootContains(right, left);
+}
+
+function resultRootContains(left: string, right: string): boolean {
+  const a = resolve(left).replaceAll("\\", "/").toLowerCase();
+  const b = resolve(right).replaceAll("\\", "/").toLowerCase();
+  return a === b || b.startsWith(`${a}/`);
 }
 
 async function waitForSettled(

@@ -991,12 +991,31 @@
       "duplicateCounts": "略過 {{skipped}} 項 · 匯入 {{remaining}} 項"
     }
   },
-  "linkedWorkspaceFolders": {
-    "label": "自動儲存資料夾用途",
-    "result": "最終影像",
-    "originals": "復原用原圖",
-    "inpainted": "已去原文",
-    "mask": "擦除區域"
+  "linkedResults": {
+    "organize": "依標題變更資料夾名稱",
+    "organizeAll": "依標題變更所有結果資料夾名稱",
+    "moving": "正在移動結果資料夾…",
+    "moveFailed": "無法移動結果資料夾",
+    "retry": "重試",
+    "preserved": "舊資料夾中仍有檔案",
+    "openPrevious": "開啟舊資料夾",
+    "savedIn": "已儲存到「{{name}}」",
+    "openFailed": "無法開啟結果資料夾。",
+    "organizeFailed": "無法整理結果資料夾。",
+    "organizeDone": "已依標題重新命名 {{count}} 個結果資料夾。",
+    "organizeUpToDate": "結果資料夾已與標題一致。",
+    "organizePartial": "{{count}} 個章節的資料夾無法移動。",
+    "workIssueCount": "結果資料夾問題 {{count}} 個",
+    "issue": {
+      "moving": "正在移動資料夾…",
+      "moveFailed": "資料夾移動失敗",
+      "syncFailed": "自動儲存失敗",
+      "preserved": "舊資料夾中有檔案"
+    },
+    "savingPaused": "已暫停自動儲存以保護檔案",
+    "details": "展開錯誤詳情",
+    "hideDetails": "收起錯誤詳情",
+    "refreshFailed": "無法重新整理結果資料夾狀態。"
   },
   "rename": {
     "workTitle": "重新命名作品",
@@ -1006,7 +1025,8 @@
     "newName": "新名稱",
     "deleteWorkWarning": "刪除作品時，其中所有章節、頁面、翻譯結果和術語／記憶也會一併刪除。",
     "deleteChapterWarning": "刪除章節時，其中所有頁面和翻譯結果也會一併刪除。",
-    "deleteChapters": "選擇章節刪除…"
+    "deleteChapters": "選擇章節刪除…",
+    "moveResultFolders": "同時變更結果資料夾"
   },
   "shareExport": {
     "title": "匯出專案",
@@ -1859,7 +1879,7 @@
       "psdAction": "匯出 PSD",
       "syncing": "正在同步結果",
       "pendingSync": "{{count}}個變更頁面等候中",
-      "syncFailed": "自動儲存失敗 · 請在設定中重試",
+      "syncFailed": "自動儲存失敗",
       "syncDisabled": "結果自動儲存已關閉",
       "synced": "最新結果已儲存",
       "description": "調整文字區塊的字體、顏色和位置，然後匯出完成 PNG 或分層 PSD。",

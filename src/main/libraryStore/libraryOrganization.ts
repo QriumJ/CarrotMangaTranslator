@@ -1,4 +1,5 @@
 import { hashStableValue } from "../../shared/blockFingerprint";
+import { notifyLinkedWorkspaceTitleChanged } from "../linkedWorkspace/linkedWorkspaceNotifications";
 import {
   collectUsedChapterTitles,
   getDefaultWorkTitle,
@@ -166,6 +167,7 @@ export async function commitLibraryOrganizationUnlocked(
     guard: () => void;
     stage: (transaction: LibraryTransaction) => Promise<void>;
   },
+  options?: { moveResultFolders?: boolean },
 ) {
   const { before, after } = change;
   const target = {
@@ -204,4 +206,16 @@ export async function commitLibraryOrganizationUnlocked(
     undefined,
     publication?.guard,
   );
+  if (options?.moveResultFolders === false) return;
+  if (before.work.title !== after.work.title)
+    notifyLinkedWorkspaceTitleChanged({ workId: after.work.id });
+  else if (
+    before.chapter &&
+    after.chapter &&
+    before.chapter.title !== after.chapter.title
+  )
+    notifyLinkedWorkspaceTitleChanged({
+      workId: after.work.id,
+      chapterId: after.chapter.id,
+    });
 }

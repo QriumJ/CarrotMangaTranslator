@@ -7,6 +7,7 @@ import type { RenameTarget } from "../lib/libraryRenameTypes";
 import type { ConfirmDialogState } from "./useConfirmDialog";
 import type { InpaintingMaskStroke } from "../../../shared/inpaintingTypes";
 import type { ChapterBulkDeleteController } from "./chapterBulkDeleteTypes";
+import type { LibraryResultActions } from "../lib/libraryResultMenuItems";
 
 type AskConfirm = (
   title: string,
@@ -55,7 +56,7 @@ export type LibraryRenameActions = {
   renameTarget: RenameTarget | null;
   renameWork: (workId: string) => void;
   setRenameTarget: Dispatch<SetStateAction<RenameTarget | null>>;
-  submitRename: (title: string) => Promise<void>;
+  submitRename: (title: string, moveResultFolders?: boolean) => Promise<void>;
 };
 
 export type LibraryReorderActions = {
@@ -94,4 +95,5 @@ export type LibraryContextActions = {
   selection: ChapterBulkDeleteController;
   openContext: (workId: string) => void;
   deleteTarget: (target: RenameTarget) => void;
+  results?: LibraryResultActions;
 };

@@ -41,7 +41,9 @@ function isSamePageTaskState(
     previous.hasSelectedPage === next.hasSelectedPage &&
     previous.jobActive === next.jobActive &&
     previous.linkedWorkspaceStatus === next.linkedWorkspaceStatus &&
-    previous.linkedWorkspaceViewBusy === next.linkedWorkspaceViewBusy
+    previous.linkedWorkspaceViewBusy === next.linkedWorkspaceViewBusy &&
+    previous.linkedWorkspaceOrganizing === next.linkedWorkspaceOrganizing &&
+    previous.viewResultsLabel === next.viewResultsLabel
   );
 }
 
@@ -54,6 +56,8 @@ function isSameRunActions(
     previous.onOpenExport === next.onOpenExport &&
     previous.onOpenPsdExport === next.onOpenPsdExport &&
     previous.onViewLinkedResults === next.onViewLinkedResults &&
+    previous.onRetryLinkedResults === next.onRetryLinkedResults &&
+    previous.onOpenPreviousLinkedResults === next.onOpenPreviousLinkedResults &&
     previous.onOpenTranslateOptions === next.onOpenTranslateOptions &&
     previous.onOpenChat === next.onOpenChat &&
     previous.onRunBubbleLayout === next.onRunBubbleLayout

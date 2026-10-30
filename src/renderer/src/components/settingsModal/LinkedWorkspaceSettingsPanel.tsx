@@ -10,7 +10,6 @@ import { sortLibraryIndex } from "../../lib/librarySort";
 import { useLinkedWorkspaceSettingsOperations } from "../../hooks/useLinkedWorkspaceSettingsOperations";
 import { useLinkedWorkspaceStatuses } from "../../hooks/useLinkedWorkspaceStatuses";
 import { LinkedWorkspaceChapterRow } from "./LinkedWorkspaceChapterRow";
-import { LinkedWorkspaceFolderRoles } from "../LinkedWorkspaceFolderRoles";
 import { Input } from "../ui/Field";
 
 export function LinkedWorkspaceSettingsPanel({
@@ -40,7 +39,6 @@ export function LinkedWorkspaceSettingsPanel({
     useLinkedWorkspaceSettingsOperations(refresh);
   return (
     <div className="linked-workspace-settings" aria-busy={loading}>
-      <LinkedWorkspaceFolderRoles />
       <div className="linked-workspace-settings-toolbar">
         <label
           className="library-search-shell linked-workspace-settings-search"

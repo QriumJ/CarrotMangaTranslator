@@ -991,12 +991,31 @@
       "duplicateCounts": "{{skipped}}개 건너뜀 · {{remaining}}개 가져오기"
     }
   },
-  "linkedWorkspaceFolders": {
-    "label": "자동 저장 폴더 역할",
-    "result": "최종 이미지",
-    "originals": "복구용 원본",
-    "inpainted": "원문 제거본",
-    "mask": "지운 영역"
+  "linkedResults": {
+    "organize": "제목에 맞춰 폴더 이름 변경",
+    "organizeAll": "모든 결과 폴더 이름을 제목에 맞춰 변경",
+    "moving": "결과 폴더 옮기는 중…",
+    "moveFailed": "결과 폴더를 옮기지 못했습니다",
+    "retry": "다시 시도",
+    "preserved": "이전 폴더에 남은 파일이 있습니다",
+    "openPrevious": "이전 폴더 열기",
+    "savedIn": "‘{{name}}’ 폴더에 저장됨",
+    "openFailed": "결과 폴더를 열지 못했습니다.",
+    "organizeFailed": "결과 폴더를 정리하지 못했습니다.",
+    "organizeDone": "결과 폴더 {{count}}개를 제목에 맞췄습니다.",
+    "organizeUpToDate": "결과 폴더가 이미 제목과 같습니다.",
+    "organizePartial": "{{count}}개 화의 폴더를 옮기지 못했습니다.",
+    "workIssueCount": "결과 폴더 문제 {{count}}개",
+    "issue": {
+      "moving": "폴더 옮기는 중…",
+      "moveFailed": "폴더 이동 실패",
+      "syncFailed": "자동 저장 실패",
+      "preserved": "이전 폴더에 파일 남음"
+    },
+    "savingPaused": "파일 보호를 위해 자동 저장 중지",
+    "details": "오류 내용 펼치기",
+    "hideDetails": "오류 내용 접기",
+    "refreshFailed": "결과 폴더 상태를 불러오지 못했습니다."
   },
   "rename": {
     "workTitle": "작품 이름 변경",
@@ -1006,7 +1025,8 @@
     "newName": "새 이름",
     "deleteWorkWarning": "작품을 삭제하면 포함된 모든 화, 페이지, 번역 결과와 용어/기억이 함께 삭제됩니다.",
     "deleteChapterWarning": "화를 삭제하면 포함된 페이지와 번역 결과가 함께 삭제됩니다.",
-    "deleteChapters": "화 골라서 삭제…"
+    "deleteChapters": "화 골라서 삭제…",
+    "moveResultFolders": "결과 폴더도 함께 변경"
   },
   "shareExport": {
     "title": "작업 내보내기",
@@ -1859,7 +1879,7 @@
       "psdAction": "PSD 출력",
       "syncing": "결과물 동기화 중",
       "pendingSync": "변경된 페이지 {{count}}개 대기",
-      "syncFailed": "자동 저장 실패 · 설정에서 다시 시도해 주세요",
+      "syncFailed": "자동 저장 실패",
       "syncDisabled": "결과물 자동 저장 꺼짐",
       "synced": "최신 결과 저장됨",
       "description": "블록의 폰트·색·위치를 정리한 뒤, 완성 PNG 또는 레이어 PSD 결과물로 내보냅니다.",

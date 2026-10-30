@@ -73,6 +73,17 @@ export const LinkedWorkspaceStatusSchema = z
     outputFormat: RasterExportFormatSchema.optional(),
     notice: z.string().max(4000).optional(),
     lastError: z.string().max(4000).optional(),
+    organization: z
+      .object({
+        state: z.enum(["moving", "failed", "idle"]),
+        error: z.string().max(4000).optional(),
+        preservedRootPaths: z
+          .array(z.string().min(1).max(4096))
+          .max(2000)
+          .optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 

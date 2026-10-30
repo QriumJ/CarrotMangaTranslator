@@ -35,6 +35,11 @@ export type LinkedWorkspaceRecordV1 = {
   /** Missing on v1 records created before managed result folders existed. */
   destinationKind?: LinkedWorkspaceDestinationKind;
   enabled: boolean;
+  /** Durable relocation outcome, independent of automatic image publication. */
+  organization?: {
+    error?: string;
+    preservedRootPaths?: string[];
+  };
   output: RasterExportSettings;
   pageRelativePaths: Record<string, string>;
   /** Final root-relative result paths, allocated after output format conversion. */
@@ -120,6 +125,11 @@ export type LinkedWorkspaceStatus = {
   outputFormat?: RasterExportFormat;
   notice?: string;
   lastError?: string;
+  organization?: {
+    state: "moving" | "failed" | "idle";
+    error?: string;
+    preservedRootPaths?: string[];
+  };
 };
 
 export type LinkedWorkspaceImportOptions = {
@@ -157,6 +167,23 @@ export type ViewLinkedResultsResult =
   | { status: "failed"; message: string };
 
 export type LinkedWorkspaceBooleanResult = { completed: boolean };
+
+export type OrganizeLinkedResultsResult = {
+  moved: number;
+  unchanged: number;
+  preserved: number;
+  failures: Array<{ chapterId: string; message: string }>;
+};
+
+export type OrganizeLinkedResultsRequest = {
+  workId: string;
+  chapterId?: string;
+};
+
+export type OpenPreservedLinkedResultsRequest = {
+  chapterId: string;
+  index?: number;
+};
 
 export type LinkedWorkspaceActivityRequest =
   | { type: "pulse" }

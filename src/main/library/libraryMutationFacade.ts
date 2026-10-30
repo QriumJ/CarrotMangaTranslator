@@ -159,15 +159,21 @@ export async function appendAnalyzedPageBlocks(
 export async function renameWork(
   workId: string,
   title: string,
+  moveResultFolders?: boolean,
 ): Promise<LibraryIndex> {
-  return withLibraryMutation(() => renameWorkUnlocked(workId, title));
+  return withLibraryMutation(() =>
+    renameWorkUnlocked(workId, title, moveResultFolders),
+  );
 }
 
 export async function renameChapter(
   chapterId: string,
   title: string,
+  moveResultFolders?: boolean,
 ): Promise<LibraryIndex> {
-  return withLibraryMutation(() => renameChapterUnlocked(chapterId, title));
+  return withLibraryMutation(() =>
+    renameChapterUnlocked(chapterId, title, moveResultFolders),
+  );
 }
 
 export async function deleteWork(workId: string): Promise<LibraryIndex> {

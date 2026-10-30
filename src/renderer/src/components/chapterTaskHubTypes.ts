@@ -8,12 +8,17 @@ export type ChapterTaskHubProps = {
   flowActive: boolean;
   linkedWorkspaceStatus: LinkedWorkspaceStatus | null;
   linkedWorkspaceViewBusy: boolean;
+  /** This chapter's result folder is being reorganized by a local request. */
+  linkedWorkspaceOrganizing: boolean;
   /** Display names owned by the shared output commands. */
   exportLabel: string;
   psdExportLabel: string;
+  viewResultsLabel: string;
   onOpenExport: () => void;
   onOpenPsdExport: () => void;
   onViewLinkedResults: () => void;
+  onRetryLinkedResults: () => void;
+  onOpenPreviousLinkedResults: () => void;
   onOpenTranslateOptions: () => void;
   onOpenChat?: () => void;
   onOpenAutoInpaintingOptions: (scope: AutoInpaintingEntryScope) => void;

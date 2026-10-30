@@ -29,6 +29,7 @@ export type ActionMenuProps = {
   triggerIcon?: React.ReactNode;
   align?: "start" | "end";
   tooltipPlacement?: "bottom" | "left" | "right" | "top";
+  showTooltip?: boolean;
 };
 
 /** Action menu sharing the app's menu, focus and dismissal contracts. */
@@ -41,6 +42,7 @@ export function ActionMenu({
   triggerIcon,
   align,
   tooltipPlacement = "left",
+  showTooltip = true,
 }: ActionMenuProps): React.JSX.Element {
   const [open, setOpen] = React.useState(false);
   const id = React.useId();
@@ -89,6 +91,7 @@ export function ActionMenu({
         icon={icon}
         triggerIcon={triggerIcon}
         tooltipPlacement={tooltipPlacement}
+        showTooltip={showTooltip}
       />
       {open
         ? createPortal(
@@ -116,21 +119,35 @@ function ActionMenuTrigger({
   icon,
   triggerIcon,
   tooltipPlacement,
+  showTooltip,
 }: Pick<
   ActionMenuProps,
-  "label" | "iconOnly" | "icon" | "triggerIcon" | "tooltipPlacement"
+  | "label"
+  | "iconOnly"
+  | "icon"
+  | "triggerIcon"
+  | "tooltipPlacement"
+  | "showTooltip"
 > & {
   trigger: React.ButtonHTMLAttributes<HTMLButtonElement> & {
     ref: React.Ref<HTMLButtonElement>;
   };
 }): React.JSX.Element {
-  return iconOnly ? (
-    <ControlTooltip content={label} placement={tooltipPlacement}>
+  if (iconOnly) {
+    const button = (
       <IconButton {...trigger} label={label} title="">
         {icon ?? <IconDots size={18} aria-hidden="true" />}
       </IconButton>
-    </ControlTooltip>
-  ) : (
+    );
+    return showTooltip ? (
+      <ControlTooltip content={label} placement={tooltipPlacement}>
+        {button}
+      </ControlTooltip>
+    ) : (
+      button
+    );
+  }
+  return (
     <Button
       {...trigger}
       size="sm"

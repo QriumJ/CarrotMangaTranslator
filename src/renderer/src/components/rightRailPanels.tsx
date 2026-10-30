@@ -55,6 +55,7 @@ export type UnifiedRightRailProps = {
   maskStrokeCount: number;
   linkedWorkspaceStatus?: LinkedWorkspaceStatus | null;
   linkedWorkspaceViewBusy?: boolean;
+  linkedWorkspaceOrganizing?: boolean;
   peeking: boolean;
   progressSnapshot: ProgressSnapshot | null;
   redoLabel?: string | null;
@@ -85,6 +86,8 @@ export type UnifiedRightRailProps = {
   onOpenExport: () => void;
   onOpenPsdExport?: () => void;
   onViewLinkedResults?: () => void;
+  onRetryLinkedResults?: () => void;
+  onOpenPreviousLinkedResults?: () => void;
   onOpenErrorReport: () => void;
   onReviewResults: () => void;
   onRetryPage: (pageId: string) => void;
@@ -143,7 +146,17 @@ export function UnifiedRightRail(
           onRunBubbleLayout={props.onRunBubbleLayout}
           linkedWorkspaceStatus={props.linkedWorkspaceStatus ?? null}
           linkedWorkspaceViewBusy={props.linkedWorkspaceViewBusy ?? false}
+          linkedWorkspaceOrganizing={props.linkedWorkspaceOrganizing ?? false}
+          viewResultsLabel={resolveAppCommandLabel(
+            props.commandLabels,
+            "view-linked-results",
+            t("inpainting.export.viewResults"),
+          )}
           onViewLinkedResults={props.onViewLinkedResults ?? NOOP}
+          onRetryLinkedResults={props.onRetryLinkedResults ?? NOOP}
+          onOpenPreviousLinkedResults={
+            props.onOpenPreviousLinkedResults ?? NOOP
+          }
         />
       ) : null}
       <ContextualRightRailPanel {...props} />

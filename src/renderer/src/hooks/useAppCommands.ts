@@ -1,5 +1,9 @@
 import { buildOutputCommands } from "../lib/appOutputCommands";
 import { buildWorkContextCommand } from "../lib/workContextCommand";
+import {
+  buildLinkedResultsCommands,
+  type LinkedResultsCommandSource,
+} from "../lib/linkedResultsCommands";
 import { buildInpaintingCommands } from "../lib/appInpaintingCommands";
 import { useMemo } from "react";
 import {
@@ -28,6 +32,7 @@ type UseAppCommandsOptions = {
   openChat?: () => void;
   editBlockText?: () => void;
   openWorkContext?: (workId: string) => void;
+  linkedResults?: LinkedResultsCommandSource;
   runCurrentPageInpainting: () => void;
   cancelJob: () => void;
   openImportPreview: (mode: "zip-folder") => Promise<void>;
@@ -77,6 +82,7 @@ export function useAppCommands(
         openChat: options.openChat,
         editBlockText: options.editBlockText,
         openWorkContext: options.openWorkContext,
+        linkedResults: options.linkedResults,
         openTranslationSource: options.openTranslationSource,
         openAddChapterPages: options.openAddChapterPages,
         openPageEditor: options.openPageEditor,
@@ -109,6 +115,7 @@ export function useAppCommands(
       options.openChat,
       options.editBlockText,
       options.openWorkContext,
+      options.linkedResults,
       options.openTranslationSource,
       options.openAddChapterPages,
       options.openPageEditor,
@@ -150,6 +157,11 @@ function buildAppCommandRegistry(
     "open-work-context": buildWorkContextCommand(
       options.currentChapter?.workId ?? null,
       options.openWorkContext,
+      options.componentText,
+    ),
+    ...buildLinkedResultsCommands(
+      options.currentChapter,
+      options.linkedResults,
       options.componentText,
     ),
   } satisfies AppCommandMap;

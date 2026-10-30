@@ -69,6 +69,7 @@ recent-dialog-paths.json
 /block-library.json
 /batch-edit-schemes.yaml
 /linked-workspaces.json
+/linked-relocations/
 /linked-sync-queue.json
 /.linked-sync-queue.json.*.tmp
 /codex/

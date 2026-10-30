@@ -55,6 +55,7 @@ const ANALYSIS_UPDATE_CONFLICT_MESSAGE =
 export async function renameWorkUnlocked(
   workId: string,
   title: string,
+  moveResultFolders?: boolean,
 ): Promise<LibraryIndex> {
   await commitLibraryOrganizationUnlocked(
     await prepareLibraryOrganizationUnlocked({
@@ -62,6 +63,8 @@ export async function renameWorkUnlocked(
       workId,
       title,
     }),
+    undefined,
+    { moveResultFolders },
   );
   return listLibraryAfterCommittedMutation();
 }
@@ -69,6 +72,7 @@ export async function renameWorkUnlocked(
 export async function renameChapterUnlocked(
   chapterId: string,
   title: string,
+  moveResultFolders?: boolean,
 ): Promise<LibraryIndex> {
   const locator = await findChapterLocation(chapterId);
   if (!locator) throw new Error("화를 찾지 못했습니다.");
@@ -79,6 +83,8 @@ export async function renameChapterUnlocked(
       chapterId,
       title,
     }),
+    undefined,
+    { moveResultFolders },
   );
   return listLibraryAfterCommittedMutation();
 }

@@ -135,6 +135,9 @@ import type {
   LinkedWorkspaceActivityRequest,
   LinkedWorkspaceBooleanResult,
   LinkedWorkspaceStatus,
+  OrganizeLinkedResultsResult,
+  OrganizeLinkedResultsRequest,
+  OpenPreservedLinkedResultsRequest,
   LinkedWorkspaceStatusChangedEvent,
   UpdateLinkedWorkspaceRequest,
   ViewLinkedResultsRequest,
@@ -297,6 +300,12 @@ export interface MangaApi extends McpApi, ChatApi, ClaudeApi, GrokApi {
   getLinkedWorkspaceStatus: (
     chapterId: string,
   ) => Promise<LinkedWorkspaceStatus>;
+  organizeLinkedResults: (
+    target?: OrganizeLinkedResultsRequest,
+  ) => Promise<OrganizeLinkedResultsResult>;
+  openPreservedLinkedResults: (
+    request: OpenPreservedLinkedResultsRequest,
+  ) => Promise<ViewLinkedResultsResult>;
   listLinkedWorkspaceStatuses: (
     chapterIds: string[],
   ) => Promise<LinkedWorkspaceStatus[]>;
@@ -413,8 +422,16 @@ export interface MangaApi extends McpApi, ChatApi, ClaudeApi, GrokApi {
   importReviewText: (
     request: ImportReviewTextRequest,
   ) => Promise<ImportReviewTextResult>;
-  renameWork: (workId: string, title: string) => Promise<LibraryIndex>;
-  renameChapter: (chapterId: string, title: string) => Promise<LibraryIndex>;
+  renameWork: (
+    workId: string,
+    title: string,
+    moveResultFolders?: boolean,
+  ) => Promise<LibraryIndex>;
+  renameChapter: (
+    chapterId: string,
+    title: string,
+    moveResultFolders?: boolean,
+  ) => Promise<LibraryIndex>;
   deleteWork: (
     workId: string,
     removeCustomOutputs?: boolean,

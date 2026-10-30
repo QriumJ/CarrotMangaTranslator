@@ -4,6 +4,9 @@ import type {
   LinkedWorkspaceActivityRequest,
   LinkedWorkspaceBooleanResult,
   LinkedWorkspaceStatus,
+  OrganizeLinkedResultsResult,
+  OrganizeLinkedResultsRequest,
+  OpenPreservedLinkedResultsRequest,
   UpdateLinkedWorkspaceRequest,
   ViewLinkedResultsRequest,
   ViewLinkedResultsResult,
@@ -31,6 +34,52 @@ const viewResultSchema = z.discriminatedUnion("status", [
     .strict(),
 ]);
 export const linkedWorkspaceIpcContracts = {
+  organizeLinkedResults: defineIpcContract<
+    [OrganizeLinkedResultsRequest?],
+    OrganizeLinkedResultsResult
+  >({
+    apiKey: "organizeLinkedResults",
+    channel: "linked-workspace:organize-results",
+    args: z.tuple([
+      z
+        .object({
+          workId: z.string().uuid(),
+          chapterId: z.string().uuid().optional(),
+        })
+        .strict()
+        .optional(),
+    ]),
+    result: z
+      .object({
+        moved: z.number().int().nonnegative(),
+        unchanged: z.number().int().nonnegative(),
+        preserved: z.number().int().nonnegative(),
+        failures: z
+          .array(
+            z
+              .object({ chapterId: z.string().uuid(), message: z.string() })
+              .strict(),
+          )
+          .max(2000),
+      })
+      .strict(),
+  }),
+  openPreservedLinkedResults: defineIpcContract<
+    [OpenPreservedLinkedResultsRequest],
+    ViewLinkedResultsResult
+  >({
+    apiKey: "openPreservedLinkedResults",
+    channel: "linked-workspace:open-preserved-results",
+    args: z.tuple([
+      z
+        .object({
+          chapterId: z.string().uuid(),
+          index: z.number().int().min(0).max(1999).optional(),
+        })
+        .strict(),
+    ]),
+    result: viewResultSchema,
+  }),
   getLinkedWorkspaceStatus: defineIpcContract<[string], LinkedWorkspaceStatus>({
     apiKey: "getLinkedWorkspaceStatus",
     channel: "linked-workspace:get-status",

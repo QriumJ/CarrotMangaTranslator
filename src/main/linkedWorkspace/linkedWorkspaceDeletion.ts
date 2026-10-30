@@ -49,7 +49,9 @@ const journalSchema = z
 type Journal = z.infer<typeof journalSchema>;
 type OwnedFile = { path: string; sha256: string };
 
-function ownedFiles(record: LinkedWorkspaceRecordV1): OwnedFile[] {
+export function ownedLinkedWorkspaceFiles(
+  record: LinkedWorkspaceRecordV1,
+): OwnedFile[] {
   const artifacts = Object.values(record.artifacts).flatMap((entry) =>
     Object.values(entry),
   );
@@ -90,7 +92,7 @@ export function isTrustedDarwinSystemAlias(
 }
 
 /** Refuse user junctions/symlinks in every component, including custom-root ancestors. */
-async function assertPlainPath(path: string): Promise<void> {
+export async function assertPlainLinkedPath(path: string): Promise<void> {
   let current = resolve(path);
   while (true) {
     if (await exists(current)) {
@@ -104,7 +106,9 @@ async function assertPlainPath(path: string): Promise<void> {
           entry.uid,
         )
       )
-        throw new Error(`연결된 경로는 자동 삭제할 수 없습니다: ${current}`);
+        throw new Error(
+          `정션·심볼릭 링크로 연결된 경로는 변경할 수 없습니다: ${current}`,
+        );
     }
     const parent = dirname(current);
     if (parent === current) return;
@@ -124,7 +128,7 @@ async function planDeletion(
     all
       .filter((record) => !deleting.has(record.id))
       .flatMap((record) =>
-        ownedFiles(record).map((file) =>
+        ownedLinkedWorkspaceFiles(record).map((file) =>
           resolvePathInside(record.rootPath, file.path).toLowerCase(),
         ),
       ),
@@ -136,8 +140,8 @@ async function planDeletion(
   for (const record of records.filter(
     (entry) => entry.destinationKind === "managed" || removeCustom,
   )) {
-    await assertPlainPath(record.rootPath);
-    for (const file of ownedFiles(record)) {
+    await assertPlainLinkedPath(record.rootPath);
+    for (const file of ownedLinkedWorkspaceFiles(record)) {
       const path = resolvePathInside(record.rootPath, file.path);
       if (
         seen.has(path.toLowerCase()) ||
@@ -145,7 +149,7 @@ async function planDeletion(
       )
         continue;
       seen.add(path.toLowerCase());
-      await assertPlainPath(path);
+      await assertPlainLinkedPath(path);
       if (!(await exists(path))) continue;
       // Files edited or replaced outside the app are not ours to remove.
       if ((await fingerprintFile(path)).sha256 !== file.sha256) continue;
@@ -188,7 +192,7 @@ async function planMirror(
   );
   if (seen.has(path.toLowerCase())) return null;
   seen.add(path.toLowerCase());
-  await assertPlainPath(path);
+  await assertPlainLinkedPath(path);
   if (!(await exists(path))) return null;
   const raw = await readFile(path, "utf8");
   const mirror = JSON.parse(raw) as Record<string, unknown> | null;
@@ -220,7 +224,7 @@ async function protectedMirrorPaths(
   const paths: string[] = [];
   for (const root of new Set(records.map((record) => record.rootPath))) {
     const path = resolvePathInside(root, buildLinkedMirrorFileName(root));
-    await assertPlainPath(path);
+    await assertPlainLinkedPath(path);
     const mirror = await readJsonFile<{
       chapters?: { id: string; pages?: unknown[] }[];
     } | null>(path, null);
@@ -252,7 +256,7 @@ function mirrorPagePaths(page: unknown): string[] {
 async function restore(journal: Journal): Promise<void> {
   for (const file of [...journal.files].reverse()) {
     if (!(await exists(file.staged))) continue;
-    await assertPlainPath(file.path);
+    await assertPlainLinkedPath(file.path);
     if (await exists(file.path))
       throw new Error(`삭제 복구 대상에 다른 파일이 있습니다: ${file.path}`);
     await rename(file.staged, file.path);
@@ -267,7 +271,7 @@ async function pruneEmpty(
   let current = directory;
   while (true) {
     if (preserveRoot && current === resolve(root)) return;
-    await assertPlainPath(current);
+    await assertPlainLinkedPath(current);
     try {
       await rmdir(current);
     } catch (error) {
@@ -286,7 +290,7 @@ async function pruneEmpty(
 
 async function finish(journal: Journal): Promise<void> {
   for (const file of journal.files) {
-    await assertPlainPath(file.path);
+    await assertPlainLinkedPath(file.path);
     if (file.replacement !== undefined) {
       const existing = await readJsonFile<unknown>(file.path, null);
       if (
@@ -324,7 +328,7 @@ export async function deleteLinkedWorkspaceFiles<T>(options: {
   let committed = false;
   try {
     for (const file of journal.files) {
-      await assertPlainPath(file.path);
+      await assertPlainLinkedPath(file.path);
       await rename(file.path, file.staged);
       if (
         file.sha256 &&
