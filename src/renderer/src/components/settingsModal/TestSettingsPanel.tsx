@@ -1,9 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { settingsGateway } from "../../api/settingsGateway";
-import { toast } from "../../lib/toastStore";
+import { AppUpdateSettings } from "../AppUpdateSection";
 import type { TestState } from "../settingsModalTypes";
-import { formatSettingsErrorMessage } from "../settingsModalHelpers";
 import { SettingsSection } from "./SettingsSection";
 import { Button } from "../ui/Button";
 
@@ -29,7 +27,7 @@ export function TestSettingsPanel({
   const { t } = useTranslation("components");
   return (
     <div className="settings-panel-stack">
-      <UpdateSection />
+      <AppUpdateSettings />
       <SettingsSection title={t("settings.test.title")}>
         <div className="settings-inline-actions">
           <Button
@@ -62,60 +60,5 @@ export function TestSettingsPanel({
         ) : null}
       </SettingsSection>
     </div>
-  );
-}
-
-function UpdateSection(): React.JSX.Element {
-  const { t } = useTranslation("components");
-  const [info, setInfo] = React.useState<{
-    currentVersion: string;
-    releasesUrl: string;
-  } | null>(null);
-
-  React.useEffect(() => {
-    let active = true;
-    void settingsGateway
-      .getAppUpdateInfo()
-      .then((result) => {
-        if (active) {
-          setInfo(result);
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to read app update info", error);
-      });
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  return (
-    <SettingsSection title={t("settings.update.title")}>
-      <p className="muted-line">
-        {info
-          ? t("settings.update.currentVersion", {
-              version: info.currentVersion,
-            })
-          : t("settings.update.checkingVersion")}
-      </p>
-      <div className="settings-inline-actions">
-        <Button
-          type="button"
-          onClick={() => {
-            void settingsGateway.openReleasesPage().catch((error) => {
-              toast.error(
-                formatSettingsErrorMessage(
-                  error,
-                  t("settings.hardware.openLinkFailed"),
-                ),
-              );
-            });
-          }}
-          size="sm"
-        >
-          {t("settings.update.check")}
-        </Button>
-      </div>
-    </SettingsSection>
   );
 }

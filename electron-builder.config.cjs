@@ -403,7 +403,7 @@ module.exports = {
     // filenames. Keep the payload executable ASCII-only while preserving the
     // Korean product, installer, shortcut, and Control Panel display names.
     executableName: WINDOWS_EXECUTABLE_BASENAME,
-    artifactName: "${productName} Setup ${version}.${ext}",
+    artifactName: "CarrotMangaTranslator-Setup-v${version}.${ext}",
     // Keep only the Chromium locale packs that the app can select. The app's
     // own translations remain bundled by Vite; the other Electron locale
     // packs only add installer bytes and disk writes.
@@ -461,11 +461,10 @@ module.exports = {
     allowToChangeInstallationDirectory: true,
     perMachine: false,
     allowElevation: true,
-    // UAC is handled by setup/removal and the startup runas boundary, not
-    // electron-updater. Do not ship its unused resources/elevate.exe helper.
-    packElevateHelper: false,
-    // This app links users to GitHub Releases instead of applying
-    // differential electron-updater packages. ZIP extracts directly into the
+    // The updater needs the standard helper when installation requires UAC.
+    packElevateHelper: true,
+    // In-app updates use the full installer; differential packages stay off.
+    // ZIP extracts directly into the
     // install directory and avoids the default 7z temp-extract + full-copy
     // cycle for this large Electron bundle.
     differentialPackage: false,

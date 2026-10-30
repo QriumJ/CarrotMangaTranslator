@@ -1,4 +1,8 @@
 export const APP_COMMAND_IDS = [
+  "check-app-update",
+  "download-app-update",
+  "cancel-app-update",
+  "install-app-update",
   "open-translate-options",
   "open-chat",
   "edit-block-text",

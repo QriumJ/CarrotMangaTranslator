@@ -295,6 +295,7 @@ function resolveDefaultUiSettings(
     wheelZoomSensitivityPercent: 1,
     hayaiTranslationUi: "workflow",
     blockReadingSize: 15,
+    checkUpdatesOnStartup: true,
     exportPreferences: { ...DEFAULT_EXPORT_PREFERENCES },
   };
 }

@@ -1,3 +1,4 @@
+import { registerAppUpdateIpc } from "./appUpdateIpc";
 import { registerMcpDesktopIpc } from "./mcpDesktopIpc";
 import { registerChatIpc } from "./chatIpc";
 import { registerEnvironmentBackupIpc } from "./environmentBackupIpc";
@@ -84,6 +85,7 @@ export function registerIpc(context: IpcContext): void {
   registerBlockLibraryIpc(context);
   registerConditionalBatchIpc(context);
   registerExternalLinksIpc(context);
+  registerAppUpdateIpc(context);
   registerErrorReportIpc(context);
   registerLogsIpc(context);
   registerSettingsIpc(context);

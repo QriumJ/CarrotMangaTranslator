@@ -2667,10 +2667,40 @@
     },
     "update": {
       "title": "업데이트",
-      "currentVersion": "현재 버전: {{version}}",
+      "currentVersion": "현재 버전 {{version}}",
       "checkingVersion": "현재 버전: 확인 중…",
-      "check": "업데이트 확인 (릴리스 페이지 열기)",
-      "description": "새 버전 설치 파일을 같은 위치에 설치해도 모델·보관함·OCR 런타임 등 데이터는 그대로 유지됩니다. 제거할 때 ‘데이터도 함께 삭제’를 직접 선택하지 않으면 데이터는 지워지지 않습니다."
+      "check": "업데이트 확인",
+      "description": "새 버전 설치 파일을 같은 위치에 설치해도 모델·보관함·OCR 런타임 등 데이터는 그대로 유지됩니다. 제거할 때 ‘데이터도 함께 삭제’를 직접 선택하지 않으면 데이터는 지워지지 않습니다.",
+      "download": "다운로드",
+      "cancel": "다운로드 취소",
+      "install": "재시작하여 업데이트",
+      "openInstaller": "설치 파일 열기",
+      "onStartup": "실행 시 업데이트 확인",
+      "statusCenterHint": "작업 센터에서 계속",
+      "busy": "작업이 끝나면 설치할 수 있습니다.",
+      "phases": {
+        "idle": "업데이트를 확인할 수 있습니다.",
+        "checking": "업데이트 확인 중…",
+        "current": "최신 버전입니다.",
+        "available": "새 버전 {{version}}",
+        "downloading": "{{version}} 다운로드 중…",
+        "ready": "{{version}} 설치 준비 완료",
+        "preparing": "편집 내용 저장 중…",
+        "installing": "설치 시작 중…",
+        "error": "업데이트 실패"
+      },
+      "errors": {
+        "network": "업데이트를 확인하지 못했습니다. 연결을 확인하고 다시 시도하세요.",
+        "incomplete": "새 버전의 설치 파일을 준비 중입니다. 잠시 후 다시 확인하세요.",
+        "integrity": "다운로드한 파일이 손상됐습니다. 다시 다운로드하세요.",
+        "download": "다운로드하지 못했습니다. 연결과 디스크 여유 공간을 확인하세요.",
+        "save": "편집 내용을 저장하지 못해 설치를 중단했습니다. 저장 상태를 확인하세요.",
+        "busy": "진행 중인 작업을 마친 뒤 다시 시도하세요.",
+        "install": "설치를 시작하지 못했습니다. 다시 시도하세요.",
+        "unsupported": "이 실행 환경에서는 앱 내 업데이트를 지원하지 않습니다.",
+        "storage": "업데이트 파일을 저장하지 못했습니다. 여유 공간과 폴더 권한을 확인하세요."
+      },
+      "preferenceError": "설정을 저장하지 못했습니다."
     },
     "validation": {
       "languageCode": "번역 언어 코드는 en, ja, zh-Hans, pt-BR 같은 형식이어야 합니다.",

@@ -182,6 +182,7 @@ type OcrSettings = {
 };
 
 export type UiSettings = {
+  checkUpdatesOnStartup?: boolean;
   exportPreferences?: import("./exportPreferences").ExportPreferences;
   hayaiTranslationUi?: "classic" | "workflow";
   pageWorkflowDefault?: import("./pageWorkflowTypes").PageWorkflowPlan;

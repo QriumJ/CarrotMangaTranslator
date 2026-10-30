@@ -1063,9 +1063,9 @@ describe("Apple Silicon Alpha packaging", () => {
       "if: ${{ needs.build_verify.result == 'success' && !inputs.verify_only }}",
     );
     expect(workflow).toContain("default: false");
-    expect(workflow).toContain("--clobber");
-    expect(workflow).toContain("publish_attempt=1");
-    expect(workflow).toContain("retrying in ${delay} seconds");
+    expect(workflow).not.toContain("--clobber");
+    expect(workflow).toContain("Existing assets are never replaced.");
+    expect(workflow).toContain('gh release download "$RELEASE_TAG"');
     expect(workflow).toContain(
       "test ! -e dist/mac-alpha-hosted-app-smoke-waiver.json",
     );

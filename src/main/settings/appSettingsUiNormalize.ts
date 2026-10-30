@@ -29,6 +29,7 @@ export function normalizeUiSettings(
     base.cumulativeContextDetailDefault,
   );
   return {
+    checkUpdatesOnStartup: resolveBoolean(data.checkUpdatesOnStartup, true),
     exportPreferences: normalizeExportPreferences(data.exportPreferences),
     ...normalizePageWorkflowUi(data),
     ...resolveCodexTypesettingPreferences(data.codexTypesettingPreferences),

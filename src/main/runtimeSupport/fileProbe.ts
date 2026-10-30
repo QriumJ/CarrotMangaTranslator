@@ -293,7 +293,7 @@ async function verifyRemoteFileHash(
   return true;
 }
 
-async function sha256File(filePath: string): Promise<string> {
+export async function sha256File(filePath: string): Promise<string> {
   const hash = createHash("sha256");
   for await (const chunk of createReadStream(filePath)) {
     hash.update(chunk as Buffer);

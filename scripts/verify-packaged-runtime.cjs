@@ -143,7 +143,8 @@ const allowedElectronLocales = new Set([
 // resulting thin payload ceiling exact so unrelated growth fails closed.
 // CLI runtimes are downloaded from pinned official assets on first use.
 // Remove their former 49-file / 615 MiB allowance from the payload ceiling.
-const MAX_PACKAGED_FILES = 330;
+// In-app NSIS updates restore the single required resources/elevate.exe helper.
+const MAX_PACKAGED_FILES = 331;
 const MAX_PACKAGED_BYTES = 1080 * 1024 * 1024;
 
 for (const name of ["c", "claude"]) {

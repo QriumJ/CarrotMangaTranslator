@@ -3,6 +3,12 @@ import type {
   McpPageChangedEvent,
 } from "./mcpEditingTypes";
 import { z } from "zod";
+import {
+  AppUpdateStateSchema,
+  AppUpdatePreparationSchema,
+  type AppUpdateState,
+  type AppUpdatePreparation,
+} from "./appUpdate";
 import type { JobEvent, ModelTestProgressEvent } from "./jobTypes";
 import { JobEventSchema, ModelTestProgressEventSchema } from "./ipcSchemas";
 import {
@@ -30,6 +36,16 @@ import type { ChatEvent } from "./chatTypes";
 import type { AppActivityState } from "./appActivityTypes";
 
 export const ipcEventContracts = {
+  appUpdateState: defineIpcEventContract<AppUpdateState>({
+    eventKey: "appUpdateState",
+    channel: "app-update:state",
+    payload: AppUpdateStateSchema,
+  }),
+  appUpdatePreparation: defineIpcEventContract<AppUpdatePreparation>({
+    eventKey: "appUpdatePreparation",
+    channel: "app-update:preparation",
+    payload: AppUpdatePreparationSchema,
+  }),
   chatEvent: defineIpcEventContract<ChatEvent>({
     eventKey: "chatEvent",
     channel: "chat:event",

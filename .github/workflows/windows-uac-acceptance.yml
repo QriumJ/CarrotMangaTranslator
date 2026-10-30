@@ -107,7 +107,7 @@ jobs:
       - name: Record tested source and package identity
         shell: pwsh
         run: |
-          $installers = @(Get-ChildItem -LiteralPath dist -Filter '* Setup *.exe')
+          $installers = @(Get-ChildItem -LiteralPath dist -Filter 'CarrotMangaTranslator-Setup-v*.exe')
           if ($installers.Count -ne 1) { throw 'Expected exactly one test installer.' }
           $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $installers[0].FullName).Hash.ToLowerInvariant()
           "$hash  $($installers[0].Name)" | Set-Content -Encoding utf8 dist/UAC-SHA256SUMS.txt
@@ -124,7 +124,7 @@ jobs:
         with:
           name: windows-uac-test-package-${{ github.sha }}
           path: |
-            dist/* Setup *.exe
+            dist/CarrotMangaTranslator-Setup-v*.exe
             dist/UAC-SHA256SUMS.txt
             dist/uac-acceptance.json
           if-no-files-found: error

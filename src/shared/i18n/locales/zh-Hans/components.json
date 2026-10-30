@@ -2667,10 +2667,40 @@
     },
     "update": {
       "title": "更新",
-      "currentVersion": "当前版本：{{version}}",
+      "currentVersion": "当前版本 {{version}}",
       "checkingVersion": "当前版本：检查中…",
-      "check": "检查更新（打开发布页面）",
-      "description": "在相同位置安装新版本会保留模型、资料库、OCR运行时等数据。只有卸载时明确选择删除数据，数据才会被移除。"
+      "check": "检查更新",
+      "description": "在相同位置安装新版本会保留模型、资料库、OCR运行时等数据。只有卸载时明确选择删除数据，数据才会被移除。",
+      "download": "下载",
+      "cancel": "取消下载",
+      "install": "重启并更新",
+      "openInstaller": "打开安装文件",
+      "onStartup": "启动时检查更新",
+      "statusCenterHint": "在任务中心继续",
+      "busy": "任务完成后即可安装。",
+      "phases": {
+        "idle": "可以检查更新。",
+        "checking": "正在检查更新…",
+        "current": "已是最新版本。",
+        "available": "新版本 {{version}}",
+        "downloading": "正在下载 {{version}}…",
+        "ready": "{{version}} 已准备好安装",
+        "preparing": "正在保存编辑内容…",
+        "installing": "正在启动安装…",
+        "error": "更新失败"
+      },
+      "errors": {
+        "network": "无法检查更新。请检查网络连接后重试。",
+        "incomplete": "新版本安装文件正在准备中。请稍后检查。",
+        "integrity": "下载的文件已损坏。请重新下载。",
+        "download": "下载失败。请检查连接和可用磁盘空间。",
+        "save": "无法保存编辑内容，已停止安装。请检查保存状态。",
+        "busy": "请完成当前任务后重试。",
+        "install": "无法启动安装。请重试。",
+        "unsupported": "此运行环境不支持应用内更新。",
+        "storage": "无法保存更新文件。请检查可用空间和文件夹权限。"
+      },
+      "preferenceError": "无法保存设置。"
     },
     "validation": {
       "languageCode": "翻译语言代码必须使用en、ja、zh-Hans、pt-BR等格式。",

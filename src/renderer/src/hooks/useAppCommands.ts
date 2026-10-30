@@ -1,3 +1,4 @@
+import { createAppUpdateCommands } from "../lib/appUpdateCommands";
 import { buildOutputCommands } from "../lib/appOutputCommands";
 import { buildWorkContextCommand } from "../lib/workContextCommand";
 import {
@@ -142,6 +143,7 @@ function buildAppCommandRegistry(
   options: LocalizedCommandOptions,
 ): AppCommandRegistry {
   const byId = {
+    ...createAppUpdateCommands(options.componentText),
     ...buildTranslationCommands(options),
     ...buildInpaintingCommands(options),
     ...buildJobCommands(options),

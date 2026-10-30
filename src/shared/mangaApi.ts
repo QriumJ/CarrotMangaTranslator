@@ -5,6 +5,11 @@ import type {
   SubmitGitHubReport,
   GitHubReportResult,
 } from "./githubReport";
+import type {
+  AppUpdateState,
+  AppUpdatePreparation,
+  AppUpdateAcknowledgement,
+} from "./appUpdate";
 import type { EditPageOrganizationRequest } from "./pageOrganization";
 import type { ExportPreferences } from "./exportPreferences";
 import type {
@@ -483,6 +488,17 @@ export interface MangaApi extends McpApi, ChatApi, ClaudeApi, GrokApi {
   pickLocalMmprojFile: () => Promise<string | null>;
   pickVertexServiceAccountFile: () => Promise<VertexServiceAccountPickResult | null>;
   openAmdHipSdkDownload: () => Promise<unknown>;
+  getAppUpdateState: () => Promise<AppUpdateState>;
+  checkAppUpdate: () => Promise<AppUpdateState>;
+  downloadAppUpdate: () => Promise<AppUpdateState>;
+  cancelAppUpdate: () => Promise<AppUpdateState>;
+  installAppUpdate: () => Promise<AppUpdateState>;
+  setAppUpdateCheckOnStartup: (enabled: boolean) => Promise<AppUpdateState>;
+  acknowledgeAppUpdate: (ack: AppUpdateAcknowledgement) => Promise<boolean>;
+  onAppUpdateState: (callback: (state: AppUpdateState) => void) => () => void;
+  onAppUpdatePreparation: (
+    callback: (request: AppUpdatePreparation) => void,
+  ) => () => void;
   getAppUpdateInfo: () => Promise<{
     currentVersion: string;
     releasesUrl: string;

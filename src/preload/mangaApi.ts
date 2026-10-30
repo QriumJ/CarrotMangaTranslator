@@ -37,6 +37,7 @@ export function createMangaApi(runtime: MangaApiRuntime): MangaApi {
   const invokeApi = bindInvokeContracts(ipcInvokeContracts, runtime.invoke);
   return {
     ...invokeApi,
+    ...bindAppUpdateEvents(runtime),
     onChatEvent: (callback) =>
       subscribeToIpcEvent(ipcEventContracts.chatEvent, callback, runtime),
     getPathForFile: runtime.getPathForFile,
@@ -134,5 +135,20 @@ function subscribeToIpcEvent<TPayload>(
   runtime.events.on(contract.channel, listener);
   return () => {
     runtime.events.removeListener(contract.channel, listener);
+  };
+}
+
+function bindAppUpdateEvents(
+  runtime: MangaApiRuntime,
+): Pick<MangaApi, "onAppUpdateState" | "onAppUpdatePreparation"> {
+  return {
+    onAppUpdateState: (callback) =>
+      subscribeToIpcEvent(ipcEventContracts.appUpdateState, callback, runtime),
+    onAppUpdatePreparation: (callback) =>
+      subscribeToIpcEvent(
+        ipcEventContracts.appUpdatePreparation,
+        callback,
+        runtime,
+      ),
   };
 }

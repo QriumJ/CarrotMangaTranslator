@@ -254,6 +254,20 @@ const bridgeTemplate = `(() => {
     saveConditionalBatchYamlFile: async () => null,
     importConditionalBatchYaml: async () => conditionalBatchSnapshot(),
   };
+  let appUpdate = { revision: 0, currentVersion: "3.7.8", platform: "windows", supported: true, checkOnStartup: true, phase: "idle", busy: false };
+  const updateListeners = new Set();
+  const update = (patch) => { appUpdate = { ...appUpdate, ...patch, revision: appUpdate.revision + 1 }; for (const listener of updateListeners) listener(appUpdate); return appUpdate; };
+  Object.assign(implementations, {
+    getAppUpdateState: async () => appUpdate,
+    checkAppUpdate: async () => update({ phase: "current" }),
+    downloadAppUpdate: async () => update({ phase: "ready", transferred: appUpdate.total }),
+    cancelAppUpdate: async () => update({ phase: "available" }),
+    installAppUpdate: async () => update({ phase: "installing" }),
+    setAppUpdateCheckOnStartup: async (checkOnStartup) => update({ checkOnStartup }),
+    acknowledgeAppUpdate: async () => true,
+    onAppUpdateState: (listener) => { updateListeners.add(listener); return () => updateListeners.delete(listener); },
+    onAppUpdatePreparation: () => () => {},
+  });
   const mangaApi = new Proxy(implementations, {
     get(target, property) {
       if (property in target) return target[property];

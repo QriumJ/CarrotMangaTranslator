@@ -7,6 +7,11 @@ on:
         description: "Release tag to create or update (example: v0.1.0)"
         required: true
         type: string
+      verify_only:
+        description: "Build and verify without publishing a release"
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -100,13 +105,32 @@ jobs:
       - name: Smoke test fresh install and upgrade
         run: node scripts/smoke-windows-installer.cjs
 
+      - name: Verify updater metadata
+        run: node scripts/verify-windows-update-metadata.cjs
+
+      - name: Verify old-version upgrade and user file preservation
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $previous = Join-Path $env:RUNNER_TEMP ([guid]::NewGuid().ToString())
+          New-Item -ItemType Directory -Path $previous | Out-Null
+          gh release download v3.7.7 --repo "${{ github.repository }}" --pattern 'CarrotMangaTranslator-Setup-v3.7.7.exe' --pattern 'SHA256SUMS-windows.txt' --dir $previous
+          if ($LASTEXITCODE -ne 0) { throw 'Could not download the previous release.' }
+          $line = (Get-Content -LiteralPath (Join-Path $previous 'SHA256SUMS-windows.txt') -Raw).Trim()
+          if ($line -notmatch '^([a-f0-9]{64})  CarrotMangaTranslator-Setup-v3\.7\.7\.exe$') { throw 'Invalid previous-release checksum manifest.' }
+          $expected = $Matches[1]
+          $oldInstaller = Join-Path $previous 'CarrotMangaTranslator-Setup-v3.7.7.exe'
+          if ((Get-FileHash -LiteralPath $oldInstaller -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) { throw 'Previous-release checksum mismatch.' }
+          & .github/scripts/verify-update-upgrade.ps1 -PreviousInstaller $oldInstaller
+
       - name: Seal Windows release artifact
         shell: pwsh
         env:
           RELEASE_TAG: ${{ steps.release_meta.outputs.tag }}
           RELEASE_NOTES_PATH: ${{ steps.release_meta.outputs.notes_path }}
         run: |
-          $files = @(Get-ChildItem -Path "dist" -Filter "* Setup *.exe")
+          $files = @(Get-ChildItem -Path "dist" -Filter "CarrotMangaTranslator-Setup-v*.exe")
           if ($files.Count -ne 1) {
             throw "Expected exactly one Windows installer, found $($files.Count)."
           }
@@ -123,6 +147,7 @@ jobs:
             runAttempt = "${{ github.run_attempt }}"
             artifact = $files[0].Name
             publishedArtifact = $publishedArtifact
+            updateMetadataSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath dist/latest.yml).Hash.ToLowerInvariant()
             sha256 = $hash
           } | ConvertTo-Json | Set-Content -Encoding utf8 dist/windows-provenance.json
 
@@ -133,14 +158,24 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           path: |
-            dist/* Setup *.exe
+            dist/CarrotMangaTranslator-Setup-v*.exe
+            dist/latest.yml
             dist/SHA256SUMS-windows.txt
             dist/windows-provenance.json
             dist/release-notes.md
 
+      - name: Preserve upgrade verification evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: windows-update-verification-${{ steps.release_meta.outputs.tag }}
+          path: .tmp/update-upgrade-evidence.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+
   publish:
     needs: build
-    if: ${{ needs.build.result == 'success' }}
+    if: ${{ needs.build.result == 'success' && !inputs.verify_only }}
     runs-on: windows-latest
     environment: release
     permissions:
@@ -158,7 +193,7 @@ jobs:
           RELEASE_TAG: ${{ needs.build.outputs.tag }}
           RELEASE_TARGET: ${{ needs.build.outputs.target }}
         run: |
-          $files = @(Get-ChildItem -Path "release-artifact" -Filter "* Setup *.exe")
+          $files = @(Get-ChildItem -Path "release-artifact" -Filter "CarrotMangaTranslator-Setup-v*.exe")
           if ($files.Count -ne 1) {
             throw "Expected exactly one sealed Windows installer, found $($files.Count)."
           }
@@ -175,6 +210,8 @@ jobs:
           if ($provenance.commit -ne $env:RELEASE_TARGET) { throw "Windows provenance commit does not match the release target." }
           $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $files[0].FullName).Hash.ToLowerInvariant()
           if ($actual -ne $expected) { throw "Windows release artifact checksum mismatch." }
+          $metadataHash = (Get-FileHash -Algorithm SHA256 -LiteralPath release-artifact/latest.yml).Hash.ToLowerInvariant()
+          if ($metadataHash -ne $provenance.updateMetadataSha256) { throw "Windows update metadata checksum mismatch." }
 
       - name: Publish GitHub release assets
         shell: pwsh
@@ -293,40 +330,34 @@ jobs:
             $release = Invoke-GitHubApiWithRetry -Method Post -Uri "https://api.github.com/repos/$owner/$repo/releases" -Headers $headers -Body $releaseBody -ContentType "application/json" -RecoveryUri $releaseByTagUri
           }
 
-          $files = @(Get-ChildItem -Path "release-artifact" -Filter "* Setup *.exe")
+          $files = @(Get-ChildItem -Path "release-artifact" -Filter "CarrotMangaTranslator-Setup-v*.exe")
           if ($files.Count -ne 1) {
-            throw "Expected exactly one Windows installer matching dist/* Setup *.exe, found $($files.Count)."
+            throw "Expected exactly one Windows installer matching dist/CarrotMangaTranslator-Setup-v*.exe, found $($files.Count)."
           }
 
           $release = Invoke-GitHubApiWithRetry -Method Patch -Uri "https://api.github.com/repos/$owner/$repo/releases/$($release.id)" -Headers $headers -Body $releaseUpdateBody -ContentType "application/json"
-          $replaceAssetNames = @(
-            "CarrotMangaTranslator-Setup-$env:RELEASE_TAG.exe",
-            "SHA256SUMS-windows.txt",
-            "windows-provenance.json"
-          )
-          foreach ($asset in $release.assets) {
-            if ($replaceAssetNames -contains $asset.name) {
-              Invoke-GitHubApiWithRetry -Method Delete -Uri "https://api.github.com/repos/$owner/$repo/releases/assets/$($asset.id)" -Headers $headers
-              Write-Host "Deleted existing asset $($asset.name)"
-            }
-          }
-
           $uploadUrl = $release.upload_url -replace "\{\?name,label\}", ""
-          foreach ($file in $files) {
-            $assetName = "CarrotMangaTranslator-Setup-$env:RELEASE_TAG.exe"
-            $encodedName = [uri]::EscapeDataString($assetName)
-            $assetUploadUri = "$($uploadUrl)?name=$encodedName"
-            Invoke-RestMethod `
-              -Method Post `
-              -Uri $assetUploadUri `
-              -Headers $headers `
-              -ContentType "application/octet-stream" `
-              -InFile $file.FullName `
-              -TimeoutSec 3600
-            Write-Host "Uploaded $assetName from $($file.Name)"
-          }
-          foreach ($supportFile in @("SHA256SUMS-windows.txt", "windows-provenance.json")) {
-            $supportPath = Join-Path "release-artifact" $supportFile
-            $encodedName = [uri]::EscapeDataString($supportFile)
-            Invoke-RestMethod -Method Post -Uri "$($uploadUrl)?name=$encodedName" -Headers $headers -ContentType "application/octet-stream" -InFile $supportPath -TimeoutSec 3600
+          # A complete installer and checksums must be remotely verified before advertising it.
+          $assetNames = @("CarrotMangaTranslator-Setup-$env:RELEASE_TAG.exe", "SHA256SUMS-windows.txt", "windows-provenance.json", "latest.yml")
+          $verifyRoot = Join-Path $env:RUNNER_TEMP ([guid]::NewGuid().ToString())
+          New-Item -ItemType Directory -Path $verifyRoot | Out-Null
+          foreach ($assetName in $assetNames) {
+            $localPath = Join-Path "release-artifact" $assetName
+            $localHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $localPath).Hash
+            $localSize = (Get-Item -LiteralPath $localPath).Length
+            $existing = @($release.assets | Where-Object { $_.name -eq $assetName })
+            if ($existing.Count -gt 1) { throw "Duplicate release asset: $assetName" }
+            if ($existing.Count -eq 1) {
+              $asset = $existing[0]
+            } else {
+              $encodedName = [uri]::EscapeDataString($assetName)
+              $asset = Invoke-RestMethod -Method Post -Uri "$($uploadUrl)?name=$encodedName" -Headers $headers -ContentType "application/octet-stream" -InFile $localPath -TimeoutSec 3600
+            }
+            if ($asset.size -ne $localSize) { throw "Published asset size differs: $assetName. Existing assets are never replaced." }
+            $downloadHeaders = $headers.Clone()
+            $downloadHeaders.Accept = "application/octet-stream"
+            $verifiedPath = Join-Path $verifyRoot $assetName
+            Invoke-WebRequest -Uri $asset.url -Headers $downloadHeaders -OutFile $verifiedPath -TimeoutSec 3600
+            if ((Get-FileHash -Algorithm SHA256 -LiteralPath $verifiedPath).Hash -ne $localHash) { throw "Published asset checksum differs: $assetName. Existing assets are never replaced." }
+            Write-Host "Verified published asset: $assetName ($localSize bytes)"
           }

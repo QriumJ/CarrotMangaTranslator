@@ -2667,10 +2667,40 @@
     },
     "update": {
       "title": "更新",
-      "currentVersion": "目前版本：{{version}}",
+      "currentVersion": "目前版本 {{version}}",
       "checkingVersion": "目前版本：檢查中…",
-      "check": "檢查更新（開啟版本發布頁面）",
-      "description": "在相同位置安裝新版本會保留模型、資料庫、OCR執行階段等資料。只有卸載時明確選擇刪除資料，資料才會被移除。"
+      "check": "檢查更新",
+      "description": "在相同位置安裝新版本會保留模型、資料庫、OCR執行階段等資料。只有卸載時明確選擇刪除資料，資料才會被移除。",
+      "download": "下載",
+      "cancel": "取消下載",
+      "install": "重新啟動並更新",
+      "openInstaller": "開啟安裝檔案",
+      "onStartup": "啟動時檢查更新",
+      "statusCenterHint": "在工作中心繼續",
+      "busy": "工作完成後即可安裝。",
+      "phases": {
+        "idle": "可以檢查更新。",
+        "checking": "正在檢查更新…",
+        "current": "已是最新版本。",
+        "available": "新版本 {{version}}",
+        "downloading": "正在下載 {{version}}…",
+        "ready": "{{version}} 已準備好安裝",
+        "preparing": "正在儲存編輯內容…",
+        "installing": "正在啟動安裝…",
+        "error": "更新失敗"
+      },
+      "errors": {
+        "network": "無法檢查更新。請檢查網路連線後重試。",
+        "incomplete": "新版本安裝檔案正在準備中。請稍後檢查。",
+        "integrity": "下載的檔案已損毀。請重新下載。",
+        "download": "下載失敗。請檢查連線和可用磁碟空間。",
+        "save": "無法儲存編輯內容，已停止安裝。請檢查儲存狀態。",
+        "busy": "請完成目前工作後重試。",
+        "install": "無法啟動安裝。請重試。",
+        "unsupported": "此執行環境不支援應用程式內更新。",
+        "storage": "無法儲存更新檔案。請檢查可用空間及資料夾權限。"
+      },
+      "preferenceError": "無法儲存設定。"
     },
     "validation": {
       "languageCode": "翻譯語言代碼必須使用 en、ja、zh-Hans、pt-BR 等格式。",

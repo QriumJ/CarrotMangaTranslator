@@ -49,6 +49,7 @@ const electronBoundary = vi.hoisted(() => {
 vi.mock("electron", () => ({
   app: {
     exit: vi.fn(),
+    once: vi.fn(),
     getLocale: () => "ko",
     getPath: () => "C:\\test",
     getVersion: () => "1.0.0",
@@ -288,6 +289,8 @@ it("registers and removes every preload event listener on its contract channel",
     warn: vi.fn(),
   });
   const subscriptions = [
+    ["onAppUpdateState", ipcEventContracts.appUpdateState],
+    ["onAppUpdatePreparation", ipcEventContracts.appUpdatePreparation],
     ["onAppActivities", ipcEventContracts.appActivities],
     [
       "onLinkedWorkspaceStatusChanged",
