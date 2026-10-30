@@ -46,61 +46,64 @@ function mountedImages() {
     }).toString(),
   ).images;
 }
-try {
-  await app.whenReady();
-  await new Promise((done) => server.listen(0, "127.0.0.1", done));
-  const baseUrl = `http://127.0.0.1:${server.address().port}/`;
-  const release = {
-    version,
-    tag: `v${version}`,
-    baseUrl,
-    name,
-    url: baseUrl + name,
-    size,
-    sha256,
-  };
-  const download = new AppUpdateDownload(() => {});
-  await download.download(release, new AbortController().signal, () => {});
-  await download.install(release);
-  const cachedDmg = join(root, "app-updates", version, name);
-  const deadline = Date.now() + 30000;
-  while (Date.now() < deadline) {
-    mounted = mountedImages().find(
-      (entry) => entry["image-path"] === cachedDmg,
+async function run() {
+  try {
+    await app.whenReady();
+    await new Promise((done) => server.listen(0, "127.0.0.1", done));
+    const baseUrl = `http://127.0.0.1:${server.address().port}/`;
+    const release = {
+      version,
+      tag: `v${version}`,
+      baseUrl,
+      name,
+      url: baseUrl + name,
+      size,
+      sha256,
+    };
+    const download = new AppUpdateDownload(() => {});
+    await download.download(release, new AbortController().signal, () => {});
+    await download.install(release);
+    const cachedDmg = join(root, "app-updates", version, name);
+    const deadline = Date.now() + 30000;
+    while (Date.now() < deadline) {
+      mounted = mountedImages().find(
+        (entry) => entry["image-path"] === cachedDmg,
+      );
+      if (mounted) break;
+      await new Promise((done) => setTimeout(done, 500));
+    }
+    assert.ok(mounted, "shell.openPath must mount the verified downloaded DMG");
+    await writeFile(
+      "dist/mac-update-verification.json",
+      JSON.stringify(
+        {
+          version,
+          size,
+          sha256,
+          downloaded: true,
+          verified: true,
+          opened: true,
+          source: "local HTTP server serving the real release DMG",
+        },
+        null,
+        2,
+      ),
     );
-    if (mounted) break;
-    await new Promise((done) => setTimeout(done, 500));
+    console.log(
+      "Production updater downloaded, verified and opened the real DMG.",
+    );
+  } catch (error) {
+    console.error(error);
+    process.exitCode = 1;
+  } finally {
+    if (mounted) {
+      const device = mounted["system-entities"].find(
+        (entry) => entry["mount-point"],
+      )?.["dev-entry"];
+      if (device) execFileSync("hdiutil", ["detach", device]);
+    }
+    server.close();
+    app.exit(process.exitCode ?? 0);
   }
-  assert.ok(mounted, "shell.openPath must mount the verified downloaded DMG");
-  await writeFile(
-    "dist/mac-update-verification.json",
-    JSON.stringify(
-      {
-        version,
-        size,
-        sha256,
-        downloaded: true,
-        verified: true,
-        opened: true,
-        source: "local HTTP server serving the real release DMG",
-      },
-      null,
-      2,
-    ),
-  );
-  console.log(
-    "Production updater downloaded, verified and opened the real DMG.",
-  );
-} catch (error) {
-  console.error(error);
-  process.exitCode = 1;
-} finally {
-  if (mounted) {
-    const device = mounted["system-entities"].find(
-      (entry) => entry["mount-point"],
-    )?.["dev-entry"];
-    if (device) execFileSync("hdiutil", ["detach", device]);
-  }
-  server.close();
-  app.exit(process.exitCode ?? 0);
 }
+void run();
