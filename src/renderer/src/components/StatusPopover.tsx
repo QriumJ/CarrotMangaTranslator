@@ -1,4 +1,6 @@
 import React from "react";
+import { AppUpdateStatus } from "./AppUpdateSection";
+import { hasAppUpdateNews, useAppUpdate } from "../hooks/useAppUpdate";
 import { IconBug, IconRefresh, IconTrash, IconX } from "@tabler/icons-react";
 import { useTranslation } from "react-i18next";
 import type { JobState } from "../../../shared/jobTypes";
@@ -79,6 +81,7 @@ export function StatusPopover({
   jobHistory = [],
 }: StatusPopoverProps): React.JSX.Element {
   const titleId = React.useId();
+  const updateVisible = hasAppUpdateNews(useAppUpdate());
   const soundPreferences = {
     muted: completionSoundMuted,
     volume: completionSoundVolume,
@@ -104,8 +107,10 @@ export function StatusPopover({
         onClose={onClose}
         onOpenErrorReport={onOpenErrorReport}
       />
+      <AppUpdateStatus />
       <ConcurrentTaskStatus
         taskController={taskController}
+        hideIdle={updateVisible}
         jobState={jobState}
         operationActivity={operationActivity}
         progressSnapshot={progressSnapshot}

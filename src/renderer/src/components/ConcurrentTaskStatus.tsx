@@ -13,11 +13,15 @@ import { toastNotificationPort } from "../lib/notificationPort";
 export function ConcurrentTaskStatus(
   props: React.ComponentProps<typeof CurrentStatusContent> & {
     taskController: ReturnType<typeof useStatusCenterTasks>;
+    /** Another status (e.g. an app update) already fills the empty state. */
+    hideIdle?: boolean;
   },
 ): React.JSX.Element {
   const { t: rendererT } = useTranslation("renderer");
-  const { tasks, selected, select } = props.taskController;
+  const { hideIdle, taskController, ...content } = props;
+  const { tasks, selected, select, idle } = taskController;
   const job = selected.job ?? props.jobState;
+  if (hideIdle && idle) return <PageHandoffStatus jobId={selected.id} />;
   return (
     <>
       {tasks.length > 1 ? (
@@ -43,7 +47,7 @@ export function ConcurrentTaskStatus(
         </div>
       ) : null}
       <CurrentStatusContent
-        {...props}
+        {...content}
         jobState={job}
         operationActivity={selected.operation ?? null}
         progressSnapshot={

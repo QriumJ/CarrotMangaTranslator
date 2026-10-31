@@ -1,4 +1,5 @@
 import React from "react";
+import { useAppUpdateNotice } from "../hooks/useAppUpdate";
 import { IconBell } from "@tabler/icons-react";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
@@ -82,7 +83,9 @@ export function StatusDockButton({
     resolvedStatusEntries,
     operationLine ?? resolveActiveJobLine(jobState),
   );
-  const latest = resolveLatestStatusLine(operationLine, resolvedStatusEntries);
+  const latest = useAppUpdateNotice(
+    resolveLatestStatusLine(operationLine, resolvedStatusEntries),
+  );
   const {
     closePopover,
     open,

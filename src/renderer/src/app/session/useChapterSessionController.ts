@@ -211,6 +211,7 @@ function useChapterRuntimeController({
   const linkedWorkspace = useLinkedWorkspaceController({
     currentChapter: core.currentChapter,
     currentPageId: core.selectedPageId,
+    library: core.library,
     pushStatus: statusLog.pushStatus,
     saveNow: persistence.saveNow,
   });

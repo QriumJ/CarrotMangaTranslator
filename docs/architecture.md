@@ -521,3 +521,40 @@ coverage floor는 유지한다. 계약과 검증은 `docs/page-organization-edit
 페이지 이름 변경의 공백·대소문자·숫자 정리 도움말은 공용 `ControlTooltip`을 직접 사용한다.
 스크롤 영역 밖 portal과 마우스/키보드 동작을 재사용하며, 해당 primitive의 소비 상한만
 37에서 실제 소비 수 38로 조정했다.
+
+# 2026-10-31 기본 결과 폴더 제목 동기화
+
+작품·화 제목 변경의 native organization commit에서 결과물 동기화를 알린다. desktop과
+MCP/Undo가 같은 경로를 사용하며, 보관함 쓰기 잠금이 풀린 다음 기존 activity gate와
+동기화 서비스의 metadata publication 경계에서 기본 결과물만 옮긴다.
+기존 삭제 모듈의 파일 소유권 목록과 정션 검사, storage의 경로 검사·원자적 JSON 저장을
+직접 재사용한다. 변경된 파일·추가 파일·사용자 지정 폴더는 보존하고, 새 위치의 복사본을
+검증한 뒤 registry를 전환한다. registry 전환 전후의 중단은 별도 이동 journal로 복구한다.
+복구·일반 이동 모두 재귀 삭제 없이 검증된 파일과 빈 부모 디렉터리만 정리한다.
+
+직접 소비 증가의 실측 상한은 storage runtimeImportedBy 43, linkedWorkspaceSyncService
+runtimeImports 22, toastStore runtimeImportedBy 28이다. 결과 알림은 기존 공통 toast를
+사용한다. 전역 예산 및 기존 coverage floor는 낮추지 않는다.
+`linkedWorkspaceRelocation`, `resultOrganizationLinked`, `libraryOrganizationCompatibility`,
+`linkedWorkspaceDeletion`, `linkedWorkspaceSettingsPanel` 테스트가 소유권 보존과 연결을 검증한다.
+
+새 relocation 3개 모듈과 `LinkedResultsOrganization`의 최초 coverage는
+`.tmp/issue166-focused-coverage/coverage-summary.json`에 기록했다.
+SHA-256: `caafb83bd80fe0257162c73c68f4aa2a00559f7aa21f2b8b2e345725fbe06d90`.
+기존 모듈의 기준과 역사 provenance는 변경하지 않았다.
+불필요해진 `LinkedWorkspaceFolderRoles`와 전용 스타일·문구는 삭제했다. 이 파일은
+cleanup 기준 이후 추가된 파일이므로 introduced inventory에서만 제거한다.
+
+작품·화별 정리 요청과 보존 폴더 열기는 기존 linked workspace gateway/IPC를 확장한다.
+보존 폴더는 registry에 기록된 경로를 기존 managed-root 검사로 검증하며 임의 경로를 받지 않는다.
+이동 오류는 이미지 동기화 상태와 별도로 영속화하고, 해결 전에는 해당 화의 출력을 중지한다.
+결과 열기의 최종 경로 조회도 metadata 직렬화 안에서 수행해 이동 중 옛 폴더를 재생성하지 않는다.
+`linkedWorkspaceContext`는 실제 임시 파일을 사용해 범위 격리, 동시 결과 열기, 재시작,
+원제목 복원, 동일 위치 재연결과 외부 수정 파일 보존을 검증한다.
+
+설정 전용 `LinkedResultsOrganization`은 제거하고 보관함/출력/팔레트가 같은
+`AppCommandId`와 결과 명령 정의를 사용한다. 새 `linkedResultsCommands`,
+`libraryResultMenuItems`, `libraryTreeResults`의 최초 coverage는
+`.tmp/issue166-context-ui-coverage/coverage-summary.json`이며 SHA-256은
+`6a12febd65d10a00c22389b81208fd6edb9c2b6e9795151c519e8bc6b33e64dc`다.
+introduced inventory는 1,595개이며 기존 floor는 유지했다.

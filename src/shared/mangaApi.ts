@@ -5,6 +5,11 @@ import type {
   SubmitGitHubReport,
   GitHubReportResult,
 } from "./githubReport";
+import type {
+  AppUpdateState,
+  AppUpdatePreparation,
+  AppUpdateAcknowledgement,
+} from "./appUpdate";
 import type { EditPageOrganizationRequest } from "./pageOrganization";
 import type { ExportPreferences } from "./exportPreferences";
 import type {
@@ -135,6 +140,9 @@ import type {
   LinkedWorkspaceActivityRequest,
   LinkedWorkspaceBooleanResult,
   LinkedWorkspaceStatus,
+  OrganizeLinkedResultsResult,
+  OrganizeLinkedResultsRequest,
+  OpenPreservedLinkedResultsRequest,
   LinkedWorkspaceStatusChangedEvent,
   UpdateLinkedWorkspaceRequest,
   ViewLinkedResultsRequest,
@@ -297,6 +305,12 @@ export interface MangaApi extends McpApi, ChatApi, ClaudeApi, GrokApi {
   getLinkedWorkspaceStatus: (
     chapterId: string,
   ) => Promise<LinkedWorkspaceStatus>;
+  organizeLinkedResults: (
+    target?: OrganizeLinkedResultsRequest,
+  ) => Promise<OrganizeLinkedResultsResult>;
+  openPreservedLinkedResults: (
+    request: OpenPreservedLinkedResultsRequest,
+  ) => Promise<ViewLinkedResultsResult>;
   listLinkedWorkspaceStatuses: (
     chapterIds: string[],
   ) => Promise<LinkedWorkspaceStatus[]>;
@@ -413,8 +427,16 @@ export interface MangaApi extends McpApi, ChatApi, ClaudeApi, GrokApi {
   importReviewText: (
     request: ImportReviewTextRequest,
   ) => Promise<ImportReviewTextResult>;
-  renameWork: (workId: string, title: string) => Promise<LibraryIndex>;
-  renameChapter: (chapterId: string, title: string) => Promise<LibraryIndex>;
+  renameWork: (
+    workId: string,
+    title: string,
+    moveResultFolders?: boolean,
+  ) => Promise<LibraryIndex>;
+  renameChapter: (
+    chapterId: string,
+    title: string,
+    moveResultFolders?: boolean,
+  ) => Promise<LibraryIndex>;
   deleteWork: (
     workId: string,
     removeCustomOutputs?: boolean,
@@ -466,6 +488,17 @@ export interface MangaApi extends McpApi, ChatApi, ClaudeApi, GrokApi {
   pickLocalMmprojFile: () => Promise<string | null>;
   pickVertexServiceAccountFile: () => Promise<VertexServiceAccountPickResult | null>;
   openAmdHipSdkDownload: () => Promise<unknown>;
+  getAppUpdateState: () => Promise<AppUpdateState>;
+  checkAppUpdate: () => Promise<AppUpdateState>;
+  downloadAppUpdate: () => Promise<AppUpdateState>;
+  cancelAppUpdate: () => Promise<AppUpdateState>;
+  installAppUpdate: () => Promise<AppUpdateState>;
+  setAppUpdateCheckOnStartup: (enabled: boolean) => Promise<AppUpdateState>;
+  acknowledgeAppUpdate: (ack: AppUpdateAcknowledgement) => Promise<boolean>;
+  onAppUpdateState: (callback: (state: AppUpdateState) => void) => () => void;
+  onAppUpdatePreparation: (
+    callback: (request: AppUpdatePreparation) => void,
+  ) => () => void;
   getAppUpdateInfo: () => Promise<{
     currentVersion: string;
     releasesUrl: string;

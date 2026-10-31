@@ -206,7 +206,6 @@ export function createRightRailProps(
     onCancelOperation: () => void model.operationActivity?.cancel(),
     onCompletionSoundChange: model.completionSound.setPreferences,
     onOpenErrorReport: openManualErrorReport,
-    onViewLinkedResults: () => void model.linkedWorkspace?.viewResults(),
   };
 }
 
@@ -222,10 +221,27 @@ function resolveRightRailReadingDirection(model: RightRailViewModel) {
   );
 }
 
+/** Output-area result state; actions run the same commands as menus and palette. */
 function resolveLinkedWorkspaceProps(model: RightRailViewModel) {
+  const { commandRegistry, linkedWorkspace } = model;
+  const chapter = model.core.currentChapter;
   return {
-    linkedWorkspaceStatus: model.linkedWorkspace?.status ?? null,
-    linkedWorkspaceViewBusy: model.linkedWorkspace?.viewBusy ?? false,
+    linkedWorkspaceStatus: linkedWorkspace?.status ?? null,
+    linkedWorkspaceViewBusy: linkedWorkspace?.viewBusy ?? false,
+    linkedWorkspaceOrganizing: Boolean(
+      chapter &&
+      linkedWorkspace?.isOrganizing({
+        workId: chapter.workId,
+        chapterId: chapter.id,
+      }),
+    ),
+    onViewLinkedResults:
+      commandRegistry?.byId["view-linked-results"].run ??
+      (() => void linkedWorkspace?.viewResults()),
+    onRetryLinkedResults: commandRegistry?.byId["organize-linked-results"].run,
+    onOpenPreviousLinkedResults:
+      commandRegistry?.byId["open-previous-linked-results"].run ??
+      (() => void linkedWorkspace?.openPreviousFolder()),
   };
 }
 

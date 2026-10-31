@@ -193,6 +193,10 @@ jobs:
           test ! -e dist/mac-alpha-hosted-app-smoke-waiver.json
           (cd dist && shasum -a 256 -c SHA256SUMS-macOS-arm64.txt)
 
+      - name: Verify production updater DMG download and opening
+        timeout-minutes: 5
+        run: npx electron tests/fixtures/appUpdateMac.mjs
+
       - name: Generate macOS provenance
         shell: bash
         run: |
@@ -213,6 +217,7 @@ jobs:
             dist/CarrotMangaTranslator-${{ steps.release_meta.outputs.version }}-macOS-arm64.zip
             dist/SHA256SUMS-macOS-arm64.txt
             dist/macOS-arm64-provenance.json
+            dist/mac-update-verification.json
             ${{ runner.temp }}/mac-release-ui-1440x900.png
             ${{ runner.temp }}/mac-release-ui-1240x760.png
 
@@ -262,23 +267,19 @@ jobs:
           test -s "$zip_path"
           test -s "$provenance_path"
           (cd "$artifact_dir" && shasum -a 256 -c SHA256SUMS-macOS-arm64.txt)
-          publish_attempt=1
-          while true; do
-            if gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" \
-              "$dmg_path" \
-              "$zip_path" \
-              "${checksum_paths[0]}" \
-              "$provenance_path" \
-              --clobber; then
-              break
+          verify_dir="$(mktemp -d)"
+          for asset_path in "$dmg_path" "$zip_path" "${checksum_paths[0]}" "$provenance_path"; do
+            asset_name="$(basename "$asset_path")"
+            gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' > "$verify_dir/asset-names.txt"
+            if ! grep -Fxq "$asset_name" "$verify_dir/asset-names.txt"; then
+              gh release upload "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" "$asset_path"
             fi
-            if (( publish_attempt >= 6 )); then
-              echo "macOS release asset upload failed after ${publish_attempt} attempts." >&2
+            gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern "$asset_name" --dir "$verify_dir"
+            expected="$(shasum -a 256 "$asset_path" | awk '{print $1}')"
+            actual="$(shasum -a 256 "$verify_dir/$asset_name" | awk '{print $1}')"
+            if [[ "$expected" != "$actual" ]]; then
+              echo "Published asset differs: $asset_name. Existing assets are never replaced." >&2
               exit 1
             fi
-            delay=$((5 * (1 << (publish_attempt - 1))))
-            if (( delay > 30 )); then delay=30; fi
-            echo "macOS release asset upload failed (attempt ${publish_attempt}/6); retrying in ${delay} seconds." >&2
-            sleep "$delay"
-            publish_attempt=$((publish_attempt + 1))
+            echo "Verified published asset: $asset_name"
           done

@@ -31,6 +31,7 @@ export function createLinkedWorkspaceRuntime(options: {
         (chapterId, pageIds, options) =>
           service.notifyPagesSaved(chapterId, pageIds, options),
         options.reportError,
+        (target) => service.organizeManagedResults(target),
       ),
   };
 }

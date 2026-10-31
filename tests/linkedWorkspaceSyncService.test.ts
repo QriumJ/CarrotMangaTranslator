@@ -1,3 +1,4 @@
+import { registerResultOrganizationLinkedCases } from "./resultOrganizationLinked.cases";
 import { registerPageOrganizationLinkedCases } from "./pageOrganizationLinked.cases";
 import { makeChapter } from "./fixtures/linkedWorkspace";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -1248,4 +1249,11 @@ registerPageOrganizationLinkedCases({
   makeConnectedService,
   requirePage,
   requireChapter,
+});
+
+registerResultOrganizationLinkedCases({
+  makeConnectedService,
+  createService,
+  requireChapter,
+  requireLibrary,
 });

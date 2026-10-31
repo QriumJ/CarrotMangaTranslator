@@ -991,12 +991,31 @@
       "duplicateCounts": "{{skipped}}개 건너뜀 · {{remaining}}개 가져오기"
     }
   },
-  "linkedWorkspaceFolders": {
-    "label": "자동 저장 폴더 역할",
-    "result": "최종 이미지",
-    "originals": "복구용 원본",
-    "inpainted": "원문 제거본",
-    "mask": "지운 영역"
+  "linkedResults": {
+    "organize": "제목에 맞춰 폴더 이름 변경",
+    "organizeAll": "모든 결과 폴더 이름을 제목에 맞춰 변경",
+    "moving": "결과 폴더 옮기는 중…",
+    "moveFailed": "결과 폴더를 옮기지 못했습니다",
+    "retry": "다시 시도",
+    "preserved": "이전 폴더에 남은 파일이 있습니다",
+    "openPrevious": "이전 폴더 열기",
+    "savedIn": "‘{{name}}’ 폴더에 저장됨",
+    "openFailed": "결과 폴더를 열지 못했습니다.",
+    "organizeFailed": "결과 폴더를 정리하지 못했습니다.",
+    "organizeDone": "결과 폴더 {{count}}개를 제목에 맞췄습니다.",
+    "organizeUpToDate": "결과 폴더가 이미 제목과 같습니다.",
+    "organizePartial": "{{count}}개 화의 폴더를 옮기지 못했습니다.",
+    "workIssueCount": "결과 폴더 문제 {{count}}개",
+    "issue": {
+      "moving": "폴더 옮기는 중…",
+      "moveFailed": "폴더 이동 실패",
+      "syncFailed": "자동 저장 실패",
+      "preserved": "이전 폴더에 파일 남음"
+    },
+    "savingPaused": "파일 보호를 위해 자동 저장 중지",
+    "details": "오류 내용 펼치기",
+    "hideDetails": "오류 내용 접기",
+    "refreshFailed": "결과 폴더 상태를 불러오지 못했습니다."
   },
   "rename": {
     "workTitle": "작품 이름 변경",
@@ -1006,7 +1025,8 @@
     "newName": "새 이름",
     "deleteWorkWarning": "작품을 삭제하면 포함된 모든 화, 페이지, 번역 결과와 용어/기억이 함께 삭제됩니다.",
     "deleteChapterWarning": "화를 삭제하면 포함된 페이지와 번역 결과가 함께 삭제됩니다.",
-    "deleteChapters": "화 골라서 삭제…"
+    "deleteChapters": "화 골라서 삭제…",
+    "moveResultFolders": "결과 폴더도 함께 변경"
   },
   "shareExport": {
     "title": "작업 내보내기",
@@ -1859,7 +1879,7 @@
       "psdAction": "PSD 출력",
       "syncing": "결과물 동기화 중",
       "pendingSync": "변경된 페이지 {{count}}개 대기",
-      "syncFailed": "자동 저장 실패 · 설정에서 다시 시도해 주세요",
+      "syncFailed": "자동 저장 실패",
       "syncDisabled": "결과물 자동 저장 꺼짐",
       "synced": "최신 결과 저장됨",
       "description": "블록의 폰트·색·위치를 정리한 뒤, 완성 PNG 또는 레이어 PSD 결과물로 내보냅니다.",
@@ -2647,10 +2667,40 @@
     },
     "update": {
       "title": "업데이트",
-      "currentVersion": "현재 버전: {{version}}",
+      "currentVersion": "현재 버전 {{version}}",
       "checkingVersion": "현재 버전: 확인 중…",
-      "check": "업데이트 확인 (릴리스 페이지 열기)",
-      "description": "새 버전 설치 파일을 같은 위치에 설치해도 모델·보관함·OCR 런타임 등 데이터는 그대로 유지됩니다. 제거할 때 ‘데이터도 함께 삭제’를 직접 선택하지 않으면 데이터는 지워지지 않습니다."
+      "check": "업데이트 확인",
+      "description": "새 버전 설치 파일을 같은 위치에 설치해도 모델·보관함·OCR 런타임 등 데이터는 그대로 유지됩니다. 제거할 때 ‘데이터도 함께 삭제’를 직접 선택하지 않으면 데이터는 지워지지 않습니다.",
+      "download": "다운로드",
+      "cancel": "다운로드 취소",
+      "install": "재시작하여 업데이트",
+      "openInstaller": "설치 파일 열기",
+      "onStartup": "실행 시 업데이트 확인",
+      "statusCenterHint": "작업 센터에서 계속",
+      "busy": "작업이 끝나면 설치할 수 있습니다.",
+      "phases": {
+        "idle": "업데이트를 확인할 수 있습니다.",
+        "checking": "업데이트 확인 중…",
+        "current": "최신 버전입니다.",
+        "available": "새 버전 {{version}}",
+        "downloading": "{{version}} 다운로드 중…",
+        "ready": "{{version}} 설치 준비 완료",
+        "preparing": "편집 내용 저장 중…",
+        "installing": "설치 시작 중…",
+        "error": "업데이트 실패"
+      },
+      "errors": {
+        "network": "업데이트를 확인하지 못했습니다. 연결을 확인하고 다시 시도하세요.",
+        "incomplete": "새 버전의 설치 파일을 준비 중입니다. 잠시 후 다시 확인하세요.",
+        "integrity": "다운로드한 파일이 손상됐습니다. 다시 다운로드하세요.",
+        "download": "다운로드하지 못했습니다. 연결과 디스크 여유 공간을 확인하세요.",
+        "save": "편집 내용을 저장하지 못해 설치를 중단했습니다. 저장 상태를 확인하세요.",
+        "busy": "진행 중인 작업을 마친 뒤 다시 시도하세요.",
+        "install": "설치를 시작하지 못했습니다. 다시 시도하세요.",
+        "unsupported": "이 실행 환경에서는 앱 내 업데이트를 지원하지 않습니다.",
+        "storage": "업데이트 파일을 저장하지 못했습니다. 여유 공간과 폴더 권한을 확인하세요."
+      },
+      "preferenceError": "설정을 저장하지 못했습니다."
     },
     "validation": {
       "languageCode": "번역 언어 코드는 en, ja, zh-Hans, pt-BR 같은 형식이어야 합니다.",

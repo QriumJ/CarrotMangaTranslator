@@ -311,16 +311,24 @@ export const libraryIpcContracts = {
     ]),
     result: z.string(),
   }),
-  renameWork: defineIpcContract<[string, string], LibraryIndex>({
+  renameWork: defineIpcContract<[string, string, boolean?], LibraryIndex>({
     apiKey: "renameWork",
     channel: "library:rename-work",
-    args: z.tuple([stringArg, z.string().max(MAX_TITLE_LENGTH)]),
+    args: z.tuple([
+      stringArg,
+      z.string().max(MAX_TITLE_LENGTH),
+      z.boolean().optional(),
+    ]),
     result: LibraryIndexSchema,
   }),
-  renameChapter: defineIpcContract<[string, string], LibraryIndex>({
+  renameChapter: defineIpcContract<[string, string, boolean?], LibraryIndex>({
     apiKey: "renameChapter",
     channel: "library:rename-chapter",
-    args: z.tuple([stringArg, z.string().max(MAX_TITLE_LENGTH)]),
+    args: z.tuple([
+      stringArg,
+      z.string().max(MAX_TITLE_LENGTH),
+      z.boolean().optional(),
+    ]),
     result: LibraryIndexSchema,
   }),
   deleteWork: defineIpcContract<[string, boolean?], LibraryIndex>({

@@ -991,12 +991,31 @@
       "duplicateCounts": "Skip {{skipped}} · Import {{remaining}}"
     }
   },
-  "linkedWorkspaceFolders": {
-    "label": "Automatic-save folder roles",
-    "result": "Final images",
-    "originals": "Recovery originals",
-    "inpainted": "Text-erased images",
-    "mask": "Erased areas"
+  "linkedResults": {
+    "organize": "Match folder name to title",
+    "organizeAll": "Match all result folder names to titles",
+    "moving": "Moving result folder…",
+    "moveFailed": "Couldn't move the result folder",
+    "retry": "Retry",
+    "preserved": "Some files stayed in the previous folder",
+    "openPrevious": "Open previous folder",
+    "savedIn": "Saved in “{{name}}”",
+    "openFailed": "Couldn't open the result folder.",
+    "organizeFailed": "Couldn't organize result folders.",
+    "organizeDone": "Matched {{count}} result folders to their titles.",
+    "organizeUpToDate": "Result folders already match their titles.",
+    "organizePartial": "Couldn't move folders for {{count}} chapters.",
+    "workIssueCount": "Result folder problems: {{count}}",
+    "issue": {
+      "moving": "Moving folder…",
+      "moveFailed": "Folder move failed",
+      "syncFailed": "Automatic save failed",
+      "preserved": "Files left in previous folder"
+    },
+    "savingPaused": "Auto-save paused to protect files",
+    "details": "Show error details",
+    "hideDetails": "Hide error details",
+    "refreshFailed": "Could not refresh result folder status."
   },
   "rename": {
     "workTitle": "Rename work",
@@ -1006,7 +1025,8 @@
     "newName": "New name",
     "deleteWorkWarning": "Deleting this work also removes all of its chapters, pages, translation results, and terminology/memory.",
     "deleteChapterWarning": "Deleting this chapter also removes all of its pages and translation results.",
-    "deleteChapters": "Delete selected chapters…"
+    "deleteChapters": "Delete selected chapters…",
+    "moveResultFolders": "Rename result folders too"
   },
   "shareExport": {
     "title": "Export work",
@@ -1859,7 +1879,7 @@
       "psdAction": "Export PSD",
       "syncing": "Syncing results",
       "pendingSync": "{{count}} changed pages waiting",
-      "syncFailed": "Automatic save failed · Retry from Settings",
+      "syncFailed": "Automatic save failed",
       "syncDisabled": "Automatic result saving is off",
       "synced": "Latest results saved",
       "description": "Refine block fonts, colors, and positions, then export a finished PNG or layered PSD.",
@@ -2647,10 +2667,40 @@
     },
     "update": {
       "title": "Update",
-      "currentVersion": "Current version: {{version}}",
+      "currentVersion": "Current version {{version}}",
       "checkingVersion": "Current version: checking…",
-      "check": "Check for updates (open releases page)",
-      "description": "Installing a new version in the same location preserves models, the library, OCR runtimes, and other data. Data is removed only if you explicitly select the option to delete it during uninstall."
+      "check": "Check for updates",
+      "description": "Installing a new version in the same location preserves models, the library, OCR runtimes, and other data. Data is removed only if you explicitly select the option to delete it during uninstall.",
+      "download": "Download",
+      "cancel": "Cancel download",
+      "install": "Restart and update",
+      "openInstaller": "Open installer",
+      "onStartup": "Check for updates on startup",
+      "statusCenterHint": "Continue in the activity center",
+      "busy": "Install after current tasks finish.",
+      "phases": {
+        "idle": "You can check for updates.",
+        "checking": "Checking for updates…",
+        "current": "You are up to date.",
+        "available": "Version {{version}} available",
+        "downloading": "Downloading {{version}}…",
+        "ready": "{{version}} ready to install",
+        "preparing": "Saving edits…",
+        "installing": "Starting installer…",
+        "error": "Update failed"
+      },
+      "errors": {
+        "network": "Could not check for updates. Check your connection and try again.",
+        "incomplete": "The new release is still being prepared. Check again later.",
+        "integrity": "The downloaded file is damaged. Download it again.",
+        "download": "Download failed. Check your connection and free disk space.",
+        "save": "Installation stopped because edits could not be saved. Check your saved work.",
+        "busy": "Finish current tasks and try again.",
+        "install": "Could not start installation. Try again.",
+        "unsupported": "In-app updates are not supported in this environment.",
+        "storage": "Could not save the update. Check free space and folder permissions."
+      },
+      "preferenceError": "Could not save the setting."
     },
     "validation": {
       "languageCode": "Translation language codes must use a format such as en, ja, zh-Hans, or pt-BR.",

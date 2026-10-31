@@ -143,7 +143,7 @@ describe("Windows installer permission policy", () => {
     expect(config.win.requestedExecutionLevel).toBe("asInvoker");
     expect(config.nsis.perMachine).toBe(false);
     expect(config.nsis.allowElevation).toBe(true);
-    expect(config.nsis.packElevateHelper).toBe(false);
+    expect(config.nsis.packElevateHelper).toBe(true);
     expect(installer).not.toMatch(/icacls|AccessControl::GrantOnFile/i);
     expect(removal).not.toMatch(/icacls|AccessControl::GrantOnFile/i);
   });

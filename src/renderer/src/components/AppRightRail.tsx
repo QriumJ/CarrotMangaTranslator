@@ -171,6 +171,8 @@ function useStableRightRailActions(
   | "onOpenExport"
   | "onOpenPsdExport"
   | "onViewLinkedResults"
+  | "onRetryLinkedResults"
+  | "onOpenPreviousLinkedResults"
   | "onOpenStyleGuide"
   | "onOpenTextView"
   | "onOpenTranslateOptions"
@@ -207,6 +209,10 @@ function useStableRightRailActions(
     onOpenExport: useEventCallback(props.onOpenExport),
     onOpenPsdExport: useEventCallback(props.onOpenPsdExport ?? NOOP),
     onViewLinkedResults: useEventCallback(props.onViewLinkedResults ?? NOOP),
+    onRetryLinkedResults: useEventCallback(props.onRetryLinkedResults ?? NOOP),
+    onOpenPreviousLinkedResults: useEventCallback(
+      props.onOpenPreviousLinkedResults ?? NOOP,
+    ),
     onOpenStyleGuide: useEventCallback(props.onOpenStyleGuide),
     onOpenTextView: useEventCallback(props.onOpenTextView),
     onOpenTranslateOptions: useEventCallback(props.onOpenTranslateOptions),

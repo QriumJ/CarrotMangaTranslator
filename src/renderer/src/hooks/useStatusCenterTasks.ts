@@ -83,8 +83,17 @@ export function useStatusCenterTasks(
       unsubOperation();
     };
   }, []);
+  const selection = resolveStatusCenterSelection(
+    tasks,
+    selectedId,
+    foreground,
+    operation,
+  );
   return {
-    ...resolveStatusCenterSelection(tasks, selectedId, foreground, operation),
+    ...selection,
+    // With no visible task, selection is the foreground placeholder.
+    idle:
+      selection.tasks.length === 0 && selection.selected.job?.status === "idle",
     completed: tasks.filter(isFinishedTask),
     select,
   };

@@ -1,6 +1,10 @@
 let exclusive = false;
 const pending = new Set<Promise<unknown>>();
 const allowed = new Set([
+  "app-update:install",
+  "app-update:get",
+  "app-update:acknowledge",
+  "app-update:cancel",
   "app-operation:cancel",
   "app-operation:get-active",
   "app-operation:get-all",
@@ -25,11 +29,31 @@ export async function trackEnvironmentAccess<T>(
     pending.delete(task);
   }
 }
-export async function suspendEnvironmentAccess(): Promise<() => void> {
+export async function suspendEnvironmentAccess(
+  signal?: AbortSignal,
+): Promise<() => void> {
   if (exclusive)
     throw new Error("An environment backup operation is already active.");
   exclusive = true;
-  await Promise.allSettled([...pending]);
+  let onAbort: (() => void) | undefined;
+  try {
+    signal?.throwIfAborted();
+    const drained = Promise.allSettled([...pending]);
+    if (signal) {
+      const aborted = new Promise<never>((_resolve, reject) => {
+        onAbort = () => reject(signal.reason);
+        signal.addEventListener("abort", onAbort, { once: true });
+      });
+      const results = await Promise.race([drained, aborted]);
+      if (results.some((result) => result.status === "rejected"))
+        throw new Error("A pending file operation failed");
+    } else await drained;
+  } catch (error) {
+    exclusive = false;
+    throw error;
+  } finally {
+    if (onAbort) signal?.removeEventListener("abort", onAbort);
+  }
   return () => {
     exclusive = false;
   };

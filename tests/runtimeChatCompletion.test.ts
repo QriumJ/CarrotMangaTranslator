@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 const { readChatCompletionResult } =
   require("../src/main/runtime/transport/chat-completion.cjs") as {
@@ -8,6 +8,14 @@ const { readChatCompletionResult } =
       requestSummary: Record<string, unknown>,
       requestStartedAt: number,
     ) => Promise<{ outputText: string }>;
+  };
+
+const { runWithApiKeyRetry } =
+  require("../src/main/runtime/transport/api-key-retry.cjs") as {
+    runWithApiKeyRetry: <T>(
+      options: Record<string, unknown>,
+      attempt: () => Promise<T>,
+    ) => Promise<T>;
   };
 
 function chatResponse(
@@ -29,6 +37,75 @@ function chatResponse(
 }
 
 describe("chat completion terminal reasons", () => {
+  it.each([
+    ["content_filter", "콘텐츠 정책"],
+    ["content_filter: PROHIBITED_CONTENT", "사유: PROHIBITED_CONTENT"],
+    ["content_filter: SAFETY", "사유: SAFETY"],
+    [" content_filter :\n OTHER_REASON ", "사유: OTHER_REASON"],
+    ["content_filter:", "콘텐츠 정책"],
+  ])("stops at a provider block: %s", async (finishReason, message) => {
+    // Gemini's blocked response omits message entirely, despite HTTP 200.
+    const attempt = vi.fn(() =>
+      readChatCompletionResult(
+        new Response(
+          JSON.stringify({
+            choices: [{ finish_reason: finishReason, index: 0 }],
+          }),
+          { status: 200 },
+        ),
+        {},
+        {},
+        Date.now(),
+      ),
+    );
+    await expect(
+      runWithApiKeyRetry(
+        {
+          modelProvider: "openai-api",
+          apiKey: "test-key-one\ntest-key-two",
+          apiKeyMaxAttempts: 3,
+          apiRetryDelaySeconds: 0,
+        },
+        attempt,
+      ),
+    ).rejects.toMatchObject({
+      message: expect.stringContaining(message),
+      failureCategory: "model-refusal",
+      nonRetriable: true,
+    });
+    expect(attempt).toHaveBeenCalledOnce();
+  });
+
+  it("rejects filtered content even when some output is present", async () => {
+    await expect(
+      readChatCompletionResult(
+        chatResponse('{"items":[]}', "content_filter: PROHIBITED_CONTENT"),
+        {},
+        {},
+        Date.now(),
+      ),
+    ).rejects.toMatchObject({
+      failureCategory: "model-refusal",
+      nonRetriable: true,
+      message: expect.stringContaining("PROHIBITED_CONTENT"),
+    });
+  });
+
+  it("keeps genuine empty output retriable and does not match similar names", async () => {
+    for (const reason of ["stop", "content_filter_disabled"]) {
+      const result = readChatCompletionResult(
+        chatResponse("", reason),
+        {},
+        {},
+        Date.now(),
+      );
+      await expect(result).rejects.toMatchObject({
+        failureCategory: "empty-model-response",
+      });
+      await expect(result).rejects.not.toHaveProperty("nonRetriable");
+    }
+  });
+
   it("rejects a nonempty structured response cut off by max_tokens", async () => {
     const promise = readChatCompletionResult(
       chatResponse('{"items":[', "length"),

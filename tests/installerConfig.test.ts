@@ -285,7 +285,7 @@ describe("Windows installer clean uninstall option", () => {
       "const MAX_PACKAGED_BYTES = 1080 * 1024 * 1024;",
     );
     expect(packagedRuntimeVerifier).toContain(
-      "const MAX_PACKAGED_FILES = 330;",
+      "const MAX_PACKAGED_FILES = 331;",
     );
     expect(packagedRuntimeVerifier).toContain(
       "const mainRuntimeSmokeMessage = runPackagedMainRuntimeSmoke();",
@@ -423,9 +423,6 @@ describe("Windows installer clean uninstall option", () => {
       );
       expect(extractPackage).not.toContain('    StrCmp $R0 "success" +3');
       expect(installerFunctions).toContain(
-        "      ; Manual GitHub-release updates do not use electron-updater's cached installer.",
-      );
-      expect(installerFunctions).not.toContain(
         '      !insertmacro copyFile "$EXEPATH" "$LOCALAPPDATA\\${APP_INSTALLER_STORE_FILE}"',
       );
     } finally {

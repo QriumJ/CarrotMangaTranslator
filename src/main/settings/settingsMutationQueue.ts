@@ -26,6 +26,7 @@ export function preserveIndependentUiPreferences(
       codexTypesettingPreferences:
         current.ui?.codexTypesettingPreferences ??
         submitted.ui?.codexTypesettingPreferences,
+      checkUpdatesOnStartup: current.ui?.checkUpdatesOnStartup,
       exportPreferences: current.ui?.exportPreferences,
     },
   };

@@ -37,12 +37,15 @@ export function useSubmitRenameAction({
   setLibrary,
   setRenameBusy,
   setRenameTarget,
-}: SubmitRenameActionOptions): (title: string) => Promise<void> {
+}: SubmitRenameActionOptions): (
+  title: string,
+  moveResultFolders?: boolean,
+) => Promise<void> {
   const { t } = useTranslation("renderer");
   const currentChapterId = currentChapter?.id ?? null;
 
   return useCallback(
-    async (title) => {
+    async (title, moveResultFolders = true) => {
       if (!renameTarget) {
         return;
       }
@@ -50,13 +53,23 @@ export function useSubmitRenameAction({
       setRenameBusy(true);
       try {
         if (renameTarget.kind === "work") {
-          setLibrary(await libraryGateway.renameWork(renameTarget.id, title));
+          setLibrary(
+            await libraryGateway.renameWork(
+              renameTarget.id,
+              title,
+              moveResultFolders,
+            ),
+          );
         } else {
           if (currentChapterId === renameTarget.id) {
             await saveCurrentChapterBeforeRename(dirty, saveNow);
           }
           setLibrary(
-            await libraryGateway.renameChapter(renameTarget.id, title),
+            await libraryGateway.renameChapter(
+              renameTarget.id,
+              title,
+              moveResultFolders,
+            ),
           );
           if (currentChapterId === renameTarget.id) {
             applyChapter(await libraryGateway.openChapter(renameTarget.id));

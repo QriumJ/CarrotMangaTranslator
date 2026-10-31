@@ -73,6 +73,69 @@ afterEach(() => {
   window.mangaApi = createTestMangaGatewayStub();
 });
 
+it.each(["work", "chapter"] as const)(
+  "lets users rename a %s without moving result folders",
+  async (kind) => {
+    const rename = vi.fn(async () => makeLibrary(5));
+    window.mangaApi = createTestMangaGatewayStub({
+      deleteChapters,
+      getLibrary,
+      ...(kind === "work" ? { renameWork: rename } : { renameChapter: rename }),
+    });
+    render(<LibraryEditHarness />);
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: kind === "work" ? "작품 열기" : "화 열기",
+      }),
+    );
+    const option = screen.getByRole("checkbox", {
+      name: "결과 폴더도 함께 변경",
+    }) as HTMLInputElement;
+    expect(option.checked).toBe(true);
+    fireEvent.click(option);
+    const input = screen.getByRole("textbox", { name: "새 이름" });
+    fireEvent.change(input, { target: { value: " 새 제목 " } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    await waitFor(() =>
+      expect(rename).toHaveBeenCalledExactlyOnceWith(
+        kind === "work" ? WORK : chapterId(1),
+        "새 제목",
+        false,
+      ),
+    );
+  },
+);
+
+it("defaults each new rename dialog to moving result folders", async () => {
+  const renameWork = vi.fn(async () => makeLibrary(5));
+  window.mangaApi = createTestMangaGatewayStub({
+    deleteChapters,
+    getLibrary,
+    renameWork,
+  });
+  render(<LibraryEditHarness />);
+  fireEvent.click(screen.getByRole("button", { name: "작품 열기" }));
+  fireEvent.click(
+    screen.getByRole("checkbox", { name: "결과 폴더도 함께 변경" }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "취소" }));
+  fireEvent.click(screen.getByRole("button", { name: "작품 열기" }));
+  expect(
+    (
+      screen.getByRole("checkbox", {
+        name: "결과 폴더도 함께 변경",
+      }) as HTMLInputElement
+    ).checked,
+  ).toBe(true);
+  fireEvent.change(screen.getByRole("textbox", { name: "새 이름" }), {
+    target: { value: "새 제목" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "저장" }));
+  await waitFor(() =>
+    expect(renameWork).toHaveBeenCalledExactlyOnceWith(WORK, "새 제목", true),
+  );
+});
+
 function Harness({
   currentChapter = null,
 }: {
@@ -344,7 +407,9 @@ function LibraryEditHarness({ count = 5 }: { count?: number }) {
       />
       <LibraryEditModals
         onCancelRename={() => actions.setRenameTarget(null)}
-        onSubmitRename={(title) => void actions.submitRename(title)}
+        onSubmitRename={(title, moveResultFolders) =>
+          void actions.submitRename(title, moveResultFolders)
+        }
         renameBusy={actions.renameBusy}
         renameTarget={actions.renameTarget}
       />

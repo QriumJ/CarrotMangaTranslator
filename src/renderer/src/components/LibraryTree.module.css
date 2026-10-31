@@ -60,3 +60,29 @@
   opacity: 1;
   cursor: default;
 }
+
+/* Result-folder state replaces the page meta line only while it needs attention. */
+.resultIssue[data-result-issue="moving"] {
+  color: var(--accent-hi);
+}
+
+.resultIssue[data-result-issue="moveFailed"],
+.resultIssue[data-result-issue="syncFailed"] {
+  color: var(--danger-text);
+}
+
+.resultIssue[data-result-issue="preserved"] {
+  color: var(--warning-text);
+}
+
+.resultIssueCount {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  padding-left: var(--sp-2);
+  color: var(--danger-text);
+  font-size: var(--font-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}

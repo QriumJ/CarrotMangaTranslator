@@ -171,14 +171,27 @@ function extractModelOutputFailure(parsed) {
       outputTruncated: true,
     };
   }
-  if (choice?.finish_reason === "content_filter") {
+  const filtered = contentFilterFailure(choice?.finish_reason);
+  if (filtered) return filtered;
+  return hasReasoningOnlyPayload(record) ? reasoningOnlyFailure() : null;
+}
+
+/** @param {unknown} finishReason */
+function contentFilterFailure(finishReason) {
+  // OpenAI-compatible providers may append a policy reason after a colon.
+  const contentFilter =
+    typeof finishReason === "string"
+      ? /^content_filter(?:\s*:\s*([\s\S]*))?$/.exec(finishReason.trim())
+      : null;
+  if (contentFilter) {
+    const reason = truncateInline(contentFilter[1] || "", 500);
     return {
-      message: "모델 응답이 content_filter로 차단되었습니다.",
+      message: `모델 제공자가 콘텐츠 정책에 따라 요청을 차단했습니다.${reason ? ` 사유: ${reason}` : ""}`,
       failureCategory: "model-refusal",
       nonRetriable: true,
     };
   }
-  return hasReasoningOnlyPayload(record) ? reasoningOnlyFailure() : null;
+  return null;
 }
 
 /**

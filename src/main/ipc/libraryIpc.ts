@@ -129,27 +129,45 @@ function registerLibraryRenameIpc(context: IpcContext): void {
   trustedHandleContract(
     context,
     libraryIpcContracts.renameWork,
-    async (_event, workId: unknown, title: unknown) => {
+    async (
+      _event,
+      workId: unknown,
+      title: unknown,
+      moveResultFolders?: unknown,
+    ) => {
       assertLibraryStructureMutationAvailable(context);
       const request = parseIpcPayload(
         RenameWorkRequestSchema,
-        { workId, title },
+        { workId, title, moveResultFolders },
         tMain("ipc.labels.workRename"),
       );
-      return renameWork(request.workId, request.title);
+      return renameWork(
+        request.workId,
+        request.title,
+        request.moveResultFolders,
+      );
     },
   );
   trustedHandleContract(
     context,
     libraryIpcContracts.renameChapter,
-    async (_event, chapterId: unknown, title: unknown) => {
+    async (
+      _event,
+      chapterId: unknown,
+      title: unknown,
+      moveResultFolders?: unknown,
+    ) => {
       assertLibraryStructureMutationAvailable(context);
       const request = parseIpcPayload(
         RenameChapterRequestSchema,
-        { chapterId, title },
+        { chapterId, title, moveResultFolders },
         tMain("ipc.labels.chapterRename"),
       );
-      return renameChapter(request.chapterId, request.title);
+      return renameChapter(
+        request.chapterId,
+        request.title,
+        request.moveResultFolders,
+      );
     },
   );
 }

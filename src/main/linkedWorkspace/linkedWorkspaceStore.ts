@@ -32,6 +32,16 @@ const linkedWorkspaceRecordSchema = z
     rootPath: z.string().min(1).max(4096),
     destinationKind: z.enum(["managed", "custom"]).optional(),
     enabled: z.boolean(),
+    organization: z
+      .object({
+        error: z.string().max(4000).optional(),
+        preservedRootPaths: z
+          .array(z.string().min(1).max(4096))
+          .max(2000)
+          .optional(),
+      })
+      .strict()
+      .optional(),
     output: RasterExportSettingsSchema,
     pageRelativePaths: z.record(z.string().uuid(), z.string().min(1).max(4096)),
     resultRelativePaths: z

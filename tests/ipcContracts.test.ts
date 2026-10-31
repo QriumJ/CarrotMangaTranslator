@@ -49,6 +49,7 @@ const electronBoundary = vi.hoisted(() => {
 vi.mock("electron", () => ({
   app: {
     exit: vi.fn(),
+    once: vi.fn(),
     getLocale: () => "ko",
     getPath: () => "C:\\test",
     getVersion: () => "1.0.0",
@@ -288,6 +289,8 @@ it("registers and removes every preload event listener on its contract channel",
     warn: vi.fn(),
   });
   const subscriptions = [
+    ["onAppUpdateState", ipcEventContracts.appUpdateState],
+    ["onAppUpdatePreparation", ipcEventContracts.appUpdatePreparation],
     ["onAppActivities", ipcEventContracts.appActivities],
     [
       "onLinkedWorkspaceStatusChanged",
@@ -474,7 +477,7 @@ it("focuses the main window when a detached editor opens the block library", asy
   expect(focus).toHaveBeenCalledOnce();
 });
 
-it("accepts linked-workspace activity from registered panels without widening other workspace IPC", async () => {
+async function linkedWorkspaceIpcFixture() {
   const [
     { registerLinkedWorkspaceIpc },
     { ActiveJobStore },
@@ -496,7 +499,17 @@ it("accepts linked-workspace activity from registered panels without widening ot
   );
   context.getMainWindow = () => mainWindow;
   context.panelWindows.isPanelSender = (webContentsId) => webContentsId === 29;
-  Reflect.set(context, "linkedWorkspaceSync", { reportActivity });
+  const organized = { moved: 1, unchanged: 0, preserved: 1, failures: [] };
+  const organizeManagedResults = vi.fn(async () => organized);
+  const openPreservedResults = vi.fn(async () => ({
+    status: "opened",
+    syncedPages: 0,
+  }));
+  Reflect.set(context, "linkedWorkspaceSync", {
+    reportActivity,
+    organizeManagedResults,
+    openPreservedResults,
+  });
   registerLinkedWorkspaceIpc(context);
 
   const activityHandler = electronBoundary.handlers.get(
@@ -516,7 +529,34 @@ it("accepts linked-workspace activity from registered panels without widening ot
     sender: { id: 31 },
     senderFrame: { url: rendererUrl },
   } as IpcMainInvokeEvent;
+  const mainEvent = {
+    sender: { id: 17 },
+    senderFrame: { url: rendererUrl },
+  } as IpcMainInvokeEvent;
+  return {
+    activityHandler,
+    statusHandler,
+    reportActivity,
+    organizeManagedResults,
+    openPreservedResults,
+    organized,
+    registeredPanelEvent,
+    unregisteredPanelEvent,
+    mainEvent,
+  };
+}
 
+it("accepts linked-workspace activity from registered panels without widening other workspace IPC", async () => {
+  const {
+    activityHandler,
+    statusHandler,
+    reportActivity,
+    organizeManagedResults,
+    organized,
+    registeredPanelEvent,
+    unregisteredPanelEvent,
+    mainEvent,
+  } = await linkedWorkspaceIpcFixture();
   await expect(
     activityHandler(registeredPanelEvent, { type: "pulse" }),
   ).resolves.toEqual({ completed: true });
@@ -527,6 +567,70 @@ it("accepts linked-workspace activity from registered panels without widening ot
   await expect(
     statusHandler(registeredPanelEvent, "11111111-1111-4111-8111-111111111111"),
   ).rejects.toThrow();
+  const organizeHandler = electronBoundary.handlers.get(
+    ipcInvokeContracts.organizeLinkedResults.channel,
+  );
+  if (!organizeHandler) throw new Error("Missing organization handler.");
+  await expect(organizeHandler(registeredPanelEvent)).rejects.toThrow();
+  await expect(organizeHandler(mainEvent)).resolves.toEqual(organized);
+  expect(organizeManagedResults).toHaveBeenCalledOnce();
+  await expect(organizeHandler(mainEvent, "C:/untrusted")).rejects.toThrow();
+});
+
+it("validates contextual result-folder scope and opens only registry-selected preserved paths", async () => {
+  const {
+    organizeManagedResults,
+    openPreservedResults,
+    organized,
+    registeredPanelEvent,
+    mainEvent,
+  } = await linkedWorkspaceIpcFixture();
+  const organizeHandler = electronBoundary.handlers.get(
+    ipcInvokeContracts.organizeLinkedResults.channel,
+  );
+  if (!organizeHandler) throw new Error("Missing organization handler.");
+  const scope = {
+    workId: "11111111-1111-4111-8111-111111111111",
+    chapterId: "22222222-2222-4222-8222-222222222222",
+  };
+  await expect(organizeHandler(mainEvent, scope)).resolves.toEqual(organized);
+  expect(organizeManagedResults).toHaveBeenLastCalledWith(scope);
+  await expect(
+    organizeHandler(mainEvent, { workId: scope.workId }),
+  ).resolves.toEqual(organized);
+  expect(organizeManagedResults).toHaveBeenLastCalledWith({
+    workId: scope.workId,
+  });
+  await expect(
+    organizeHandler(mainEvent, { ...scope, rootPath: "C:/untrusted" }),
+  ).rejects.toThrow();
+  await expect(
+    organizeHandler(mainEvent, { chapterId: scope.chapterId }),
+  ).rejects.toThrow();
+  const preservedHandler = electronBoundary.handlers.get(
+    ipcInvokeContracts.openPreservedLinkedResults.channel,
+  );
+  if (!preservedHandler) throw new Error("Missing preserved-folder handler.");
+  await expect(
+    preservedHandler(mainEvent, { chapterId: scope.chapterId, index: 0 }),
+  ).resolves.toEqual({ status: "opened", syncedPages: 0 });
+  expect(openPreservedResults).toHaveBeenCalledExactlyOnceWith({
+    chapterId: scope.chapterId,
+    index: 0,
+  });
+  await expect(
+    preservedHandler(registeredPanelEvent, { chapterId: scope.chapterId }),
+  ).rejects.toThrow();
+  await expect(
+    preservedHandler(mainEvent, { chapterId: scope.chapterId, index: -1 }),
+  ).rejects.toThrow();
+  await expect(
+    preservedHandler(mainEvent, {
+      chapterId: scope.chapterId,
+      path: "C:/untrusted",
+    }),
+  ).rejects.toThrow();
+  expect(openPreservedResults).toHaveBeenCalledTimes(1);
 });
 
 it("opens only allowlisted Vertex setup pages", async () => {

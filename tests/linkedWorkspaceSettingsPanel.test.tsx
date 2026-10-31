@@ -27,6 +27,7 @@ const connect = vi.fn();
 const reconnect = vi.fn();
 const resetLocation = vi.fn();
 const viewResults = vi.fn();
+const organize = vi.fn();
 
 beforeEach(() => {
   listStatuses.mockResolvedValue([
@@ -54,6 +55,7 @@ beforeEach(() => {
   resetLocation.mockResolvedValue(undefined);
   viewResults.mockResolvedValue({ status: "opened", syncedPages: 0 });
   window.mangaApi = createTestMangaGatewayStub({
+    organizeLinkedResults: organize,
     listLinkedWorkspaceStatuses: listStatuses,
     onLinkedWorkspaceStatusChanged: () => () => undefined,
     updateLinkedWorkspace: updateConnection,
@@ -71,6 +73,35 @@ afterEach(() => {
 });
 
 describe("LinkedWorkspaceSettingsPanel", () => {
+  it("keeps automatic organization notices and failures visible on their chapter", async () => {
+    listStatuses.mockResolvedValue([
+      {
+        chapterId: FIRST_CHAPTER_ID,
+        connectionId: CONNECTION_ID,
+        state: "idle",
+        pendingCount: 0,
+        failedCount: 0,
+        destinationKind: "managed",
+        notice: "이전 폴더의 사용자 파일을 보존했습니다.",
+        lastError: "파일이 사용 중입니다.",
+      },
+    ]);
+    render(<LinkedWorkspaceSettingsPanel library={makeLibrary()} />);
+    expect(
+      await screen.findByText("이전 폴더의 사용자 파일을 보존했습니다."),
+    ).toBeTruthy();
+    expect(screen.getByRole("alert").textContent).toBe("파일이 사용 중입니다.");
+  });
+  it("keeps preferences only; folder repair lives with the library items", async () => {
+    render(<LinkedWorkspaceSettingsPanel library={makeLibrary()} />);
+    await screen.findByText("테스트 작품");
+    expect(
+      screen
+        .getAllByRole("button")
+        .some((button) => /맞추|정리/.test(button.textContent ?? "")),
+    ).toBe(false);
+    expect(organize).not.toHaveBeenCalled();
+  });
   it("treats an empty bridge status response as no linked chapters", async () => {
     Reflect.apply(listStatuses.mockResolvedValueOnce, listStatuses, [null]);
 
@@ -85,10 +116,7 @@ describe("LinkedWorkspaceSettingsPanel", () => {
   it("lists every work/chapter and toggles each chapter independently", async () => {
     render(<LinkedWorkspaceSettingsPanel library={makeLibrary()} />);
     expect(await screen.findByText("테스트 작품")).toBeTruthy();
-    expect(screen.getByText("result")).toBeTruthy();
-    expect(screen.getByText("최종 이미지")).toBeTruthy();
-    expect(screen.getByText("originals")).toBeTruthy();
-    expect(screen.getByText("복구용 원본")).toBeTruthy();
+    expect(screen.queryByText("originals")).toBeNull();
     expect(
       screen.getByRole("checkbox", { name: "1화 결과물 자동 저장" }),
     ).toBeTruthy();

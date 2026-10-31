@@ -1,3 +1,4 @@
+import { initializeAppUpdates } from "./lib/appUpdateLifecycle";
 import { restoreBackupPreferences } from "./lib/environmentBackupPreferences";
 import React from "react";
 import { createRoot } from "react-dom/client";
@@ -33,6 +34,7 @@ async function bootstrapRenderer(root: HTMLElement): Promise<void> {
   await initializeAppI18n(locale);
   const errorReportWindow = window.location.hash === "#error-report";
   const panelId = parsePanelRoute(window.location.hash);
+  if (!errorReportWindow) initializeAppUpdates(root);
   if (!errorReportWindow && !panelId) {
     try {
       await restoreBackupPreferences();

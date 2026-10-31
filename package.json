@@ -1,6 +1,6 @@
 {
   "name": "carrot-manga-translator",
-  "version": "3.7.7",
+  "version": "3.8.0",
   "description": "Open-source desktop OCR, AI translation, editing and inpainting tool for user-provided manga and comic images.",
   "license": "GPL-3.0-only",
   "type": "commonjs",
@@ -88,6 +88,7 @@
     "@anthropic-ai/claude-agent-sdk": "0.3.311",
     "@openai/codex": "0.164.0",
     "ag-psd": "^31.0.2",
+    "electron-updater": "6.8.11",
     "google-auth-library": "^11.1.0",
     "i18next": "^26.4.2",
     "onnxruntime-node": "1.30.0",

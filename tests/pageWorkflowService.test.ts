@@ -15,6 +15,9 @@ import {
 import { resolveBlockDisplayText } from "../src/shared/blockDisplayText";
 import { makePage, makeChapter } from "./helpers/workspacePointerFixtures";
 import type { MangaPage } from "../src/shared/libraryTypes";
+import { isNonRetriableRuntimeError } from "../src/main/pipeline/failure";
+import { emitWorkflowCompletion } from "../src/main/jobs/pageWorkflowProgress";
+import { extractModelOutputFailure } from "./helpers/runtimeModelContracts";
 
 function harness(
   stages: PageWorkflowStage[],
@@ -62,6 +65,36 @@ function harness(
 }
 
 describe("Hayai page workflow commits", () => {
+  it("passes the provider block reason to the final job event and preserves page content", async () => {
+    const failure = extractModelOutputFailure({
+      choices: [
+        { finish_reason: "content_filter: PROHIBITED_CONTENT", index: 0 },
+      ],
+    });
+    expect(failure).not.toBeNull();
+    if (!failure) throw new Error("Expected a content-policy failure");
+    const error = Object.assign(new Error(failure.message), failure);
+    const h = harness(["translate"], async () => {
+      throw error;
+    });
+    h.port.isFatal = isNonRetriableRuntimeError;
+    const original = structuredClone(h.page());
+    const emit = vi.fn();
+
+    const result = await executePageWorkflow(h.input, h.port);
+    emitWorkflowCompletion(emit, h.input.runId, result, 1);
+
+    expect(h.port.execute).toHaveBeenCalledOnce();
+    expect(h.page().blocks).toEqual(original.blocks);
+    expect(h.page().imagePath).toBe(original.imagePath);
+    expect(emit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "failed",
+        progressText: expect.stringContaining("사유: PROHIBITED_CONTENT"),
+      }),
+    );
+  });
+
   it.each(["fatal", "cancel", "cleanup"])(
     "preserves earlier page issues when a later %s interrupts the stage",
     async (failure) => {

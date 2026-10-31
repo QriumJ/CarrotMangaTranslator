@@ -4,6 +4,8 @@ export const linkedWorkspaceGateway = createMangaDomainGateway(
   "Linked workspace",
   [
     "getLinkedWorkspaceStatus",
+    "organizeLinkedResults",
+    "openPreservedLinkedResults",
     "listLinkedWorkspaceStatuses",
     "connectLinkedWorkspace",
     "updateLinkedWorkspace",

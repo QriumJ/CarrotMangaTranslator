@@ -173,7 +173,7 @@ async function main() {
 }
 
 function findInstaller() {
-  const suffix = ` Setup ${packageJson.version}.exe`;
+  const suffix = `CarrotMangaTranslator-Setup-v${packageJson.version}.exe`;
   const installers = readdirSync(distDir)
     .filter((name) => name.endsWith(suffix))
     .map((name) => join(distDir, name));

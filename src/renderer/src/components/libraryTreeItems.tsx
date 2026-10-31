@@ -20,7 +20,12 @@ import { ChevronDownIcon, EditIcon } from "./ui/icons";
 import { Button } from "./ui/Button";
 import type { LibraryWorkDisclosure } from "./useLibraryWorkDisclosure";
 import styles from "./LibraryTree.module.css";
-import { resolveChapterStatusLabel } from "../lib/chapterStatusLabel";
+import {
+  buildChapterResultMenuItems,
+  buildWorkResultMenuItems,
+  resolveChapterResultIssue,
+} from "../lib/libraryResultMenuItems";
+import { ChapterRowMeta, WorkResultIssueCount } from "./libraryTreeResults";
 
 /** Saved-layout bulk actions; search keeps folding transient, so it disables them. */
 export function LibraryBulkDisclosureButtons({
@@ -99,6 +104,9 @@ export function LibraryWorkGroup({
       selecting={selecting}
       controlsId={listId}
       onToggleExpanded={onToggleExpanded}
+      issueCount={
+        <WorkResultIssueCount results={contextActions?.results} work={work} />
+      }
       actions={
         <LibraryWorkMenu
           work={work}
@@ -139,6 +147,7 @@ export function LibraryWorkGroup({
                     onOpenChapter={onOpenChapter}
                     onRenameChapter={onRenameChapter}
                     onDeleteChapter={contextActions?.deleteTarget}
+                    results={contextActions?.results}
                   />
                 ))}
               </div>
@@ -157,10 +166,12 @@ function LibraryWorkHeader({
   controlsId,
   onToggleExpanded,
   actions,
+  issueCount,
 }: Pick<LibraryWorkGroupProps, "work" | "expanded" | "onToggleExpanded"> & {
   selecting: boolean;
   controlsId: string;
   actions: React.ReactNode;
+  issueCount: React.ReactNode;
 }) {
   const { t } = useTranslation("components");
   return (
@@ -180,6 +191,7 @@ function LibraryWorkHeader({
           className={expanded ? styles.chevron : styles.chevronCollapsed}
         />
         <strong>{work.title}</strong>
+        {issueCount}
         {expanded ? null : (
           <small className={styles.collapsedCount}>
             {t("common.chapterCount", { count: work.chapters.length })}
@@ -205,6 +217,7 @@ function LibraryWorkMenu({
     <ActionMenu
       iconOnly
       label={t("library.itemActions", { title: work.title })}
+      showTooltip={false}
       disabled={disabled}
       items={[
         {
@@ -217,6 +230,7 @@ function LibraryWorkMenu({
           disabled: !selection || !work.chapters.length,
         },
         { label: t("common.rename"), run: () => onRenameWork(work.id) },
+        ...buildWorkResultMenuItems(contextActions?.results, work, t),
         {
           label: t("rename.deleteWork"),
           run: () =>
@@ -242,10 +256,12 @@ type SortableChapterItemProps = {
   onOpenChapter: (chapterId: string) => void;
   onRenameChapter: (chapterId: string) => void;
   onDeleteChapter?: LibraryContextActions["deleteTarget"];
+  results?: LibraryContextActions["results"];
 };
 
 function SortableChapterItem({
   onDeleteChapter,
+  results,
   workId,
   chapter,
   active,
@@ -271,10 +287,8 @@ function SortableChapterItem({
       workId,
     },
   });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
+  const style = { transform: CSS.Transform.toString(transform), transition };
+  const resultItems = buildChapterResultMenuItems(results, workId, chapter, t);
 
   return (
     <div
@@ -289,13 +303,20 @@ function SortableChapterItem({
         listeners={listeners}
         setActivatorNodeRef={setActivatorNodeRef}
       />
-      <ChapterSelectButton chapter={chapter} onOpenChapter={onOpenChapter} />
+      <ChapterSelectButton
+        chapter={chapter}
+        issue={resolveChapterResultIssue(results, workId, chapter.id)}
+        onOpenChapter={onOpenChapter}
+      />
       <ActionMenu
         iconOnly
         label={t("library.itemActions", { title: chapter.title })}
+        showTooltip={false}
         disabled={jobActive}
         items={[
+          ...resultItems.leading,
           { label: t("common.rename"), run: () => onRenameChapter(chapter.id) },
+          ...resultItems.repair,
           {
             label: t("rename.deleteChapter"),
             run: () =>
@@ -345,12 +366,13 @@ function ChapterDragHandle({
 
 function ChapterSelectButton({
   chapter,
+  issue,
   onOpenChapter,
 }: {
   chapter: LibraryChapterSummary;
+  issue: React.ComponentProps<typeof ChapterRowMeta>["issue"];
   onOpenChapter: (chapterId: string) => void;
 }): React.JSX.Element {
-  const { t } = useTranslation("components");
   return (
     <Button
       className="chapter-select"
@@ -359,10 +381,7 @@ function ChapterSelectButton({
       variant="bare"
     >
       <span>{chapter.title}</span>
-      <small>
-        {t("common.pageCount", { count: chapter.pageCount })} ·{" "}
-        {resolveChapterStatusLabel(chapter.status, t)}
-      </small>
+      <ChapterRowMeta chapter={chapter} issue={issue} />
     </Button>
   );
 }
@@ -374,7 +393,6 @@ export function ChapterDragPreview({
   chapter: LibraryChapterSummary;
   active: boolean;
 }): React.JSX.Element {
-  const { t } = useTranslation("components");
   return (
     <div
       className={`chapter-item sortable-item drag-preview ${active ? "active" : ""}`}
@@ -384,10 +402,7 @@ export function ChapterDragPreview({
       </span>
       <div className="chapter-select preview-select" title={chapter.title}>
         <span>{chapter.title}</span>
-        <small>
-          {t("common.pageCount", { count: chapter.pageCount })} ·{" "}
-          {resolveChapterStatusLabel(chapter.status, t)}
-        </small>
+        <ChapterRowMeta chapter={chapter} issue={null} />
       </div>
       <span className="library-icon-button preview-edit" aria-hidden="true">
         <EditIcon size={14} />

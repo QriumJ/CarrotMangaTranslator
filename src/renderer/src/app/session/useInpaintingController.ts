@@ -113,6 +113,7 @@ function useSessionCommands(
       chapter.uiState.requestEditorTextTab();
     },
     openWorkContext: chapter.uiState.openWorkContext,
+    linkedResults: chapter.linkedWorkspace,
     setTranslationSourceOpen: chapter.importShareModal.setTranslationSourceOpen,
     setAddPagesChapter: chapter.importShareModal.setAddPagesChapter,
   });

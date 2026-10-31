@@ -1,3 +1,4 @@
+import { appUpdateIpcContracts } from "./ipcAppUpdateContracts";
 import { chapterPageIpcContracts } from "./ipcChapterPageContracts";
 import { mcpIpcContracts } from "./ipcMcpContracts";
 import { chatIpcContracts } from "./ipcChatContracts";
@@ -58,6 +59,7 @@ export {
 };
 
 export const ipcInvokeContracts = {
+  ...appUpdateIpcContracts,
   ...claudeIpcContracts,
   ...grokIpcContracts,
   ...chatIpcContracts,

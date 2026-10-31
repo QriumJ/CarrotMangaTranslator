@@ -158,7 +158,8 @@ function createModalsProps({
       void importShareActions.selectTranslateSource(mode),
     onPreparedWebImport: importShareActions.acceptWebImportPreview,
     onSubmitImport: (payload) => void importShareActions.submitImport(payload),
-    onSubmitRename: (title) => void libraryActions.submitRename(title),
+    onSubmitRename: (title, moveResultFolders) =>
+      void libraryActions.submitRename(title, moveResultFolders),
     onSubmitSettings: (nextSettings) =>
       void settingsDialog.submitSettings(nextSettings),
     onSubmitShareExport: (request) =>
@@ -242,6 +243,7 @@ function createSidebarProps({
   core,
   derivedState,
   libraryActions,
+  linkedWorkspace,
   pageNavigationHandlers,
   retranslatePage,
   settingsDialog,
@@ -276,6 +278,11 @@ function createSidebarProps({
       selection: libraryActions.chapterBulkDelete,
       openContext: uiState.openWorkContext,
       deleteTarget: (target) => void libraryActions.deleteRenameTarget(target),
+      results: linkedWorkspace,
+    },
+    organizeAllResults: {
+      ...commandRegistry.byId["organize-all-linked-results"],
+      busy: linkedWorkspace.isOrganizing(),
     },
     onReorderChapter: libraryActions.reorderChapterInLibrary,
     onReorderPage: libraryActions.reorderPageInChapter,

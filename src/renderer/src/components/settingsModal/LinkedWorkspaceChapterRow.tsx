@@ -75,7 +75,7 @@ export function LinkedWorkspaceChapterRow({
           status={status}
         />
       </div>
-      <ChapterRowError error={error} />
+      <ChapterRowFeedback error={error} status={status} />
     </div>
   );
 }
@@ -106,16 +106,28 @@ function ChapterConnectionActions({
   );
 }
 
-function ChapterRowError({
+function ChapterRowFeedback({
   error,
+  status,
 }: {
   error?: string;
+  status: LinkedWorkspaceStatus | null;
 }): React.JSX.Element | null {
-  return error ? (
-    <p className="linked-workspace-row-error" role="alert">
-      {error}
-    </p>
-  ) : null;
+  const message = error ?? status?.lastError;
+  return (
+    <>
+      {message ? (
+        <p className="linked-workspace-row-error" role="alert">
+          {message}
+        </p>
+      ) : null}
+      {status?.notice ? (
+        <p className="linked-workspace-settings-message" role="status">
+          {status.notice}
+        </p>
+      ) : null}
+    </>
+  );
 }
 
 function ConnectionActions({

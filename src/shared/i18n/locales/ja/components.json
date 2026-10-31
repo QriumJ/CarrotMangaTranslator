@@ -991,12 +991,31 @@
       "duplicateCounts": "{{skipped}}件スキップ · {{remaining}}件追加"
     }
   },
-  "linkedWorkspaceFolders": {
-    "label": "自動保存フォルダーの役割",
-    "result": "完成画像",
-    "originals": "復旧用の原本",
-    "inpainted": "原文消去済み",
-    "mask": "消去範囲"
+  "linkedResults": {
+    "organize": "フォルダー名をタイトルに合わせる",
+    "organizeAll": "すべての結果フォルダー名をタイトルに合わせる",
+    "moving": "結果フォルダーを移動中…",
+    "moveFailed": "結果フォルダーを移動できませんでした",
+    "retry": "再試行",
+    "preserved": "以前のフォルダーにファイルが残っています",
+    "openPrevious": "以前のフォルダーを開く",
+    "savedIn": "「{{name}}」に保存済み",
+    "openFailed": "結果フォルダーを開けませんでした。",
+    "organizeFailed": "結果フォルダーを整理できませんでした。",
+    "organizeDone": "結果フォルダー{{count}}件をタイトルに合わせました。",
+    "organizeUpToDate": "結果フォルダーはすでにタイトルと一致しています。",
+    "organizePartial": "{{count}}話のフォルダーを移動できませんでした。",
+    "workIssueCount": "結果フォルダーの問題 {{count}}件",
+    "issue": {
+      "moving": "フォルダー移動中…",
+      "moveFailed": "フォルダー移動失敗",
+      "syncFailed": "自動保存失敗",
+      "preserved": "以前のフォルダーにファイルあり"
+    },
+    "savingPaused": "ファイル保護のため自動保存を停止",
+    "details": "エラーの詳細を表示",
+    "hideDetails": "エラーの詳細を閉じる",
+    "refreshFailed": "結果フォルダーの状態を取得できませんでした。"
   },
   "rename": {
     "workTitle": "作品名を変更",
@@ -1006,7 +1025,8 @@
     "newName": "新しい名前",
     "deleteWorkWarning": "作品を削除すると、含まれるすべての話・ページ・翻訳結果と用語/記憶も削除されます。",
     "deleteChapterWarning": "話を削除すると、含まれるページと翻訳結果も削除されます。",
-    "deleteChapters": "話を選んで削除…"
+    "deleteChapters": "話を選んで削除…",
+    "moveResultFolders": "結果フォルダーも変更する"
   },
   "shareExport": {
     "title": "作業を書き出す",
@@ -1859,7 +1879,7 @@
       "psdAction": "PSDを出力",
       "syncing": "結果を同期中",
       "pendingSync": "変更ページ{{count}}件が待機中",
-      "syncFailed": "自動保存に失敗 · 設定から再試行してください",
+      "syncFailed": "自動保存に失敗",
       "syncDisabled": "結果の自動保存はオフです",
       "synced": "最新の結果を保存済み",
       "description": "ブロックのフォント・色・位置を整え、完成PNGまたはレイヤーPSDとして書き出します。",
@@ -2647,10 +2667,40 @@
     },
     "update": {
       "title": "アップデート",
-      "currentVersion": "現在のバージョン: {{version}}",
+      "currentVersion": "現在のバージョン {{version}}",
       "checkingVersion": "現在のバージョン: 確認中…",
-      "check": "アップデートを確認（リリースページを開く）",
-      "description": "新しいバージョンを同じ場所にインストールしても、モデル・ライブラリ・OCRランタイムなどのデータは保持されます。アンインストール時にデータ削除を明示的に選んだ場合のみ削除されます。"
+      "check": "更新を確認",
+      "description": "新しいバージョンを同じ場所にインストールしても、モデル・ライブラリ・OCRランタイムなどのデータは保持されます。アンインストール時にデータ削除を明示的に選んだ場合のみ削除されます。",
+      "download": "ダウンロード",
+      "cancel": "ダウンロードを中止",
+      "install": "再起動して更新",
+      "openInstaller": "インストーラーを開く",
+      "onStartup": "起動時に更新を確認",
+      "statusCenterHint": "アクティビティセンターで続行",
+      "busy": "処理が終わるとインストールできます。",
+      "phases": {
+        "idle": "更新を確認できます。",
+        "checking": "更新を確認中…",
+        "current": "最新バージョンです。",
+        "available": "新しいバージョン {{version}}",
+        "downloading": "{{version}} をダウンロード中…",
+        "ready": "{{version}} のインストール準備完了",
+        "preparing": "編集内容を保存中…",
+        "installing": "インストールを開始中…",
+        "error": "更新に失敗しました"
+      },
+      "errors": {
+        "network": "更新を確認できませんでした。接続を確認して再試行してください。",
+        "incomplete": "新しいインストーラーを準備中です。後でもう一度確認してください。",
+        "integrity": "ダウンロードしたファイルが破損しています。再度ダウンロードしてください。",
+        "download": "ダウンロードに失敗しました。接続と空き容量を確認してください。",
+        "save": "編集内容を保存できなかったためインストールを中止しました。保存状態を確認してください。",
+        "busy": "実行中の処理を終えてから再試行してください。",
+        "install": "インストールを開始できませんでした。再試行してください。",
+        "unsupported": "この実行環境ではアプリ内更新を利用できません。",
+        "storage": "更新ファイルを保存できません。空き容量とフォルダー権限を確認してください。"
+      },
+      "preferenceError": "設定を保存できませんでした。"
     },
     "validation": {
       "languageCode": "翻訳言語コードは en、ja、zh-Hans、pt-BR のような形式で入力してください。",

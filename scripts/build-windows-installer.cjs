@@ -44,7 +44,6 @@ function patchNsisTemplates(templatesDir) {
     "include",
     "extractAppPackage.nsh",
   );
-  const installerFunctionsPath = join(templatesDir, "include", "installer.nsh");
 
   let installSection = readFileSync(installSectionPath, "utf8").replace(
     /\r\n/g,
@@ -106,18 +105,6 @@ function patchNsisTemplates(templatesDir) {
     "ZIP extraction",
   );
   writeFileSync(extractPackagePath, extractPackage, "utf8");
-
-  let installerFunctions = readFileSync(installerFunctionsPath, "utf8").replace(
-    /\r\n/g,
-    "\n",
-  );
-  installerFunctions = replaceExactlyOnce(
-    installerFunctions,
-    '      !insertmacro copyFile "$EXEPATH" "$LOCALAPPDATA\\${APP_INSTALLER_STORE_FILE}"',
-    "      ; Manual GitHub-release updates do not use electron-updater's cached installer.",
-    "installer cache copy",
-  );
-  writeFileSync(installerFunctionsPath, installerFunctions, "utf8");
 }
 
 /**
@@ -184,6 +171,11 @@ async function buildWindowsInstaller() {
       config: "electron-builder.config.cjs",
       publish: "never",
     });
+    await require("./verify-windows-update-metadata.cjs").verifyWindowsUpdateMetadata(
+      join(__dirname, "..", "dist"),
+      require("../package.json").version,
+      true,
+    );
   } finally {
     try {
       if (templatesDirChanged) {

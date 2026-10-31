@@ -3,6 +3,7 @@ import { type Dispatch, type SetStateAction } from "react";
 import type { ChapterSnapshot } from "../../../../shared/libraryTypes";
 import type { AppCommandRegistry } from "../../lib/appCommandTypes";
 import { useAppCommands } from "../../hooks/useAppCommands";
+import type { LinkedResultsController } from "../../hooks/useLinkedWorkspaceController";
 
 type UseAppSessionCommandControllerArgs = {
   redactionPreparation: RedactionPreparationActions;
@@ -33,6 +34,7 @@ type UseAppSessionCommandControllerArgs = {
   openChat?: () => void;
   editBlockText?: () => void;
   openWorkContext?: (workId: string) => void;
+  linkedResults?: LinkedResultsController;
   setTranslationSourceOpen: Dispatch<SetStateAction<boolean>>;
   setAddPagesChapter: Dispatch<SetStateAction<ChapterSnapshot | null>>;
 };
@@ -65,6 +67,7 @@ export function useAppSessionCommandController({
   openChat,
   editBlockText,
   openWorkContext,
+  linkedResults,
   setTranslationSourceOpen,
   setAddPagesChapter,
 }: UseAppSessionCommandControllerArgs): AppCommandRegistry {
@@ -97,6 +100,7 @@ export function useAppSessionCommandController({
     openChat,
     editBlockText,
     openWorkContext,
+    linkedResults,
     openTranslationSource: () => {
       setAddPagesChapter(null);
       setTranslationSourceOpen(true);
