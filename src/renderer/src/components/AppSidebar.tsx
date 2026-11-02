@@ -1,3 +1,4 @@
+import { CompactPageNavigation } from "./CompactPageNavigation";
 import type { LibraryContextActions } from "../hooks/libraryActionTypes";
 import React from "react";
 import { useTranslation } from "react-i18next";
@@ -28,6 +29,7 @@ import {
 } from "../lib/appCommandTypes";
 import { useContextRailExpansion } from "./useContextRailExpansion";
 import {
+  measureLibrarySplitPercent,
   useSidebarPanelLayout,
   type SidebarPanelLayout,
 } from "./useSidebarPanelLayout";
@@ -121,6 +123,7 @@ function SidebarAside(props: AppSidebarProps): React.JSX.Element {
           <ToggleIcon size={19} stroke={2} aria-hidden="true" />
         </IconButton>
       ) : null}
+      {hasChapter ? <CompactPageNavigation {...props} /> : null}
       <MacAlphaBadge />
       <LibrarySidebarContent {...props} layout={layout} />
     </aside>
@@ -219,6 +222,7 @@ function SidebarSplitHandle({
       }
       valueMin={0}
       valueMax={100}
+      measureValue={measureLibrarySplitPercent}
       onResizeStart={layout.onSplitResizeStart}
       onResize={layout.onSplitResize}
       onResizeEnd={layout.onSplitResizeEnd}
