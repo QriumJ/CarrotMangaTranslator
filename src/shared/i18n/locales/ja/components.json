@@ -2355,7 +2355,7 @@
         "loginFailed": "Codexへのログインに失敗しました。",
         "logoutFailed": "Codexからのログアウトに失敗しました。"
       },
-      "imageReasoning": "画像生成の推論強度",
+      "imageReasoning": "画像処理の推論強度",
       "imageGenerationModel": "画像モデル",
       "imageGenerationAuto": "Codex の既定",
       "imageGenerationAutoHint": "Codex 内蔵の画像ツールを使用します。",

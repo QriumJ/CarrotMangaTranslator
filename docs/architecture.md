@@ -1,5 +1,37 @@
 # 코드 경계와 품질 규칙
 
+## 2026-11-07 대화 삭제와 글꼴 분석 임시 파일 (#173)
+
+대화 삭제는 런타임을 닫은 뒤 해당 `nativeThreadId`를 Codex `thread/delete`로 정리한다.
+재시작한 대화도 같은 경로를 사용하며 실패하면 앱 기록을 남겨 재시도한다. 이미 삭제된
+스레드라는 정확한 응답만 성공으로 인정하고, native ID 해제를 먼저 저장한다.
+첨부·요약·대화 저장과 삭제는 기존 대화별 쓰기 큐에서 직렬화한다. 선택한 대화의
+UUID 첨부 JSON과 요약만 지우고 빈 폴더만 제거한다. 알 수 없는 파일·하위 폴더는 보존하며
+심볼릭 링크/정션은 경로 검증에서 거부한다. 원본·보관함·앱 출력은 삭제 경로에 넣지 않는다.
+
+`fontChapterWorkspace`는 해당 실행에서 생성한 `cache/font-chapter-c18/chapter-*` 하나만
+소유한다. 준비 실패 또는 분석 완료·실패·취소 후 워커 종료가 확인되면 전체 트리를 검사하고
+파일과 빈 폴더를 개별 제거한다. 종료 확인 실패나 링크 발견 시 안전하게 남긴다.
+글꼴 선택 알고리즘, 모델 자산, 연구 artifact와 이전 실행 잔여물은 변경하지 않는다.
+기존 경로 검증을 직접 사용하는 소비자 하나에 한해 `libraryTransactionStorage`의 실측
+fan-in을 28→29로 기록한다. pipeline에서 libraryStore로 직접 의존하지 않는다.
+
+관련 13개 테스트 파일 82개가 통과했다. 격리된 Codex 0.164.0에서 추론·계정 사용 없이
+기록을 주입하고 재시작 후 실제 JSONL 삭제, 다른 스레드·원본·보관함·출력 보존을 검증했다.
+새 workspace 모듈의 최초 coverage 출처는 `.tmp/issue173-final-coverage/coverage-summary.json`,
+SHA-256은 `db3edd732e5b9321c17868a2464aeeaac43bae702dad26a80fc75241f42f01d8`이다.
+변경된 기존 저장/수명 모듈의 보호 기준을 유지했고 새 모듈만 introduced inventory에 추가했다.
+
+## 2026-11-06 시작 로그의 앱·빌드 식별
+
+`app.log`와 `bootstrap.log`의 시작 기록에 Electron의 앱 버전, 플랫폼·아키텍처,
+Electron·Node 버전과 설치본의 커밋·미커밋 변경 여부를 기록한다. Windows/macOS 공용
+패키징 설정이 Git 정보를 package metadata에 넣으며 실행 시 Git을 호출하지 않는다.
+기존 `buildChannel`의 package reader를 재사용하고, 구버전·개발 실행·메타데이터 오류는
+식별 정보 `null`로 구분한다. 이 직접 재사용의 실측 import 상한만 bootstrap 13,
+index 35로 기록하며 전역 상한은 유지한다. `runtimeCapabilities` 테스트가 패키징
+metadata 왕복과 누락·손상 데이터를 검증한다.
+
 ## 2026-10-25 채팅 복구 이력 자동 순환
 
 `mcpRetentionStorage`는 일반 페이지 변경 이력의 1 GiB/4,096개 목표를 저장 거부
@@ -558,3 +590,14 @@ cleanup 기준 이후 추가된 파일이므로 introduced inventory에서만 �
 `.tmp/issue166-context-ui-coverage/coverage-summary.json`이며 SHA-256은
 `6a12febd65d10a00c22389b81208fd6edb9c2b6e9795151c519e8bc6b33e64dc`다.
 introduced inventory는 1,595개이며 기존 floor는 유지했다.
+
+## 2026-11-06 Codex 이미지 모델 설정 계약
+
+GPT Image 2.6 모델 목록과 2.5 설정 마이그레이션은 shared 계약을 사용한다.
+IPC와 MCP가 같은 `CodexImageGenerationModelSchema`를 직접 소비하므로
+`ipcSettingsSchemas`의 runtimeImports 상한만 실측 14에서 15로 갱신한다.
+전역 예산과 기존 coverage floor는 유지한다. 새 schema의 최초 coverage는
+`.tmp/imagegen-coverage/coverage-summary.json`이며 SHA-256은
+`966a34ff4a35314a5cc90507921e707bedaedefc3d042d312968a75131805c81`다.
+설정 정규화, IPC, MCP의 이전 모델 계열 유지와 저장 파일 불변 테스트를 포함한
+5개 파일 93개 테스트가 통과했다. introduced inventory는 1620개다.

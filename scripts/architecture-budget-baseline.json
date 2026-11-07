@@ -22,9 +22,13 @@
     "src/renderer/src/app/useAppSessionModel.ts": 14
   },
   "allow": {
+    "src/main/bootstrap.ts": {
+      "maxRuntimeImports": 13,
+      "reason": "Startup diagnostics directly reuse buildChannel's packaged metadata reader to log the build identity before main loads. This adds one measured import (13 total), with no alternate package reader or global budget change. Runtime capabilities tests cover packaged identity and missing/invalid metadata."
+    },
     "src/main/libraryStore/libraryTransactionStorage.ts": {
-      "maxImportedBy": 28,
-      "reason": "Encrypted paged MCP retention indexes add one direct consumer of the canonical durable JSON writer (28 total). Native atomic publication and crash recovery stay unchanged; mcpRetentionIndex and mcpRetentionRotation integration tests cover migration, corruption and rollback. No global ceiling change."
+      "maxImportedBy": 29,
+      "reason": "Encrypted paged MCP retention indexes reuse the canonical durable JSON writer. Font chapter scratch cleanup adds one direct consumer of its path/symlink validation (29 total), with preservation/junction tests. Native atomic publication, crash recovery and global ceilings stay unchanged."
     },
     "src/main/settings/appSettingsDefaults.ts": {
       "maxRuntimeImports": 15,
@@ -51,16 +55,16 @@
       "reason": "Master stale-image recovery, SFX review/restore and MCP editor refresh jointly have 28 direct consumers. All preserve the same typed gateway and dirty-page merge behavior. The workflow page selector reads other chapters through the existing library gateway. Master integration: MCP editor synchronization and the workflow page selector share the existing typed library gateway. The merged runtime-consumer count is exactly 29; global limits are unchanged. Post-append navigation reopens the committed chapter after flushing edits using the canonical typed gateway. Import destination selection reads a chosen chapter through the existing library gateway and presents read failures through the existing error boundary; stale-read and retry tests cover this additional consumer. Page organization action uses the existing library gateway. Issue 156 chapter multi-delete calls the typed library gateway like the single delete action; the term file hook receives the gateway from the style guide model instead of importing it."
     },
     "src/shared/ipcSettingsSchemas.ts": {
-      "maxRuntimeImports": 14,
-      "reason": "Settings IPC composition adds the separately owned Codex typesetting preset contract; existing domain validators remain authoritative"
+      "maxRuntimeImports": 15,
+      "reason": "Settings IPC composition adds the separately owned Codex typesetting preset contract; existing domain validators remain authoritative Image model migration reuses codexSettingsSchemas with MCP discovery (15 direct imports). Legacy family-preserving migration, strict unknown-value rejection and unchanged settings reads are covered by codexDelegation and mcpSoundEffectGeneration tests."
     },
     "src/main/wholePagePipeline.ts": {
       "maxRuntimeImports": 27,
       "reason": "Whole-page composition adds fresh-input handoff and checkpoint compatibility without moving OCR/font algorithms. Whole-page handoff parity tests compare unchanged output and context order."
     },
     "src/main/index.ts": {
-      "maxRuntimeImports": 34,
-      "reason": "Electron main composition root Startup composition owns the persistent desktop MCP service and legacy local test listener, including terminal shutdown. Global chat adds one direct consumer/registration of this existing authority; contracts and algorithms are unchanged. See docs/global-chat-translation-20261009.md. Issue 151 directly normalizes main-process incident fields with the shared report context contract before strict IPC validation; one measured additional import, no global budget change."
+      "maxRuntimeImports": 35,
+      "reason": "Electron main composition root Startup composition owns the persistent desktop MCP service and legacy local test listener, including terminal shutdown. Global chat adds one direct consumer/registration of this existing authority; contracts and algorithms are unchanged. See docs/global-chat-translation-20261009.md. Issue 151 directly normalizes main-process incident fields with the shared report context contract before strict IPC validation; one measured additional import, no global budget change. Startup diagnostics reuse buildChannel's packaged metadata reader directly (35 imports); runtime capabilities tests cover identity parsing and absent/invalid metadata."
     },
     "src/main/ipc/registerIpc.ts": {
       "maxRuntimeImports": 28,

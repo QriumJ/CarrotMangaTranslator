@@ -2355,7 +2355,7 @@
         "loginFailed": "Codex 登入失敗。",
         "logoutFailed": "Codex 登出失敗。"
       },
-      "imageReasoning": "圖像生成推理強度",
+      "imageReasoning": "圖像任務推理強度",
       "imageGenerationModel": "圖像模型",
       "imageGenerationAuto": "Codex 預設",
       "imageGenerationAutoHint": "使用 Codex 內建圖像工具。",
